@@ -1,0 +1,9 @@
+﻿.plusViewerTabs {  width: 100%; border-collapse: collapse; clear:both; border: none; vertical-align: middle; }
+.plusViewerTabs > tbody > tr > td { width: 100%; height: 100%; border: solid 1px #0000A6; border-top: none; border-right: solid 2px #1E1ED2; padding: 4px;}
+.plusViewerTabs > tbody > tr > th { font-family: Arial; font-size:small; cursor: pointer; padding: 1px; font-weight: normal; font-style: italic; color: #888; border-left: solid 1px #bbb; border-top: solid 1px #bbb; border-bottom: solid 1px #1E1ED2; border-right: none; background-color: #f8f8f8; }
+.plusViewerTabs > tbody > tr { border-right: solid 1px #bbb; }
+.plusViewerTabs th.header_true { cursor:default; font-weight: bold; border-left: solid 1px #0000A6; border-top: solid 1px #0000A6; border-right: solid 2px #1E1ED2; border-bottom: solid 1px #eee; color: #0000A6; background-color: #fff; }
+.plusViewerTabs textarea { width: 100%; overflow: auto; border:none; }
+.plusButton { position: absolute; display:none; cursor: pointer; border: 1px solid #FF0000; margin: 4px; text-align: center; height: 12px; width: 12px;
+	line-height: 11px; background-color: #CCFF99; color: #CC0000; }
+.plusTargetContainer { border: solid transparent 1px; }
