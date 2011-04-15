@@ -6,7 +6,8 @@ Add this script after jquery.tmpl.js
 var internalCall = 0, state, activeContainer, oldTmpl = $.tmpl, oldTtemplate = $.template, oldManip = jQuery.fn.domManip, plusButton, 
 	viewerTmpl = '<table class="plusViewerTabs"><tbody><tr><th class="header_${activeIndex === 0}">Result</th><th class="header_${activeIndex === 1}">Data</th>{{each tmpls}}<th class="header_${activeIndex === 2 + $index}">${$value.name}</th>{{/each}}</tr><tr><td colspan="${tmpls.length + 2}">{{if activeIndex === 0}}{{wrap wrapper}}{{tmpl(data) tmpls[0].tmpl}}{{/wrap}}{{else activeIndex === 1}}<textarea{{if !editable}} readonly{{/if}}>${$item.getData()}</textarea>{{else}}<textarea{{if !editable}} readonly{{/if}}>${tmpls[activeIndex - 2].markup}</textarea>{{/if}}</td></tr></tbody></table>';  
 	
-viewerTmpl = $.template(null, viewerTmpl);
+	state = null,
+	viewerTmpl = $.template(null, viewerTmpl);
 
 $.tmpl = function( tmpl, data, options, parentItem ) {
 	if ( !internalCall  && !parentItem ) {
@@ -18,27 +19,29 @@ $.extend( $.tmpl, oldTmpl );
 
 $.template = function( name, tmpl ) {
 	var tmplName, tmplRef, thisTmpl = tmpl;
-	if ( state && state.tmplNames[name] ) {
-		return state.tmpls[ state.tmplNames[name] - 1 ].tmpl;
-	} else if ( thisTmpl && !internalCall ) {
-		if ( thisTmpl instanceof jQuery ) {
-			thisTmpl = tmpl[0] || {};
-		}
-		if ( thisTmpl.nodeType ) {
-			// If this is a template block, use cached copy, or generate tmpl function and cache.
-			tmplName = "#" + thisTmpl.getAttribute( "id" );
-			thisTmpl = thisTmpl.innerHTML;
-		}
-		if ( typeof thisTmpl === "string" ) {
-			tmplRef = tmplName || thisTmpl;
-			if ( !state.tmplNames[tmplRef] ) {
-				state.tmpls.push( {
-					markup: thisTmpl,
-					tmpl: thisTmpl = oldTtemplate( name, tmpl ),
-					name: tmplName || "Template"
-				});
-				state.tmplNames[tmplRef] = state.tmpls.length
-				return thisTmpl;
+	if ( state ) {
+		if ( state.tmplNames[name] ) {
+			return state.tmpls[ state.tmplNames[name] - 1 ].tmpl;
+		} else if ( thisTmpl && !internalCall ) {
+			if ( thisTmpl instanceof jQuery ) {
+				thisTmpl = tmpl[0] || {};
+			}
+			if ( thisTmpl.nodeType ) {
+				// If this is a template block, use cached copy, or generate tmpl function and cache.
+				tmplName = "#" + thisTmpl.getAttribute( "id" );
+				thisTmpl = thisTmpl.innerHTML;
+			}
+			if ( typeof thisTmpl === "string" ) {
+				tmplRef = tmplName || thisTmpl;
+				if ( !state.tmplNames[tmplRef] ) {
+					state.tmpls.push( {
+						markup: thisTmpl,
+						tmpl: thisTmpl = oldTtemplate( name, tmpl ),
+						name: tmplName || "Template"
+					});
+					state.tmplNames[tmplRef] = state.tmpls.length
+					return thisTmpl;
+				}
 			}
 		}
 	}

@@ -1,0 +1,21 @@
+﻿table { border-collapse: collapse; float: left; clear: both; }
+table tr { border: 1px solid blue; color: blue; height: 25px; }
+.header { color: #009; border-bottom: solid #77c 2px; background-color: #E8E8F7; }
+.header th { padding:5px; }
+.hover { cursor: pointer; }
+.hover:hover { color: red; }
+#movieList tr td:first-child { width: 250px; }
+table { border: 2px solid blue; width: 380px; margin: 4px 0 4px 4px; padding: 2px; background-color: #f8f8f8; }
+#movieDetail > div { border: 2px solid blue; width: 280px; margin: 4px 0 4px 4px; padding: 2px; background-color: #f8f8f8; }
+table td { padding: 3px; margin: 3px; }
+#movieDetail div div { margin: 3px; }
+.selected { background-color: yellow; }
+#movieDetail input { float: left; padding: 2px; width: 245px; margin: 1px; border: 1px solid #4A4AFF }
+#movieDetail { float: left; margin-left: 10px; }
+#movieDetail { font-weight: bold; font-style: italic; color:#009; }
+#movieDetail div { float: left; clear: both; }
+button { float: left; }
+.close { float: right; cursor: pointer; margin: 6px; }
+#addLanguageBtn, #addMovieBtn { float: right; text-decoration: underline; font-style: italic; color: blue; cursor:pointer; padding: 0 5px 0 15px; }
+#console { float: left; clear:both; }
+.consoleButtons { display:none; }
