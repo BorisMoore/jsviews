@@ -47,7 +47,9 @@ Click for details:
 
 <script type="text/javascript">
 
-	var movies = [
+	var selectedItem = null,
+
+		movies = [
 			{
 				Title: "The Red Violin",
 				Languages: [
@@ -72,8 +74,6 @@ Click for details:
 				]
 			}
 		],
-
-		selectedItem = null,
 
 		detailTemplate = $( "#detailTemplate" ).template(),
 

@@ -84,8 +84,8 @@
 					// If this is a template block, use cached copy, or generate tmpl function and cache.
 					tmpl = $.data( tmpl, "tmpl" ) || $.data( tmpl, "tmpl", buildTmplFn( tmpl.innerHTML ));
 				}
-				tmpl.name = tmpl.name || "_" + autoName++;
-				return $.template[ tmpl.name ] = tmpl;
+				tmpl._name = tmpl._name || "_" + autoName++;
+				return $.template[ tmpl._name ] = tmpl;
 			}
 			// Return named compiled template
 			return name ? (typeof name !== "string" ? $.template( null, name ):
@@ -262,7 +262,7 @@
 		}
 		return ( parentItem || options ).annotate 
 			? [].concat( 
-				"<!--tmpl(" + (arrayItem||ret[0]).path + ") " + tmpl.name + "-->", //+ tmpl.name + ":"  
+				"<!--tmpl(" + (arrayItem||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"  
 				ret, 
 				"<!--/tmpl-->" ) 
 			: ret;

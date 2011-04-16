@@ -17,7 +17,11 @@
 <h3>Data Link: Linking the master-list selected data to the detail view</h3>
 
 <h4>Script:</h4>
-<pre class="brush: js;">$( "#movieList" )
+<pre class="brush: js;">var app = { // Our app state - available for data linking.  
+		selectedItem: null
+	};
+
+$( "#movieList" )
 	.html(
 		$( "#movieTemplate" ).render( movies )
 	)
@@ -26,10 +30,6 @@
 	.delegate( "tr", "click", function () {
 		select( $.tmplItem( this )); // Click finds the clicked template item, passes it to select()
 	})
-
-var app = { // Our app state - available for data linking.  
-		selectedItem: null
-	};
 
 function select( tmplItem ) {
 	if ( app.selectedItem ) {
@@ -53,6 +53,9 @@ $.dataLink( app, function( event, args ) { // Data link to app and listen for se
 	}
 });</pre>
 
+<hr />
+<h4>Demo:</h4>
+
 <!--=================== Demo Section ===================-->
 
 <script id="movieTemplate" type="text/x-jquery-tmpl"> 
@@ -65,7 +68,7 @@ $.dataLink( app, function( event, args ) { // Data link to app and listen for se
 </script>
 
 <script id="languageTemplate" type="text/x-jquery-tmpl"> 
-	<div>${Name} </div>
+	<div>${Name}</div>
 </script>
 
 <script id="languageEditTemplate" type="text/x-jquery-tmpl"> 

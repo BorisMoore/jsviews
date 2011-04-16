@@ -49,7 +49,9 @@ Click for details:
 
 <script type="text/javascript">
 
-	var movies = [
+	var selectedItem = null,
+	
+		movies = [
 			{
 				Title: "The Red Violin",
 				Languages: [
@@ -74,8 +76,6 @@ Click for details:
 				]
 			}
 		],
-
-		selectedItem = null,
 
 		detailTemplate = $( "#detailTemplate" ).template(),
 
@@ -122,16 +122,16 @@ Click for details:
 <!--================ End of Demo Section ================-->
 
 <h4>Data:</h4>
-<pre class="brush: js;">	var movies = [
-		{
-			Title: "The Red Violin",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
-			]
-		},
-		...
-	];
+<pre class="brush: js;">var movies = [
+	{
+		Title: "The Red Violin",
+		Languages: [
+			{ Name: "English" },
+			{ Name: "French" }
+		]
+	},
+	...
+];
 ;</pre>
 
 <h4>HTML:</h4>
@@ -152,35 +152,36 @@ Click for details:
 </pre>
 
 <h4>Script:</h4>
-<pre class="brush: js;">$("#movieList")
-	function unselect( tmplItem ) {
-		if ( selectedItem ) {
-			/* Set the template of the selected item
-			   back to the summary template */
-			selectedItem.tmpl = summaryTemplate;
-			selectedItem.update();
-			selectedItem = null;
-		}
+<pre class="brush: js;">var selectedItem = null;
+	
+function unselect( tmplItem ) {
+	if ( selectedItem ) {
+		/* Set the template of the selected item
+			back to the summary template */
+		selectedItem.tmpl = summaryTemplate;
+		selectedItem.update();
+		selectedItem = null;
 	}
+}
 
-	$("#movieList")
-		.delegate( ".movieSummary", "click", function () {
- 			/* Unselect the currently selected item */
-			unselect( selectedItem );
+$("#movieList")
+	.delegate( ".movieSummary", "click", function () {
+ 		/* Unselect the currently selected item */
+		unselect( selectedItem );
 			
-			/* Get the template item data structure
-			   which this clicked element belongs to, 
-			   and make it the selected item */
-			selectedItem = $.tmplItem(this);
+		/* Get the template item data structure
+			which this clicked element belongs to, 
+			and make it the selected item */
+		selectedItem = $.tmplItem(this);
 
-			/* Set the template on this item to the detail template */
-			selectedItem.tmpl = detailTemplate;
-			selectedItem.update();
-		})
-		.delegate( ".movieDetail", "click", function () {
- 			/* Unselect the currently selected item */
-			unselect();
-		});
+		/* Set the template on this item to the detail template */
+		selectedItem.tmpl = detailTemplate;
+		selectedItem.update();
+	})
+	.delegate( ".movieDetail", "click", function () {
+ 		/* Unselect the currently selected item */
+		unselect();
+	});
 </pre>
 
 </body>

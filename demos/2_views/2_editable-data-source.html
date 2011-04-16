@@ -17,8 +17,24 @@
 
 <h3>Fully Editable Data: Change events with integrated Data Link and Templates</h3>
 
+<h4>HTML:</h4>
+<pre class="brush: xml;">...
+
+&lt;script id="languageTemplate" type="text/x-jquery-tmpl"> 
+	&lt;div data-jq-linkfrom="Name">${Name}&lt;/div>
+&lt;/script>
+
+&lt;script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
+	&lt;input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}"/>...
+&lt;/script>
+
+...
+</pre>
+
+
 <h4>Script:</h4>
 <pre class="brush: js;">...
+
 $.dataLink( app, function( event, args ) {
 	if ( args.path === "selectedItem" ) {
 		var selectedData = args.value.data;
@@ -31,6 +47,7 @@ $.dataLink( app, function( event, args ) {
 			.dataLink( selectedData ); // Data link the selected data to the detail view rendered HTML
 	}
 });
+
 $( "#movieDetail" )
 	.delegate( "#addLanguageBtn", "click", function () {
 		$.changeArray( 
@@ -68,6 +85,9 @@ function deleteLastLanguage() {
 	$.changeArray( movies[ movies.length - 1 ].Languages, "pop" );
 }</pre>
 
+<hr />
+<h4>Demo:</h4>
+
 <!--=================== Demo Section ===================-->
 
 <button onclick="showData()">show data</button>
@@ -86,17 +106,17 @@ function deleteLastLanguage() {
 </script>
 
 <script id="languageTemplate" type="text/x-jquery-tmpl"> 
-	<div data-jq-linkfrom="Name">${Name} </div>
+	<div data-jq-linkfrom="Name">${Name}</div>
 </script>
 
 <script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
-	<input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}"/><img class="close" src="../resources/close.png" />
+	<input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}" /><img class="close" src="../resources/close.png" />
 </script>
 
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
 	<div>
 		<div class="title">Title:</div>
-		<div><input data-jq-linkfrom="Title" data-jq-linkto="Title" value="${Title}"/></div>
+		<div><input data-jq-linkfrom="Title" data-jq-linkto="Title" value="${Title}" /></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>{{tmpl(Languages) "#languageEditTemplate"}}</div>
 	</div>

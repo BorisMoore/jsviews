@@ -155,5 +155,26 @@
 	{{/wrap}}
 &lt;/script></pre>
 
+<h4>Script:</h4>
+<pre class="brush: js;">	/* Track the selected tab index for inner and outer tab views */
+	var state = { activeIndex: 1 };
+
+	function refresh() {
+		$( "#tabsView" ).empty();
+		$( "#tabsTmpl" ).tmpl( null, { state: state})
+			.appendTo( "#tabsView" );
+	}
+
+	/* Render tabs view */
+	refresh();
+
+	$( "#tabsView" )
+		.delegate( ".tabsView th", "click", function() {
+			/* Set the selected tab index to this tab */
+			$.tmplItem( this ).state.activeIndex = $(this).index();
+
+			/* update the rendering */
+			refresh();
+		});</pre>
 </body>
 </html>

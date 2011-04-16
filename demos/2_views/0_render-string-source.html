@@ -15,19 +15,33 @@
 
 <h3>API: Hierarchical data with template composition, rendered as an HTML string</h3>
 
-<h4>HTML:</h4>
+<h4>Data:</h4>
+<pre class="brush: js;">var movies = [
+	{ Name: "Meet Joe Black",
+		Languages:[
+			{ Name: "English" }, 
+			{ Name: "French" }
+		]
+	},
+	{ Name: "Eyes Wide Shut", 
+		Languages:[
+			{ Name: "French" }, 
+			{ Name: "German" } , 
+			{ Name: "Spanish" }
+		]
+	}
+];</pre>
 
+<h4>HTML:</h4>
 <pre class="brush: xml;">&lt;script id="movieTemplate" type="text/x-jquery-tmpl">
 	&lt;tr>
 		&lt;td>${Title}&lt;/td>
-		&lt;td>
-			{{tmpl(Languages) "#languageTemplate"}}
-		&lt;/td>
+		&lt;td>{{tmpl(Languages) "#languageTemplate"}}&lt;/td>
 	&lt;/tr>
 &lt;/script>
 
 &lt;script id="languageTemplate" type="text/x-jquery-tmpl"> 
-	&lt;div>${Name} &lt;/div>
+	&lt;div>${Name}&lt;/div>
 &lt;/script>
 
 &lt;table>&lt;tbody>&lt;tr>&lt;th>Title&lt;/th>&lt;th>Languages&lt;/th>&lt;/tr>&lt;/tbody>
@@ -41,6 +55,9 @@
 
 </pre>
 
+<hr />
+<h4>Demo:</h4>
+
 <!--=================== Demo Section ===================-->
 
 <script id="movieTemplate" type="text/x-jquery-tmpl"> 
@@ -53,7 +70,7 @@
 </script>
 
 <script id="languageTemplate" type="text/x-jquery-tmpl"> 
-	<div>${Name} </div>
+	<div>${Name}</div>
 </script>
 
 <table class="movieList"><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
