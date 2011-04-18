@@ -143,10 +143,10 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 	var	toObj,
 		callback = parentView && ($.isFunction( parentView ) ? parentView : parentView.callback),
 		toType = "view";
-	
+
 	if ( to ) {
 		toType = objectType( to );
-		toObj = to[0]; 
+		toObj = to[0];
 	}
 
 	var	j, l, innerMap, isArray, path, view, views,
@@ -251,17 +251,17 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 						if ( targetPath ) {
 							setTarget( "", "", targetPath );
 						} else {
-							view = view || $.tmplItem( el ); // Cache view on this link instance
+							view = view || $.view( el ); // Cache view on this link instance
 							if ( !view || (view.data === source && view.onDataChanged( ev.type, eventArgs ) !== false )) {
 								decl.applyBindInfo( el, setTarget );
-							} 
+							}
 						}
 					});
 				},
 				"view": function() {
 //					if ( parentView.data === source ) {
 						parentView.onDataChanged( ev.type, eventArgs );
-//					} 
+//					}
 				},
 				"object": function() {
 
@@ -282,7 +282,7 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 							// TODO support for named converters
 							var cnvt = window[ declCnvt ] || convert;
 
-							view = $.tmplItem( source );
+							view = $.view( source );
 
 							$.setField( view.data, path, cnvt
 								? cnvt( sourceValue, path, source, view.data, thisMap )
@@ -318,7 +318,7 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 				ev.stopImmediatePropagation();
 			}
 		};
-	
+
 	switch ( fromType + toType ) {
 		case "htmlarray":
 			for ( j=0, l=toObj.length; j<l; j++ ) {
@@ -334,17 +334,6 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 				// This is the top-level declarative binding from data to HTML
 				// Create View tree
 				thisMap.link = false;
-				// REFRESH THE LINKS ON THIS TARGET NODE. TREAT ELEMENT AS AN ITEM TO BE RELINKED. 
-				// TREAT <!--ITEM--> NODE AS RELINKING THE CORRESPONDING VIEW ITEM. REMOVE PREVIOUS LINKS AND RELINK
-				// THIS WILL REMOVE AND ADD LINKS FROM LINKS ARRAY FOR THIS ITEM
-
-				// TREAT ELEMENT AS CUE TO RELINK TOP LEVEL <!--TMPL--> NODES 
-				// BY RELINKING THE CORRESPONDING VIEW (TMPLITEM). REMOVE PREVIOUS LINKS AND RELINK
-				// THIS WILL REPLACE THE LINK IN THE LINKS ARRAY FOR THIS ITEM (SINCE ARRAY BINDING CREATES A SINGLE LINK IN THE 
-				// LINKS ARRAY, WITH CHILD LINKS. PROBABLY CAN USE THE ITSELF FOR THIS HIERARCHICAL LINK CONCEPT, SO A VIEW ITEM 
-				// NEEDS TO HAVE A CHILD ITEMS ARRAY, SO YOU CAN UNLINK THE ITEM VIA THE UNLINK METHOD, AND THIS WILL CLEAN UP ALL 
-				// CHILD LINKS TOO. SO THE LINKS RETURNED BY THE CALL TO dataLink() WILL BE UP-TO-DATE EVEN AFTER ARRAY CHANGE EVENTS
-				// WHICH RE-RENDER TEMPLATES AND NESTED TEMPLATES....
 				linkViews( thisMap, prevNode || toObj, 0, parentView, nextNode, fromObj );
 				return;
 				// Don't bind this element. We will bind the <!--tmpl--> node.
@@ -353,7 +342,7 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 				viewsJsData( el, "_jsvLinks" ).push( [from, handler] ); // TODO determine whether this can be on the jsViews data instead, for unlinking?
 			});
 		break;
-		
+
 		case "objectview":
 			return;
 		case "arrayview":
@@ -412,11 +401,11 @@ function CreateView( node, path, template, parentView, parentElViews, data, map 
 		return new CreateView( node, path, template, parentView, parentElViews, data, map );
 	}
 	//unbindLinkedElem( node ); // FOR NOW only support creating views on html nodes that have NOT already been 'activated'
-//	use $.tmplItem( node ).unlink(); ???
+//	use $.view( node ).unlink(); ???
 
 	var self = this;
-	
-	$.extend( self, { 
+
+	$.extend( self, {
 		views: [],
 		nodes: [],
 		bindings: [],
@@ -437,28 +426,28 @@ function viewsJsData( el, jqDataName ) {
 	jqDataName = jqDataName || "_jsView";
 	return $.data( el, jqDataName ) || $.data( el, jqDataName, [] );
 }
-	
+
 function linkViews( map, node, depth, parent, nextNode, data, index ) {
-	var tokens, tmplName, parentElViews, 
+	var tokens, tmplName, parentElViews,
 		parentView = parent,
 		viewDepth = depth;
-		index = index || 0; 
+		index = index || 0;
 
-	function viewCreated( view ){  
+	function viewCreated( view ){
 		if ( view.bindings.length ) {
 			link( map, $([ view.data ]), $( view.bindings ), view );
 		}
 		link( map, $([ view.data ]), undefined, view );
 	}
-		
+
 	function getParentElViews() {
 		return parentElViews || (parentElViews = viewsJsData( node.parentNode ));
 	}
-	
+
 	if ( node.nodeType === 1 ) {
 		if ( viewDepth++ === 0 ) {
 			parentView.nodes.push( node );
-		}		
+		}
 		if ( node.getAttribute( bindAttr )) {
 			parentView.bindings.push( node );
 		}
@@ -468,10 +457,10 @@ function linkViews( map, node, depth, parent, nextNode, data, index ) {
 	}
 	while ( node != nextNode ) {
 		if ( node.nodeType === 1 ) {
-			linkViews( map, node, viewDepth, parentView );	
-		} else if ( 
-			node.nodeType === 8 
-			&& (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\(([\w\.\~]+)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue )) 
+			linkViews( map, node, viewDepth, parentView );
+		} else if (
+			node.nodeType === 8
+			&& (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\(([\w\.\~]+)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))
 		) {
 			if ( tokens[1]) {
 				if ( tokens[2] ) {
@@ -483,26 +472,26 @@ function linkViews( map, node, depth, parent, nextNode, data, index ) {
 
 				} else {
 					// A tmpl close tag: <!--/tmpl-->
-						
+
 					parentView.nextNode = node;
 					viewCreated( parentView );
 					return node;
 				}
-			} else if ( tokens[2] ) { 
-				// An item open tag: <!--item--> 
+			} else if ( tokens[2] ) {
+				// An item open tag: <!--item-->
 				parentView = ViewItem( node, "*", parentView, getParentElViews(), index++, map );
 
 			} else {
 				// A tmpl open tag: <!--tmpl(path) name-->
 
-				node = linkViews( map, node, 0, 
+				node = linkViews( map, node, 0,
 					View( node, tokens[3], tokens[4], parentView, getParentElViews(), data, map )
 				);
 			}
 		} else if ( viewDepth === 0 ) {
 			parentView.nodes.push( node );
 		}
-		node = node.nextSibling; 
+		node = node.nextSibling;
 	}
 }
 
@@ -550,33 +539,11 @@ function unbindLinkedElem( node ) {
 		for ( i=0, l=links.length; i<l; i++ ) {
 			var link = links[i],
 				from = link[0];
-			from.unbind( ($.isArray( from[ 0 ]) ? "array" : "object" ) + "Change", link[1] /* handler */ ); 
+			from.unbind( ($.isArray( from[ 0 ]) ? "array" : "object" ) + "Change", link[1] /* handler */ );
 			//TODO what if to includes several target elements, and only some are removed? Need to remove from to, not unbind... Probably not possible for this to happen with declarative binding
 		}
 	}
-//		for ( links
-//	var parentElViews, i, view = $.tmplItem( node );
-////	if ( view ) {
-//		var isArray = $.isArray( view.data );  // TODO improve - field index or other should indicate whether array...
-//		if ( isArray ) {
-//			$( [view.data] ).unbind( "arrayChange" );//, view.handler );
-//		} else {
-//			$( view.data ).unbind( "objectChange" ); //, view.handler );
-//		}
-//		if ( node.nodeType === 8 ) {
-//			parentElViews = $.data( node.parentNode, "_jsView" );
-//			i = parentElViews && parentElViews.length;
-//			while ( i-- ) {
-//				view = parentElViews[ i ];
-//				if ( view.prevNode === node ) {
-//					parentElViews.splice( i, 1 );
-//					return;
-//				}
-//			}
-//		}
-//	
-//	}
-} 
+}
 
 // ============================
 
@@ -604,28 +571,28 @@ $.extend({
 
 		from = wrapObject( from );
 		to = wrapObject( to );
-				
+
 		var i, map, maps, topView,
 			targetElems = to,
 			fromType = objectType( from ),
 			toType = objectType( to ),
 			toObj = to[0];
-		
+
 		if ( toType === "html" ) {
-			topView = $.data( toObj, "_jsTopView" ); // THIS needs to be stored, and unlinked whenever replaced... 
+			topView = $.data( toObj, "_jsTopView" ); // THIS needs to be stored, and unlinked whenever replaced...
 			if ( topView ) {
 				topView.unlink();
 			}
-		
+
 			topView = View();
 			topView.callback = callback;
-		
+
 			$.data( toObj, "_jsTopView", topView );
 			if ( prevNode && !prevNode.nodeType ) {
 				maps = prevNode;
 				prevNode = undefined;
 			}
-		}		
+		}
 		maps = maps
 			|| !unsupported[ fromType + toType ]
 			&& {
@@ -672,12 +639,12 @@ $.extend({
 			}
 		}
 	},
-	
+
 	getField: function( object, path ) {
 		return getField( object, path );
 	},
-	
-	tmplItem: function( node ) {
+
+	view: function( node ) {
 		var view, parentElViews, i;
 		while ( node ) {
 			if  ( node.nodeType === 8 && /^item|tmpl(\([\w\.\~]+\))?(\s+[^\s]+)?$/.test( node.nodeValue )) {
@@ -690,7 +657,7 @@ $.extend({
 					}
 				}
 				return;
-			} 
+			}
 			node = node.previousSibling || node.parentNode;
 		}
 	},
@@ -779,7 +746,7 @@ $.extend({
 				this.parent.add( this.index, [this.data] );
 				this.parent.remove( this.index, 1 );
 			},
-			add: function( index, dataItems ) { // TODO deal with adding at the beginning, or inserting, so there are following items that need to be dealt with 
+			add: function( index, dataItems ) { // TODO deal with adding at the beginning, or inserting, so there are following items that need to be dealt with
 				var itemsCount = dataItems.length,
 					views = this.views;
 
@@ -794,7 +761,7 @@ $.extend({
 					linkViews( this.map, prevNode || this.prevNode, 0, this, nextNode, this.data, index );
 				}
 			},
-			remove: function( index, itemsCount ) { 
+			remove: function( index, itemsCount ) {
 				var views = this.views;
 
 				if ( itemsCount ) {
@@ -803,7 +770,7 @@ $.extend({
 						nodes = [ node ];
 
 					while ( node !== nextNode ) {
-						node = node.nextSibling 
+						node = node.nextSibling
 						nodes.push( node );
 					}
 					$( nodes ).remove();
@@ -834,11 +801,11 @@ $.fn.extend({
 		$.dataLink( to, this, prevNode, nextNode, callback );
 		return this;
 	},
-	tmplItem: function() {
-		return $.tmplItem( this[0] );
+	view: function() {
+		return $.view( this[0] );
 	}
 });
- 
+
 linkSettings = $.dataLinkSettings;
 View.prototype = linkSettings.view;
 CreateView.prototype = linkSettings.view;
