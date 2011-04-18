@@ -9,40 +9,40 @@ Add this script after jquery.tmpl.js
 <head>
 	<title>A tabs control against HTML markup, using {{wrap}}</title>
 	<link href="sampleviewer.css" rel="stylesheet" type="text/css" />
-	
+
 	<style>
 		.targetTable { width:250px; border-collapse:collapse; border:none; background-color:#f8f8f8; }
 		.targetTable tr { border:1px solid blue; }
 		.targetTable td { padding:2px; }
 		.targetTable tr.title { border-bottom:solid 01px #f8f8f8; }
 		.targetTable tr.detail { border-top:none; }
-		
+
 		.targetTable2 { width:500px; border-collapse:collapse; border:1px solid blue; background-color:#f8f8f8; }
 		.targetTable2 tr { border:1px solid blue; }
 		.targetTable2 td, .targetTable2 th { padding:2px; border:1px solid blue; }
 	</style>
-	
+
 	<script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
 	<script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js" type="text/javascript"></script>
-<!--<script src="sampleviewer.min.js" type="text/javascript"></script>-->	
+<!--<script src="sampleviewer.min.js" type="text/javascript"></script>-->
 	<script src="sampleviewer.js" type="text/javascript"></script>
 </head>
 <body>
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
     {{tmpl "#titleTemplate"}}
     {{! a comment }}
 	<tr class="detail"><td>Director: ${Director}</td></tr>
 </script>
 
-<script id="titleTemplate" type="text/x-jquery-tmpl"> 
+<script id="titleTemplate" type="text/x-jquery-tmpl">
     <tr class="title"><td>${Name}</td></tr>
 </script>
 
-<script id="listTmpl" type="text/x-jquery-tmpl"> 
+<script id="listTmpl" type="text/x-jquery-tmpl">
     <li>${Name} - Director: ${Director}</li>
 </script>
 
-<script id="movieTemplate2" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate2" type="text/x-jquery-tmpl">
     <td>${Name}</td>
 </script>
 
@@ -95,7 +95,7 @@ var movies = [
     { Name: "The Inheritance", Director: "Mauro Bolognini" }
 ];
 
-// Render the movies data using the "movieTemplate" 
+// Render the movies data using the "movieTemplate"
 // with "titleTemplate" as a nested template.
 $( "#movieTemplate" ).tmpl( movies ).appendTo( "#noViewerList" );
 $( "#movieTemplate" ).tmpl( movies ).appendTo( "#readOnlyList" );

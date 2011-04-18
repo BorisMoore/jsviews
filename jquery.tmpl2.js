@@ -13,19 +13,19 @@
 		itemKey = 0, stack = [], autoName = 0,
 		defaultOpen = "$item.calls($item,__,$1,$2);__=[];",
 		defaultClose = ["call=$item.calls();__=call[1].concat($item.", "(call,__));"];
-	
+
 	function TmplItem( options, parentItem, tmplFn, data ) { //, index ) {
 		// Returns a template item data structure for a new rendered instance of a template (a 'template item').
 		// The content field is a hierarchical array of strings and nested items (to be
 		// removed and replaced by nodes field of dom elements, once inserted in DOM).
 		// Prototype is $.tmplSettings.item, which provides both methods and fields.
-		
+
 		var self = this,
 			annotate = ( parentItem||options ).annotate;
 		self.parent = parentItem || null;
 		parentItem = parentItem || {};
 		options.path = options.path || "~";
-		$.extend( self, options, { 
+		$.extend( self, options, {
 			data: data || parentItem.data || {},
 			annotate: annotate,
 			tmpl: tmplFn || null,
@@ -101,11 +101,11 @@
 
 		// The following substitution terms can be uses in template tag definitions:
 		// $1 is the target parameter - as in {{if targetParam}}
-		// $1a is the target parameter as above, but with automatic detection of functions, so if targetParam is a function it will 
+		// $1a is the target parameter as above, but with automatic detection of functions, so if targetParam is a function it will
 		//     be replaced by its return value during rendering
-		// $2 is the comma-separated list of additional function parameters as in {{tmpl(functionParams) targetParam}} 
-		// $2s is the string corresponding to the comma-separated list of additional function parameters, 
-		//     so with {{tmpl(param1, param2) targetParam}} it will be the string "param1, param2" 
+		// $2 is the comma-separated list of additional function parameters as in {{tmpl(functionParams) targetParam}}
+		// $2s is the string corresponding to the comma-separated list of additional function parameters,
+		//     so with {{tmpl(param1, param2) targetParam}} it will be the string "param1, param2"
 		tmplSettings: {
 			tag: {
 				"tmpl": {
@@ -248,7 +248,7 @@
 //				options.path = "*";
 //				return dataItem ? new TmplItem( options, arrayItem, tmpl, dataItem ) : null;
 //			})
-//		} 
+//		}
 //		return [ new TmplItem( options, parentItem, tmpl, data ) ];
 
 		if ( $.isArray( data )) {
@@ -260,28 +260,28 @@
 		} else {
 			ret = [ new TmplItem( options, parentItem, tmpl, data ) ];
 		}
-		return ( parentItem || options ).annotate 
-			? [].concat( 
-				"<!--tmpl(" + (arrayItem||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"  
-				ret, 
-				"<!--/tmpl-->" ) 
+		return ( parentItem || options ).annotate
+			? [].concat(
+				"<!--tmpl(" + (arrayItem||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"
+				ret,
+				"<!--/tmpl-->" )
 			: ret;
 	}
 
 	function buildStringArray( tmplItem, content ) {
-		// Convert hierarchical content (tree of nested tmplItems) into flat string array of rendered content 
+		// Convert hierarchical content (tree of nested tmplItems) into flat string array of rendered content
 		// (optionally with attribute annotations for tmplItems)
 		// Add data-jq-path attribute to top-level elements (if any) of the rendered item...
 
 		var annotate = tmplItem && tmplItem.annotate;
-		
-		return content 
+
+		return content
 			? $.map( content, function( item ) {
-				return (typeof item === "string") 
+				return (typeof item === "string")
 					? item
 					: buildStringArray( item, item._ctnt );
-				}) 
-			
+				})
+
 			// If content is not defined, return tmplItem directly. Not a template item. May be a string, or a string array, e.g. from {{html $item.html()}}.
 			: tmplItem;
 	}

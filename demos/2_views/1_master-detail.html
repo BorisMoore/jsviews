@@ -12,11 +12,12 @@
 <a href="../toc.html">TOC</a><br />
 <a href="1_master-detail-source.html">Source</a>
 
-<h3>Data Link: Linking the master-list selected data to the detail view</h3>
+<h3>Master-Detail:<br /></h3>
+<div class="subhead">Interactivity to select row.<br />Data Link to render detail view when selected item changes</div>
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr class="hover">
 		<td>${Title}</td>
 		<td>
@@ -25,11 +26,11 @@
 	</tr>
 </script>
 
-<script id="languageTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageTemplate" type="text/x-jquery-tmpl">
 	<div>${Name}</div>
 </script>
 
-<script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageEditTemplate" type="text/x-jquery-tmpl">
 	<input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}"/>
 </script>
 
@@ -53,7 +54,7 @@
 	var app = {
 			selectedItem: null
 		},
-	
+
 		movies = [
 		{
 			Title: "Meet Joe Black",
@@ -79,27 +80,22 @@
 		.dataLink( movies )
 
 		.delegate( "tr", "click", function () {
-			select( $.tmplItem( this ));
-		})
+			var thisItem = $.view( this );
+			if ( app.selectedItem != thisItem ) {
+				if ( app.selectedItem ) {
+					$( app.selectedItem.nodes ).removeClass( "selected");
+				}
+				$( thisItem.nodes ).addClass( "selected");
 
-	function select( tmplItem ) {
-		if ( app.selectedItem != tmplItem ) {
-			if ( app.selectedItem ) {
-				$( app.selectedItem.nodes ).removeClass( "selected");
+				$.setField( app, "selectedItem", thisItem );
 			}
-			if (tmplItem) {
-				$( tmplItem.nodes ).addClass( "selected");
-			}
-			$.setField( app, "selectedItem", tmplItem );
-		}
-	}
+		});
 
 	$.dataLink( app, function( event, args ) {
 		if ( args.path === "selectedItem" ) {
-			if ( args.value ) {
-				var selectedData = args.value.data;
+			if ( app.selectedItem ) {
 				$( "#movieDetail" ).html(
-					$( "#detailViewTemplate" ).render( selectedData, { annotate: true } )
+					$( "#detailViewTemplate" ).render( app.selectedItem.data, { annotate: true } )
 				);
 			} else {
 				$( "#movieDetail" ).empty();

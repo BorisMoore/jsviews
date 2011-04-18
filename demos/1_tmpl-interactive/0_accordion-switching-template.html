@@ -9,7 +9,7 @@
 		table { cursor:pointer; border-collapse:collapse; border:2px solid blue; width:300px; margin:8px; }
 		table tr { border:1px solid blue; color:blue; background-color:#f8f8f8; } table td { padding:3px; } table tr:hover { color:red; }
 		.movieDetail { background-color:yellow; } .movieDetail.row1 { border-bottom:none; } .movieDetail.row2 { border-top:none; }
-	</style>  
+	</style>
 </head>
 <body>
 <a href="../toc.html">TOC</a><br />
@@ -25,16 +25,16 @@
 	</td></tr>
 </script>
 
-<script id="detailTemplate" type="text/x-jquery-tmpl"> 
+<script id="detailTemplate" type="text/x-jquery-tmpl">
 	<tr class='movieDetail row1'><td>
 		${Title}
 	</td></tr>
-	<tr class='movieDetail row2'><td><b>Languages:</b> 
+	<tr class='movieDetail row2'><td><b>Languages:</b>
 		{{tmpl(Languages) "#languageTemplate"}}
 	</td></tr>
 </script>
 
-<script id="languageTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageTemplate" type="text/x-jquery-tmpl">
 	<div>
 		<em>${Name}</em>
 	</div>
@@ -65,9 +65,9 @@ Click for details:
 					{ Name: "Spanish" }
 				]
 			},
-			{ 
-				Title: "The Inheritance", 
-				ReleaseYear: "1976", 
+			{
+				Title: "The Inheritance",
+				ReleaseYear: "1976",
 				Languages: [
 					{ Name: "English" },
 					{ Name: "Dutch" }
@@ -100,9 +100,9 @@ Click for details:
 		.delegate( ".movieSummary", "click", function () {
 			/* Unselect the currently selected item */
 			unselect( selectedItem );
-			
+
 			/* Get the template item data structure
-			   which this clicked element belongs to, 
+			   which this clicked element belongs to,
 			   and make it the selected item */
 			selectedItem = $.tmplItem(this);
 

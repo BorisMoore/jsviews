@@ -6,8 +6,8 @@
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
-	<link href="../resources/syntaxHighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="../resources/syntaxHighlighter.js" type="text/javascript"></script>
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.js" type="text/javascript"></script>
 </head>
 <body>
 <a href="../toc.html">TOC</a><br />
@@ -17,13 +17,13 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
 		<td>
 			{{if Languages}}
 				Alternative languages: <em>${Languages}</em>.
-			{{else Subtitles}} 
+			{{else Subtitles}}
 				Original language only... <br/>Subtitles in <em>${Subtitles}</em>.
 			{{else}}
 				Original version only, without subtitles.
@@ -60,7 +60,7 @@
 
 	$( "#movieTemplate" ).tmpl( movies )
 		.appendTo( "#movieList" );
-	
+
 </script>
 
 <!--================ End of Demo Section ================-->
@@ -90,7 +90,7 @@
 		&lt;td>
 			{{if Languages}}
 				Alternative languages: &lt;em>${Languages}&lt;/em>.
-			{{else Subtitles}} 
+			{{else Subtitles}}
 				Original language only... &lt;br/>Subtitles in &lt;em>${Subtitles}&lt;/em>.
 			{{else}}
 				Original version only, without subtitles.

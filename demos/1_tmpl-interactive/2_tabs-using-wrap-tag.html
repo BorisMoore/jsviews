@@ -8,8 +8,8 @@
 	<style type="text/css">
 		.body { height: 175px; background-color: #fff; }
 		.body div { height: 60px; padding: 12px; font-weight: bold; color: #222; }
-		.body div input { margin: 7px 0 10px 0; border: 1px solid #66e; padding: 3px;} 
-		.body div img { float: left; margin-right: 30px; } 
+		.body div input { margin: 7px 0 10px 0; border: 1px solid #66e; padding: 3px;}
+		.body div img { float: left; margin-right: 30px; }
 		.body h3 { text-align: center; }
 		.tabsView td { border: solid 1px #0000A6; border-top: none; border-right: solid 2px #1E1ED2; }
 		.tabsView th { cursor: pointer; padding: 2px; font-weight: normal; font-style: italic; color: #888; border: solid 1px #bbb; border-right: none; background-color: #f8f8f8; border-bottom: solid 1px #1E1ED2; }
@@ -27,15 +27,16 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="tabsTmpl" type="text/x-jquery-tmpl">
-	{{wrap(null, {state: $item.state}) "#tabsWrap"}}
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<h2>${Title}</h2>
+
+	{{wrap "#tabsTemplate"}}
 		<h3>Details</h3>
 		<div>
 
-			Title: <input value="Eyes Wide Shut" ><br/><br/>
+			Title: <input value="${Title}" ><br/><br/>
 			Languages:<br/>
-			<input type="text" value="English"/><br/>
-			<input type="text" value="French"/>
+			{{each Languages}}<input type="text" value="${$value.Name}"/><br/>{{/each}}
 
 		</div>
 
@@ -43,7 +44,7 @@
 		<div>
 
 			<img src='http://cdn-4.nflximg.com/US/boxshots/large/5670434.jpg'/><br/><br/>
-			Director Stanley Kubrick's<br/> final film. 
+			Director Stanley Kubrick's<br/> final film.
 
 		</div>
 
@@ -60,21 +61,25 @@
 	{{/wrap}}
 </script>
 
-<script id="tabsWrap" type="text/x-jquery-tmpl">
+<script id="tabsTemplate" type="text/x-jquery-tmpl">
 	<table class="tabsView"><tbody>
 		<tr>
 			{{each $item.html("h3", true)}}
-				<th class="header_${$index === $item.state.activeIndex}">
+				<th class="header_${$index === selectedTab}">
 					${$value}
 				</th>
 			{{/each}}
 		</tr>
 		<tr><td colspan='${$item.html("h3").length}'>
 			<div class="body">
-				{{html $item.html("div")[$item.state.activeIndex]}}
+				{{html $item.html("div")[selectedTab]}}
 			</div>
 		</td></tr>
 	</tbody></table>
+</script>
+
+<script id="languageTemplate" type="text/x-jquery-tmpl">
+	<div>${Name}</div>
 </script>
 
 <br />
@@ -83,11 +88,19 @@
 <script type="text/javascript">
 
 	/* Track the selected tab index for inner and outer tab views */
-	var state = { activeIndex: 1 };
+	var movie = {
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			],
+			selectedTab: 0
+		};
+
 
 	function refresh() {
 		$( "#tabsView" ).empty();
-		$( "#tabsTmpl" ).tmpl( null, { state: state})
+		$( "#movieTemplate" ).tmpl( movie )
 			.appendTo( "#tabsView" );
 	}
 
@@ -97,7 +110,7 @@
 	$( "#tabsView" )
 		.delegate( ".tabsView th", "click", function() {
 			/* Set the selected tab index to this tab */
-			$.tmplItem( this ).state.activeIndex = $(this).index();
+			$.tmplItem( this ).data.selectedTab = $(this).index();
 
 			/* update the rendering */
 			refresh();

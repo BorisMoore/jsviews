@@ -3,9 +3,9 @@ Author: Boris Moore
 Add this script after jquery.tmpl.js
 */
 (function( $, undefined ){
-var internalCall = 0, state, activeContainer, oldTmpl = $.tmpl, oldTtemplate = $.template, oldManip = jQuery.fn.domManip, plusButton, 
-	viewerTmpl = '<table class="plusViewerTabs"><tbody><tr><th class="header_${activeIndex === 0}">Result</th><th class="header_${activeIndex === 1}">Data</th>{{each tmpls}}<th class="header_${activeIndex === 2 + $index}">${$value.name}</th>{{/each}}</tr><tr><td colspan="${tmpls.length + 2}">{{if activeIndex === 0}}{{wrap wrapper}}{{tmpl(data) tmpls[0].tmpl}}{{/wrap}}{{else activeIndex === 1}}<textarea{{if !editable}} readonly{{/if}}>${$item.getData()}</textarea>{{else}}<textarea{{if !editable}} readonly{{/if}}>${tmpls[activeIndex - 2].markup}</textarea>{{/if}}</td></tr></tbody></table>';  
-	
+var internalCall = 0, state, activeContainer, oldTmpl = $.tmpl, oldTtemplate = $.template, oldManip = jQuery.fn.domManip, plusButton,
+	viewerTmpl = '<table class="plusViewerTabs"><tbody><tr><th class="header_${activeIndex === 0}">Result</th><th class="header_${activeIndex === 1}">Data</th>{{each tmpls}}<th class="header_${activeIndex === 2 + $index}">${$value.name}</th>{{/each}}</tr><tr><td colspan="${tmpls.length + 2}">{{if activeIndex === 0}}{{wrap wrapper}}{{tmpl(data) tmpls[0].tmpl}}{{/wrap}}{{else activeIndex === 1}}<textarea{{if !editable}} readonly{{/if}}>${$item.getData()}</textarea>{{else}}<textarea{{if !editable}} readonly{{/if}}>${tmpls[activeIndex - 2].markup}</textarea>{{/if}}</td></tr></tbody></table>';
+
 	state = null,
 	viewerTmpl = $.template(null, viewerTmpl);
 
@@ -13,7 +13,7 @@ $.tmpl = function( tmpl, data, options, parentItem ) {
 	if ( !internalCall  && !parentItem ) {
 		state = { tmpls:[], tmplNames:{}, activeIndex: 0, data: data };
 	}
-	return oldTmpl( tmpl, data, options, parentItem ); 
+	return oldTmpl( tmpl, data, options, parentItem );
 }
 $.extend( $.tmpl, oldTmpl );
 
@@ -45,7 +45,7 @@ $.template = function( name, tmpl ) {
 			}
 		}
 	}
-	return oldTtemplate( name, tmpl); 
+	return oldTtemplate( name, tmpl);
 }
 
 jQuery.fn.extend({
@@ -54,24 +54,24 @@ jQuery.fn.extend({
 			var depth = 0, elem = this[0], container = $(elem), tabs;
 			container.addClass( "plusViewerTarget" );
 			while ( elem !== document.body ) {
-				if ( container.hasClass( "plusViewer" )) { 
+				if ( container.hasClass( "plusViewer" )) {
 					state.wrapper = elem.innerHTML;
 					state.depth = depth;
-					state.persist = container.hasClass( "persist" ), 
-					tabs = state.tabs = container.hasClass( "tabs" ), 
-					state.editable = state.persist || container.hasClass( "edit" ); 
-				
+					state.persist = container.hasClass( "persist" ),
+					tabs = state.tabs = container.hasClass( "tabs" ),
+					state.editable = state.persist || container.hasClass( "edit" );
+
 					container.data( "plusViewerState", state );
 					container.data( "plusViewerInitialState",  $.extend(true, {}, state) );
 					state = null;
 					break;
 				}
 				container = $( elem = elem.parentNode );
-				depth++; 
+				depth++;
 			}
 		}
 		var ret = oldManip.apply( this, arguments );
-		if ( tabs ) { 
+		if ( tabs ) {
 			internalCall++;
 			renderViewer( container );
 			internalCall--;
@@ -86,7 +86,7 @@ function renderViewer( container ) {
 	state = container.data( "plusViewerState" );
 	if (state.wrapper) {
 		var split = state.wrapper.split( "plusViewerTarget" );
-		split[1] = split[1].replace(/>[\w\s]*</, ">{{html $item.html()}}</")		
+		split[1] = split[1].replace(/>[\w\s]*</, ">{{html $item.html()}}</")
 		state.wrapper = split.join( "plusViewerTarget" );
 	} else {
 		state.wrapper = "{{! }}{{html $item.html()}}";
@@ -115,7 +115,7 @@ function resizeTab( container ) {
 	var textArea = $( container ).find( "textarea" )[0];
 	if ( textArea ) {
 		textArea.style.overflow = 'hidden';
-		textArea.scrollHeight; 
+		textArea.scrollHeight;
 		textArea.style.height = textArea.scrollHeight + 'px';
 		textArea.style.overflow = 'auto';
 	}
@@ -130,71 +130,71 @@ $( function () {
 	plusButton.innerHTML = "+";
 	plusButton.className = "plusButton";
 	document.body.appendChild( plusButton );
-	
+
 	$( ".plusViewer" )
 		.delegate( ".header_false", "click", function() {
-			var textArea, tmplItem = $.tmplItem( this ), 
+			var textArea, tmplItem = $.tmplItem( this ),
 				index = tmplItem.data.activeIndex = $(this).index();
 			internalCall++;
 			state = tmplItem.data;
-			tmplItem.update(); 
+			tmplItem.update();
 			state = null;
 			internalCall--;
-			
+
 			if ( !index ) return;
-			
+
 			resizeTab( tmplItem.nodes[0] );
 		})
 		.delegate( "textarea", "change", function() {
 			var tmplItem = $.tmplItem( this );
 			if ( tmplItem.data.activeIndex === 1 ) {
-				try { 
-					tmplItem.data.data = $.parseJSON( this.value ); 
+				try {
+					tmplItem.data.data = $.parseJSON( this.value );
 				}
 				catch (e) {
 					alert("Syntax error!");
-					this.value = getData.call( tmplItem ); 
+					this.value = getData.call( tmplItem );
 				}
 			} else {
 				internalCall++;
-				var markup = this.value, 
-					tmplFn = $.template( null, markup ), 
+				var markup = this.value,
+					tmplFn = $.template( null, markup ),
 					tmplInfo = tmplItem.data.tmpls[tmplItem.data.activeIndex - 2];
-				
-				try { 
-					tmplFn( $, $.extend({}, tmplItem, { data: tmplItem.data.data[0] || tmplItem.data.data })); // Test first for valid markup - will throw it there is a syntax error in tmplFn 
-								
-					tmplItem.data.targetMarkup = markup; 
-					tmplInfo.markup = markup; 
-					tmplInfo.tmpl = tmplFn; 
+
+				try {
+					tmplFn( $, $.extend({}, tmplItem, { data: tmplItem.data.data[0] || tmplItem.data.data })); // Test first for valid markup - will throw it there is a syntax error in tmplFn
+
+					tmplItem.data.targetMarkup = markup;
+					tmplInfo.markup = markup;
+					tmplInfo.tmpl = tmplFn;
 				}
 				catch (e) {
 					alert("Syntax error!");
-					this.value = tmplInfo.markup; 
+					this.value = tmplInfo.markup;
 				}
 				internalCall--;
 			}
 		})
 
 	$( ".plusTargetContainer" ).live( "mouseenter", function( event ) {
-		if ( event.relatedTarget && (event.relatedTarget.className === "plusButton") ) return; 
+		if ( event.relatedTarget && (event.relatedTarget.className === "plusButton") ) return;
 		if (activeContainer) {
 			activeContainer.style.border = "solid transparent 1px";
 		}
 		activeContainer = this;
 		plusButton.innerHTML = $( this ).hasClass( "activeViewer" ) ? "-" : "+";
-			
+
 		var offset = $( this ).offset();
-			
+
 		this.style.border = "solid green 1px";
 		plusButton.style.left = offset.left + "px";
 		plusButton.style.top = offset.top + "px";
 		plusButton.style.display = "block";
 	});
-		
+
 	$( ".plusTargetContainer" ).live( "mouseleave", function( event ) {
-		if ( event.relatedTarget && (event.relatedTarget.className === "plusButton") ) return; 
-			
+		if ( event.relatedTarget && (event.relatedTarget.className === "plusButton") ) return;
+
 		//var toolbar = $.data(  this, "plusViewerToolbar" );
 		activeContainer = null;
 		plusButton.style.display = "none";
@@ -208,16 +208,16 @@ $( function () {
 			renderViewer( targetContainer );
 			targetContainer.addClass( "activeViewer" );
 			this.innerHTML = "-";
-		} else {  
+		} else {
 			var	tmplItem = $( activeContainer ).children().first().tmplItem(),
-				coll = tmplItem.nodes, 
-				div = document.createElement("div"), 
-				originalContainer = coll[0].parentNode, 
+				coll = tmplItem.nodes,
+				div = document.createElement("div"),
+				originalContainer = coll[0].parentNode,
 				d = tmplItem.data.depth,
 				originalState = targetContainer.data(  "plusViewerInitialState" );
-			
+
 			div.innerHTML = originalState.wrapper;
-			
+
 			if (tmplItem.data.persist) {
 				state = tmplItem.data;
 				targetContainer.data( "plusViewerState", state );
@@ -225,10 +225,10 @@ $( function () {
 				state = originalState;
 				targetContainer.data( "plusViewerState", $.extend( true, {}, state ));
 			}
-			
+
 			$.tmpl( state.tmpls[0].tmpl, state.data )
 				.appendTo( $( div ).find( ".plusViewerTarget" ) );
-				
+
 			jQuery( coll ).remove();
 			originalContainer.innerHTML = div.innerHTML;
 			this.innerHTML = "+";

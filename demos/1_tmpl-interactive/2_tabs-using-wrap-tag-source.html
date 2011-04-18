@@ -5,20 +5,23 @@
 	<script src="../../jquery.tmpl.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
-	<link href="../resources/syntaxHighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="../resources/syntaxHighlighter.js" type="text/javascript"></script>
+	<link href="../sampleviewer/sampleviewer.css" rel="stylesheet" type="text/css" />
+	<script src="../sampleviewer/sampleviewer.js" type="text/javascript"></script>
+
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.js" type="text/javascript"></script>
 	<style type="text/css">
 		.body { height: 175px; background-color: #fff; }
 		.body div { height: 60px; padding: 12px; font-weight: bold; color: #222; }
-		.body div input { margin: 7px 0 10px 0; border: 1px solid #66e; padding: 3px;} 
-		.body div img { float: left; margin-right: 30px; } 
+		.body div input { margin: 7px 0 10px 0; border: 1px solid #66e; padding: 3px;}
+		.body div img { float: left; margin-right: 30px; }
 		.body h3 { text-align: center; }
 		.tabsView td { border: solid 1px #0000A6; border-top: none; border-right: solid 2px #1E1ED2; }
 		.tabsView th { cursor: pointer; padding: 2px; font-weight: normal; font-style: italic; color: #888; border: solid 1px #bbb; border-right: none; background-color: #f8f8f8; border-bottom: solid 1px #1E1ED2; }
 		#tabsView > .tabsView { width: 465px; }
 		.tabsView { width: 450px; border-collapse: collapse; border: none; margin: 5px; }
 		.tabsView tr { border-right: solid 1px #bbb; }
-		th.header_true { font-weight: bold; border: solid 1px #0000A6; border-right: solid 2px #1E1ED2; border-bottom: solid 1px #eee; color: #0000A6; background-color: #fff; }
+		th.head_true { font-weight: bold; border: solid 1px #0000A6; border-right: solid 2px #1E1ED2; border-bottom: solid 1px #eee; color: #0000A6; background-color: #fff; }
 	</style>
 </head>
 <body>
@@ -29,15 +32,16 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="tabsTmpl" type="text/x-jquery-tmpl">
-	{{wrap(null, {state: $item.state}) "#tabsWrap"}}
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<h2>${Title}</h2>
+
+	{{wrap "#tabsTemplate"}}
 		<h3>Details</h3>
 		<div>
 
-			Title: <input value="Eyes Wide Shut" ><br/><br/>
+			Title: <input value="${Title}" ><br/><br/>
 			Languages:<br/>
-			<input type="text" value="English"/><br/>
-			<input type="text" value="French"/>
+			{{each Languages}}<input type="text" value="${$value.Name}"/><br/>{{/each}}
 
 		</div>
 
@@ -45,7 +49,7 @@
 		<div>
 
 			<img src='http://cdn-4.nflximg.com/US/boxshots/large/5670434.jpg'/><br/><br/>
-			Director Stanley Kubrick's<br/> final film. 
+			Director Stanley Kubrick's<br/> final film.
 
 		</div>
 
@@ -62,35 +66,45 @@
 	{{/wrap}}
 </script>
 
-<script id="tabsWrap" type="text/x-jquery-tmpl">
+<script id="tabsTemplate" type="text/x-jquery-tmpl">
 	<table class="tabsView"><tbody>
 		<tr>
 			{{each $item.html("h3", true)}}
-				<th class="header_${$index === $item.state.activeIndex}">
+				<th class="head_${$index === selectedTab}">
 					${$value}
 				</th>
 			{{/each}}
 		</tr>
 		<tr><td colspan='${$item.html("h3").length}'>
 			<div class="body">
-				{{html $item.html("div")[$item.state.activeIndex]}}
+				{{html $item.html("div")[selectedTab]}}
 			</div>
 		</td></tr>
 	</tbody></table>
 </script>
 
 <br />
-<div id="tabsView">..loading</div><br />
-<hr />
+<div class="plusViewer persist">
+<div id="tabsView">..loading</div>
+</div><br />
 
 <script type="text/javascript">
 
 	/* Track the selected tab index for inner and outer tab views */
-	var state = { activeIndex: 1 };
+	var movie = {
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "French" }
+			],
+			selectedTab: 0
+		};
+
 
 	function refresh() {
 		$( "#tabsView" ).empty();
-		$( "#tabsTmpl" ).tmpl( null, { state: state})
+
+		$( "#movieTemplate" ).tmpl( movie )
 			.appendTo( "#tabsView" );
 	}
 
@@ -100,7 +114,7 @@
 	$( "#tabsView" )
 		.delegate( ".tabsView th", "click", function() {
 			/* Set the selected tab index to this tab */
-			$.tmplItem( this ).state.activeIndex = $(this).index();
+			$.tmplItem( this ).data.selectedTab = $(this).index();
 
 			/* update the rendering */
 			refresh();
@@ -111,67 +125,59 @@
 <!--================ End of Demo Section ================-->
 
 <h4>HTML:</h4>
-<pre class="brush: xml;">&lt;script id="tabsTmpl" type="text/x-jquery-tmpl">
-	&lt;table class="tabsView">&lt;tbody>
+<pre class="brush: xml;">&lt;script id="movieTemplate" type="text/x-jquery-tmpl">
+	&lt;h2>${Title}&lt;/h2>
+
+	{{wrap "#tabsTemplate"}}
+		&lt;h3>Details&lt;/h3>
+		&lt;div>
+			Title: &lt;input value="${Title}" >
+			Languages:
+			{{each Languages}}&lt;input type="text" value="${$value.Name}"/>{{/each}}
+		&lt;/div>
+
+		&lt;h3>Description&lt;/h3>
+		&lt;div>
+			... content of tab 2
+		&lt;/div>
+
+		&lt;h3>Comments&lt;/h3>
+		&lt;div>
+			... content of tab 3
+		&lt;/div>
+	{{/wrap}}
+&lt;/script>
+
+&lt;script id="tabsTemplate" type="text/x-jquery-tmpl">
+	&lt;table>&lt;tbody>
 		&lt;tr>
 			{{each $item.html("h3", true)}}
-				&lt;th class="header_${$index === $item.state.activeIndex}">
+				&lt;th class="head_${$index === selectedTab}">
 					${$value}
 				&lt;/th>
 			{{/each}}
 		&lt;/tr>
 		&lt;tr>&lt;td colspan='${$item.html("h3").length}'>
-			&lt;div class="body">
-				{{html $item.html("div")[$item.state.activeIndex]}}
+			&lt;div>
+				{{html $item.html("div")[selectedTab]}}
 			&lt;/div>
 		&lt;/td>&lt;/tr>
 	&lt;/tbody>&lt;/table>
 &lt;/script>
-
-&lt;script id="tabsWrap" type="text/x-jquery-tmpl">
-	{{wrap(null, {state: $item.state}) "#tabsWrap"}}
-		&lt;h3>Details&lt;/h3>
-		&lt;div>
-
-			Title: &lt;input value="Eyes Wide Shut" >
-			Languages: &lt;input type="text" value="English"/>
-	
-		&lt;/div>
-		
-		&lt;h3>Description&lt;/h3>
-		&lt;div>
-	
-			&lt;img src='http://cdn-4.nflximg.com/US/boxshots/large/5670434.jpg'/>
-			Director Stanley Kubrick's final film. 
-	
-		&lt;/div>
-		
-		&lt;h3>Comments&lt;/h3>
-		&lt;div>
-	
-			&lt;ul>&lt;li>Great film...&lt;/li>&lt;/ul>
-	
-		&lt;/div>
-	{{/wrap}}
-&lt;/script></pre>
+</pre>
 
 <h4>Script:</h4>
-<pre class="brush: js;">	/* Track the selected tab index for inner and outer tab views */
-	var state = { activeIndex: 1 };
-
-	function refresh() {
+<pre class="brush: js;">	function refresh() {
 		$( "#tabsView" ).empty();
-		$( "#tabsTmpl" ).tmpl( null, { state: state})
+
+		$( "#movieTemplate" ).tmpl( movie )
 			.appendTo( "#tabsView" );
 	}
-
-	/* Render tabs view */
-	refresh();
 
 	$( "#tabsView" )
 		.delegate( ".tabsView th", "click", function() {
 			/* Set the selected tab index to this tab */
-			$.tmplItem( this ).state.activeIndex = $(this).index();
+			$.tmplItem( this ).data.selectedTab = $(this).index();
 
 			/* update the rendering */
 			refresh();

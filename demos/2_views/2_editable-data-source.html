@@ -8,8 +8,8 @@
 
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
 
-	<link href="../resources/syntaxHighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="../resources/syntaxHighlighter.js" type="text/javascript"></script>
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.js" type="text/javascript"></script>
 </head>
 <body>
 <a href="../toc.html">TOC</a><br />
@@ -20,11 +20,11 @@
 <h4>HTML:</h4>
 <pre class="brush: xml;">...
 
-&lt;script id="languageTemplate" type="text/x-jquery-tmpl"> 
+&lt;script id="languageTemplate" type="text/x-jquery-tmpl">
 	&lt;div data-jq-linkfrom="Name">${Name}&lt;/div>
 &lt;/script>
 
-&lt;script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
+&lt;script id="languageEditTemplate" type="text/x-jquery-tmpl">
 	&lt;input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}"/>...
 &lt;/script>
 
@@ -35,43 +35,55 @@
 <h4>Script:</h4>
 <pre class="brush: js;">...
 
+$( "#movieList" )
+	.html(
+		// Simple string rendering of template
+		$( "#movieTemplate" ).render( movies )
+	)
+	// Data link between data and HTML content: declarative contextual data linking
+	.dataLink( movies )
+
+	...
+
 $.dataLink( app, function( event, args ) {
+
 	if ( args.path === "selectedItem" ) {
-		var selectedData = args.value.data;
-		
-		// Render the detail view for the selectedData
 		$( "#movieDetail" )
 			.html(
-				$( "#detailViewTemplate" ).render( selectedData )
+				// Render the detail view for the selectedData
+				$( "#detailViewTemplate" ).render( app.selectedItem.data )
 			)
-			.dataLink( selectedData ); // Data link the selected data to the detail view rendered HTML
+			// Data link between selected data and HTML of detail view
+			.dataLink( app.selectedItem.data );
 	}
+
 });
 
+// All dynamic UI changes are a result of 'observable changes' (using built-in data-link templates integration)
 $( "#movieDetail" )
 	.delegate( "#addLanguageBtn", "click", function () {
-		$.changeArray( 
-			$.tmplItem( this ).data.Languages, 
-			"push", 
+		$.changeArray(
+			$.view( this ).data.Languages,
+			"push",
 			{
 				Name: "NewLanguage"
 			}
 		);
 	})
 	.delegate( ".close", "click", function () {
-		$.changeArray( 
-			app.selectedItem.data.Languages, 
-			"splice", 
-			$.tmplItem( this ).index,
+		$.changeArray(
+			app.selectedItem.data.Languages,
+			"splice",
+			$.view( this ).index,
 			1
 		);
 	});
 
 
 $( "#addMovieBtn" ).click( function () {
-	$.changeArray( 
-		movies, 
-		"push", 
+	$.changeArray(
+		movies,
+		"push",
 		{
 			Title: "NewTitle",
 			Languages: [
@@ -90,10 +102,9 @@ function deleteLastLanguage() {
 
 <!--=================== Demo Section ===================-->
 
-<button onclick="showData()">show data</button>
-<button class="consoleButtons" onclick="deleteLastLanguage()">delete last language</button>
+<button onclick="deleteLastLanguage()">delete last language</button>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td data-jq-linkfrom="Title">${Title}</td>
 		<td>
@@ -105,11 +116,11 @@ function deleteLastLanguage() {
 	</tr>
 </script>
 
-<script id="languageTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageTemplate" type="text/x-jquery-tmpl">
 	<div data-jq-linkfrom="Name">${Name}</div>
 </script>
 
-<script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageEditTemplate" type="text/x-jquery-tmpl">
 	<input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}" /><img class="close" src="../resources/close.png" />
 </script>
 
@@ -135,7 +146,7 @@ function deleteLastLanguage() {
 	var app = {
 			selectedItem: null
 		},
-	
+
 		movies = [
 		{
 			Title: "Meet Joe Black",
@@ -162,24 +173,24 @@ function deleteLastLanguage() {
 		.dataLink( movies )
 
 		.delegate( "tr", "click", function () {
-			select( $.tmplItem( this ));
+			select( $.view( this ));
 		})
 
 		.delegate( ".close", "click", function () {
 			select();
-			$.changeArray( movies, "splice", $.tmplItem( this ).index, 1 );
-			return false; 
+			$.changeArray( movies, "splice", $.view( this ).index, 1 );
+			return false;
 		});
 
 	$( "#movieDetail" )
 		.delegate( "#addLanguageBtn", "click", function () {
-			$.changeArray( $.tmplItem( this ).data.Languages, "push", {
+			$.changeArray( $.view( this ).data.Languages, "push", {
 				Name: "NewLanguage"
 			});
 		})
 		.delegate( ".close", "click", function () {
-			$.changeArray( app.selectedItem.data.Languages, "splice", $.tmplItem( this ).index, 1 );
-			return false; 
+			$.changeArray( app.selectedItem.data.Languages, "splice", $.view( this ).index, 1 );
+			return false;
 		});
 
 
@@ -192,34 +203,33 @@ function deleteLastLanguage() {
 		);
 
 		// Set selection on the added item
-		select( $("#movieList tr:last").tmplItem());
+		select( $("#movieList tr:last").view());
 	});
 
-	function select( tmplItem ) {
-		if ( app.selectedItem != tmplItem ) {
+	function select( view ) {
+		if ( app.selectedItem != view ) {
 			if ( app.selectedItem ) {
 				$( app.selectedItem.nodes ).removeClass( "selected");
 			}
-			if (tmplItem) {
-				$( tmplItem.nodes ).addClass( "selected");
+			if (view) {
+				$( view.nodes ).addClass( "selected");
 			}
-			$.setField( app, "selectedItem", tmplItem );
+			$.setField( app, "selectedItem", view );
 		}
 	}
 
 	$.dataLink( app, function( event, args ) {
+
 		if ( args.path === "selectedItem" ) {
-			if ( args.value ) {
-				var selectedData = args.value.data;
-				$( "#movieDetail" )
-					.html(
-						$( "#detailViewTemplate" ).render( selectedData, { annotate: true } )
-					)
-					.dataLink( selectedData );
-			} else {
-				$( "#movieDetail" ).empty();
-			}
+			$( "#movieDetail" )
+				.html(
+					// Render the detail view for the selectedData
+					$( "#detailViewTemplate" ).render( app.selectedItem.data, { annotate: true } )
+				)
+				// Data link between selected data and HTML of detail view
+				.dataLink( app.selectedItem.data );
 		}
+
 	});
 
 	function deleteLastLanguage() {
@@ -231,23 +241,6 @@ function deleteLastLanguage() {
 </script>
 
 <!--================ End of Demo Section ================-->
-
-<!--Console-->
-
-<script id="showData" type="text/x-jquery-tmpl">
-	<div><b>Movie:</b> ${Title} <b>Languages:</b> {{each Languages}} ${$value.Name}{{/each}}</div>
-</script>
-
-<div id="console">
-</div>
-	
-<script type="text/javascript">
-	function showData() {
-		$( ".consoleButtons" ).css( "display", "block" );
-		$( "#console" ).append("<hr/>");
-		$( "#console" ).append( $( "#showData" ).render( movies ));
-	}
-</script>
 
 </body>
 </html>

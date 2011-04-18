@@ -15,10 +15,10 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
-		<td>Languages: 
+		<td>Languages:
 			<em>
 				{{each Languages}}
 					${$value.Name}
@@ -46,7 +46,7 @@
 		}
 		return ret;
 	}
-	
+
 	var movies = [
 		{
 			Title: "Meet Joe Black",
@@ -67,7 +67,7 @@
 
 	$( "#movieTemplate" ).tmpl( movies )
 		.appendTo( "#movieList" );
-	
+
 </script>
 
 <!--================ End of Demo Section ================-->

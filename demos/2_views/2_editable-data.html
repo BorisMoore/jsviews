@@ -15,11 +15,11 @@
 <h3>Fully Editable Data: Change events with integrated Data Link and Templates</h3>
 
 <button onclick="showData()">show data</button>
-<button class="consoleButtons" onclick="deleteLastLanguage()">delete last language</button>
+<button onclick="deleteLastLanguage()">delete last language</button>
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td data-jq-linkfrom="Title">${Title}</td>
 		<td>
@@ -31,11 +31,11 @@
 	</tr>
 </script>
 
-<script id="languageTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageTemplate" type="text/x-jquery-tmpl">
 	<div data-jq-linkfrom="Name">${Name}</div>
 </script>
 
-<script id="languageEditTemplate" type="text/x-jquery-tmpl"> 
+<script id="languageEditTemplate" type="text/x-jquery-tmpl">
 	<input data-jq-linkfrom="Name" data-jq-linkto="Name" value="${Name}"/><img class="close" src="../resources/close.png" />
 </script>
 
@@ -59,7 +59,7 @@
 	var app = {
 			selectedItem: null
 		},
-	
+
 		movies = [
 		{
 			Title: "Meet Joe Black",
@@ -86,24 +86,24 @@
 		.dataLink( movies )
 
 		.delegate( "tr", "click", function () {
-			select( $.tmplItem( this ));
+			select( $.view( this ));
 		})
 
 		.delegate( ".close", "click", function () {
 			select();
-			$.changeArray( movies, "splice", $.tmplItem( this ).index, 1 );
-			return false; 
+			$.changeArray( movies, "splice", $.view( this ).index, 1 );
+			return false;
 		});
 
 	$( "#movieDetail" )
 		.delegate( "#addLanguageBtn", "click", function () {
-			$.changeArray( $.tmplItem( this ).data.Languages, "push", {
+			$.changeArray( $.view( this ).data.Languages, "push", {
 				Name: "NewLanguage"
 			});
 		})
 		.delegate( ".close", "click", function () {
-			$.changeArray( app.selectedItem.data.Languages, "splice", $.tmplItem( this ).index, 1 );
-			return false; 
+			$.changeArray( app.selectedItem.data.Languages, "splice", $.view( this ).index, 1 );
+			return false;
 		});
 
 
@@ -116,18 +116,18 @@
 		);
 
 		// Set selection on the added item
-		select( $("#movieList tr:last").tmplItem());
+		select( $("#movieList tr:last").view());
 	});
 
-	function select( tmplItem ) {
-		if ( app.selectedItem != tmplItem ) {
+	function select( view ) {
+		if ( app.selectedItem != view ) {
 			if ( app.selectedItem ) {
 				$( app.selectedItem.nodes ).removeClass( "selected");
 			}
-			if (tmplItem) {
-				$( tmplItem.nodes ).addClass( "selected");
+			if (view) {
+				$( view.nodes ).addClass( "selected");
 			}
-			$.setField( app, "selectedItem", tmplItem );
+			$.setField( app, "selectedItem", view );
 		}
 	}
 
@@ -164,7 +164,7 @@
 
 <div id="console">
 </div>
-	
+
 <script type="text/javascript">
 	function showData() {
 		$( ".consoleButtons" ).css( "display", "block" );

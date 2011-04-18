@@ -15,16 +15,16 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
-		<td><b>Languages:</b> 
+		<td><b>Languages:</b>
 			<em>
 				{{each Languages}}
 					${$value.Name}{{if $index < Languages.length - 2}}, {{else $index === Languages.length - 2}} and {{/if}}
 				{{/each}}
 			</em><br/><br/>
-			<b>Subtitles:</b> 
+			<b>Subtitles:</b>
 			<em>
 				{{each( i, lang ) Subtitles}}
 					${namePlusSeparator( lang.Name, i, Subtitles.length )}
@@ -52,7 +52,7 @@
 		}
 		return ret;
 	}
-	
+
 	var movies = [
 		{
 			Title: "Meet Joe Black",
@@ -81,7 +81,7 @@
 
 	$( "#movieTemplate" ).tmpl( movies )
 		.appendTo( "#movieList" );
-	
+
 </script>
 
 <!--================ End of Demo Section ================-->

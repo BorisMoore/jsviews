@@ -15,13 +15,13 @@
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
 		<td>
 			{{if Languages}}
 				Alternative languages: <em>${Languages}</em>.
-			{{else Subtitles}} 
+			{{else Subtitles}}
 				Original language only... <br/>Subtitles in <em>${Subtitles}</em>.
 			{{else}}
 				Original version only, without subtitles.
@@ -58,7 +58,7 @@
 
 	$( "#movieTemplate" ).tmpl( movies )
 		.appendTo( "#movieList" );
-	
+
 </script>
 
 <!--================ End of Demo Section ================-->

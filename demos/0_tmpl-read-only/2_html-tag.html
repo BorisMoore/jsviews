@@ -7,7 +7,7 @@
 
 	<link href="../resources/movielist.css" rel="stylesheet" type="text/css" />
 	<style type="text/css">
-		.role { font-weight: bold; font-style: italic; background-color: Yellow; } 
+		.role { font-weight: bold; font-style: italic; background-color: Yellow; }
 		.synopsis { background-color: white; padding: 15px; }
 		.director { font-weight: bold; font-style: italic; color: red;  }
 	</style>
@@ -16,11 +16,16 @@
 <a href="../toc.html">TOC</a><br />
 <a href="2_html-tag-source.html">Source</a>
 
-<h3>Demo: Using {{html}} to render html markup from data.</h3>
+<h3>Demo: Using ${} or {{html}} to render data values or expressions</h3>
+
+<ul>
+<li>${} is equivalent to {{= }}. It HTML encodes. (Better security, but slight perf cost)</li>
+<li>{{html}} does not encode. Used to render values that include html markup</li>
+</ul><br />
 
 <!--=================== Demo Section ===================-->
 
-<script id="movieTemplate" type="text/x-jquery-tmpl"> 
+<script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>${Title}</td>
 		<td class="synopsis">{{html Synopsis}}</td>
@@ -46,7 +51,7 @@
 
 	$( "#movieTemplate" ).tmpl( movies )
 		.appendTo( "#movieList" );
-	
+
 </script>
 
 <!--================ End of Demo Section ================-->

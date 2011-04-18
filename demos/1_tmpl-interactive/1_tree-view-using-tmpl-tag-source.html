@@ -5,12 +5,12 @@
 	<script src="../../jquery.tmpl.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
-	<link href="../resources/syntaxHighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="../resources/syntaxHighlighter.js" type="text/javascript"></script>
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.js" type="text/javascript"></script>
 	<style type="text/css">
-		.treeView li li {margin-left:18px;} .expand {vertical-align:middle;margin-right:7px;display:inline-block;border:1px solid #555;text-align:center;height:12px;width:12px;line-height:11px;background-color:#f8f8f8;color:Blue;} 
+		.treeView li li {margin-left:18px;} .expand {vertical-align:middle;margin-right:7px;display:inline-block;border:1px solid #555;text-align:center;height:12px;width:12px;line-height:11px;background-color:#f8f8f8;color:Blue;}
 		.treeView, .treeView ul {padding:0;margin:0;} .treeView li {margin-left:8px;list-style-type:none;padding:2px;cursor:pointer;} .treeView li.folderItem {color:Blue;text-decoration:underline;font-style:italic;margin-bottom:4px;}
-	</style>  
+	</style>
 </head>
 <body>
 <a href="../toc.html">TOC</a><br />
@@ -41,7 +41,7 @@
 
 <script type="text/javascript">
 
- /* Hierarchy of named folders */ 
+ /* Hierarchy of named folders */
 var folders = {
 	name: "Categories",
 	folders: [
@@ -60,13 +60,13 @@ var folders = {
 
 /* Array for the folder items. Each item can show up in one or more folders */
 var movies = [
-	{ name: "12 Angry Men", 
-		folders: [ "Courtroom" ], 
-		description: "A jury of 12 men must decide the fate of an 18-year-old boy." 
+	{ name: "12 Angry Men",
+		folders: [ "Courtroom" ],
+		description: "A jury of 12 men must decide the fate of an 18-year-old boy."
 	},
-	{ name: "Word of Honor", 
-		folders: [ "Courtroom", "Classic" ], 
-		description: "One man's word against the U.S. military." 
+	{ name: "Word of Honor",
+		folders: [ "Courtroom", "Classic" ],
+		description: "One man's word against the U.S. military."
 	}
 ];
 
@@ -75,12 +75,12 @@ function getFolderItems( tmplItem ) {
 	return $.map( movies, function( movie ) {
 		return $.inArray( tmplItem.data.name, movie.folders ) > -1 ? movie : null;
 	});
-} 
+}
 
 function getSubFolders( tmplItem ) {
 	return tmplItem.data.folders || [];
 }
- 
+
 function expanderSymbol( tmplItem ) {
 	return tmplItem.data.expanded ? "-" : "+";
 }
@@ -121,13 +121,13 @@ $( "#movieList" )
 };
 
 var movies = [
-	{ name: "12 Angry Men", 
-		folders: [ "Courtroom" ], 
-		description: "A jury of 12 men must decide the fate of an 18-year-old boy." 
+	{ name: "12 Angry Men",
+		folders: [ "Courtroom" ],
+		description: "A jury of 12 men must decide the fate of an 18-year-old boy."
 	},
-	{ name: "Word of Honor", 
-		folders: [ "Courtroom", "Classic" ], 
-		description: "One man's word against the U.S. military." 
+	{ name: "Word of Honor",
+		folders: [ "Courtroom", "Classic" ],
+		description: "One man's word against the U.S. military."
 	}
 ];</pre>
 
