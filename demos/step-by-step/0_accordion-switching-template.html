@@ -1,8 +1,9 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-	<script src="../../jquery.tmpl.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
 	<style type="text/css">
@@ -12,8 +13,7 @@
 	</style>
 </head>
 <body>
-<a href="../toc.html">TOC</a><br />
-<a href="0_accordion-switching-template-source.html">Source</a>
+<a href="../index.html">Home</a><br />
 
 <h3>Accordion: Using dynamic switching of templates</h3>
 
@@ -47,7 +47,7 @@ Click for details:
 
 <script type="text/javascript">
 
-	var selectedItem = null,
+	var selectedSubView = null,
 
 		movies = [
 			{
@@ -79,39 +79,41 @@ Click for details:
 
 		summaryTemplate = $( "#summaryTemplate" ).template();
 
-	function unselect( tmplItem ) {
-		/* Set the template of the selected item
-		   back to the summary template */
-		if ( selectedItem ) {
-			selectedItem.tmpl = summaryTemplate;
-			selectedItem.update();
-			selectedItem = null;
+	function unselect() {
+		/* Switch template of the selected view back to the summary template */
+		if ( selectedSubView ) {
+			selectedSubView.tmpl = summaryTemplate;
+			selectedSubView.refresh();
+			selectedSubView = null;
 		}
 	}
 
 	/* Render the summaryTemplate with the "movies" data */
-	$( "#summaryTemplate" )
-		.tmpl( movies )
-		.appendTo( "#movieList" );
+	$( "#movieList" )
+		.html(
+			$( "#summaryTemplate" ).render( movies, { annotate: true } )
+		)
 
-	/* Add onclick handlers for movie template items
-	   using the summary or details template */
-	$("#movieList")
+		/* Link rendered content to data, to provide interactive views */
+		.dataLink( movies )
+
+		/* onclick handler for movie subviews when not selected */
 		.delegate( ".movieSummary", "click", function () {
-			/* Unselect the currently selected item */
-			unselect( selectedItem );
+			/* Unselect the currently selected view */
+			unselect( selectedSubView );
 
-			/* Get the template item data structure
-			   which this clicked element belongs to,
-			   and make it the selected item */
-			selectedItem = $.tmplItem(this);
+			/* Get the view which this clicked element 
+			   belongs to, and make it the selected view */
+			selectedSubView = $.view(this);
 
-			/* Set the template on this item to the detail template */
-			selectedItem.tmpl = detailTemplate;
-			selectedItem.update();
+			/* Switch the template on this view to the detail template */
+			selectedSubView.tmpl = detailTemplate;
+			selectedSubView.refresh();
 		})
+
+		/* onclick handler for movie subviews when selected */
 		.delegate( ".movieDetail", "click", function () {
-			/* Unselect the currently selected item */
+			/* Unselect the currently selected view */
 			unselect();
 		});
 

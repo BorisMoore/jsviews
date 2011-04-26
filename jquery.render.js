@@ -1,49 +1,44 @@
 /*!
- * jQuery Templates Plugin 1.0.0pre
- * http://github.com/jquery/jquery-tmpl
- * Requires jQuery 1.4.2
- *
- * Copyright Software Freedom Conservancy, Inc.
- * Dual licensed under the MIT or GPL Version 2 licenses.
- * http://jquery.org/license
+ * jQuery Render Plugin v1.0pre
+ * Optimized version of jQuery Templates, for rendering to string
+ * http://github.com/BorisMoore/jsrender
  */
 
 (function( $, undefined ) {
 	var oldManip = $.fn.domManip, htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
-		itemKey = 0, stack = [], autoName = 0,
-		defaultOpen = "$item.calls($item,__,$1,$2);__=[];",
-		defaultClose = ["call=$item.calls();__=call[1].concat($item.", "(call,__));"];
+		viewKey = 0, stack = [], autoName = 0,
+		defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
+		defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"];
 
-	function TmplItem( options, parentItem, tmplFn, data ) { //, index ) {
-		// Returns a template item data structure for a new rendered instance of a template (a 'template item').
-		// The content field is a hierarchical array of strings and nested items (to be
-		// removed and replaced by nodes field of dom elements, once inserted in DOM).
-		// Prototype is $.tmplSettings.item, which provides both methods and fields.
+	function View( options, parentView, tmplFn, data ) { //, index ) {
+		// Returns a view data structure for a new rendered instance of a template.
+		// The content field is a hierarchical array of strings and nested views.
+		// Prototype is $.tmplSettings.view, which provides both methods and fields.
 
 		var self = this,
-			annotate = ( parentItem||options ).annotate;
-		self.parent = parentItem || null;
-		parentItem = parentItem || {};
+			annotate = ( parentView||options ).annotate;
+		self.parent = parentView || null;
+		parentView = parentView || {};
 		options.path = options.path || "~";
 		$.extend( self, options, {
-			data: data || parentItem.data || {},
+			data: data || parentView.data || {},
 			annotate: annotate,
 			tmpl: tmplFn || null,
-			_wrap: parentItem._wrap
+			_wrap: parentView._wrap
 		});
 
 		if ( tmplFn ) {
 			// Build the hierarchical content to be used during insertion into DOM
 			content = self.tmpl( $, self );
-			self._ctnt = ( annotate && $.isArray( parentItem.data )) ? [].concat( "<!--item-->", content, "<!--/item-->" ) : content;
-			self.key = ++itemKey;
+			self._ctnt = ( annotate && $.isArray( parentView.data )) ? [].concat( "<!--item-->", content, "<!--/item-->" ) : content;
+			self.key = ++viewKey;
 		}
 	}
 	$.fn.extend({
 		// Use first wrapped element as template markup.
-		// Return wrapped set of template items, obtained by rendering template against data.
-		render: function( data, options, parentItem ) {
-			return $.render( this[0], data, options, parentItem );
+		// Return string obtained by rendering the template against data.
+		render: function( data, options, parentView ) {
+			return $.render( this[0], data, options, parentView );
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
@@ -54,9 +49,9 @@
 
 	$.extend({
 		// Return string obtained by rendering template against data.
-		render: function( tmpl, data, options, parentItem ) {
-			var ret = renderTemplate( tmpl, data, options, parentItem );
-			itemKey = 0;
+		render: function( tmpl, data, options, parentView ) {
+			var ret = renderTemplate( tmpl, data, options, parentView );
+			viewKey = 0;
 			return ret;
 		},
 
@@ -102,15 +97,15 @@
 		// The following substitution terms can be uses in template tag definitions:
 		// $1 is the target parameter - as in {{if targetParam}}
 		// $1a is the target parameter as above, but with automatic detection of functions, so if targetParam is a function it will
-		//     be replaced by its return value during rendering
+		// be replaced by its return value during rendering
 		// $2 is the comma-separated list of additional function parameters as in {{tmpl(functionParams) targetParam}}
 		// $2s is the string corresponding to the comma-separated list of additional function parameters,
-		//     so with {{tmpl(param1, param2) targetParam}} it will be the string "param1, param2"
+		// so with {{tmpl(param1, param2) targetParam}} it will be the string "param1, param2"
 		tmplSettings: {
 			tag: {
 				"tmpl": {
 					_default: { $2: "null" },
-					open: "if($notnull_1){__=__.concat($item.nest($1,$2s,$2));}"
+					open: "if($notnull_1){__=__.concat($view.nest($1,$2s,$2));}"
 					// tmpl target parameter can be of type function, so use $1, not $1a (so not auto detection of functions)
 					// This means that {{tmpl foo}} treats foo as a template (which IS a function).
 					// Explicit parens can be used if foo is a function that returns a template: {{tmpl foo()}}.
@@ -152,7 +147,7 @@
 				}
 			},
 
-			item: {
+			view: {
 				tmpl: null,
 				nodes: [],
 				calls: function( content ) {
@@ -165,7 +160,7 @@
 					// nested template, using {{tmpl}} tag
 					options = options || {};
 					options.path = paramString;
-					var ret = renderTmplItems( $.template( tmpl ), data, options, this );
+					var ret = renderViews( $.template( tmpl ), data, options, this );
 					return ret;
 
 				},
@@ -174,7 +169,7 @@
 					var options = call[4] || {};
 					options.wrapped = wrapped;
 					// Apply the template, which may incorporate wrapped content,
-					return $.tmpl( $.template( call[2] ), call[3], options, call[0] ); // tmpl, data, options, item
+					return $.render( $.template( call[2] ), call[3], options, call[0] ); // tmpl, data, options, view
 				},
 				html: function( filter, textOnly ) {
 					var wrapped = this._wrap;
@@ -193,44 +188,44 @@
 	var tags = $.tmplSettings.tag,
 		pluginsWrapperTmpl = $.template( null, "{{html this.html()}}" );
 
-	TmplItem.prototype = $.tmplSettings.item;
+	View.prototype = $.tmplSettings.view;
 
 	//========================== Private helper functions, used by code above ==========================
 
-	function renderTemplate( tmpl, data, options, parentItem ) {
-		var ret = renderTmplItems( tmpl, data, options, parentItem );
-		return (parentItem && tmpl) ? ret : buildStringArray( parentItem, ret ).join("");
+	function renderTemplate( tmpl, data, options, parentView ) {
+		var ret = renderViews( tmpl, data, options, parentView );
+		return (parentView && tmpl) ? ret : buildStringArray( parentView, ret ).join("");
 	}
 
-	function renderTmplItems( tmpl, data, options, parentItem ) {
-		// Render template against data as a tree of template items (nested template), or as a string (top-level template).
+	function renderViews( tmpl, data, options, parentView ) {
+		// Render template against data as a tree of subviews (nested template), or as a string (top-level template).
 		options = options || {};
-		var arrayItem, ret, topLevel = !parentItem;
+		var arrayView, ret, topLevel = !parentView;
 		if ( topLevel ) {
 			// This is a top-level tmpl call (not from a nested template using {{tmpl}})
-//			parentItem = topTmplItem;
+//			parentView = topView;
 			if ( !$.isFunction( tmpl ) ) {
 				tmpl = $.template[tmpl] || $.template( null, tmpl );
 			}
-//			wrappedItems = {}; // Any wrapped items will be rebuilt, since this is top level
+//			wrappedViews = {}; // Any wrapped views will be rebuilt, since this is top level
 		} else if ( !tmpl ) {
-			// The template item is already associated with DOM - this is a refresh.
-			// Re-evaluate rendered template for the parentItem
-			tmpl = parentItem.tmpl;
-//			newTmplItems[parentItem.key] = parentItem;
-			parentItem.nodes = [];
-			if ( parentItem.wrapped ) {
-				updateWrapped( parentItem, parentItem.wrapped );
+			// The view is already associated with DOM - this is a refresh.
+			// Re-evaluate rendered template for the parentView
+			tmpl = parentView.tmpl;
+//			newViews[parentView.key] = parentView;
+			parentView.nodes = [];
+			if ( parentView.wrapped ) {
+				updateWrapped( parentView, parentView.wrapped );
 			}
-			// Rebuild, without creating a new template item
-			return parentItem.tmpl( $, parentItem );
+			// Rebuild, without creating a new view
+			return parentView.tmpl( $, parentView );
 		}
 		if ( !tmpl ) {
 			return null; // Could throw...
 		}
 	//	options =  $.extend( {}, options, tmpl )
 		if ( typeof data === "function" ) {
-			data = data.call( parentItem || {} );
+			data = data.call( parentView || {} );
 		}
 		if ( options.wrapped ) {
 			updateWrapped( options, options.wrapped );
@@ -243,47 +238,47 @@
 			}
 		}
 //		if ( $.isArray( data )) {
-//			arrayItem = new TmplItem( options, parentItem, null, data );
+//			arrayView = new View( options, parentView, null, data );
 //			return $.map( data, function( dataItem ) {
 //				options.path = "*";
-//				return dataItem ? new TmplItem( options, arrayItem, tmpl, dataItem ) : null;
+//				return dataItem ? new View( options, arrayView, tmpl, dataItem ) : null;
 //			})
 //		}
-//		return [ new TmplItem( options, parentItem, tmpl, data ) ];
+//		return [ new View( options, parentView, tmpl, data ) ];
 
 		if ( $.isArray( data )) {
-			arrayItem = new TmplItem( options, parentItem, null, data );
+			arrayView = new View( options, parentView, null, data );
 			ret = $.map( data, function( dataItem ) {
 				options.path = "*";
-				return dataItem ? new TmplItem( options, arrayItem, tmpl, dataItem ) : null;
+				return dataItem ? new View( options, arrayView, tmpl, dataItem ) : null;
 			})
 		} else {
-			ret = [ new TmplItem( options, parentItem, tmpl, data ) ];
+			ret = [ new View( options, parentView, tmpl, data ) ];
 		}
-		return ( parentItem || options ).annotate
+		return ( parentView || options ).annotate
 			? [].concat(
-				"<!--tmpl(" + (arrayItem||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"
+				"<!--tmpl(" + (arrayView||ret[0]).path + ") " + tmpl._name + "-->", //+ tmpl._name + ":"
 				ret,
 				"<!--/tmpl-->" )
 			: ret;
 	}
 
-	function buildStringArray( tmplItem, content ) {
-		// Convert hierarchical content (tree of nested tmplItems) into flat string array of rendered content
-		// (optionally with attribute annotations for tmplItems)
-		// Add data-jq-path attribute to top-level elements (if any) of the rendered item...
+	function buildStringArray( view, content ) {
+		// Convert hierarchical content (tree of nested views) into flat string array of rendered content
+		// (optionally with attribute annotations for views)
+		// Add data-jq-path attribute to top-level elements (if any) of the rendered view...
 
-		var annotate = tmplItem && tmplItem.annotate;
+		var annotate = view && view.annotate;
 
 		return content
-			? $.map( content, function( item ) {
-				return (typeof item === "string")
-					? item
-					: buildStringArray( item, item._ctnt );
+			? $.map( content, function( view ) {
+				return (typeof view === "string")
+					? view
+					: buildStringArray( view, view._ctnt );
 				})
 
-			// If content is not defined, return tmplItem directly. Not a template item. May be a string, or a string array, e.g. from {{html $item.html()}}.
-			: tmplItem;
+			// If content is not defined, return view directly. Not a view. May be a string, or a string array, e.g. from {{html $view.html()}}.
+			: view;
 	}
 
 	function jqObjectWithTextNodes( content ) {
@@ -317,7 +312,7 @@
 	function buildTmplFn( markup ) {
 		var regExShortCut = /\$\{([^\}]*)\}/g;
 
-		var code = "var $=jQuery,call,__=[],$data=$item.data;" +
+		var code = "var $=jQuery,call,__=[],$data=$view.data;" +
 
 			// Introduce the data as local variables using with(){}
 			"with($data){__.push('" +
@@ -339,9 +334,9 @@
 						target = unescape( target );
 						args = args ? ("," + unescape( args ) + ")") : (parens ? ")" : "");
 						// Support for target being things like a.toLowerCase();
-						// In that case don't call with template item as 'this' pointer. Just evaluate...
-						expr = parens ? (target.indexOf(".") > -1 ? target + unescape( parens ) : ("(" + target + ").call($item" + args)) : target;
-						exprAutoFnDetect = parens ? expr : "(typeof(" + target + ")==='function'?(" + target + ").call($item):(" + target + "))";
+						// In that case don't call with view as 'this' pointer. Just evaluate...
+						expr = parens ? (target.indexOf(".") > -1 ? target + unescape( parens ) : ("(" + target + ").call($view" + args)) : target;
+						exprAutoFnDetect = parens ? expr : "(typeof(" + target + ")==='function'?(" + target + ").call($view):(" + target + "))";
 					} else {
 						exprAutoFnDetect = expr = def.$1 || "null";
 					}
@@ -357,7 +352,7 @@
 					return test;
 				}) +
 			"');}return __;"
-		return new Function( "jQuery","$item", code );
+		return new Function( "jQuery","$view", code );
 	}
 
 	function updateWrapped( options, wrapped ) {
