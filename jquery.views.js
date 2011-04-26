@@ -1,17 +1,12 @@
 /*!
- * jQuery Data Link plugin 1.0.0pre
- *
- * BETA2 INVESTIGATION
- *
- * http://github.com/jquery/jquery-datalink
- *
- * Copyright Software Freedom Conservancy, Inc.
- * Dual licensed under the MIT or GPL Version 2 licenses.
- * http://jquery.org/license
+ * jQuery Views Plugin v1.0pre
+ * Interactive data-driven views, based on integration between jQuery Templates and jQuery Data Link.
+ * Requires jquery.render.js (optimized version of jQuery Templates, for rendering to string).
+ * See JsRender at http://github.com/BorisMoore/jsrender
+ * and JsViews at http://github.com/BorisMoore/jsviews
  */
 /// <reference path="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5-vsdoc.js" />
 /// <reference path="../jquery-1.5.2.js" />
-
 (function($, undefined) {
 
 var linkSettings, decl,
@@ -369,16 +364,6 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 
 // ============================
 // Helpers
-function getPathObject( object, path) {
-	if ( object && path ) {
-		var parts = path.split(".");
-		while ( object && parts.length ) {
-			object = object[ parts.shift() ];
-		}
-		return object;
-	}
-}
-
 function ViewItem( node, path, parentView, parentElViews, index, map ) {
 	var view = CreateView( node, path, undefined, parentView, parentElViews, map );  // TODO Use apply( arguments ) to reduce code size - and elsewhere too.
 	view.index = index;
@@ -387,18 +372,24 @@ function ViewItem( node, path, parentView, parentElViews, index, map ) {
 }
 
 function View( node, path, template, parentView, parentElViews, data, map ) {
-	var view = CreateView( node, path, template, parentView, parentElViews, data, map );
-	view.data = data || getPathObject( parentView && parentView.data, path );
+	var view = CreateView( node, path, template, parentView, parentElViews, map );
+
+	if ( data === undefined && path && path !== "~" ) {
+		var func = new Function( "jQuery","$item", "var $=jQuery,$data=$item.data; with($data){ return " + path  + "}");
+		data = func( $, parentView );
+	}
+	view.data = data;
 	return view;
 }
 
-function CreateView( node, path, template, parentView, parentElViews, data, map ) {
+
+function CreateView( node, path, template, parentView, parentElViews, map ) {
 	// TODO Consider support for methods added to the public View prototype, and making the viewCreated event public.
 	// Also actions called on view will bubble up parent views looking for the an view that implements that named action.
 
 	// Allow instantiation without the 'new' keyword
 	if ( !this.refresh ) {
-		return new CreateView( node, path, template, parentView, parentElViews, data, map );
+		return new CreateView( node, path, template, parentView, parentElViews, map );
 	}
 	//unbindLinkedElem( node ); // FOR NOW only support creating views on html nodes that have NOT already been 'activated'
 //	use $.view( node ).unlink(); ???
@@ -434,10 +425,12 @@ function linkViews( map, node, depth, parent, nextNode, data, index ) {
 		index = index || 0;
 
 	function viewCreated( view ){
-		if ( view.bindings.length ) {
-			link( map, $([ view.data ]), $( view.bindings ), view );
+		if ( view.data ) {
+			if ( view.bindings.length ) {
+				link( map, $([ view.data ]), $( view.bindings ), view );
+			}
+			link( map, $([ view.data ]), undefined, view );
 		}
-		link( map, $([ view.data ]), undefined, view );
 	}
 
 	function getParentElViews() {
@@ -460,7 +453,10 @@ function linkViews( map, node, depth, parent, nextNode, data, index ) {
 			linkViews( map, node, viewDepth, parentView );
 		} else if (
 			node.nodeType === 8
-			&& (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\(([\w\.\~]+)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))
+			&& (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.+)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))
+//			&& (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\(([\w\.\~]+)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))
+//			/\{\{(\/?)(\w+|.)(?:\(((?:[^\}]|\}(?!\}))*?)?\))?(?:\s+(.*?)?)?(\(((?:[^\}]|\}(?!\}))*)\))?\s*\}\}/g,  // TODO - what do we allow here?
+//				function( all, slash, type, fnargs, target, parens, args ) {
 		) {
 			if ( tokens[1]) {
 				if ( tokens[2] ) {
@@ -531,6 +527,29 @@ function getLeafObject( object, path ) {
 		return [ object, path ];
 	}
 	return [];
+}
+
+function getLeafValue( object, path ) {
+	var ret;
+	if ( object && path ) {
+	//   toPath     convert(  toPath  )        end
+		path.replace( /^(?:([\w\.]+)|(\w+)\((.*)\))$/, function( all, path, convert, params ){
+			convert = window[ convert ];
+			//convert = converters[ convert ] || window[ convert ] // TODO support for named converters
+			if ( convert && $.isFunction( convert )) {
+				 ret = convert( getLeafValue( object, params ));
+			}
+		});
+		if ( ret ) {
+			object = ret;
+		} else {
+			object = getLeafObject( object, path );
+			path = object[ 1 ];
+			object = object[ 0 ];
+			object = object && object[ path ];
+		}
+	}
+	return object;
 }
 
 function unbindLinkedElem( node ) {
@@ -729,10 +748,10 @@ $.extend({
 					oldItems = eventArgs.oldItems;
 				switch ( change ) {
 					case "add":
-						self.add( newIndex, newItems );
+						self.addItems( newIndex, newItems );
 					break;
 					case "remove":
-						self.remove( oldIndex, oldItems.length );
+						self.removeItems( oldIndex, oldItems.length );
 					break;
 					case "move":
 					break;
@@ -742,44 +761,64 @@ $.extend({
 				}
 				return true;
 			},
-			refresh: function() { // NOTE - Do not remove this since it is used to allow instantiation without the 'new' keyword
-				this.parent.add( this.index, [this.data] );
-				this.parent.remove( this.index, 1 );
+			refresh: function() {
+				// NOTE - Do not remove this since it is used to allow instantiation without the 'new' keyword
+				var html = $.render( this.tmpl, this.data, { annotate: true }),
+					prevNode = this.prevNode,
+					nextNode = this.nextNode,
+					parentNode = prevNode.parentNode;
+
+				this.map = { link: true };
+				$( this.nodes ).remove();
+				this.removeItems( 0, this.views.length );
+				this.nodes = [];
+				$( prevNode ).after( html );
+				this.prevNode = prevNode.nextSibling;
+				parentNode.removeChild( prevNode );
+				parentNode.removeChild( nextNode.previousSibling );
+				linkViews( this.map, this.prevNode, 0, this, this.nextNode, this.data, this.index );
+
+//				this.parent.add( this.index, [this.data], this.tmpl );
+//				this.parent.remove( this.index, 1 );
 			},
-			add: function( index, dataItems ) { // TODO deal with adding at the beginning, or inserting, so there are following items that need to be dealt with
+			addItems: function( index, dataItems, tmpl ) { // TODO deal with adding at the beginning, or inserting, so there are following items that need to be dealt with
 				var itemsCount = dataItems.length,
 					views = this.views;
 
 				if ( itemsCount ) {
-					var html = $.render( this.tmpl, dataItems, { annotate: true }),
+					var html = $.render( tmpl || this.tmpl, dataItems, { annotate: true }), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
 						nextNode = prevNode.nextSibling,
 						parentNode = prevNode.parentNode;
 					$( prevNode ).after( html );
-					parentNode.removeChild( prevNode.nextSibling);
-					parentNode.removeChild( nextNode.previousSibling);
+					parentNode.removeChild( prevNode.nextSibling );
+					parentNode.removeChild( nextNode.previousSibling );
 					linkViews( this.map, prevNode || this.prevNode, 0, this, nextNode, this.data, index );
 				}
 			},
-			remove: function( index, itemsCount ) {
-				var views = this.views;
-
+			removeItems: function( index, itemsCount ) {
 				if ( itemsCount ) {
-					var node = views[ index ].prevNode,
-						nextNode = views[ index + itemsCount - 1 ].nextNode,
-						nodes = [ node ];
+					var views = this.views,
+						current = index + itemsCount;
 
-					while ( node !== nextNode ) {
-						node = node.nextSibling
-						nodes.push( node );
+					while ( current-- > index ) {
+						var view = views[ current ],
+							node = view.prevNode,
+							nextNode = view.nextNode,
+							nodes = [ node ];
+
+						while ( node !== nextNode ) {
+							node = node.nextSibling
+							nodes.push( node );
+						}
+						$( nodes ).remove();
 					}
-					$( nodes ).remove();
-				}
+					views.splice( index, itemsCount );
+					viewCount = views.length;
 
-				views.splice( index, itemsCount );
-				viewCount = views.length;
-				while ( index < viewCount ) {
-					views[ index++ ].index -= itemsCount;
+					while ( index < viewCount ) {
+						views[ index++ ].index -= itemsCount;
+					}
 				}
 			},
 			unlink: function() {
