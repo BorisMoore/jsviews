@@ -100,7 +100,7 @@
 
 	$( "#tabsView" )
 		.html(
-			$( "#movieTemplate" ).render( movie, { annotate: true } )
+			$( "#movieTemplate" ).render( movie )
 		)
 		.dataLink( movie )
 		.delegate( ".tabsView th", "click", function() {

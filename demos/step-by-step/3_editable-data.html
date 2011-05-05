@@ -80,7 +80,7 @@
 
 	$( "#movieList" )
 		.html(
-			$( "#movieTemplate" ).render( movies, { annotate: true } )
+			$( "#movieTemplate" ).render( movies )
 		)
 		.dataLink( movies )
 		.delegate( "tr", "click", function () {
@@ -134,7 +134,7 @@
 				var selectedData = args.value.data;
 				$( "#movieDetail" )
 					.html(
-						$( "#detailViewTemplate" ).render( selectedData, { annotate: true } )
+						$( "#detailViewTemplate" ).render( selectedData )
 					)
 					.dataLink( selectedData );
 			} else {

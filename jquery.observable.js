@@ -148,7 +148,7 @@
 
 	$.observable.array.extend({
 		replace: function( newItems ) {
-			[].splice.apply( this, [].concat( 0, this._data.length, newItems ));
+			this.splice.apply( this, [].concat( 0, this._data.length, newItems ));
 			return this;
 		}
 	});
