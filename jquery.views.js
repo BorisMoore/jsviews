@@ -26,85 +26,6 @@ var linkSettings, decl,
 		"objectarray": 1
 	}
 
-	getEventArgs = {
-		pop: function( arr, args ) {
-			if ( arr.length ) {
-				return { change: "remove", oldIndex: arr.length - 1, oldItems: [ arr[arr.length - 1 ]]};
-			}
-		},
-		push: function( arr, args ) {
-			return { change: "add", newIndex: arr.length, newItems: [ args[ 0 ]]};
-		},
-		reverse: function( arr, args ) {
-			if ( arr.length ) {
-				return { change: "reset" };
-			}
-		},
-		shift: function( arr, args ) {
-			if ( arr.length ) {
-				return { change: "remove", oldIndex: 0, oldItems: [ arr[ 0 ]]};
-			}
-		},
-		sort: function( arr, args ) {
-			if ( arr.length ) {
-				return { change: "reset" };
-			}
-		},
-		splice: function( arr, args ) {
-			var index = args[ 0 ],
-				numToRemove = args[ 1 ],
-				elementsToRemove,
-				elementsToAdd = args.slice( 2 );
-			if ( numToRemove <= 0 ) {
-				if ( elementsToAdd.length ) {
-					return { change: "add", newIndex: index, newItems: elementsToAdd };
-				}
-			} else {
-				elementsToRemove = arr.slice( index, index + numToRemove );
-				if ( elementsToAdd.length ) {
-					return { change: "move", oldIndex: index, oldItems: elementsToRemove, newIndex: index, newItems: elementsToAdd };
-				} else {
-					return { change: "remove", oldIndex: index, oldItems: elementsToRemove };
-				}
-			}
-		},
-		unshift: function( arr, args ) {
-			return { change: "add", newIndex: 0, newItems: [ args[ 0 ]]};
-		},
-		move: function( arr, args ) {
-			var fromIndex,
-				numToMove = arguments[ 1 ];
-			if ( numToMove > 0 ) {
-				fromIndex = arguments[ 0 ];
-				return { change: "move", oldIndex: fromIndex, oldItems: arr.splice( fromIndex, numToMove ), newIndex: arguments[ 2 ]};
-			}
-		}
-	};
-
-function changeArray( array, eventArgs ) {
-	if ( eventArgs ) {
-		var $array = $([ array ]);
-
-		switch ( eventArgs.change ) {
-			case "add":
-				array.push( eventArgs.newItems[0] ); // Todo - use concat or iterate, for inserting multiple items
-			break;
-
-			case "remove":
-				array.splice( eventArgs.oldIndex, eventArgs.oldItems.length );
-			break;
-
-			case "reset":
-			break;
-
-			case "move":
-				array.splice( eventArgs.newIndex, 0, array.splice( eventArgs.oldIndex, eventArgs.number));
-			break;
-		}
-		$array.triggerHandler( "arrayChange!", eventArgs );
-	}
-}
-
 function link( map, from, to, parentView, prevNode, nextNode ) {
 
 	// ============================
@@ -127,7 +48,7 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 
 	function convertAndSetField( val, path, cnvt, sourceObj ) {
 		//path = isFromHtml ? getLinkedPath( sourceObj, path )[0] : path;  // TODO do we need to pass in path?
-		$.setField( toObj, path, cnvt
+		$.observable( toObj ).setField( path, cnvt
 			? cnvt( val, path, sourceObj, toObj, thisMap )
 			: val
 		);
@@ -279,7 +200,7 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 
 							view = $.view( source );
 
-							$.setField( view.data, path, cnvt
+							$.observable( view.data ).setField( path, cnvt
 								? cnvt( sourceValue, path, source, view.data, thisMap )
 								: sourceValue
 							);
@@ -289,15 +210,16 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 				"array": function() {
 					// For arrayChange events, eventArgs is a data structure of info on the array change
 					if ( fromType === "array" ) {
-						if ( !eventArgs ) {
-							var args = $.map( fromObj, function( obj ){
-								return $.extend( true, {}, obj );
-							});
-							args.unshift( toObj.length );
-							args.unshift( 0 );
-							eventArgs = getEventArgs.splice( toObj, args );
-						}
-						changeArray( toObj, eventArgs );
+						// TODO
+//						if ( !eventArgs ) {
+//							var args = $.map( fromObj, function( obj ){
+//								return $.extend( true, {}, obj );
+//							});
+//							args.unshift( toObj.length );
+//							args.unshift( 0 );
+//							eventArgs = getEventArgs.splice( toObj, args );
+//						}
+//						changeArray( toObj, eventArgs );
 					}
 				}
 			};
@@ -644,25 +566,6 @@ $.extend({
 		return topView;
 	},
 
-	setField: function( object, path, value ) { // TODO add support for passing in object (map) with newValues to copy from.
-		if ( path ) {
-			var $object = $( object ),
-				args = [{ path: path, value: value }],
-				leaf = getLeafObject( object, path );
-
-			object = leaf[0], path = leaf[1];
-			if ( object && (object[ path ] !== value )) {
-			//	$object.triggerHandler( setFieldEvent + "!", args );
-				object[ path ] = value;
-				$object.triggerHandler( "objectChange!", args );
-			}
-		}
-	},
-
-	getField: function( object, path ) {
-		return getField( object, path );
-	},
-
 	view: function( node ) {
 		var view, parentElViews, i;
 		while ( node ) {
@@ -679,13 +582,6 @@ $.extend({
 			}
 			node = node.previousSibling || node.parentNode;
 		}
-	},
-
-	// operations: pop push reverse shift sort splice unshift move
-	changeArray: function( array, operation ) {
-		var args = $.makeArray( arguments );
-		args.splice( 0, 2 );
-		return changeArray( array, getEventArgs[ operation ]( array, args ));
 	},
 
 	dataLinkSettings: {
@@ -754,10 +650,11 @@ $.extend({
 						self.removeItems( oldIndex, oldItems.length );
 					break;
 					case "move":
+						self.refresh(); // Could optimize this
 					break;
 					case "reset":
-					break;
-					default:
+						self.refresh();
+					// Othercases: (e.g.undefined, for setField on observable object) etc. do nothing
 				}
 				return true;
 			},
@@ -824,7 +721,7 @@ $.extend({
 			unlink: function() {
 				var i, l, view, views = this.views;
 				if ( this.handler ) {
-					$( [this.data] ).unbind( "arrayChange", this.handler );
+					$([ this.data ]).unbind( "arrayChange", this.handler );
 				}
 				for ( i=0, l=views.length; i<l; i++ ) {
 					views[i].unlink();
