@@ -287,14 +287,14 @@ function link( map, from, to, parentView, prevNode, nextNode ) {
 // ============================
 // Helpers
 function ViewItem( node, path, parentView, parentElViews, index, map ) {
-	var view = CreateView( node, path, undefined, parentView, parentElViews, map );  // TODO Use apply( arguments ) to reduce code size - and elsewhere too.
+	var view = CreateView( node, path, undefined, parentView, parentElViews, index, map );  // TODO Use apply( arguments ) to reduce code size - and elsewhere too.
 	view.index = index;
 	view.data = parentView.data[ index ];
 	return view;
 }
 
-function View( node, path, template, parentView, parentElViews, data, map ) {
-	var view = CreateView( node, path, template, parentView, parentElViews, map );
+function View( node, path, template, parentView, parentElViews, data, index, map ) {
+	var view = CreateView( node, path, template, parentView, parentElViews, index, map );
 
 	if ( data === undefined && path && path !== "~" ) {
 		var func = new Function( "jQuery","$item", "var $=jQuery,$data=$item.data; with($data){ return " + path  + "}");
@@ -305,18 +305,18 @@ function View( node, path, template, parentView, parentElViews, data, map ) {
 }
 
 
-function CreateView( node, path, template, parentView, parentElViews, map ) {
+function CreateView( node, path, template, parentView, parentElViews, index, map ) {
 	// TODO Consider support for methods added to the public View prototype, and making the viewCreated event public.
 	// Also actions called on view will bubble up parent views looking for the an view that implements that named action.
 
 	// Allow instantiation without the 'new' keyword
 	if ( !this.refresh ) {
-		return new CreateView( node, path, template, parentView, parentElViews, map );
+		return new CreateView( node, path, template, parentView, parentElViews, index, map );
 	}
 	//unbindLinkedElem( node ); // FOR NOW only support creating views on html nodes that have NOT already been 'activated'
 //	use $.view( node ).unlink(); ???
 
-	var self = this;
+	var self = this, views;
 
 	$.extend( self, {
 		views: [],
@@ -329,9 +329,19 @@ function CreateView( node, path, template, parentView, parentElViews, map ) {
 		map: map
 	});
 	if ( parentView ) {
-		callback: parentView.callback,
+		self.callback = parentView.callback;
+		views = parentView.views;
 		parentElViews.push( self );
-		parentView.views.push( self );
+		if ( index == undefined )  {
+			views.push( self );
+		} else {
+			views.splice( index, 0, self );
+			viewCount = views.length;
+
+			while ( index < viewCount ) {
+				views[ index++ ].index++;
+			}
+		}
 	}
 }
 
@@ -403,7 +413,7 @@ function linkViews( map, node, depth, parent, nextNode, data, index ) {
 				// A tmpl open tag: <!--tmpl(path) name-->
 
 				node = linkViews( map, node, 0,
-					View( node, tokens[3], tokens[4], parentView, getParentElViews(), data, map )
+					View( node, tokens[3], tokens[4], parentView, getParentElViews(), data, index, map )
 				);
 			}
 		} else if ( viewDepth === 0 ) {
@@ -579,6 +589,8 @@ $.extend({
 					}
 				}
 				return;
+			} else if ( node.nodeType === 1 && (view = $.data( node, "_jsTopView" ))) {
+				return view;
 			}
 			node = node.previousSibling || node.parentNode;
 		}
@@ -659,7 +671,6 @@ $.extend({
 				return true;
 			},
 			refresh: function() {
-				// NOTE - Do not remove this since it is used to allow instantiation without the 'new' keyword
 				var html = $.render( this.tmpl, this.data ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
@@ -674,11 +685,10 @@ $.extend({
 				parentNode.removeChild( prevNode );
 				parentNode.removeChild( nextNode.previousSibling );
 				linkViews( this.map, this.prevNode, 0, this, this.nextNode, this.data, this.index );
-
-//				this.parent.add( this.index, [this.data], this.tmpl );
-//				this.parent.remove( this.index, 1 );
+				return this;
+				// ToDo look at allowing chained operations on updated view, with a way of getting to the updated nodes through and appropriate return value...
 			},
-			addItems: function( index, dataItems, tmpl ) { // TODO deal with adding at the beginning, or inserting, so there are following items that need to be dealt with
+			addItems: function( index, dataItems, tmpl ) {
 				var itemsCount = dataItems.length,
 					views = this.views;
 
@@ -692,6 +702,7 @@ $.extend({
 					parentNode.removeChild( nextNode.previousSibling );
 					linkViews( this.map, prevNode || this.prevNode, 0, this, nextNode, this.data, index );
 				}
+				return this;
 			},
 			removeItems: function( index, itemsCount ) {
 				if ( itemsCount ) {
@@ -717,6 +728,7 @@ $.extend({
 						views[ index++ ].index -= itemsCount;
 					}
 				}
+				return this;
 			},
 			unlink: function() {
 				var i, l, view, views = this.views;
@@ -726,6 +738,7 @@ $.extend({
 				for ( i=0, l=views.length; i<l; i++ ) {
 					views[i].unlink();
 				}
+				return this;
 			}
 		}
 	}

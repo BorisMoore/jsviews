@@ -138,7 +138,7 @@
 		}
 	}
 
-	$.each([ "pop", "push", "reverse", "shift", "sort", "splice", "move" ], function ( index, operation ) {
+	$.each([ "pop", "push", "reverse", "shift", "unshift", "sort", "splice", "move" ], function ( index, operation ) {
 		$.observable.array[ operation ] = function() {
 			var array = this._data;
 			changeArray( array, getEventArgs[ operation ].apply( array, arguments ), this.changes );
