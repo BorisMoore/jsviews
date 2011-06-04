@@ -1,8 +1,9 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -84,19 +85,18 @@ function hasContent( folder ) {
 }
 
 /* Render the folderTemplate with the "movies" data */
-$( "#foldersList" )
-	.html(
+$( "#foldersList" ).html(
 		$( "#folderTemplate" ).render( rootFolder )
 	)
 
 	/* Link rendered content to data, to provide interactive views */
-	.dataLink( rootFolder )
+	.link( rootFolder )
 
 	.delegate( ".toggle", "click", function() {
 		/* Toggle expanded property on data, then refresh rendering */
 		var view = $.view( this );
 		view.data.expanded = !view.data.expanded;
-		view.refresh();
+		view.render();
 	})
 	.delegate( ".folderItem", "click", function() {
 		alert( $.view( this ).data.description );
@@ -108,5 +108,3 @@ $( "#foldersList" )
 
 </body>
 </html>
-<script>
-

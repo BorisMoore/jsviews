@@ -1,8 +1,9 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 
@@ -98,16 +99,15 @@
 		};
 
 
-	$( "#tabsView" )
-		.html(
+	$( "#tabsView" ).html(
 			$( "#movieTemplate" ).render( movie )
 		)
-		.dataLink( movie )
+		.link( movie )
 		.delegate( ".tabsView th", "click", function() {
 			/* Set the selected tab index to this tab */
 			var view = $.view( this ).parent;
 			view.data.selectedTab = $(this).index();
-			view.refresh();
+			view.render();
 		});
 
 </script>

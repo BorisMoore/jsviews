@@ -3,7 +3,7 @@
  * Observable changes on arrays and objects
  * http://github.com/BorisMoore/jsviews
  */
-(function ($) {
+(function ( $, undefined ) {
 	$.observable = function( data ) {
 		return $.isArray( data )
 			? new ObservableArray( data )
@@ -49,33 +49,31 @@
 		extend: extend
 	}
 
-})( jQuery );
-
 // Observable Array extensions
-(function ($) {
+
 	var getEventArgs = {
 		pop: function() {
 			var length = this.length;
 			if ( length ) {
-				return { change: "remove", oldIndex: length - 1, oldItems: [ this[length - 1 ]]};
+				return { action: "remove", oldIndex: length - 1, oldItems: [ this[length - 1 ]]};
 			}
 		},
 		push: function() {
-			return { change: "add", newIndex: this.length, newItems: [ arguments[ 0 ]]};
+			return { action: "add", newIndex: this.length, newItems: [ arguments[ 0 ]]};
 		},
 		reverse: function() {
 			if ( this.length ) {
-				return { change: "reset" };
+				return { action: "reset" };
 			}
 		},
 		shift: function() {
 			if ( this.length ) {
-				return { change: "remove", oldIndex: 0, oldItems: [ this[ 0 ]]};
+				return { action: "remove", oldIndex: 0, oldItems: [ this[ 0 ]]};
 			}
 		},
 		sort: function() {
 			if ( this.length ) {
-				return { change: "reset" };
+				return { action: "reset" };
 			}
 		},
 		splice: function() {
@@ -86,33 +84,33 @@
 				elementsToAdd = args.slice( 2 );
 			if ( numToRemove <= 0 ) {
 				if ( elementsToAdd.length ) {
-					return { change: "add", newIndex: index, newItems: elementsToAdd };
+					return { action: "add", newIndex: index, newItems: elementsToAdd };
 				}
 			} else {
 				elementsToRemove = this.slice( index, index + numToRemove );
 				if ( elementsToAdd.length ) {
-					return { change: "move", oldIndex: index, oldItems: elementsToRemove, newIndex: index, newItems: elementsToAdd };
+					return { action: "move", oldIndex: index, oldItems: elementsToRemove, newIndex: index, newItems: elementsToAdd };
 				} else {
-					return { change: "remove", oldIndex: index, oldItems: elementsToRemove };
+					return { action: "remove", oldIndex: index, oldItems: elementsToRemove };
 				}
 			}
 		},
 		unshift: function() {
-			return { change: "add", newIndex: 0, newItems: [ arguments[ 0 ]]};
+			return { action: "add", newIndex: 0, newItems: [ arguments[ 0 ]]};
 		},
 		move: function() {
 			var fromIndex,
 				numToMove = arguments[ 1 ];
 			if ( numToMove > 0 ) {
 				fromIndex = arguments[ 0 ];
-				return { change: "move", oldIndex: fromIndex, oldItems: this.splice( fromIndex, numToMove ), newIndex: arguments[ 2 ]};
+				return { action: "move", oldIndex: fromIndex, oldItems: this.splice( fromIndex, numToMove ), newIndex: arguments[ 2 ]};
 			}
 		}
 	};
 
 	function changeArray( array, eventArgs, changes ) {
 		if ( eventArgs ) {
-			switch ( eventArgs.change ) {
+			switch ( eventArgs.action ) {
 				case "add":
 					[].splice.apply( array, [].concat( eventArgs.newIndex, 0, eventArgs.newItems ));
 				break;
@@ -152,27 +150,38 @@
 			return this;
 		}
 	});
-})(jQuery);
 
 // Observable Object extensions
-(function ($) {
+
 	$.observable.object.extend({
 		setField: function( path, value ) {
-			var object = this._data;
-			if ( path ) {
-				var args = [{ path: path, value: value }],
-					leaf = getLeafObject( object, path );
-
-				object = leaf[0], path = leaf[1];
-				if ( object && (object[ path ] !== value )) {
-					object[ path ] = value;
-					if ( this.changes ) {
-						this.changes.push( args );
-					} else {
-						$( object ).triggerHandler( "objectChange", args );
+			if ( value === undefined ) {
+				if ( typeof path === "object" ) {
+					for ( var key in path ) {
+						this.setField( key, path[ key ])
 					}
+					return this;
 				}
 			}
+			var object = this._data,
+				args = [{
+					action: "setField",
+					path: path,
+					value: value
+				}],
+				leaf = getLeafObject( object, path );
+
+			path = leaf[1];
+			leaf = leaf[0];
+			if ( leaf && (leaf[ path ] !== value )) {
+				leaf[ path ] = value;
+				if ( this.changes ) {
+					this.changes.push( args );
+				} else {
+					$( object ).triggerHandler( "objectChange", args );
+				}
+			}
+			return this;
 		}
 	});
 
@@ -191,8 +200,5 @@
 
 })(jQuery);
 
-// Consider these possible APIs:
-//		$.observable( developersGrid ).source( developers )
-//		$.observable( developersGrid ).set( "source", developers )
-//		$.setField( developersGrid, "source", developers );
-
+// Consider also this possible API:
+//		$.observable( object ).someFieldName( value )
