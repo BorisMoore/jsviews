@@ -20,8 +20,11 @@
 <!--=================== Demo Section ===================-->
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
-	<tr>
-		<td data-getfrom="[Title]"></td>
+	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index])">
+		<td>
+			<span data-getfrom="$view[index]"></span>:
+			<span data-getfrom="[Title]"></span>
+		</td>
 		<td>
 			{{tmpl(Languages) "#languageTemplate"}}
 		</td>
@@ -78,7 +81,8 @@
 		}
 	];
 
-	$( "#movieList" ).html(
+	$( "#movieList" )
+		.html(
 			$( "#movieTemplate" ).render( movies )
 		)
 		.link( movies )
@@ -92,6 +96,10 @@
 		});
 
 	$( "#movieDetail" )
+		.html(
+			$( "#detailViewTemplate" ).render([])
+		)
+		.link([])
 		.delegate( "#addLanguageBtn", "click", function () {
 			$.observable( $.view( this ).data.Languages ).push({
 				Name: "NewLanguage"
@@ -101,7 +109,6 @@
 			$.observable( app.selectedItem.data.Languages ).splice( $.view( this ).index, 1 );
 			return false;
 		});
-
 
 	$( "#addMovieBtn" ).click( function () {
 		$.observable( movies ).push({
@@ -115,6 +122,17 @@
 		select( $("#movieList tr:last").view());
 	});
 
+	$.link( app, function( event, args ) {
+		if ( args.path === "selectedItem" ) {
+			$( "#movieDetail" )
+				.link( args.value ? [ args.value.data ] : [] );
+		}
+	});
+
+	function bgColor( index ) {
+		return index%2 ? "#fdfdfe" : "#efeff2";
+	}
+
 	function select( view ) {
 		if ( app.selectedItem != view ) {
 			if ( app.selectedItem ) {
@@ -127,52 +145,11 @@
 		}
 	}
 
-//	$.link( app, function( event, args ) {
-//		if ( args.path === "selectedItem" ) {
-//			if ( args.value ) {
-//				$( "#movieDetail" )
-////					.unlink( selectedData )
-//					.html(
-//						$( "#detailViewTemplate" ).render( selectedData )
-//					)
-////					.link( args.value.data );
-//					selectedData = args.value.data;
-//			} else {
-//				$( "#movieDetail" )
-//					.unlink( selectedData )
-//					.empty();
-//				selectedData = null;
-//			}
-//		}
-//		return false;
-//	});
-
-
-	$.link( app, function( event, args ) {
-		if ( args.path === "selectedItem" ) {
-			if ( args.value ) {
-				var selectedData = args.value.data;
-				$( "#movieDetail" )
-					.unlink()
-					.html(
-						$( "#detailViewTemplate" ).render( selectedData )
-					)
-					.link( selectedData );
-			} else {
-				$( "#movieDetail" )
-				.unlink()
-				.empty();
-			}
-		}
-		return false;
-	});
-
 	function deleteLastLanguage() {
 		if ( movies.length ) {
 			$.observable( movies[ movies.length - 1 ].Languages ).pop();
 		}
 	}
-
 </script>
 
 <!--================ End of Demo Section ================-->

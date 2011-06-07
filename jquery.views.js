@@ -8,7 +8,7 @@
 /// <reference path="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5-vsdoc.js" />
 /// <reference path="../jquery-1.5.2.js" />
 (function($, undefined) {
-// var TEST = { total: 0, change:0, arrayChange: 0, objectChange:0 };
+// var TEST_EVENTS = { total:0, change:0, arrayChange:0, objectChange:0 };
 var topView, settings, decl,
 	fnSetters = {
 		value: "val",
@@ -169,33 +169,8 @@ function View( node, path, template, parentView, parentElViews, callback, data )
 			views.push( self );
 		}
 	}
-	if ( $.isArray( data ))  {
-		self._onArrayChange = addLink( "arrayChange", data, { target: self, cb: callback });
-	}
 	self.data = data;
-}
-
-
-function eachParam( paramString, context, cb ) {
-	if ( paramString ) {
-		var param, args, i, fn,
-			parenDepth = 0,
-			params = paramString //.replace( /[\r\t\n]/g, "" )
-			.replace( /(\s*\,\s*)|(\(\s*)|(\s*\))/g, function( all, comma, leftParen, rightParen, index ) {
-				if ( comma ) {
-					return parenDepth ? all : "\r";
-				}
-				if ( leftParen ) {
-					return parenDepth++ ? all : "\t";
-				}
-				return --parenDepth ? all : "\t";
-			}).split( "\r" );
-
-		i = params.length;
-		while ( i-- ) {
-			cb.apply( context, params[ i ].split( "\t" ));
-		}
-	}
+	setArrayChangeLink( self );
 }
 
 function createNestedViews( node, parent, callback, nextNode, depth, data, prevNode, index ) {
@@ -227,7 +202,7 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 		link( fromObj, node, callback, addedLink );
 	}
 
-	var tokens, tmplName, parentElViews, get, from,
+	var tokens, tmplName, parentElViews, get, from, view, existing,
 		unlink = callback === false,
 		currentView = parent,
 		viewDepth = depth;
@@ -238,6 +213,7 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 
 	if ( !prevNode && node.nodeType === 1 ) {
 		if ( viewDepth++ === 0 ) {
+			// Add top-level element nodes to view.nodes
 			currentView.nodes.push( node );
 		}
 		eachParam( node.getAttribute( settings.getFromAttr ), "getFrom", addFromLink );
@@ -268,94 +244,269 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 				parentElViews = parentElViews || jsViewsData( node.parentNode, "view", true );
 				if ( tokens[2] ) {
 					// An item open tag: <!--item-->
+//					view = $.view( node );
+//					if ( view && view.prevNode === node ) {
+//						if ( view.index < currentView.data.length ) {
+//							existing = view;
+//							view.data = currentView.data[ view.index ];
+//						} else {
+//							debugger;
+//						}
+//					}
+//					currentView = existing || new View( node, index++, undefined, currentView, parentElViews, callback );
 					currentView = new View( node, index++, undefined, currentView, parentElViews, callback );
 				} else {
 					// A tmpl open tag: <!--tmpl(path) name-->
 
-					node = createNestedViews( node, new View( node, tokens[3], tokens[4], currentView, parentElViews, callback, data ), callback, nextNode, 0 );
+					view = $.view( node );
+					if ( view && view.prevNode === node ) {
+						if ( view.data === data ) {
+							existing = view.nextNode;
+						} else {
+							view.data = data;
+							view.render();
+							return view.nextNode;
+						}
+					} else {
+						view = new View( node, tokens[3], tokens[4], currentView, parentElViews, callback, data );
+					}
+					node = existing || createNestedViews( node, view, callback, nextNode, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
+			// Add top-level non-element nodes to view.nodes
 			currentView.nodes.push( node );
 		}
-		node = node.nextSibling;
+			node = node.nextSibling;
 	}
 }
 
-// TODO clean up relationship between createNestedViews and removeNestedViews - with more shared code...
-function removeNestedViews( node, parent, index ) {
-	function removeFromLink( path, params ) {
-		var fromObj = parent.data;
-
-		path = path.split(/\:\s*/);
-		if ( path[ 1 ] ) {
-			attr = path[ 0 ];
-			path[ 0 ] = path[ 1 ];
-		}
-		path = path[ 0 ];
-		if ( params ) {
-			convert = path;
-			path = params;
-		}
-		var addedLink = {
-			target: node
-//			,
-//			toAttr: attr,
-//			convert: convert
-		};
-		path = path.split(/\[|\]/);
-		if ( path[ 1 ]) {
-			fromObj = path[ 0 ] === "$view" ? currentView : window[ path[ 0 ]] || fromObj;
-			path[ 0 ] = path[ 1 ];
-		}
-		addedLink.from = path[ 0 ];
-		link( fromObj, node, false, addedLink );
-	}
-
-	var tokens, tmplName, parentElViews, get, from,
-		currentView = parent;
-
-	index = index || 0;
-
-	if ( node.nodeType === 1 ) {
-		eachParam( node.getAttribute( settings.getFromAttr ), undefined, removeFromLink );
-		eachParam( node.getAttribute( settings.linkFromAttr ), undefined, removeFromLink );
-		node = node.firstChild;
+function link( from, to, callback, links, prevNode ) {
+	from = wrapObject( from );
+	if ( $.isFunction( to )) {
+			callback = to;
+			to = undefined;
 	} else {
-		node = node.nextSibling;
+		to = wrapObject( to );
 	}
 
-	while ( node ) {
-		if ( node.nodeType === 1 ) {
-			removeNestedViews( node, currentView );
-		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
-			if ( tokens[1]) {
-				if ( tokens[2] ) {
-					// An item close tag: <!--/item-->
-					currentView = parent;
+	var method, link, addedLink, path, isFromHtml,
+		targetElems = to,
+		self = this,
+		addedLinks = [],
+		fromOb = from[0],
+		i = arguments.length - 1;
 
-				} else {
-					// A tmpl close tag: <!--/tmpl-->
-					currentView.parent.removeViews( currentView.index, 1, true );
-					return node;
+	if ( !callback && i > 2 && $.isFunction( arguments[i] )) {
+		callback = arguments[i];
+		arguments[i] = undefined;
+	}
+
+	if ( !fromOb ) {
+		return;
+	}
+	isFromHtml = fromOb.nodeType;
+	links = (links ? ($.isArray( links ) ? links : [ links ]) : []);
+	i = links.length;
+
+	if ( prevNode ) {
+
+		// DECLARATIVE DATA LINKING
+
+		if ( isFromHtml ) {
+			// Linking HTML to object or array
+			from.each( function () {
+				var currentLinkedData = jsViewsData( this, "to" );
+				if ( currentLinkedData.length ) {
+					currentLinkedData = currentLinkedData[0];
+					if ( currentLinkedData === to[0]) {
+						return;
+					}
+					removeLinkFromNode( this, { target: currentLinkedData, cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]});
 				}
-			} else {
-				if ( tokens[2] ) {
-					// An item open tag: <!--item-->
-					currentView = currentView.views[ index++ ]
-				} else {
-					// A tmpl open tag: <!--tmpl(path) name-->
-					node = removeNestedViews( node, $.view( node ), 0 );
+				addLinkFromNode( this, { target: to[0], cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]});
+			});
+			return;
+		}
+		// Linking object or array to HTML or to another object or array
+		to.each( function() {
+			createNestedViews( this, $.view( this ), callback, undefined, undefined, fromOb );
+		});
+		return;
+	}
+	if ( isFromHtml ) {
+
+		// EXPLICIT DATA LINKING FROM HTML
+
+		if ( i || callback ) {
+			from.each( function () {
+				addLinkFromNode( this, { target: to[0], cb: callback, links: links });
+			});
+		}
+		return;
+	}
+	if ( i ) {
+
+		// EXPLICIT DATA LINKING TO HTML
+
+		while ( i-- ) {
+			link = links[ i ];
+			path = link.to;
+			if ( path ) {
+				targetElems = to.find( path ).add( $( this ).filter( path )); // Use future findFilter method in jQuery 1.7?
+			}
+			targetElems.each( function() {
+				addedLink = $.extend( { source: fromOb, target: this, cb: callback }, link );
+				addedLink.to = undefined;
+				addedLinks.push( addedLink );
+			});
+		}
+		method = onDataChange.objectChange;
+		i = addedLinks.length;
+		while ( i-- ) {
+			addedLink = addedLinks[ i ];
+			// If 'from' path points to a field of a descendant 'leaf object',
+			// link not only from leaf object, but also from intermediate objects
+
+			var innerOb = fromOb,
+				get = addedLink.getFrom
+				innerPath = (get||addedLink.from).split("."),
+				innerLinks = [];
+
+			while ( innerPath.length > 1 ) {
+				innerOb = innerOb[ innerPath.shift() ];
+				if ( innerOb ) {
+					addLinkToNode( innerOb, $.extend({ inner: innerPath.join(".") }, addedLink ));
 				}
 			}
+			addLinkToNode( fromOb, addedLink, get );
 		}
-		node = node.nextSibling;
+		return;
+	}
+	if ( callback ) {
+		// Case of providing callback but no links or no to
+		addLinkToNode( fromOb, { source: fromOb, target: to, cb: callback });
+	}
+}
+
+function addLinkToNode( source, context, get ) { // TODO reduce code size by shared code in the add/remove/set link functions
+	var target = context.target,
+		handler = function() {
+			onDataChange.objectChange.apply( context, arguments );
+		};
+
+	// Store handlers for unlinking
+	jsViewsData( target, "from", true ).push({ source: source, handler: handler, inner: context.inner });
+	$( source ).bind( "objectChange", handler );
+//	$( "#console" ).append( ++TEST_EVENTS.total + " + objectChange " + ++(TEST_EVENTS.objectChange) + "<br/>");
+	if ( get ) {
+		handler({ target: source });
+	}
+	return handler;
+}
+
+function addLinkFromNode( source, context ) {
+	var target = context.target,
+		handler = function() {
+			onDataChange.change.apply( context, arguments );
+		};
+
+	// Store handlers for unlinking
+	jsViewsData( source, "to", true ).push( target ); // Store for unlinking
+	$( source ).bind( "change", handler );
+//	$( "#console" ).append( ++TEST_EVENTS.total + " + change " + ++(TEST_EVENTS.change) + "<br/>");
+	return handler;
+}
+
+function removeLinkFromNode( source, context ) {
+	var links = jsViewsData( source, "to" ),
+		l = links.length;
+	while( l-- ) {
+		if ( links[ l ] === context.target ) {
+			$( source ).unbind( "change" );
+//	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
+			links.splice( l, 1 );
+		}
+	}
+}
+
+function setArrayChangeLink( view ) {
+	var handler,
+		data = view.data,
+		onArrayChange = view._onArrayChange;
+
+	if ( onArrayChange ) {
+		if ( onArrayChange[ 1 ] === data ) {
+			return;
+		}
+		$([ onArrayChange[ 1 ]]).unbind( "arrayChange", onArrayChange[ 0 ]);
+//	$( "#console" ).append( --TEST_EVENTS.total + " - arrayChange " + --(TEST_EVENTS.arrayChange) + "<br/>");
+	}
+
+	if ( $.isArray( data )) {
+		handler = function() {
+			onDataChange.arrayChange.apply( { target: view, cb: view.callback }, arguments );
+		};
+		$([ data ]).bind( "arrayChange", handler );
+		view._onArrayChange = [ handler, data ];
+//	$( "#console" ).append( ++TEST_EVENTS.total + " + arrayChange " + ++(TEST_EVENTS.arrayChange) + "<br/>");
+	}
+}
+
+function clean( i, el ) { // TODO optimize for perf
+	var link, links, l, views, parentView, view;
+
+	if ( jsViewsData( el, "to" ).length ) {
+		$( el ).unbind( "change" );
+//	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
+	}
+
+	links = jsViewsData( el, "from" ),
+	l = links.length;
+
+	while( l-- ) {
+		link = links[ l ];
+		$( link.source ).unbind( "objectChange", link.handler );
+//	$( "#console" ).append( --TEST_EVENTS.total + " - objectChange " + --(TEST_EVENTS.objectChange) + "<br/>");
+	}
+
+	views = jsViewsData( el, "view" );
+	if ( l = views.length ) {
+		parentView = $.view( el );
+		while( l-- ) {
+			view = views[ l ];
+			if ( view.parent === parentView ) {
+				parentView.removeViews( view.index, 1 );  // NO - ONLY remove view if its top-level nodes are all
+			}
+		}
 	}
 }
 
 function jsViewsData( el, type, create ) {
 	var jqData = $.data( el, jsvData ) || create && $.data( el, jsvData, { "view": [], "from": [], "to": [] });
 	return jqData ? jqData[ type ] : [];
+}
+
+function eachParam( paramString, context, cb ) {
+	if ( paramString ) {
+		var param, args, i, fn,
+			parenDepth = 0,
+			params = paramString //.replace( /[\r\t\n]/g, "" )
+			.replace( /(\s*\,\s*)|(\(\s*)|(\s*\))/g, function( all, comma, leftParen, rightParen, index ) {
+				if ( comma ) {
+					return parenDepth ? all : "\r";
+				}
+				if ( leftParen ) {
+					return parenDepth++ ? all : "\t";
+				}
+				return --parenDepth ? all : "\t";
+			}).split( "\r" );
+
+		i = params.length;
+		while ( i-- ) {
+			cb.apply( context, params[ i ].split( "\t" ));
+		}
+	}
 }
 
 function wrapObject( object ) {
@@ -381,192 +532,9 @@ function getLeafObject( object, path ) {
 		while ( object && parts.length ) {
 			object = object[ parts.shift() ];
 		}
-		return [ object, path ];
+		return [ object, path ];rray
 	}
 	return [];
-}
-
-function addLink( eventType, source, context, remove, get ) {
-	if ( !remove ) {
-		var target = context.target,
-			handler = function() {
-				onDataChange[ eventType ].apply( context, arguments );
-			};
-
-		jsViewsData( target, "from", true ).push({ source: source, handler: handler, inner: context.inner });
-
-		// Store handlers for unlinking and for calling from pushValues.
-		jsViewsData( source, "to", true ).push( target ); // Store for unlinking
-		wrapObject( source ).bind( eventType, handler );
-//		$( "#console" ).append( ++TEST.total + " + " + eventType + " " + ++(TEST[eventType]) + "<br/>");
-		if ( get ) {
-			handler({ target: source });
-		}
-		return handler;
-	}
-	unlink( source, context.target );
-}
-
-function link( from, to, callback, links, prevNode ) {
-	from = wrapObject( from );
-	if ( $.isFunction( to )) {
-			callback = to;
-			to = undefined;
-	} else {
-		to = wrapObject( to );
-	}
-
-	var method, link, addedLink, path, isFromHtml,
-		unlink = callback === false;
-		targetElems = to,
-		eventType = "objectChange",
-		addedLinks = [],
-		fromOb = from[0],
-		i = arguments.length - 1;
-
-	if ( !callback && i > 2 && $.isFunction( arguments[i] )) {
-		callback = arguments[i];
-		arguments[i] = undefined;
-	}
-
-	if ( !fromOb ) {
-		return;
-	}
-	isFromHtml = fromOb.nodeType;
-	links = (links ? ($.isArray( links ) ? links : [ links ]) : []);
-	i = links.length;
-
-	if ( prevNode ) {
-
-		// DECLARATIVE DATA LINKING
-
-		if ( isFromHtml ) {
-			// Linking HTML to object or array
-			from.each( function () {
-				addLink( "change", this, { target: to[0], cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]}, unlink );
-			});
-//						this.linkTo = [ this, { target: fromOb, cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]}];
-		} else {
-			// Linking object or array to HTML or to another object or array
-			to.each( function() {
-				if ( unlink ) {
-					removeNestedViews( this, $.view( this ), fromOb );
-				} else {
-					createNestedViews( this, $.view( this ), callback, undefined, undefined, fromOb );
-				}
-			});
-		}
-	} else if ( isFromHtml ) {
-
-		// EXPLICIT DATA LINKING FROM HTML
-
-		if ( i || callback ) {
-			from.each( function () {
-				addLink( "change", this, { target: to[0], cb: callback, links: links }, unlink );
-			});
-		}
-
-	} else if ( i ) {
-
-		// EXPLICIT DATA LINKING TO HTML
-
-		while ( i-- ) {
-			link = links[ i ];
-			path = link.to;
-			if ( path ) {
-				targetElems = to.find( path ).add( $( this ).filter( path )); // Use future findFilter method in jQuery 1.7?
-			}
-			targetElems.each( function() {
-				addedLink = $.extend( { source: fromOb, target: this, cb: callback }, link );
-				addedLink.to = undefined;
-				addedLinks.push( addedLink );
-			});
-		}
-		method = onDataChange[ eventType ];
-		i = addedLinks.length;
-		while ( i-- ) {
-			addedLink = addedLinks[ i ];
-			// If 'from' path points to a field of a descendant 'leaf object',
-			// link not only from leaf object, but also from intermediate objects
-
-			var innerOb = fromOb,
-				get = addedLink.getFrom
-				innerPath = (get||addedLink.from).split("."),
-				innerLinks = [];
-
-			while ( innerPath.length > 1 ) {
-				innerOb = innerOb[ innerPath.shift() ];
-				if ( innerOb ) {
-					addLink( eventType, innerOb, $.extend({ inner: innerPath.join(".") }, addedLink ), unlink );
-				}
-			}
-			addLink( eventType, fromOb, addedLink, unlink, get );
-		}
-	} else if ( callback ) {
-		// Case of providing callback but no links or no to
-		addLink( eventType, fromOb, { source: fromOb, target: to, cb: callback }, unlink );
-	}
-}
-
-function unlink( source, target ) {
-	var link, from, to, innerLink, innerLinks, linkFroms, i, j, l, linkTos, views, parentView, view;
-
-	if ( target && target.nodeType ) {
-		linkFroms = jsViewsData( target, "from" ),
-		l = linkFroms.length;
-
-		while( l-- ) {
-			link = linkFroms[ l ];
-			if ( !source || link.source === source ) {
-				wrapObject( from = link.source ).unbind( "objectChange", link.handler );
-//	$( "#console" ).append( --TEST.total + " - objectChange " + --(TEST.objectChange) + "<br/>");
-				linkFroms.splice( l, 1 );
-				linkTos = jsViewsData( from, "to" ),
-				i = linkTos.length;
-				while( i-- ) {
-					if ( linkTos[ i ] === target ) {
-						linkTos.splice( i, 1 );
-						// break; TODO verify whether to allow more than one link with same source and target
-					}
-				}
-			}
-		}
-		views = jsViewsData( target, "view" );
-		if ( l = views.length ) {
-			parentView = $.view( target );
-			while( l-- ) {
-				view = views[ l ];
-				if ( view.parent === parentView ) {
-					parentView.removeViews( view.index, 1 );
-				}
-			}
-		}
-	}
-	if ( source && source.nodeType ) {
-		linkTos = jsViewsData( source, "to" ),
-		l = linkTos.length;
-		while( l-- ) {
-			to = linkTos[ l ];
-			if ( !target || to === target ) {
-				wrapObject( source ).unbind( "change" );
-//	$( "#console" ).append( --TEST.total + " - change " + --(TEST.change) + "<br/>");
-				linkTos.splice( l, 1 );
-				linkFroms = jsViewsData( to, "from" ),
-				i = linkFroms.length;
-				while( i-- ) {
-					if ( linkFroms[ i ].source === source ) {
-						linkFroms.splice( i, 1 );
-						// break; TODO verify whether to allow more than one link with same source and target
-					}
-				}
-			}
-		}
-	}
-}
-
-function clean( i, el ) {
-	unlink( el );
-	unlink( undefined, el );
 }
 
 // ============================
@@ -620,7 +588,7 @@ $.extend({
 		if ( topView && !topView.views.length ) {
 			ret = topView; // Perf optimization for common case
 		} else {
-			// Step up through parents to find an element which is a views container, or if non found, create the top-level view for the page
+			// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
 			while( !(parentElViews = jsViewsData( parentNode = node.parentNode || topNode, "view" )).length ) {
 				if ( !parentNode || node === topNode ) {
 					jsViewsData( topNode.parentNode, "view", true ).push( ret = topView = new View());
@@ -727,7 +695,7 @@ $.extend({
 				}
 			},
 			render: function() {
-				var html = $.render( this.tmpl, this.data ),
+				var arrayChange, html = $.render( this.tmpl, this.data ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
 					parentNode = prevNode.parentNode;
@@ -738,7 +706,8 @@ $.extend({
 				$( prevNode ).after( html );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, undefined, nextNode, 0, undefined, prevNode, this.index );
+				createNestedViews( parentNode, this, undefined, nextNode, 0, undefined, prevNode, 0); //this.index
+				setArrayChangeLink( this );
 				return this;
 			},
 			addViews: function( index, dataItems, tmpl ) {
@@ -791,10 +760,8 @@ $.extend({
 							}
 							$( nodes ).remove();
 						}
-						if ( view._onArrayChange ) {
-							wrapObject( view.data ).unbind( "arrayChange", view._onArrayChange );
-//	$( "#console" ).append( --TEST.total + " - arrayChange " + --(TEST.arrayChange) + "<br/>");
-						}
+						view.data = undefined;
+						setArrayChangeLink( view );
 					}
 					views.splice( index, itemsCount );
 					viewCount = views.length;
@@ -833,21 +800,23 @@ $.fn.extend({
 		// Supported signatures:
 		//    link( data );
 		//    link( data, callback );
-		link( data, this, callback, undefined, true );
-		link( this, data, callback, undefined, true );
-		return this;
-	},
-	unlink: function( data ) {
 		if ( data ) {
-			link( data, this, false, undefined, true );
-			link( this, data, false, undefined, true );
-		} else {
-			this.each( clean );
+			link( data, this, callback, undefined, true );
+			link( this, data, callback, undefined, true );
 		}
 		return this;
-
-		// TODO - clean up the unlinking code, and consider unlinkFrom and unlinkTo
 	},
+//	unlink: function( data ) {  // TODO provide unlink methods
+//		if ( data ) {
+//			link( data, this, false, undefined, true );
+//			link( this, data, false, undefined, true );
+//		} else {
+//			this.each( clean );
+//		}
+//		return this;
+
+//		// TODO - clean up the unlinking code, and consider unlinkFrom and unlinkTo
+//	},
 	linkFrom: function( sourceData, links, callback ) {
 		// Supported signatures:
 		//    linkFrom( sourceData, links );
