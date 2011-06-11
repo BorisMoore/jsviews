@@ -136,10 +136,10 @@
 	function select( view ) {
 		if ( app.selectedItem != view ) {
 			if ( app.selectedItem ) {
-				$( app.selectedItem.nodes ).removeClass( "selected");
+				$( app.selectedItem.nodes ).css( "backgroundColor", bgColor( app.selectedItem.index ));
 			}
 			if (view) {
-				$( view.nodes ).addClass( "selected");
+				$( view.nodes ).css( "backgroundColor", "yellow" );
 			}
 			$.observable( app ).setField( "selectedItem", view );
 		}

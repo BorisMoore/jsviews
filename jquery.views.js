@@ -20,7 +20,7 @@ var topView, settings, decl,
 
 	onDataChange = {
 		change: function( ev ) {
-			var setter, cancel, fromAttr, toPath, sourceValue, link, cnvt, view, reg,
+			var setter, cancel, fromAttr, toPath, sourceValue, link, cnvt, cnvtParams, view, reg,
 				target = this.target,
 				source = ev.target,
 				$source = $( source ),
@@ -60,12 +60,16 @@ var topView, settings, decl,
 									}
 									toPath = path;
 									cnvt =  convert || link.convert;
+									cnvtParams = convertParams; 
 								});
 							}
 						}
-						if ( cnvt = window[ cnvt ]) {
+						if ( target[ cnvt ]) {
 							// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
-							sourceValue = cnvt( sourceValue, source, path, target, convertParams );
+							sourceValue = target[ cnvt].call( target, sourceValue, source, toPath, target, cnvtParams );
+						} else if ( cnvt = window[ cnvt ] ) {
+							// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
+							sourceValue = cnvt( sourceValue, source, toPath, target, cnvtParams );
 						}
 						if ( target ) {
 							$.observable( target ).setField( toPath, sourceValue );
@@ -97,8 +101,12 @@ var topView, settings, decl,
 
 				// If the eventArgs is specified, then this came from a real field change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
-				if ( convert && ($.isFunction( convert ) || (convert = window[ link.convert ]))) {
-					sourceValue = convert.call( link, sourceValue, source, sourcePath, target );
+				if ( convert && ($.isFunction( convert ) || (convert = (source[ link.convert ] || window[ link.convert ])))) {
+					if ( convert === source[ link.convert ] ) {
+						sourceValue = convert.call( source );
+					} else {
+						sourceValue = convert.call( link, sourceValue, source, sourcePath, target );
+					}
 				}
 				if ( !attr ) {
 					// Merge in the default attribute bindings for this target element
