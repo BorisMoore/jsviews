@@ -101,7 +101,7 @@ var topView, settings, decl,
 
 				// If the eventArgs is specified, then this came from a real field change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
-				if ( convert && ($.isFunction( convert ) || (convert = (source[ link.convert ] || window[ link.convert ])))) {
+					if ( convert && ($.isFunction( convert ) || (convert = (source[ link.convert ] || window[ link.convert ])))) {
 					if ( convert === source[ link.convert ] ) {
 						sourceValue = convert.call( source );
 					} else {
@@ -523,10 +523,12 @@ function wrapObject( object ) {
 
 function getField( object, path ) { // Alternative simpler implementation would use eval
 	if ( object && path ) {
-		var leaf = getLeafObject( object, path );
+		var field,
+			leaf = getLeafObject( object, path );
 		object = leaf[0];
 		if ( object ) {
-			return object[ leaf[1] ];
+			field = object[ leaf[1] ]
+			return $.isFunction( field ) ? field.call( object ) : field;
 		}
 	}
 	return object;

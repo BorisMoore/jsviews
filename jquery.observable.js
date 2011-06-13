@@ -163,24 +163,46 @@
 					return this;
 				}
 			}
-			var object = this._data,
-				args = [{
-					action: "setField",
-					path: path,
-					value: value
-				}],
+			var args, setter, field 
+				object = this._data,
 				leaf = getLeafObject( object, path );
 
 			path = leaf[1];
 			leaf = leaf[0];
-			if ( leaf && (leaf[ path ] !== value )) {
-				leaf[ path ] = value;
-				if ( this.changes ) {
-					this.changes.push( args );
-				} else {
-					$( object ).triggerHandler( "objectChange", args );
+			
+			if ( leaf ) {
+				field = leaf[ path ];
+				if ( $.isFunction( field )) {
+					setter = field;
+					field = field.apply( leaf );
+				}
+				if ( field !== value ) {
+					if ( setter ) {
+						setter.call( leaf, value );
+						value = setter.call( leaf );
+					} else {
+						leaf[ path ] = value;
+					}
+					args = [{
+						action: "setField",
+						path: path,
+						value: value
+					}]
+					if ( this.changes ) {
+						this.changes.push( args );
+					} else {
+						$( object ).triggerHandler( "objectChange", args );
+					}
 				}
 			}
+//			if ( leaf && (leaf[ path ] !== value )) {
+//				leaf[ path ] = value;
+//				if ( this.changes ) {
+//					this.changes.push( args );
+//				} else {
+//					$( object ).triggerHandler( "objectChange", args );
+//				}
+//			}
 			return this;
 		}
 	});
