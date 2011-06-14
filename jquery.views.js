@@ -37,7 +37,7 @@ var topView, settings, decl,
 						fromAttr = fromAttr ? fromAttr.from.fromAttr : "text";
 					}
 					setter = fnSetters[ fromAttr ];
-					sourceValue = setter ? $source[setter]() : $source.attr( fromAttr );
+					sourceValue = $.isFunction( fromAttr ) ? fromAttr( source ) : setter ? $source[setter]() : $source.attr( fromAttr );
 
 					if ((!this.cb || !(cancel = this.cb( ev ) === false )) && sourceValue !== undefined ) {
 						// Find toPath using link.to, or if not specified, use declarative specification
@@ -547,6 +547,10 @@ function getLeafObject( object, path ) {
 	return [];
 }
 
+function inputAttrib( elem ) { 
+	return elem.type === "checkbox" ? elem.checked : $( elem ).val;
+}
+
 // ============================
 
 var oldCleanData = $.cleanData;
@@ -635,7 +639,7 @@ $.extend({
 		merge: {
 			input: {
 				from: {
-					fromAttr: "value"
+					fromAttr: inputAttrib
 				},
 				to: {
 					toAttr: "value"

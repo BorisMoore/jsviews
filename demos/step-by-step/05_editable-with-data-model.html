@@ -24,6 +24,7 @@
 		<td>
 			<span data-getfrom="$view[index]"></span>:
 			<span data-getfrom="[Title]"></span>
+			<span data-getfrom="html: specialOrderText([SpecialOrder])"></span>
 		</td>
 		<td>
 			{{tmpl(Languages()) "#languageTemplate"}}
@@ -45,7 +46,12 @@
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
 	<div>
 		<div class="title">Title:</div>
-		<div><input data-getfrom="[Title]" data-to="[Title]"/></div>
+		<div> 
+			Special Order: <input type="checkbox" class="special" data-getfrom="checked: [SpecialOrder]" data-to="[SpecialOrder]" />
+		</div>
+		<div>
+			<input data-getfrom="[Title]" data-to="[Title]" />
+		</div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>{{tmpl(Languages()) "#languageEditTemplate"}}</div>
 	</div>
@@ -75,7 +81,8 @@
 		}   
 	}
  
-	function Movie( title, languages ) {
+	function Movie( title, languages, specialOrder ) {
+		this._specialOrder = !!specialOrder;
 		this._title = title;
 		this._languages = languages;
 	}
@@ -86,6 +93,13 @@
 				return this._title;
 			} else {
 				this._title = title;
+			}
+		},
+		SpecialOrder: function ( value ) {
+			if ( value === undefined ) {
+				return this._specialOrder;
+			} else {
+				this._specialOrder = value;
 			}
 		},
 		Languages: function () {
@@ -114,7 +128,7 @@
 				new Language( "French" ),
 				new Language( "German" ),
 				new Language( "Spanish" )
-			])
+			], true )
 		];
 
 	$( "#movieList" )
@@ -145,7 +159,7 @@
 		});
 
 	$( "#addMovieBtn" ).click( function () {
-	    $.observable( movies ).push(new Movie( "NewTitle", [new Language( "NewLanguage" )]));
+		$.observable( movies ).push(new Movie( "NewTitle", [new Language( "NewLanguage" )]));
 	
 		// Set selection on the added item
 		select( $("#movieList tr:last").view());
@@ -157,6 +171,10 @@
 				.link( args.value ? [ args.value.data ] : [] );
 		}
 	});
+
+	function specialOrderText( specialOrder ) {
+		return specialOrder ? "(<b>special</b>)" : "(<i>regular<i>)";
+	}
 
 	function bgColor( index ) {
 		return index%2 ? "#fdfdfe" : "#efeff2";
@@ -186,7 +204,7 @@
 <!--Console-->
 
 <script id="showData" type="text/x-jquery-tmpl">
-	<div><b>Movie:</b> ${$data.Title()} <b>Languages:</b> {{tmpl($data.Languages()) "#showLanguage"}}</div>
+	<div><b>Movie:</b> ${$data.Title()} ${$data.SpecialOrder()} <b>Languages:</b> {{tmpl($data.Languages()) "#showLanguage"}}</div>
 </script>
 
 <script id="showLanguage" type="text/x-jquery-tmpl">
