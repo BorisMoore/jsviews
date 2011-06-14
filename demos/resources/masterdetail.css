@@ -20,3 +20,4 @@ button { float: left; }
 #addLanguageBtn, #addMovieBtn { float: right; text-decoration: underline; font-style: italic; color: #1010c0; cursor:pointer; padding: 0 5px 0 15px; }
 #console { float: left; clear:both; }
 .consoleButtons { display:none; }
+#movieDetail input.special { float:none; padding: inherit; width:inherit; margin: 3px; border: inherit; }
