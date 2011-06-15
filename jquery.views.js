@@ -548,7 +548,7 @@ function getLeafObject( object, path ) {
 }
 
 function inputAttrib( elem ) { 
-	return elem.type === "checkbox" ? elem.checked : $( elem ).val;
+	return elem.type === "checkbox" ? elem.checked : $( elem ).val();
 }
 
 // ============================
