@@ -101,7 +101,7 @@ var topView, settings, decl,
 
 				// If the eventArgs is specified, then this came from a real field change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
-					if ( convert && ($.isFunction( convert ) || (convert = (source[ link.convert ] || window[ link.convert ])))) {
+				if ( convert && ($.isFunction( convert ) || (convert = (source[ link.convert ] || window[ link.convert ])))) {
 					if ( convert === source[ link.convert ] ) {
 						sourceValue = convert.call( source );
 					} else {
@@ -548,7 +548,7 @@ function getLeafObject( object, path ) {
 }
 
 function inputAttrib( elem ) { 
-	return elem.type === "checkbox" ? elem.checked : $( elem ).val;
+	return elem.type === "checkbox" ? elem.checked : $( elem ).val();
 }
 
 // ============================
