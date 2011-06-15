@@ -15,9 +15,10 @@ table td { padding: 3px; margin: 3px; }
 #movieDetail { float: left; margin-left: 10px; }
 #movieDetail { font-weight: bold; font-style: italic; color:#009; }
 #movieDetail div { float: left; clear: both; }
+#movieDetail input.special { float:none; padding: inherit; width:inherit; margin: 3px; border: inherit; }
+#movieDetail .title { padding-top: 8px; }
 button { float: left; }
 .close { float: right; cursor: pointer; margin: 6px; }
 #addLanguageBtn, #addMovieBtn { float: right; text-decoration: underline; font-style: italic; color: #1010c0; cursor:pointer; padding: 0 5px 0 15px; }
 #console { float: left; clear:both; }
 .consoleButtons { display:none; }
-#movieDetail input.special { float:none; padding: inherit; width:inherit; margin: 3px; border: inherit; }
