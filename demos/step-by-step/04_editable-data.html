@@ -91,7 +91,7 @@
 		})
 		.delegate( ".close", "click", function () {
 			select();
-			$.observable( movies ).splice( $.view( this ).index, 1 );
+			$.observable( movies ).remove( $.view( this ).index, 1 );
 			return false;
 		});
 
@@ -101,17 +101,18 @@
 		)
 		.link([])
 		.delegate( "#addLanguageBtn", "click", function () {
-			$.observable( $.view( this ).data.Languages ).push({
+			var languages = $.view( this ).data.Languages;
+			$.observable( languages ).insert( languages.length, {
 				Name: "NewLanguage"
 			});
 		})
 		.delegate( ".close", "click", function () {
-			$.observable( app.selectedItem.data.Languages ).splice( $.view( this ).index, 1 );
+			$.observable( app.selectedItem.data.Languages).remove( $.view( this ).index, 1 );
 			return false;
 		});
 
 	$( "#addMovieBtn" ).click( function () {
-		$.observable( movies ).push({
+		$.observable( movies ).insert( movies.length, {
 			Title: "NewTitle",
 			Languages: [
 				{ Name: "NewLanguage" }
@@ -141,13 +142,14 @@
 			if (view) {
 				$( view.nodes ).css( "backgroundColor", "yellow" );
 			}
-			$.observable( app ).setField( "selectedItem", view );
+			$.observable( app ).setProperty( "selectedItem", view );
 		}
 	}
 
 	function deleteLastLanguage() {
 		if ( movies.length ) {
-			$.observable( movies[ movies.length - 1 ].Languages ).pop();
+			var languages = movies[ movies.length - 1 ].Languages;
+			$.observable( languages ).remove( languages.length - 1, 1 );
 		}
 	}
 </script>
