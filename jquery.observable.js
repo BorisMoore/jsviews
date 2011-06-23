@@ -1,24 +1,24 @@
 (function ($) {
 	$.observable = function( data, options ) {
 		return $.isArray( data )
-			? new ObservableArray( data )
-			: new ObservableObject( data );
+			? new ArrayObservable( data )
+			: new ObjectObservable( data );
 	};
 
 	var splice = [].splice;
 
-	function ObservableObject( data ) {
+	function ObjectObservable( data ) {
 		if ( !this.data ) {
-			return new ObservableObject( data );
+			return new ObjectObservable( data );
 		}
 
 		this._data = data;
 		return this;
 	};
 
-	$.observable.Object = ObservableObject;
+	$.observable.Object = ObjectObservable;
 
-	ObservableObject.prototype = {
+	ObjectObservable.prototype = {
 		_data: null,
 
 		data: function() {
@@ -82,9 +82,9 @@
 		return [];
 	};
 
-	function ObservableArray( data ) {
+	function ArrayObservable( data ) {
 		if ( !this.data ) {
-			return new ObservableArray( data );
+			return new ArrayObservable( data );
 		}
 
 		this._data = data;
@@ -95,9 +95,9 @@
 		$([ array ]).triggerHandler( "arrayChange", eventArgs );
 	}
 
-	$.observable.Array = ObservableArray;
+	$.observable.Array = ArrayObservable;
 
-	ObservableArray.prototype = {
+	ArrayObservable.prototype = {
 		_data: null,
 
 		data: function() {
