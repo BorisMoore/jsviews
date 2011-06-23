@@ -64,15 +64,17 @@ var topView, settings, decl,
 								});
 							}
 						}
-						if ( target[ cnvt ]) {
-							// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
-							sourceValue = target[ cnvt].call( target, sourceValue, source, toPath, target, cnvtParams );
-						} else if ( cnvt = window[ cnvt ] ) {
-							// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
-							sourceValue = cnvt( sourceValue, source, toPath, target, cnvtParams );
+						if ( cnvt ) {
+							if ( target[ cnvt ]) {
+								// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
+								sourceValue = target[ cnvt].call( target, sourceValue, source, toPath, target, cnvtParams );
+							} else if ( cnvt = window[ cnvt ] ) {
+								// TODO Use getResource( convert ); - using View.defs, or similar, with fallbacks or bubbling...
+								sourceValue = cnvt( sourceValue, source, toPath, target, cnvtParams );
+							}
 						}
 						if ( target ) {
-							$.observable( target ).setField( toPath, sourceValue );
+							$.observable( target ).setProperty( toPath, sourceValue );
 						}
 					}
 					if ( cancel ) {
@@ -90,7 +92,7 @@ var topView, settings, decl,
 				from = link.inner || link.from || link.getFrom,
 				attr = link.toAttr,
 				convert = link.convert, // TODO support for named converters
-				sourceValue = eventArgs ? eventArgs.value : getField( source, from ),
+				sourceValue = eventArgs ? eventArgs.value : getProperty( source, from ),
 				sourcePath = eventArgs && eventArgs.path,
 				view = $.view( target ); //TODO check whether we need to use the view here. If so pass it to the convert function too.
 
@@ -99,7 +101,7 @@ var topView, settings, decl,
 				&& (!sourcePath || sourcePath === from )
 				&& (!view || view.onDataChanged( eventArgs ) !== false )) {
 
-				// If the eventArgs is specified, then this came from a real field change event (not ApplyLinks trigger)
+				// If the eventArgs is specified, then this came from a real property change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
 				if ( convert ) {
 					if ( $.isFunction( convert )) {
@@ -133,7 +135,7 @@ var topView, settings, decl,
 		},
 		arrayChange: function( ev, eventArgs ) {
 			var cancel, view = this.target,
-				sourceValue = eventArgs ? eventArgs.action : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
+				sourceValue = eventArgs ? eventArgs.change : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
 
 			if ((!this.cb || !(cancel = this.cb( ev, eventArgs ) === false ))
 				&& sourceValue !== undefined ) {
@@ -167,7 +169,7 @@ function View( node, path, template, parentView, parentElViews, callback, data )
 			viewCount = views.length;
 			data = data[ index ];
 			while ( index++ < viewCount-1 ) {
-				$.observable( views[ index ] ).setField( "index", index );
+				$.observable( views[ index ] ).setProperty( "index", index );
 			}
 		} else {
 			if ( path ) {
@@ -373,7 +375,7 @@ function link( from, to, callback, links, prevNode ) {
 		i = addedLinks.length;
 		while ( i-- ) {
 			addedLink = addedLinks[ i ];
-			// If 'from' path points to a field of a descendant 'leaf object',
+			// If 'from' path points to a property of a descendant 'leaf object',
 			// link not only from leaf object, but also from intermediate objects
 
 			var innerOb = fromOb,
@@ -405,8 +407,8 @@ function addLinkToNode( source, context, get ) { // TODO reduce code size by sha
 
 	// Store handlers for unlinking
 	jsViewsData( target, "from", true ).push({ source: source, handler: handler, inner: context.inner });
-	$( source ).bind( "objectChange", handler );
-//	$( "#console" ).append( ++TEST_EVENTS.total + " + objectChange " + ++(TEST_EVENTS.objectChange) + "<br/>");
+	$( source ).bind( "propertyChange", handler );
+//	$( "#console" ).append( ++TEST_EVENTS.total + " + propertyChange " + ++(TEST_EVENTS.objectChange) + "<br/>");
 	if ( get ) {
 		handler({ target: source });
 	}
@@ -474,8 +476,8 @@ function clean( i, el ) { // TODO optimize for perf
 
 	while( l-- ) {
 		link = links[ l ];
-		$( link.source ).unbind( "objectChange", link.handler );
-//	$( "#console" ).append( --TEST_EVENTS.total + " - objectChange " + --(TEST_EVENTS.objectChange) + "<br/>");
+		$( link.source ).unbind( "propertyChange", link.handler );
+//	$( "#console" ).append( --TEST_EVENTS.total + " - propertyChange " + --(TEST_EVENTS.objectChange) + "<br/>");
 	}
 
 	views = jsViewsData( el, "view" );
@@ -521,14 +523,14 @@ function wrapObject( object ) {
 	return object instanceof $ ? object : $.isArray( object ) ? $( [object] ) : $( object ); // Ensure that an array is wrapped as a single array object
 }
 
-function getField( object, path ) { // Alternative simpler implementation would use eval
+function getProperty( object, path ) { // Alternative simpler implementation would use eval
 	if ( object && path ) {
-		var field,
+		var property,
 			leaf = getLeafObject( object, path );
 		object = leaf && leaf[0];
 		if ( object ) {
-			field = object[ leaf[1] ]
-			return $.isFunction( field ) ? field.call( object ) : field;
+			property = object[ leaf[1] ]
+			return $.isFunction( property ) ? property.call( object ) : property;
 		}
 	}
 	return object;
@@ -680,24 +682,23 @@ $.extend({
 				if ( eventArgs ) {
 					// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
 					var self = this,
-						action =  eventArgs.action,
-						newIndex = eventArgs.newIndex,
+						action =  eventArgs.change,
+						index = eventArgs.index,
 						oldIndex = eventArgs.oldIndex,
-						newItems = eventArgs.newItems,
-						oldItems = eventArgs.oldItems;
+						items = eventArgs.items;
 					switch ( action ) {
-						case "add":
-							self.addViews( newIndex, newItems );
+						case "insert":
+							self.addViews( index, items );
 						break;
 						case "remove":
-							self.removeViews( oldIndex, oldItems.length );
+							self.removeViews( index, items.length );
 						break;
 						case "move":
 							self.refresh(); // Could optimize this
 						break;
-						case "reset":
+						case "refresh":
 							self.refresh();
-						// Othercases: (e.g.undefined, for setField on observable object) etc. do nothing
+						// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
 					}
 				}
 				return true;
@@ -780,7 +781,7 @@ $.extend({
 					viewCount = views.length;
 
 					while ( index < viewCount ) {
-						$.observable( views[ index ] ).setField( "index", index++ );
+						$.observable( views[ index ] ).setProperty( "index", index++ );
 					}
 				}
 				return this;
