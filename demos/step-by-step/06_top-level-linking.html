@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<script src="../../jquery-1.5.2.js" type="text/javascript"></script>
+<!--	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+-->	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+	<button onclick="showData()">show data</button>
+
+	<button onclick="setNameAndCityAndColor()">set name city and color</button>
+	<button onclick="setCity()">set city</button>
+	<hr /><br />
+
+	<div id="myLinkedContent">
+		<h3>Declarative</h3>
+		<p data-getfrom="css-background-color: [roleColor]">
+			Name: <span data-getfrom="[firstName], css-background-color: [roleColor]"></span> <span data-getfrom="[lastName]"></span>
+		</p>
+		<p>
+			<input data-to="[firstName]" data-getfrom="[firstName]" />
+			<input data-to="[lastName]" data-getfrom="[lastName], title: titleConvert( [address.city] )" />
+			<input data-to="[address.city]" data-getfrom="[address.city]" />
+			<input data-to="[roleColor]" data-getfrom="[roleColor]" />
+		</p>
+		<p>
+			<span data-getfrom="nameConvert( [firstName] )"></span>
+			<span data-getfrom="[address.city]"></span>
+		</p>
+		<h3>Explicit</h3>
+		<p class="cityWrapper">
+			City: <span class="city"></span>
+			<input name="city" />
+			<input class="city2" />
+			<input class="city2" />
+		</p>
+	</div>
+
+	<script type="text/javascript">
+		var person = {
+				firstName: "Jo",
+				lastName: "Proctor",
+				address: {
+					city: "Redmond"
+				},
+				roleColor: "yellow"
+			};
+
+		$.link( person.address, ".city2", { getFrom: "city" });
+		$.link( ".city2", person.address, { to: "city" });
+		$.link( person, ".city2", { getFrom: "address.city" });
+		$.link( ".city2", person, { to: "address.city" });
+
+		$( "#myLinkedContent" )
+		.link( person )
+		.linkFrom( person, [
+			{
+				getFrom: "address.city",
+				to: ".city"
+			},
+			{
+				getFrom: "roleColor",
+				to: ".cityWrapper",
+				toAttr: "css-background-color"
+			},
+			{
+				getFrom: "address.city",
+				to: "input[name = city]",
+				toAttr: "title",
+				convert: "titleConvert"
+			},
+			{
+				getFrom: "address.city",
+				to: "input[name = city]"
+			}
+		])
+		.linkTo( person, {
+				from: "input[name = city]",
+				to: "address.city"
+		});
+
+		function nameConvert( value ) {
+			return value + " lives in";
+		}
+
+		function titleConvert( value ) {
+			return person.firstName + " lives in " + value;
+		}
+
+		function setNameAndCityAndColor() {
+			$.observable( person )
+				.setProperty({
+					lastName: person.lastName + "Plus",
+					"address.city": person.address.city + "More",
+					roleColor: "#8dd"
+				});
+		}
+
+		function setCity() {
+			// Either of these will work, thanks to the binding to intermediate objects
+			$.observable( person ).setProperty( "address.city", person.address.city + "Add" );
+//			$.observable( person.address ).setProperty( "city", person.address.city + "Add" );
+		}
+	</script>
+
+	<!--Console-->
+
+	<script id="showData" type="text/x-jquery-tmpl">
+		<div>${firstName} ${lastName}</div>
+		<div>${address.city}</div>
+		<div>${roleColor}</div>
+	</script>
+
+	<br /><hr />
+	<b>Console</b>
+
+	<div id="console"></div>
+	<script type="text/javascript">
+		function showData() {
+			$( "#console" ).append("-----------------");
+			$( "#console" ).append( $( "#showData" ).render( person ));
+		}
+	</script>
+
+</body>
+</html>

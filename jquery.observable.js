@@ -61,7 +61,7 @@
 						} else {
 							leaf[ path ] = value;
 						}
-						$( object ).triggerHandler( "propertyChange", { path: path, value: value });
+						$( leaf ).triggerHandler( "propertyChange", { path: path, value: value });
 					}
 				}
 			}
@@ -96,7 +96,7 @@
 	};
 
 	function validateIndex( index ) {
-		if ( typeof index !== "number" || index < 0 ) {
+		if ( typeof index !== "number" ) {
 			throw "Invalid index.";
 		}
 	};
@@ -110,17 +110,16 @@
 			return this._data;
 		},
 
-		insert: function( index ) {
+		insert: function( index, data ) {
 			validateIndex( index );
 
 			if ( arguments.length > 1 ) {
-				var arg1 = arguments[ 1 ],
-					items = arg1 == null ? [ arg1 ] : $.makeArray( arg1 );
-				// arg1 can be a single item (including a null/undefined value) or an array of items.
+				data = $.isArray( data ) ? data : [ data ];  // TODO: Clone array here?
+				// data can be a single item (including a null/undefined value) or an array of items.
 
-				if ( items.length > 0 ) {
-					splice.apply( this._data, [ index, 0 ].concat( items ));
-					triggerArrayEvent( this._data, { change: "insert", index: index, items: items });
+				if ( data.length > 0 ) {
+					splice.apply( this._data, [ index, 0 ].concat( data ));
+					triggerArrayEvent( this._data, { change: "insert", index: index, items: data });
 				}
 			}
 		},
@@ -129,10 +128,13 @@
 			validateIndex( index );
 
 			numToRemove = ( numToRemove === undefined || numToRemove === null ) ? 1 : numToRemove;
-			if ( numToRemove ) {
+			if ( numToRemove && index > -1 ) {
 				var items = this._data.slice( index, index + numToRemove );
-				this._data.splice( index, numToRemove );
-				triggerArrayEvent( this._data, { change: "remove", index: index, items: items });
+				numToRemove = items.length;
+				if ( numToRemove ) {
+					this._data.splice( index, numToRemove );
+					triggerArrayEvent( this._data, { change: "remove", index: index, items: items });
+				}
 			}
 		},
 
@@ -143,7 +145,8 @@
 			numToMove = ( numToMove === undefined || numToMove === null ) ? 1 : numToMove;
 			if ( numToMove ) {
 				var items = this._data.slice( oldIndex, oldIndex + numToMove );
-				var observable = $.observable( this._data );
+				this._data.splice( oldIndex, numToMove );
+				this._data.splice.apply( this._data, [ newIndex, 0 ].concat( items ) );
 				triggerArrayEvent( this._data, { change: "move", oldIndex: oldIndex, index: index, items: items });
 			}
 		},
@@ -155,4 +158,3 @@
 	};
 
 })(jQuery);
-

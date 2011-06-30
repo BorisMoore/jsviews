@@ -25,11 +25,12 @@ var topView, settings, decl,
 				source = ev.target,
 				$source = $( source ),
 				links = this.links,
+				beforeChange = this.options.beforeChange,
 				l = links.length;
 
 			while ( l-- && !cancel ) {
 				link = links[ l ];
-				if ( link.from && $( source ).is( link.from )) {
+				if ( !link.from || (link.from && $( source ).is( link.from ))) {
 					fromAttr = link.fromAttr;
 					if ( !fromAttr ) {
 						// Merge in the default attribute bindings for this source element
@@ -38,8 +39,7 @@ var topView, settings, decl,
 					}
 					setter = fnSetters[ fromAttr ];
 					sourceValue = $.isFunction( fromAttr ) ? fromAttr( source ) : setter ? $source[setter]() : $source.attr( fromAttr );
-
-					if ((!this.cb || !(cancel = this.cb( ev ) === false )) && sourceValue !== undefined ) {
+					if ((!beforeChange || !(cancel = beforeChange( ev ) === false )) && sourceValue !== undefined ) {
 						// Find toPath using link.to, or if not specified, use declarative specification
 						// provided by decl.applyLinkToInfo, applied to source element
 						toPath = link.to;
@@ -76,6 +76,9 @@ var topView, settings, decl,
 						if ( target ) {
 							$.observable( target ).setProperty( toPath, sourceValue );
 						}
+						if ( this.options.afterChange ) {
+							this.options.afterChange( ev );
+						}
 					}
 					if ( cancel ) {
 						ev.stopImmediatePropagation();
@@ -91,15 +94,18 @@ var topView, settings, decl,
 				source = ev.target,
 				from = link.inner || link.from || link.getFrom,
 				attr = link.toAttr,
-				convert = link.convert, // TODO support for named converters
 				sourceValue = eventArgs ? eventArgs.value : getProperty( source, from ),
 				sourcePath = eventArgs && eventArgs.path,
+				options = link.options,
+				beforeChange = options.beforeChange,
 				view = $.view( target ); //TODO check whether we need to use the view here. If so pass it to the convert function too.
 
-			if ((!link.cb || !(cancel = link.cb( ev, eventArgs ) === false ))
+			if ((!beforeChange || !(cancel = beforeChange.call( this, ev, eventArgs ) === false ))
 				&& sourceValue !== undefined
 				&& (!sourcePath || sourcePath === from )
 				&& (!view || view.onDataChanged( eventArgs ) !== false )) {
+
+				var convert = link.convert // TODO support for named converters
 
 				// If the eventArgs is specified, then this came from a real property change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
@@ -113,7 +119,7 @@ var topView, settings, decl,
 				if ( !attr ) {
 					// Merge in the default attribute bindings for this target element
 					attr = settings.merge[ target.nodeName.toLowerCase() ];
-					attr = attr? attr.to.toAttr : "text";
+					attr = attr ? attr.to.toAttr : "text";
 				}
 
 				if ( css = attr.indexOf( "css-" ) === 0 && attr.substr( 4 ) ) {
@@ -128,6 +134,9 @@ var topView, settings, decl,
 						$target.attr( attr, sourceValue );
 					}
 				}
+				if ( options.afterChange ) {
+					options.afterChange.call( this, ev, eventArgs );
+				}
 			}
 			if ( cancel ) {
 				ev.stopImmediatePropagation();
@@ -135,11 +144,15 @@ var topView, settings, decl,
 		},
 		arrayChange: function( ev, eventArgs ) {
 			var cancel, view = this.target,
+				beforeChange = this.options.beforeChange,
 				sourceValue = eventArgs ? eventArgs.change : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
 
-			if ((!this.cb || !(cancel = this.cb( ev, eventArgs ) === false ))
+			if ((!beforeChange || !(cancel = beforeChange( ev, eventArgs ) === false ))
 				&& sourceValue !== undefined ) {
 				view.onDataChanged( eventArgs );
+				if ( this.options.afterChange ) {
+					this.options.afterChange( ev, eventArgs );
+				}
 			}
 			if ( cancel ) {
 				ev.stopImmediatePropagation();
@@ -147,7 +160,7 @@ var topView, settings, decl,
 		}
 	};
 
-function View( node, path, template, parentView, parentElViews, callback, data ) {
+function View( node, path, template, parentView, parentElViews, options, data ) {
 	var views, index, self = this;
 
 	$.extend( self, {
@@ -159,7 +172,7 @@ function View( node, path, template, parentView, parentElViews, callback, data )
 		prevNode: node
 	});
 	if ( parentView ) {
-		self.callback = callback || parentView.callback;
+		self.options = options || parentView.options;
 		views = parentView.views;
 		parentElViews.push( self );
 		data = data || parentView.data;
@@ -183,7 +196,7 @@ function View( node, path, template, parentView, parentElViews, callback, data )
 	setArrayChangeLink( self );
 }
 
-function createNestedViews( node, parent, callback, nextNode, depth, data, prevNode, index ) {
+function createNestedViews( node, parent, options, nextNode, depth, data, prevNode, index ) {
 	function addFromLink( path, params ) {
 		var attr, convert,
 			fromObj = data || parent.data;
@@ -209,15 +222,14 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 			path[ 0 ] = path[ 1 ];
 		}
 		addedLink[ this ] = path[ 0 ];
-		link( fromObj, node, callback, addedLink );
+		link( fromObj, node, addedLink, false, options );
 	}
 
 	var tokens, tmplName, parentElViews, get, from, view, existing,
-		unlink = callback === false,
 		currentView = parent,
 		viewDepth = depth;
 
-	callback = callback || parent.callback;
+	options = options || parent.options;
 	index = index || 0;
 	node = prevNode || node;
 
@@ -235,7 +247,7 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 
 	while ( node && node !== nextNode ) {
 		if ( node.nodeType === 1 ) {
-			createNestedViews( node, currentView, callback, nextNode, viewDepth, data );
+			createNestedViews( node, currentView, options, nextNode, viewDepth, data );
 		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
 			if ( tokens[1]) {
 				if ( tokens[2] ) {
@@ -254,17 +266,7 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 				parentElViews = parentElViews || jsViewsData( node.parentNode, "view", true );
 				if ( tokens[2] ) {
 					// An item open tag: <!--item-->
-//					view = $.view( node );
-//					if ( view && view.prevNode === node ) {
-//						if ( view.index < currentView.data.length ) {
-//							existing = view;
-//							view.data = currentView.data[ view.index ];
-//						} else {
-//							debugger;
-//						}
-//					}
-//					currentView = existing || new View( node, index++, undefined, currentView, parentElViews, callback );
-					currentView = new View( node, index++, undefined, currentView, parentElViews, callback );
+					currentView = new View( node, index++, undefined, currentView, parentElViews, options );
 				} else {
 					// A tmpl open tag: <!--tmpl(path) name-->
 
@@ -278,9 +280,9 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 							return view.nextNode;
 						}
 					} else {
-						view = new View( node, tokens[3], tokens[4], currentView, parentElViews, callback, data );
+						view = new View( node, tokens[3], tokens[4], currentView, parentElViews, options, data );
 					}
-					node = existing || createNestedViews( node, view, callback, nextNode, 0 );
+					node = existing || createNestedViews( node, view, options, nextNode, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
@@ -291,11 +293,12 @@ function createNestedViews( node, parent, callback, nextNode, depth, data, prevN
 	}
 }
 
-function link( from, to, callback, links, prevNode ) {
+function link( from, to, links, prevNode, options ) {
+	options = options || {};
 	from = wrapObject( from );
 	if ( $.isFunction( to )) {
-			callback = to;
-			to = undefined;
+		options.beforeChange = to;
+		to = undefined;
 	} else {
 		to = wrapObject( to );
 	}
@@ -304,12 +307,12 @@ function link( from, to, callback, links, prevNode ) {
 		targetElems = to,
 		self = this,
 		addedLinks = [],
+		beforeChange = options.beforeChange,
 		fromOb = from[0],
 		i = arguments.length - 1;
 
-	if ( !callback && i > 2 && $.isFunction( arguments[i] )) {
-		callback = arguments[i];
-		arguments[i] = undefined;
+	if ( !beforeChange && options && $.isFunction( options )) {
+		beforeChange = options.beforeChange = options;
 	}
 
 	if ( !fromOb ) {
@@ -332,15 +335,15 @@ function link( from, to, callback, links, prevNode ) {
 					if ( currentLinkedData === to[0]) {
 						return;
 					}
-					removeLinkFromNode( this, { target: currentLinkedData, cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]});
+					removeLinkFromNode( this, { target: currentLinkedData, options: options, links: [{from: "input[" + settings.linkToAttr + "]" }]});
 				}
-				addLinkFromNode( this, { target: to[0], cb: callback, links: [{from: "input[" + settings.linkToAttr + "]" }]});
+				addLinkFromNode( this, { target: to[0], options: options, links: [{from: "input[" + settings.linkToAttr + "]" }]});
 			});
 			return;
 		}
 		// Linking object or array to HTML or to another object or array
 		to.each( function() {
-			createNestedViews( this, $.view( this ), callback, undefined, undefined, fromOb );
+			createNestedViews( this, $.view( this ), options, undefined, undefined, fromOb );
 		});
 		return;
 	}
@@ -348,9 +351,9 @@ function link( from, to, callback, links, prevNode ) {
 
 		// EXPLICIT DATA LINKING FROM HTML
 
-		if ( i || callback ) {
+		if ( i || options.beforeChange ) {
 			from.each( function () {
-				addLinkFromNode( this, { target: to[0], cb: callback, links: links });
+				addLinkFromNode( this, { target: to[0], options: options, links: links });
 			});
 		}
 		return;
@@ -366,7 +369,7 @@ function link( from, to, callback, links, prevNode ) {
 				targetElems = to.find( path ).add( $( this ).filter( path )); // Use future findFilter method in jQuery 1.7?
 			}
 			targetElems.each( function() {
-				addedLink = $.extend( { source: fromOb, target: this, cb: callback }, link );
+				addedLink = $.extend( { source: fromOb, target: this, options: options }, link );
 				addedLink.to = undefined;
 				addedLinks.push( addedLink );
 			});
@@ -393,9 +396,9 @@ function link( from, to, callback, links, prevNode ) {
 		}
 		return;
 	}
-	if ( callback ) {
-		// Case of providing callback but no links or no to
-		addLinkToNode( fromOb, { source: fromOb, target: to, cb: callback });
+	if ( options.beforeChange ) {
+		// Case of providing beforeChange but no links or no to
+		addLinkToNode( fromOb, { source: fromOb, target: to, options: options });
 	}
 }
 
@@ -455,7 +458,7 @@ function setArrayChangeLink( view ) {
 
 	if ( $.isArray( data )) {
 		handler = function() {
-			onDataChange.arrayChange.apply( { target: view, cb: view.callback }, arguments );
+			onDataChange.arrayChange.apply( { target: view, options: view.options }, arguments );
 		};
 		$([ data ]).bind( "arrayChange", handler );
 		view._onArrayChange = [ handler, data ];
@@ -562,26 +565,26 @@ $.extend({
 		oldCleanData( elems );
 	},
 
-	link: function( from, to, links, callback ) {
+	link: function( from, to, links, options ) {
 		// Supported signatures:
 		//    $.link( from, to, links ); // Explicit data linking
-		//    $.link( from[, to, links], callback ); // Callback with explicit data linking
+		//    $.link( from[, to, links], beforeChange ); // BeforeChange callback with explicit data linking
+		//    $.link( from[, to, links], options ); // options (may include beforeChange callback) with explicit data linking
+		options = options || {};
 		if ( $.isFunction( to )) {
-			callback = to;
+			options.beforeChange = to;
 			to = undefined;
 		} else {
 			to = wrapObject( to );
 		}
 		if ( to && to[0].nodeType ) {
 			to.each( function() {
-				link( from, this, callback, links );
-			//	$.view( this ).linkFrom( from, links, callback ); //TODO add links
+				link( from, this, links, false, options );
 			});
 		}
 		else {
 			wrapObject( from ).each( function() {
-				link( this, to, callback, links );
-			//	$.view( this ).linkTo( to, links, callback );//TODO add links
+				link( this, to, links, false, options );
 			});
 		}
 	},
@@ -648,36 +651,6 @@ $.extend({
 			}
 		},
 		view: {
-//			link: function( data, prevNode, nextNode, callback ) {
-//				// Declarative Linking
-//				// Supported signatures:
-//				//    link( data[, prevNode, nextNode] );
-//				//    link( data[, prevNode, nextNode], callback );
-//				var $this = $( this.nodes );
-//				link( data, $this, callback, undefined, prevNode||true, nextNode );
-//				link( $this, data, callback, undefined, true );
-//				return this;
-//			},
-//			linkFrom: function( sourceData, links, callback ) {
-//				// Supported signatures:
-//				//    linkFrom( sourceData, links );						Explicit
-//				//    linkFrom( sourceData, callback );						Explicit
-//				//    linkFrom( sourceData, links, callback );				Explicit
-//				link( sourceData, $( this.nodes ), callback, links );
-//				return this;
-//			},
-//			linkTo: function( targetData, links, callback ) {
-//				// Supported signatures:
-//				//    linkTo( targetData, links );
-//				//    linkTo( callback );
-//				//    linkTo( targetData, callback );
-//				//    linkTo( targetData, links, callback );
-//				link( $( this.nodes ), targetData, callback, links );
-//				return this;
-//			},
-//			unlink: function() {
-//				return linkUnlinkView( this, arguments );
-//			},
 			onDataChanged: function( eventArgs ) {
 				if ( eventArgs ) {
 					// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
@@ -694,10 +667,10 @@ $.extend({
 							self.removeViews( index, items.length );
 						break;
 						case "move":
-							self.refresh(); // Could optimize this
+							self.render(); // Could optimize this
 						break;
 						case "refresh":
-							self.refresh();
+							self.render();
 						// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
 					}
 				}
@@ -809,42 +782,34 @@ $.fn.extend({
 	view: function( options ) {
 		return $.view( this[0], options );
 	},
-	link: function( data, callback ) {
+	link: function( data, options ) {
 		// Declarative Linking
 		// Supported signatures:
 		//    link( data );
-		//    link( data, callback );
+		//    link( data, options ); 
+		// If options is a function, cb - shorthand for { beforeChange: cb }
 		if ( data ) {
-			link( data, this, callback, undefined, true );
-			link( this, data, callback, undefined, true );
+			link( data, this, undefined, true, options );
+			link( this, data, undefined, true, options );
 		}
 		return this;
 	},
-//	unlink: function( data ) {  // TODO provide unlink methods
-//		if ( data ) {
-//			link( data, this, false, undefined, true );
-//			link( this, data, false, undefined, true );
-//		} else {
-//			this.each( clean );
-//		}
-//		return this;
-
-//		// TODO - clean up the unlinking code, and consider unlinkFrom and unlinkTo
-//	},
-	linkFrom: function( sourceData, links, callback ) {
+	linkFrom: function( sourceData, links, options ) {
 		// Supported signatures:
 		//    linkFrom( sourceData, links );
-		//    linkFrom( sourceData, callback );
-		//    linkFrom( sourceData, links, callback );
-		link( sourceData, this, callback, links );
+		//    linkFrom( sourceData, options );
+		//    linkFrom( sourceData, links, options );
+		// If options is a function, cb - shorthand for { beforeChange: cb }
+		link( sourceData, this, links, false, options );
 		return this;
 	},
-	linkTo: function( targetData, links, callback ) {
+	linkTo: function( targetData, links, options ) {
 		// Supported signatures:
 		//    linkTo( targetData, links );
-		//    linkTo( targetData, callback );
-		//    linkTo( targetData, links, callback );
-		link( this, targetData, callback, links );
+		//    linkTo( targetData, options );
+		//    linkTo( targetData, links, options );
+		// If options is a function, cb - shorthand for { beforeChange: cb }
+		link( this, targetData, links, false, options );
 		return this;
 	}
 });
