@@ -60,7 +60,7 @@ var topView, settings, decl,
 									}
 									toPath = path;
 									cnvt =  convert || link.convert;
-									cnvtParams = convertParams; 
+									cnvtParams = convertParams;
 								});
 							}
 						}
@@ -551,7 +551,7 @@ function getLeafObject( object, path ) {
 	return object && object[ path ] && [ object, path ];
 }
 
-function inputAttrib( elem ) { 
+function inputAttrib( elem ) {
 	return elem.type === "checkbox" ? elem.checked : $( elem ).val();
 }
 
@@ -786,7 +786,7 @@ $.fn.extend({
 		// Declarative Linking
 		// Supported signatures:
 		//    link( data );
-		//    link( data, options ); 
+		//    link( data, options );
 		// If options is a function, cb - shorthand for { beforeChange: cb }
 		if ( data ) {
 			link( data, this, undefined, true, options );

@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html PUBLIC>
+<html>
+<head>
+	<title>Benchmark Strappend2</title>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../src/jquery-templates-strappend2-auto.js" type="text/javascript"></script>
+</head>
+<body>
+
+<h3>Strappend2</h3>
+
+<!--=================== Demo Section ===================-->
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<li>
+		<b>{{html Name}}</b> ({{html ReleaseYear}})
+		<b>{{html Name}}</b> ({{html ReleaseYear}})
+		<b>{{html Name}}</b> ({{html ReleaseYear}})
+		<b>{{html Name}}</b> ({{html ReleaseYear}})
+	</li>
+</script>
+
+<ul id="movieList"></ul>
+
+<div id="console">
+</div>
+
+
+<script type="text/javascript">
+	var tmpl, res, startTime, endTime, result,
+		times = 1000,
+		count = times;
+		movie = { Name: "The Red Violin", ReleaseYear: "1998" };
+
+	startTime = +new Date;
+	while (count--) {
+		tmpl = $.template( null, $( "#movieTemplate" )[0].innerHTML).tmpl;
+	}
+	endTime = +new Date;
+	result = ( endTime-startTime )/times;
+	$( "#console" ).append( "compile: " + result + "<br/>" );
+
+	times = 50000;
+	count = times;
+	startTime = +new Date;
+	while (count--) {
+		res = tmpl(movie);
+	}
+	endTime = +new Date;
+	result = ( endTime-startTime )/times;
+	$( "#console" ).append( "run: " + result + "<br/>");
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+
+</body>
+</html>
+
+
+</body>
+</html>

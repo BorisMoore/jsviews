@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html PUBLIC>
+<html>
+<head>
+	<title>Benchmark jQuery Templates</title>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../src/jquery.tmpl.js" type="text/javascript"></script>
+</head>
+<body>
+
+<h3>jQuery Templates</h3>
+
+<!--=================== Demo Section ===================-->
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<li>
+		<b>${Name}</b> (${ReleaseYear})
+		<b>${Name}</b> (${ReleaseYear})
+		<b>${Name}</b> (${ReleaseYear})
+		<b>${Name}</b> (${ReleaseYear})
+	</li>
+</script>
+
+<ul id="movieList"></ul>
+
+<div id="console">
+</div>
+
+
+<script type="text/javascript">
+	var tmpl, res, startTime, endTime, result,
+		times = 1000,
+		count = times;
+		movie = { Name: "The <Red> Violin", ReleaseYear: "1998" };
+
+	startTime = +new Date;
+	while (count--) {
+		tmpl = $( "#movieTemplate" ).template();
+	}
+	endTime = +new Date;
+	result = ( endTime-startTime )/times;
+	$( "#console" ).append( "compile: " + result + "<br/>" );
+
+	times = 50000;
+	count = times;
+	startTime = +new Date;
+	while (count--) {
+		res = tmpl($, { data: movie }).join("");
+	}
+	endTime = +new Date;
+	result = ( endTime-startTime )/times;
+	$( "#console" ).append( "run: " + result + "<br/>");
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+
+</body>
+</html>
+
+
+</body>
+</html>

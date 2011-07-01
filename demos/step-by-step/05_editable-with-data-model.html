@@ -46,7 +46,7 @@
 
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
     <div>
-        <div> 
+        <div>
             Special Order: <input type="checkbox" class="special" data-getfrom="checked: [SpecialOrder]" data-to="[SpecialOrder]" />
         </div>
         <div class="title">Title:</div>
@@ -69,9 +69,9 @@
 	// Data Model Definitions
 
 	function Language( name ) {
-		this._name = name;   
+		this._name = name;
 	}
- 
+
 	Language.prototype = {
 		Name: function ( name ) {
 			if ( name === undefined ) {
@@ -79,15 +79,15 @@
 			} else {
 				this._name = name;
 			}
-		}   
+		}
 	}
- 
+
 	function Movie( title, languages, specialOrder ) {
 		this._specialOrder = !!specialOrder;
 		this._title = title;
 		this._languages = languages;
 	}
- 
+
 	Movie.prototype = {
 		Title: function ( title ) {
 			if ( title === undefined ) {
@@ -113,7 +113,7 @@
 			$.observable( this._languages ).remove( index, 1 );
 		}
 	}
- 
+
 	// App and UI code
 
 	var app = {
@@ -121,11 +121,11 @@
 		},
 
 		movies = [
-			new Movie( "Meet Joe Black", [ 
+			new Movie( "Meet Joe Black", [
 				new Language( "English" ),
 				new Language( "French" )
 			]),
-			new Movie( "Eyes Wide Shut", [ 
+			new Movie( "Eyes Wide Shut", [
 				new Language( "French" ),
 				new Language( "German" ),
 				new Language( "Spanish" )
@@ -162,7 +162,7 @@
 
 	$( "#addMovieBtn" ).click( function () {
 		$.observable( movies ).insert( movies.length, new Movie( "NewTitle", [new Language( "NewLanguage" )]));
-    
+
 		// Set selection on the added item
 		select( $("#movieList tr:last").view());
 	});
