@@ -26,8 +26,6 @@
 
 <h3>Tab View: Using {{wrap}} for template composition incorporating wrapped HTML</h3>
 
-<!--=================== Demo Section ===================-->
-
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<h2>${Title}</h2>
 
@@ -95,10 +93,8 @@
 		};
 
 
-	$( "#tabsView" ).html(
-			$( "#movieTemplate" ).render( movie )
-		)
-		.link( movie )
+	$( "#tabsView" )
+		.link( movie, "#movieTemplate" )
 		.delegate( ".tabsView th", "click", function() {
 			/* Set the selected tab index to this tab */
 			var view = $.view( this ).parent;

@@ -19,8 +19,6 @@
 
 <h3>Tree view: using recursive nested {{tmpl}} tags.</h3>
 
-<!--=================== Demo Section ===================-->
-
 <ul id="foldersList" class="treeView"></ul>
 
 <script id="folderTemplate" type="text/x-jquery-tmpl">
@@ -84,13 +82,9 @@ function hasContent( folder ) {
 	return folder.expanded || folder.folders && folder.folders.length || getFolderItems(folder.name).length;
 }
 
-/* Render the folderTemplate with the "movies" data */
-$( "#foldersList" ).html(
-		$( "#folderTemplate" ).render( rootFolder )
-	)
-
-	/* Link rendered content to data, to provide interactive views */
-	.link( rootFolder )
+/* Render the folderTemplate with the "movies" data, as data-linked content, to provide interactive views  */
+$( "#foldersList" )
+	.link( rootFolder, "#folderTemplate" )
 
 	.delegate( ".toggle", "click", function() {
 		/* Toggle expanded property on data, then refresh rendering */

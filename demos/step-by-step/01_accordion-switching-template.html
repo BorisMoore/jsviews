@@ -18,8 +18,6 @@
 
 <h3>Accordion: Using dynamic switching of templates</h3>
 
-<!--=================== Demo Section ===================-->
-
 <script id="summaryTemplate" type="text/x-jquery-tmpl">
 	<tr class='movieSummary'><td>
 		${Title}
@@ -89,13 +87,11 @@ Click for details:
 		}
 	}
 
-	/* Render the summaryTemplate with the "movies" data */
-	$( "#movieList" ).html(
-			$( "#summaryTemplate" ).render( movies )
-		)
+	
 
-		/* Link rendered content to data, to provide interactive views */
-		.link( movies )
+	/* Render the movies array as data-linked content under the movieList <ul>, using the summaryTemplate */
+	$( "#movieList" )
+		.link( movies, "#summaryTemplate" )
 
 		/* onclick handler for movie subviews when not selected */
 		.delegate( ".movieSummary", "click", function () {

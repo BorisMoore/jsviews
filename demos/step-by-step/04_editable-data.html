@@ -17,8 +17,6 @@
 <button onclick="showData()">show data</button>
 <button onclick="deleteLastLanguage()">delete last language</button>
 
-<!--=================== Demo Section ===================-->
-
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index])">
 		<td>
@@ -82,10 +80,7 @@
 	];
 
 	$( "#movieList" )
-		.html(
-			$( "#movieTemplate" ).render( movies )
-		)
-		.link( movies )
+		.link( movies, "#movieTemplate" )
 		.delegate( "tr", "click", function () {
 			select( $.view( this ));
 		})
@@ -96,10 +91,7 @@
 		});
 
 	$( "#movieDetail" )
-		.html(
-			$( "#detailViewTemplate" ).render([])
-		)
-		.link([])
+		.link( [], "#detailViewTemplate" )
 		.delegate( "#addLanguageBtn", "click", function () {
 			var languages = $.view( this ).data.Languages;
 			$.observable( languages ).insert( languages.length, {

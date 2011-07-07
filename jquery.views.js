@@ -793,7 +793,12 @@ $.fn.extend({
 		//    link( data );
 		//    link( data, options );
 		// If options is a function, cb - shorthand for { beforeChange: cb }
+		// if options is a string, corresponds to $("#container").html( $.render( options, data )).link( data );
 		if ( data ) {
+			var tmpl = $.template( options );
+			if ( tmpl ) {
+				return this.html( $.render(tmpl, data )).link(data);
+			}
 			link( data, this, undefined, true, options );
 			link( this, data, undefined, true, options );
 		}

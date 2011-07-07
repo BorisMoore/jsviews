@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="../index.html">Home</a><br />
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<li>
+		<i>${Name}</i> (${ReleaseYear})
+	</li>
+</script>
+
+<!--Note that a template does not have to include HTML elements-->
+<script id="textOnlyTemplate" type="text/x-jquery-tmpl">
+	&nbsp;- ${Name}(${ReleaseYear})
+</script>
+
+<h3>Rendering templates, and linking to changes in data:</h3>
+
+<p>
+<button onclick="addMovie()">add Movie</button>
+<button onclick="removeMovie()">remove last Movie</button>
+</p>
+
+<h4>Template rendered as innerHTML under a container element:</h4>
+
+<ul id="movieList1"></ul>
+
+<h4>Template rendered between other HTML content, and data-linked for live updates</h4>
+<div id="movieList2"><b>Our Movies</b><br /></div>
+
+<h4>Content of an HTML container element linked directly to data:</h4>
+
+<ul id="movieList3"></ul>
+
+<script type="text/javascript">
+
+	var movies = [
+		{ Name: "The Red Violin", ReleaseYear: "1998" },
+		{ Name: "Eyes Wide Shut", ReleaseYear: "1999" },
+		{ Name: "The Inheritance", ReleaseYear: "1976" }
+	];
+
+	// Render the template with the movies data and insert
+	// the rendered HTML under the "movieList" element
+	$( "#movieList1" ).html(
+		$( "#movieTemplate" ).render( movies )
+	);
+
+	// Render the template with the movies data, and insert between other content.
+	$( "#movieList2" ).append(
+		"The current movies are: " + $( "#textOnlyTemplate" ).render( movies ) + ". <i>More to follow!</i>"
+	)
+	// Link to the data, for live updates.
+	.link( movies );
+
+	// Render the template with the movies data, as data-linked content
+	// of an HTML container element
+	$( "#movieList3" ).link( movies, "#movieTemplate" );
+
+	// Modify the data
+	function addMovie() {
+		$.observable( movies ).insert( movies.length, {
+			Name: "NewTitle",
+			ReleaseYear: "YYYY"
+		});
+	}
+
+	function removeMovie() {
+		$.observable( movies ).remove( movies.length - 1, 1 );
+	}
+</script>
+</body>
+</html>
+
+
