@@ -7,8 +7,8 @@
  */
 /// <reference path="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5-vsdoc.js" />
 /// <reference path="../jquery-1.5.2.js" />
-(function($, undefined) {
-// var TEST_EVENTS = { total:0, change:0, arrayChange:0, objectChange:0 };
+(function( $, undefined ) {
+// var TEST_EVENTS = { total:0, change:0, arrayChange:0, propertyChange:0 };
 var topView, settings, decl,
 	fnSetters = {
 		value: "val",
@@ -86,7 +86,7 @@ var topView, settings, decl,
 				}
 			}
 		},
-		objectChange: function( ev, eventArgs ) {
+		propertyChange: function( ev, eventArgs ) {
 			var setter, cancel,
 				link = this,
 				target = link.target,
@@ -100,12 +100,13 @@ var topView, settings, decl,
 				beforeChange = options.beforeChange,
 				view = $.view( target ); //TODO check whether we need to use the view here. If so pass it to the convert function too.
 
-			if ((!beforeChange || !(cancel = beforeChange.call( this, ev, eventArgs ) === false ))
+			if ((!beforeChange || !(eventArgs && (cancel = beforeChange.call( this, ev, eventArgs ) === false )))
 				&& sourceValue !== undefined
 				&& (!sourcePath || sourcePath === from )
 				&& (!view || view.onDataChanged( eventArgs ) !== false )) {
 
-				var convert = link.convert // TODO support for named converters
+				var changed,
+					convert = link.convert // TODO support for named converters
 
 				// If the eventArgs is specified, then this came from a real property change event (not ApplyLinks trigger)
 				// so only modify target elements which have a corresponding target path.
@@ -123,23 +124,22 @@ var topView, settings, decl,
 				}
 
 				if ( css = attr.indexOf( "css-" ) === 0 && attr.substr( 4 ) ) {
-					if ( $target.css( css ) !== sourceValue ) {
+					if ( changed = $target.css( css ) !== sourceValue ) {
 						$target.css( css, sourceValue );
 					}
 				} else {
 					setter = fnSetters[ attr ];
-					if ( setter && $target[setter]() !== sourceValue ) {
-						$target[setter]( sourceValue );
-					} else if ( $target.attr( attr ) !== sourceValue ) {
+					if ( setter ) {
+						if ( changed = $target[setter]() !== sourceValue ) {
+							$target[setter]( sourceValue );
+						}
+					} else if ( changed = $target.attr( attr ) !== sourceValue ) {
 						$target.attr( attr, sourceValue );
 					}
 				}
-				if ( options.afterChange ) {
+				if ( eventArgs && changed && options.afterChange ) {
 					options.afterChange.call( this, ev, eventArgs );
 				}
-			}
-			if ( cancel ) {
-				ev.stopImmediatePropagation();
 			}
 		},
 		arrayChange: function( ev, eventArgs ) {
@@ -153,9 +153,6 @@ var topView, settings, decl,
 				if ( this.options.afterChange ) {
 					this.options.afterChange( ev, eventArgs );
 				}
-			}
-			if ( cancel ) {
-				ev.stopImmediatePropagation();
 			}
 		}
 	};
@@ -374,7 +371,6 @@ function link( from, to, links, prevNode, options ) {
 				addedLinks.push( addedLink );
 			});
 		}
-		method = onDataChange.objectChange;
 		i = addedLinks.length;
 		while ( i-- ) {
 			addedLink = addedLinks[ i ];
@@ -405,17 +401,16 @@ function link( from, to, links, prevNode, options ) {
 function addLinkToNode( source, context, get ) { // TODO reduce code size by shared code in the add/remove/set link functions
 	var target = context.target,
 		handler = function() {
-			onDataChange.objectChange.apply( context, arguments );
+			onDataChange.propertyChange.apply( context, arguments );
 		};
 
 	// Store handlers for unlinking
 	jsViewsData( target, "from", true ).push({ source: source, handler: handler, inner: context.inner });
 	$( source ).bind( "propertyChange", handler );
-//	$( "#console" ).append( ++TEST_EVENTS.total + " + propertyChange " + ++(TEST_EVENTS.objectChange) + "<br/>");
+//	$( "#console" ).append( ++TEST_EVENTS.total + " + propertyChange " + ++(TEST_EVENTS.propertyChange) + "<br/>");
 	if ( get ) {
 		handler({ target: source });
 	}
-	return handler;
 }
 
 function addLinkFromNode( source, context ) {
@@ -428,7 +423,6 @@ function addLinkFromNode( source, context ) {
 	jsViewsData( source, "to", true ).push( target ); // Store for unlinking
 	$( source ).bind( "change", handler );
 //	$( "#console" ).append( ++TEST_EVENTS.total + " + change " + ++(TEST_EVENTS.change) + "<br/>");
-	return handler;
 }
 
 function removeLinkFromNode( source, context ) {
@@ -480,7 +474,7 @@ function clean( i, el ) { // TODO optimize for perf
 	while( l-- ) {
 		link = links[ l ];
 		$( link.source ).unbind( "propertyChange", link.handler );
-//	$( "#console" ).append( --TEST_EVENTS.total + " - propertyChange " + --(TEST_EVENTS.objectChange) + "<br/>");
+//	$( "#console" ).append( --TEST_EVENTS.total + " - propertyChange " + --(TEST_EVENTS.propertyChange) + "<br/>");
 	}
 
 	views = jsViewsData( el, "view" );
@@ -618,13 +612,24 @@ $.extend({
 				ret = parentElViews[0];
 			}
 			while ( !ret && node ) {
-				if  ( node.nodeType === 8 && /^item|tmpl(\([\w\.]*\))?(\s+[^\s]+)?$/.test( node.nodeValue )) {
-					i = parentElViews.length;
-					while ( i-- ) {
-						view = parentElViews[ i ];
-						if ( view.prevNode === node ) {
-							ret = view;
-							break;
+				if  ( node.nodeType === 8 ) {
+					if (  /^\/item|^\/tmpl$/.test( node.nodeValue )) {
+						i = parentElViews.length;
+						while ( i-- ) {
+							view = parentElViews[ i ];
+							if ( view.nextNode === node ) {
+								node = view.prevNode;
+								break;
+							}
+						}
+					} else if ( /^item|^tmpl(\([\w\.]*\))?(\s+[^\s]+)?$/.test( node.nodeValue )) {
+						i = parentElViews.length;
+						while ( i-- ) {
+							view = parentElViews[ i ];
+							if ( view.prevNode === node ) {
+								ret = view;
+								break;
+							}
 						}
 					}
 				}
