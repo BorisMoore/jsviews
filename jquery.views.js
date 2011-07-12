@@ -286,7 +286,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 			// Add top-level non-element nodes to view.nodes
 			currentView.nodes.push( node );
 		}
-			node = node.nextSibling;
+		node = node.nextSibling;
 	}
 }
 
@@ -797,7 +797,8 @@ $.fn.extend({
 		if ( data ) {
 			var tmpl = $.template( options );
 			if ( tmpl ) {
-				return this.html( $.render(tmpl, data )).link(data);
+				return this.empty().append( $.render(tmpl, data )).link( data );
+				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 			}
 			link( data, this, undefined, true, options );
 			link( this, data, undefined, true, options );

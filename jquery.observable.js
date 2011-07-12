@@ -1,5 +1,9 @@
-// TODO consider single type of event: dataChange - to cover array and property changes. Allows clients to do single afterDataChange event.
-
+/*!
+ * jQuery Observable
+ * Subcomponent of JsViews
+ * Data change events for data linking
+ * See: http://github.com/BorisMoore/jsviews
+ */
 (function ( $, undefined ) {
 	$.observable = function( data, options ) {
 		return $.isArray( data )
