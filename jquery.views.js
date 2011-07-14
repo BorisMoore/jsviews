@@ -247,12 +247,22 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 			createNestedViews( node, currentView, options, nextNode, viewDepth, data );
 		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
 			if ( tokens[1]) {
+				if ( node.parentNode !== currentView.prevNode.parentNode ) {
+					// special case for LIs in IE compat mode. Item annotation is content of preceding LI.
+					var parentNode = node.parentNode;
+					if ( tokens[2] ) {
+						// move following <!--item--> or <!--/tmpl--> to after LI element
+						parentNode.parentNode.insertBefore( node.nextSibling, parentNode.nextSibling );
+					}
+					// move <!--/item--> or <!--/tmpl--> to after LI element
+					parentNode.parentNode.insertBefore( node, parentNode.nextSibling );
+					return;
+				}
 				if ( tokens[2] ) {
 					// An item close tag: <!--/item-->
 					currentView.nextNode = node;
 					currentView.onCreated( currentView );
 					currentView = parent;
-
 				} else {
 					// A tmpl close tag: <!--/tmpl-->
 					currentView.nextNode = node;
@@ -266,7 +276,6 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 					currentView = new View( node, index++, undefined, currentView, parentElViews, options );
 				} else {
 					// A tmpl open tag: <!--tmpl(path) name-->
-
 					view = $.view( node );
 					if ( view && view.prevNode === node ) {
 						if ( view.data === data ) {
@@ -279,6 +288,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 					} else {
 						view = new View( node, tokens[3], tokens[4], currentView, parentElViews, options, data );
 					}
+					// Jump to the nextNode of the tmpl view
 					node = existing || createNestedViews( node, view, options, nextNode, 0 );
 				}
 			}
@@ -797,7 +807,7 @@ $.fn.extend({
 		if ( data ) {
 			var tmpl = $.template( options );
 			if ( tmpl ) {
-				return this.empty().append( $.render(tmpl, data )).link( data );
+				this.empty().append( $.render( tmpl, data )).link( data );
 				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 			}
 			link( data, this, undefined, true, options );

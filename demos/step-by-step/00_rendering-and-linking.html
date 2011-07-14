@@ -22,19 +22,20 @@
 
 <h3>Rendering templates, and linking to changes in data:</h3>
 
+<h4>Insert HTML from a rendered template, as innerHTML under a container element. (Uses only JsRender.)</h4>
+
+<ul id="movieList1"></ul>
+
+<h4>Insert HTML from a rendered template between other content, and then data-link the content, for live updates. (Uses JsViews for data linking.)</h4>
+
 <p>
 <button onclick="addMovie()">add Movie</button>
 <button onclick="removeMovie()">remove last Movie</button>
 </p>
 
-<h4>Template rendered as innerHTML under a container element:</h4>
-
-<ul id="movieList1"></ul>
-
-<h4>Template rendered between other HTML content, and data-linked for live updates</h4>
 <div id="movieList2"><b>Our Movies</b><br /></div>
 
-<h4>Content of an HTML container element linked directly to data:</h4>
+<h4>Use JsViews to link content of an HTML container element directly to data, by associating with a template.</h4>
 
 <ul id="movieList3"></ul>
 
@@ -46,7 +47,7 @@
 		{ Name: "The Inheritance", ReleaseYear: "1976" }
 	];
 
-	// Render the template with the movies data and insert
+	// JsRender: Render the template with the movies data and insert
 	// the rendered HTML under the "movieList" element
 	$( "#movieList1" ).html(
 		$( "#movieTemplate" ).render( movies )
