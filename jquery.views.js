@@ -922,14 +922,14 @@ $.fn.extend({
 	link: function( data, tmpl, options ) {
 		// Declarative Linking
 		// If options is a function, cb - shorthand for { beforeChange: cb }
-		if ( typeof tmpl === "string" ) {
+		if ( $.isPlainObject( tmpl )) {
+			options = tmpl;
+		} else {
 			tmpl = $.template( tmpl );
 			if ( tmpl ) {
 				this.empty().append( $.render( tmpl, data ));
 				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 			}
-		} else {
-			options = tmpl;
 		}
 		return link( this, data, undefined, options );
 	}
