@@ -1,12 +1,11 @@
 ﻿<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jquery.render.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
-
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -18,14 +17,14 @@
 <button onclick="deleteLastLanguage()">delete last language</button>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
-    <tr class="hover" data-getfrom="css-background-color:bgColor($view[index])">
+    <tr class="hover" data-getfrom="css-background-color:bgColor($view[index], [selected])">
         <td>
             <span data-getfrom="$view[index]"></span>:
-            <span data-getfrom="[Title]"></span>
-            <span data-getfrom="html: specialOrderText([SpecialOrder])"></span>
+            <span data-getfrom="[title]"></span>
+            <span data-getfrom="html: specialOrderText([specialOrder], $data)"></span>
         </td>
         <td>
-            {{tmpl(Languages()) "#languageTemplate"}}
+            {{tmpl(languages()) "#languageTemplate"}}
         </td>
         <td>
             <img class="close" src="../resources/close.png" />
@@ -34,24 +33,24 @@
 </script>
 
 <script id="languageTemplate" type="text/x-jquery-tmpl">
-    <div data-getfrom="[Name]"></div>
+    <div data-getfrom="[name]"></div>
 </script>
 
 <script id="languageEditTemplate" type="text/x-jquery-tmpl">
-    <input data-getfrom="[Name]" data-to="[Name]"/><img class="close" src="../resources/close.png" />
+    <input data-getfrom="[name]" data-to="[name]"/><img class="close" src="../resources/close.png" />
 </script>
 
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
     <div>
         <div>
-            Special Order: <input type="checkbox" class="special" data-getfrom="checked: [SpecialOrder]" data-to="[SpecialOrder]" />
+            Special Order: <input type="checkbox" class="special" data-getfrom="checked: [specialOrder]" data-to="[specialOrder]" />
         </div>
         <div class="title">Title:</div>
         <div>
-            <input data-getfrom="[Title]" data-to="[Title]" />
+            <input data-getfrom="[title]" data-to="[title]" />
         </div>
         <div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
-        <div>{{tmpl(Languages()) "#languageEditTemplate"}}</div>
+        <div>{{tmpl(languages()) "#languageEditTemplate"}}</div>
     </div>
 </script>
 
@@ -63,132 +62,176 @@
 
 <script type="text/javascript">
 
-	// Data Model Definitions
+	var moviesData = [
+		{
+			title: "Meet Joe Black",
+			languages: [ "English", "French" ],
+			specialOrder: false
+		},
+		{
+			title: "Eyes Wide Shut",
+			languages: [ "French", "German", "Spanish" ],
+			specialOrder: true
+		}
+	];
+
+	//=====================
+	// Language View Model
+	//=====================
 
 	function Language( name ) {
 		this._name = name;
 	}
 
 	Language.prototype = {
-		Name: function ( name ) {
-			if ( name === undefined ) {
+		name: function ( value ) {
+			if ( value === undefined ) {
 				return this._name;
 			} else {
-				this._name = name;
+				$.observable( this ).setProperty( "_name", value );
 			}
 		}
 	}
 
-	function Movie( title, languages, specialOrder ) {
-		this._specialOrder = !!specialOrder;
-		this._title = title;
-		this._languages = languages;
+	//=====================
+	// Movie View Model
+	//=====================
+
+	function Movie( movieData ) {
+		this._specialOrder = !!movieData.specialOrder;
+		this._title = movieData.title;
+		this.selected = false;
+		this._languages = [];
+		for ( var i = 0, l = movieData.languages.length; i<l; i++ ) {
+			this._languages.push( new Language( movieData.languages[ i ]));
+		}
 	}
 
 	Movie.prototype = {
-		Title: function ( title ) {
-			if ( title === undefined ) {
+		title: function ( value ) {
+			if ( value === undefined ) {
 				return this._title;
 			} else {
-				this._title = title;
+				$.observable( this ).setProperty( "_title", value );
 			}
 		},
-		SpecialOrder: function ( value ) {
+		specialOrder: function ( value ) {
 			if ( value === undefined ) {
 				return this._specialOrder;
 			} else {
-				this._specialOrder = value;
+				$.observable( this ).setProperty( "_specialOrder", value );
 			}
 		},
-		Languages: function () {
-			return this._languages;
+		languages: function () {
+			return this._languages
 		},
 		addLanguage: function ( language ) {
-			$.observable( this._languages ).insert( this._languages.length, language );
+			$.observable( this._languages ).insert( this._languages.length, new Language( language ));
 		},
 		removeLanguage: function ( index ) {
 			$.observable( this._languages ).remove( index, 1 );
+		},
+		select: function ( value ) {
+			$.observable( this ).setProperty( "selected", value );
 		}
 	}
 
-	// App and UI code
+	//=====================
+	// Movies View Model
+	//=====================
 
-	var app = {
-			selectedItem: null
+	function Movies( moviesData ) {
+		this._movies = [];
+		for ( var i = 0, l = moviesData.length; i<l; i++ ) {
+			this._movies.push( new Movie( moviesData[ i ]));
+		}
+	}
+
+	Movies.prototype = {
+		selectedMovie: null,
+		movies: function () {
+			return this._movies;
 		},
+		select: function ( selectedMovie ) {
+			if ( this.selectedMovie !== selectedMovie ) {
+				if ( this.selectedMovie ) {
+					this.selectedMovie.select( false );
+				}
+				if (selectedMovie) {
+					selectedMovie.select( true );
+				}
+				$.observable( this ).setProperty( "selectedMovie", selectedMovie );
+			}
+		},
+		addMovie: function ( movieData ) {
+			$.observable( this._movies ).insert( this._movies.length, new Movie( movieData ));
+		},
+		removeMovie: function ( index ) {
+			this.select();
+			$.observable( this._movies ).remove( index, 1 );
+		}
+	}
 
-		movies = [
-			new Movie( "Meet Joe Black", [
-				new Language( "English" ),
-				new Language( "French" )
-			]),
-			new Movie( "Eyes Wide Shut", [
-				new Language( "French" ),
-				new Language( "German" ),
-				new Language( "Spanish" )
-			], true )
-		];
+	//=====================
+	// Initialize
+	//=====================
+
+	var viewModel = new Movies( moviesData );
 
 	$( "#movieList" )
-		.link( movies, "#movieTemplate" )
+		.link( viewModel.movies(), "#movieTemplate" )
+
 		.delegate( "tr", "click", function () {
-			select( $.view( this ));
+			viewModel.select( $.view( this ).data );
 		})
 		.delegate( ".close", "click", function () {
-			select();
-			$.observable( movies ).remove( $.view( this ).index, 1 );
+			viewModel.removeMovie( $.view( this ).index );
 			return false;
 		});
 
 	$( "#movieDetail" )
 		.link( [], "#detailViewTemplate" )
+
 		.delegate( "#addLanguageBtn", "click", function () {
-			var languages = $.view( this ).data.Languages();
-			$.observable( languages ).insert( languages.length, new Language( "NewLanguage" ));
+			$.view( this ).data.addLanguage( "NewLanguage" );
 		})
+
 		.delegate( ".close", "click", function () {
-			$.observable( app.selectedItem.data.Languages()).remove( $.view( this ).index, 1 );
+			viewModel.selectedMovie.removeLanguage( $.view( this ).index );
 			return false;
 		});
 
 	$( "#addMovieBtn" ).click( function () {
-		$.observable( movies ).insert( movies.length, new Movie( "NewTitle", [new Language( "NewLanguage" )]));
+		viewModel.addMovie({ title: "NewTitle", languages: [ "NewLanguage" ] });
 
 		// Set selection on the added item
-		select( $("#movieList tr:last").view());
+		viewModel.select( $("#movieList tr:last").view().data );
 	});
 
-	$.link( app, function( event, args ) {
-		if ( args.path === "selectedItem" ) {
+	$( viewModel ).bind( "propertyChange", function( event, args ) {
+		if ( args.path === "selectedMovie" ) {
 			$( "#movieDetail" )
-				.link( args.value ? [ args.value.data ] : [] );
+				.link( args.value ? [ args.value ] : [] );
 		}
 	});
 
-	function specialOrderText( specialOrder ) {
-		return specialOrder ? "(<b>special</b>)" : "(<i>regular<i>)";
+	//=====================
+	// Helpers
+	//=====================
+
+	function specialOrderText( specialOrder, data ) {
+		return data.specialOrder() ? "(<b>special</b>)" : "(<i>regular<i>)";
 	}
 
-	function bgColor( index ) {
-		return index%2 ? "#fdfdfe" : "#efeff2";
-	}
-
-	function select( view ) {
-		if ( app.selectedItem != view ) {
-			if ( app.selectedItem ) {
-				$( app.selectedItem.nodes ).css( "backgroundColor", bgColor( app.selectedItem.index ));
-			}
-			if (view) {
-				$( view.nodes ).css( "backgroundColor", "yellow" );
-			}
-			$.observable( app ).setProperty( "selectedItem", view );
-		}
+	function bgColor( index, selected ) {
+		return selected ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 	}
 
 	function deleteLastLanguage() {
+		var movies = viewModel.movies();
 		if ( movies.length ) {
-			var languages = movies[ movies.length - 1 ].Languages();
-			$.observable( languages ).remove( languages.length - 1, 1 );
+			var lastMovie = movies[ movies.length - 1 ];
+			lastMovie.removeLanguage( lastMovie.languages().length - 1 );
 		}
 	}
 
@@ -199,13 +242,8 @@
 <!--Console-->
 
 <script id="showData" type="text/x-jquery-tmpl">
-    <div><b>Movie:</b> ${$data.Title()} <b>Special Order:</b> ${$data.SpecialOrder()} <b>Languages:</b> {{tmpl($data.Languages()) "#showLanguage"}}</div>
+    <div><b>Movie:</b> ${$data.title()} <b>Special Order:</b> ${$data.specialOrder()} <b>Languages:</b> {{each $data.languages()}}${$value.name()}&nbsp{{/each}}</div>
 </script>
-
-<script id="showLanguage" type="text/x-jquery-tmpl">
-    ${$data.Name()}&nbsp;
-</script>
-
 
 <div id="console">
 </div>
@@ -213,7 +251,7 @@
 <script type="text/javascript">
 	function showData() {
 		$( "#console" ).append("<hr/>");
-		$( "#console" ).append( $( "#showData" ).render( movies ));
+		$( "#console" ).append( $( "#showData" ).render( viewModel.movies() ));
 	}
 </script>
 
