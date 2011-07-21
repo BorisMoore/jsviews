@@ -11,7 +11,7 @@
 <body>
 <a href="../index.html">Home</a><br />
 
-<h3>Fully editable data, using Data Model classes with property accessors</h3>
+<h3>Fully editable data, using View Model classes with property accessors</h3>
 
 <button onclick="showData()">show data</button>
 <button onclick="deleteLastLanguage()">delete last language</button>
@@ -19,7 +19,7 @@
 <script id="movieTemplate" type="text/x-jquery-tmpl">
     <tr class="hover" data-getfrom="css-background-color:bgColor($view[index], [selected])">
         <td>
-            <span data-getfrom="$view[index]"></span>:
+            <span data-getfrom="$view[index]+1"></span>:
             <span data-getfrom="[title]"></span>
             <span data-getfrom="html: specialOrderText([specialOrder], $data)"></span>
         </td>

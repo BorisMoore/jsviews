@@ -17,9 +17,9 @@
 <button onclick="deleteLastLanguage()">delete last language</button>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
-	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index])">
+	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
 		<td>
-			<span data-getfrom="$view[index]"></span>:
+			<span data-getfrom="$view[index]+1"></span>:
 			<span data-getfrom="[Title]"></span>
 		</td>
 		<td>
@@ -125,18 +125,12 @@
 		}
 	});
 
-	function bgColor( index ) {
-		return index%2 ? "#fdfdfe" : "#efeff2";
+	function bgColor( index, selectedItem ) {
+		return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 	}
 
 	function select( view ) {
 		if ( app.selectedItem != view ) {
-			if ( app.selectedItem ) {
-				$( app.selectedItem.nodes ).css( "backgroundColor", bgColor( app.selectedItem.index ));
-			}
-			if (view) {
-				$( view.nodes ).css( "backgroundColor", "yellow" );
-			}
 			$.observable( app ).setProperty( "selectedItem", view );
 		}
 	}

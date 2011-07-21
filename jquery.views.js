@@ -29,7 +29,8 @@ function elemChangeHandler( ev ) {
 		source = ev.target,
 		$source = $( source ),
 		links = this.links,
-		beforeChange = this.options.beforeChange,
+		options = this.options || {},
+		beforeChange = options.beforeChange,
 		l = links.length;
 
 	while ( l-- && !cancel ) {
@@ -68,7 +69,7 @@ function elemChangeHandler( ev ) {
 							sourceValue = Function( "$", "$data", "$view", "$value",
 								"with($.linkSettings.converters){return " + cnvt + ";}")
 									.call({ source: source, target: target, convert: cnvt,
-										path: toPath, options: this.options },
+										path: toPath },
 										$, data, view, sourceValue );
 						} catch(e) {
 							// in debug mode, throw 'bad syntax error';
@@ -77,8 +78,8 @@ function elemChangeHandler( ev ) {
 					}
 					if ( target ) {
 						$.observable( target ).setProperty( toPath, sourceValue );
-						if ( this.options.afterChange ) {
-							this.options.afterChange( ev );
+						if ( options.afterChange ) {
+							options.afterChange( ev );
 						}
 					}
 					ev.stopPropagation(); // Stop bubbling
@@ -157,21 +158,20 @@ function propertyChangeHandler( ev, eventArgs ) {
 
 function arrayChangeHandler( ev, eventArgs ) {
 	var cancel,
-		view = this.target,
-		options = this.options || {},
+		options = this.options,
 		beforeChange = options.beforeChange,
 		sourceValue = eventArgs ? eventArgs.change : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
 
 	if ((!beforeChange || !(cancel = beforeChange( ev, eventArgs ) === FALSE ))
 		&& sourceValue !== undefined ) {
-		view.onDataChanged( eventArgs );
+		this.onDataChanged( eventArgs );
 		if ( options.afterChange ) {
 			options.afterChange( ev, eventArgs );
 		}
 	}
 }
 
-function setArrayChangeLink( view, options ) {
+function setArrayChangeLink( view ) {
 	var handler,
 		data = view.data,
 		onArrayChange = view._onArrayChange;
@@ -186,7 +186,7 @@ function setArrayChangeLink( view, options ) {
 
 	if ( $.isArray( data )) {
 		handler = function() {
-			arrayChangeHandler.apply( { target: view, options: options }, arguments );
+			arrayChangeHandler.apply( view, arguments );
 		};
 		$([ data ]).bind( "arrayChange", handler );
 		view._onArrayChange = [ handler, data ];
@@ -203,6 +203,7 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 		self = this;
 
 	$.extend( self, {
+		options: options || {},
 		views: [],
 		nodes: node ? [] : [ document.body ],
 		tmpl: template || (parentView && parentView.tmpl),
@@ -224,14 +225,19 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 			}
 		} else {
 			if ( path ) {
-				data = Function( "$", "$data", "$view", "with($data){ return " + path  + ";}")( $, data, parentView );
+				data = Function( "$", "$data", "$view", "with($data){ return [" + path + "];}")( $, data, parentView );
+				if ( data[ 1 ]) {
+					//options
+					$.extend( self, data[ 1 ]);
+				}
+				data = data[ 0 ];
 			}
 			self.index = views.length;
 			views.push( self );
 		}
 	}
 	self.data = data;
-	setArrayChangeLink( self, options );
+	setArrayChangeLink( self );
 }
 
 function createNestedViews( node, parent, options, nextNode, depth, data, prevNode, index ) {
@@ -300,7 +306,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 							existing = view.nextNode;
 						} else {
 							view.data = data;
-							view.render();
+							view.render( options );
 							return view.nextNode;
 						}
 					} else {
@@ -395,7 +401,7 @@ function link( from, to, links, options ) {
 //}
 
 function addLinksFromData( source, target, getFrom, linkFrom, options ) {
-	var param, i, l, lastChar, attr, cnvt, openParenIndex, get, object, cnvtParams, view,
+	var param, cnvtParam, i, l, lastChar, attr, cnvt, openParenIndex, get, object, cnvtParams, view,
 		triggers = [];
 
 	linkFrom = splitParams( (linkFrom ? linkFrom + "," : "") + (getFrom ? "|," + getFrom + ",": ""), TRUE );
@@ -430,20 +436,21 @@ function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 				cnvtParams = cnvt.slice( openParenIndex );
 				cnvtParams = splitParams( cnvtParams );
 				for ( i = 0, l = cnvtParams.length; i < l; i++ ) {
-					param = $.trim(cnvtParams[ i ]);
-					lastChar = param.charAt( param.length - 1 );
-					param = param.slice( 0, -1 );
+					cnvtParam = $.trim(cnvtParams[ i ]);
+					lastChar = cnvtParam.charAt( cnvtParam.length - 1 );
+					cnvtParam = cnvtParam.slice( 0, -1 );
 					if ( lastChar === '[') {
-						cnvtParams[ i ] = object = param;
+						cnvtParams[ i ] = object = cnvtParam;
 					} else if ( lastChar === ']') {
-						triggers.push([ object, param ]);
-						cnvtParams[ i ] = object ? ("." + param) : param;
+						triggers.push([ object, cnvtParam ]);
+						cnvtParams[ i ] = object ? ("." + cnvtParam) : cnvtParam;
 						object = "";
 					}
 				}
 				cnvt = cnvt.slice( 0, openParenIndex ) + cnvtParams.join("") + ")";
 			}
 
+			cnvt += param;
 			view = $.view( target );
 			l = triggers.length;
 			while ( l-- ) {
@@ -734,7 +741,7 @@ $.extend({
 			// Not within any of the views in the current parentElViews collection, so move up through parent nodes to find next parentElViews collection
 			ret = ret || $.view( parentNode );
 		}
-		return options ? $.extend( ret, options ) : ret;
+		return ret;
 	},
 
 	//=======================
@@ -796,7 +803,7 @@ $.extend({
 					this.parent.onCreated( view );
 				}
 			},
-			render: function( options ) {
+			render: function() {
 				var arrayChange, html = $.render( this.tmpl, this.data ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
@@ -808,27 +815,27 @@ $.extend({
 				$( prevNode ).after( html );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, options, nextNode, 0, undefined, prevNode, 0); //this.index
-				setArrayChangeLink( this, options );
+				createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, 0); //this.index
+				setArrayChangeLink( this );
 				return this;
 			},
-			addViews: function( index, dataItems, tmpl, options ) {
+			addViews: function( index, dataItems, tmpl ) {
 				var itemsCount = dataItems.length,
 					views = this.views;
 
 				if ( itemsCount ) {
-					var html = $.render( tmpl || this.tmpl, dataItems ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
+					var html = $.render( tmpl || this.tmpl, dataItems, this.options ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
 						nextNode = prevNode.nextSibling,
 						parentNode = prevNode.parentNode;
 					$( prevNode ).after( html );
 					parentNode.removeChild( prevNode.nextSibling );
 					parentNode.removeChild( nextNode.previousSibling );
-					createNestedViews( parentNode, this, options, nextNode, 0, undefined, prevNode, index );
+					createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, index );
 				}
 				return this;
 			},
-			removeViews: function( index, itemsCount, keepHtml, options ) {
+			removeViews: function( index, itemsCount, keepHtml ) {
 				if ( itemsCount ) {
 					var parentElViews, parentViewsIndex,
 						views = this.views,
@@ -863,7 +870,7 @@ $.extend({
 							$( nodes ).remove();
 						}
 						view.data = undefined;
-						setArrayChangeLink( view, options );
+						setArrayChangeLink( view );
 					}
 					views.splice( index, itemsCount );
 					viewCount = views.length;
@@ -882,9 +889,9 @@ $.extend({
 				}
 				return this;
 			},
-			view: function( options ) {
-				// Sets options on this view.
-				return $.extend( view, options );
+			view: function( viewOptions ) {
+				// Extends this view with viewOptions.
+				return $.extend( view, viewOptions );
 			},
 			content: function( select ) {
 				return select ? $( select, this.nodes ) : $( this.nodes );
@@ -927,7 +934,7 @@ $.fn.extend({
 		} else {
 			tmpl = $.template( tmpl );
 			if ( tmpl ) {
-				this.empty().append( $.render( tmpl, data ));
+				this.empty().append( $.render( tmpl, data, options ));
 				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 			}
 		}
