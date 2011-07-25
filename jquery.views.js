@@ -58,23 +58,13 @@ function elemChangeHandler( ev ) {
 					// data is the current view data, or the top-level target of linkTo.
 //TODO make sure we are not missing intermediate levels.
 					// get the target object
-					target = target
-						? target = Function( "$", "$data", "$view", "with($data){return " + target  + ";}")( $, data, view )
-						: data;
+					target = getTargetObject( data, view, target );
 					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
 					cnvt = linkToInfo[ 3 ];
 					if ( cnvt ) {
-						try {
-							// get the converted value
-							sourceValue = Function( "$", "$data", "$view", "$value",
-								"with($.linkSettings.converters){return " + cnvt + ";}")
-									.call({ source: source, target: target, convert: cnvt,
-										path: toPath },
-										$, data, view, sourceValue );
-						} catch(e) {
-							// in debug mode, throw 'bad syntax error';
-							throw e.message;
-						}
+						sourceValue = getConvertedValue( 
+							{ source: source, target: target, convert: cnvt, path: toPath }, 
+							data, view, cnvt, sourceValue );
 					}
 					if ( target ) {
 						$.observable( target ).setProperty( toPath, sourceValue );
@@ -93,7 +83,7 @@ function elemChangeHandler( ev ) {
 }
 
 function propertyChangeHandler( ev, eventArgs ) {
-	var pathInfo, setter, cancel, changed, attr, cnvt,
+	var pathInfo, setter, cancel, changed, attr,
 		link = this,
 		target = link.target,
 		$target = $( target ),
@@ -110,32 +100,21 @@ function propertyChangeHandler( ev, eventArgs ) {
 		if ((!beforeChange || !(eventArgs && (cancel = beforeChange.call( this, ev, eventArgs ) === FALSE )))
 		&& (!view || view.onDataChanged( eventArgs ) !== FALSE )) {
 
-			attr = pathInfo.attr,
-			cnvt = pathInfo.convert;
-
-			// If the eventArgs is specified, then this came from a real property change event (not ApplyLinks trigger)
-			// so only modify target elements which have a corresponding target path.
-			if ( cnvt ) {
-				try {
-					// get the converted value
-					sourceValue = Function( "$", "$data", "$view",
-						"with($.linkSettings.converters){with($data){return " + cnvt + ";}}")
-							.call( link, $, link.source, view );
-				} catch(e) {
-					// in debug mode, throw 'bad syntax error';
-					throw e.message;
-				}
-				if ( $.isFunction( sourceValue )) {
-					sourceValue = sourceValue.call( source );
-				}
+			attr = pathInfo.attr;
+			
+			sourceValue = getConvertedValue( link, link.source, view, pathInfo.expr, eventArgs && eventArgs.value );
+			
+			if ( $.isFunction( sourceValue )) {
+				sourceValue = sourceValue.call( source );
 			}
+			
 			if ( !attr ) {
 				// Merge in the default attribute bindings for this target element
 				attr = settings.merge[ target.nodeName.toLowerCase() ];
 				attr = attr ? attr.to.toAttr : "text";
 			}
 
-			if ( css = attr.indexOf( "css-" ) === 0 && attr.substr( 4 ) ) {
+			if ( css = attr.indexOf( "css-" ) === 0 && attr.substr( 4 )) {
 				if ( changed = $target.css( css ) !== sourceValue ) {
 					$target.css( css, sourceValue );
 				}
@@ -149,6 +128,7 @@ function propertyChangeHandler( ev, eventArgs ) {
 					$target.attr( attr, sourceValue );
 				}
 			}
+			
 			if ( eventArgs && changed && options.afterChange ) {
 				options.afterChange.call( link, ev, eventArgs );
 			}
@@ -158,7 +138,7 @@ function propertyChangeHandler( ev, eventArgs ) {
 
 function arrayChangeHandler( ev, eventArgs ) {
 	var cancel,
-		options = this.options,
+		options = this.options || {},
 		beforeChange = options.beforeChange,
 		sourceValue = eventArgs ? eventArgs.change : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
 
@@ -203,7 +183,7 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 		self = this;
 
 	$.extend( self, {
-		options: options || {},
+		options: options,
 		views: [],
 		nodes: node ? [] : [ document.body ],
 		tmpl: template || (parentView && parentView.tmpl),
@@ -225,10 +205,11 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 			}
 		} else {
 			if ( path ) {
-				data = Function( "$", "$data", "$view", "with($data){ return [" + path + "];}")( $, data, parentView );
+				data = getDataAndOptions( data, parentView, path );
+				
 				if ( data[ 1 ]) {
 					//options
-					$.extend( self, data[ 1 ]);
+//TODO 					$.extend( self, data[ 1 ]);
 				}
 				data = data[ 0 ];
 			}
@@ -245,7 +226,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 		currentView = parent,
 		viewDepth = depth;
 
-	options = options || parent.options;
+	options = options || parentOptions;
 	index = index || 0;
 	node = prevNode || node;
 
@@ -324,14 +305,50 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 	}
 }
 
+//=======================
+// Expression evaluation
+//=======================
+
+function getDataAndOptions( source, view, paramString ) {
+	return Function( "$", "$data", "$view", "$options", 
+		"with($data){ return [" + paramString+ "];}")
+		( $, source, view, view.options );
+}
+
+function getConvertedValue( context, source, view, expression, value ) {
+	try {
+		return Function( "$", "$data", "$view", "$options", "$value", 
+			"with($data){return " + expression + ";}")
+			.call( context, $, source, view, view.options, value );
+	} catch(e) {
+		// in debug mode, throw 'bad syntax error';
+		throw e.message;
+	}
+}
+
+function getTargetObject( source, view, expression ) {
+	try {
+		return expression 
+			? Function( "$", "$data", "$view", "$options", 
+				"with($data){return " + expression  + ";}")
+				( $, source, view, view.options )
+			: source;
+	} catch(e) {
+		// in debug mode, throw 'bad syntax error';
+		throw e.message;
+	}
+}
+
 //===============
 // data linking
 //===============
 
 function link( from, to, links, options ) {
-	options = $.isFunction( options )
+	options
+	 = $.isFunction( options )
 		? { beforeChange: options }
-		: options || {};
+		: 
+		options || {};
 
 	if ( links ) {
 
@@ -401,8 +418,9 @@ function link( from, to, links, options ) {
 //}
 
 function addLinksFromData( source, target, getFrom, linkFrom, options ) {
-	var param, cnvtParam, i, l, lastChar, attr, cnvt, openParenIndex, get, object, cnvtParams, view,
-		triggers = [];
+	var param, cnvtParam, i, l, lastChar, attr, openParenIndex, get, object, cnvtParams, view,
+		triggers = [], 
+		cnvt = "";
 
 	linkFrom = splitParams( (linkFrom ? linkFrom + "," : "") + (getFrom ? "|," + getFrom + ",": ""), TRUE );
 	while ( param = linkFrom.shift() ) {
@@ -456,7 +474,7 @@ function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 			while ( l-- ) {
 				var trigger = triggers[ l ],
 					path = trigger[ 1 ],
-					fromOb = trigger[ 0 ] ? Function( "$", "$data", "$view", "with($data){return " + trigger[ 0 ]  + ";}")( $, source, view ) : source,
+					fromOb = getTargetObject( source, view, trigger[ 0 ]), 
 					link = { source: source, target: target, options: options },
 					innerPath = path.split("."),
 					innerOb = fromOb;
@@ -479,11 +497,11 @@ function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 	}
 }
 
-function addLinkFromData( source, link, path, convert, attr, get ) {
+function addLinkFromData( source, link, path, expr, attr, get ) {
 	var paths, pathInfos,
 		target = link.target,
 		linkInfo = getLinkFromDataInfo( target, source ),
-		pathInfo = { attr: attr, convert: convert };
+		pathInfo = { attr: attr, expr: expr};
 
 	if ( linkInfo ) {
 		// Set path info for this path
@@ -534,17 +552,16 @@ function removeLinksToData( source, target, links ) {
 }
 
 function getLinkFromDataInfo( target, source ) {
-	var link, ret,
+	var link,
 		links = jsViewsData( target, "from" );
 		l = links.length;
 	while( l-- ) {
 		link = links[ l ];
 		if ( link.source === source ) {
 			// Set path info for this path
-			ret = link;
+			return link;
 		}
 	}
-	return ret;
 }
 
 //===============
@@ -689,9 +706,8 @@ $.extend({
 	view: function( node, options ) {
 		// $.view() returns top node
 		// $.view( node ) returns view that contains node
-		// In addition, can provide option map to each of the above. e.g. $.view( option ) returns top view after setting options on it.
 
-		var ret, view, parentElViews, i, parentNode,
+		var returnView, view, parentElViews, i, parentNode,
 			topNode = document.body;
 
 		node = node || topNode;
@@ -701,20 +717,20 @@ $.extend({
 			node = topNode;
 		}
 		if ( topView && !topView.views.length ) {
-			ret = topView; // Perf optimization for common case
+			returnView = topView; // Perf optimization for common case
 		} else {
 			// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
 			while( !(parentElViews = jsViewsData( parentNode = node.parentNode || topNode, "view" )).length ) {
 				if ( !parentNode || node === topNode ) {
-					jsViewsData( topNode.parentNode, "view", TRUE ).push( ret = topView = new View( options ));
+					jsViewsData( topNode.parentNode, "view", TRUE ).push( returnView = topView = new View());
 					break;
 				}
 				node = parentNode;
 			}
-			if ( !ret && node === topNode ) {
-				ret = parentElViews[0];
+			if ( !returnView && node === topNode ) {
+				returnView = parentElViews[0];
 			}
-			while ( !ret && node ) {
+			while ( !returnView && node ) {
 				if  ( node.nodeType === 8 ) {
 					if (  /^\/item|^\/tmpl$/.test( node.nodeValue )) {
 						i = parentElViews.length;
@@ -730,7 +746,7 @@ $.extend({
 						while ( i-- ) {
 							view = parentElViews[ i ];
 							if ( view.prevNode === node ) {
-								ret = view;
+								returnView = view;
 								break;
 							}
 						}
@@ -738,10 +754,10 @@ $.extend({
 				}
 				node = node.previousSibling;
 			}
-			// Not within any of the views in the current parentElViews collection, so move up through parent nodes to find next parentElViews collection
-			ret = ret || $.view( parentNode );
+			// If not within any of the views in the current parentElViews collection, move up through parent nodes to find next parentElViews collection
+			returnView = returnView || $.view( parentNode );
 		}
-		return ret;
+		return returnView;
 	},
 
 	//=======================
@@ -753,7 +769,6 @@ $.extend({
 			// support for property getter on data
 			return $.isFunction( value ) ? value.call(data) : value;
 		},
-		converters: {},
 		linkToAttr: "data-to",
 		linkFromAttr: "data-from",
 		getFromAttr: "data-getfrom",
@@ -804,7 +819,8 @@ $.extend({
 				}
 			},
 			render: function() {
-				var arrayChange, html = $.render( this.tmpl, this.data ),
+				var arrayChange, html = 
+					$.render( this.tmpl, this.data, this.options ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
 					parentNode = prevNode.parentNode;
@@ -815,16 +831,24 @@ $.extend({
 				$( prevNode ).after( html );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, 0); //this.index
+				createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, 0 ); //this.index
 				setArrayChangeLink( this );
 				return this;
 			},
 			addViews: function( index, dataItems, tmpl ) {
-				var itemsCount = dataItems.length,
+				var parent, options, 
+					itemsCount = dataItems.length,
 					views = this.views;
 
 				if ( itemsCount ) {
-					var html = $.render( tmpl || this.tmpl, dataItems, this.options ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
+					if ( this.path ) {
+						parent = this.parent;
+						options = getDataAndOptions( parent.data, parent, this.path )[1];
+						if ( options && parent.options ) {
+//TODO						options = $.extend( {}, parent.options, options );
+						} 
+					}
+					var html = $.render( tmpl || this.tmpl, dataItems, options ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
 						nextNode = prevNode.nextSibling,
 						parentNode = prevNode.parentNode;

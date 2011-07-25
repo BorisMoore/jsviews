@@ -88,7 +88,7 @@
 			if ( value === undefined ) {
 				return this._name;
 			} else {
-				$.observable( this ).setProperty( "_name", value );
+				this._name = value;
 			}
 		}
 	}
@@ -112,14 +112,14 @@
 			if ( value === undefined ) {
 				return this._title;
 			} else {
-				$.observable( this ).setProperty( "_title", value );
+				this._title = value;
 			}
 		},
 		specialOrder: function ( value ) {
 			if ( value === undefined ) {
 				return this._specialOrder;
 			} else {
-				$.observable( this ).setProperty( "_specialOrder", value );
+				this._specialOrder = value;
 			}
 		},
 		languages: function () {

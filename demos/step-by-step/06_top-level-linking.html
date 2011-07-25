@@ -41,7 +41,16 @@
 </div>
 
 <script type="text/javascript">
-	var person = {
+	var app = {
+			selectedItem: null,
+			editMode: true,
+			
+			yesNo: function( value, yes, no ) { 
+				return value ? yes : no; 
+			}
+		},
+
+		person = {
 			firstName: "Jo",
 			lastName: "Proctor",
 			address: {
@@ -95,16 +104,14 @@
 	//	$.observable( person.address ).setProperty( "city", person.address.city + "Add" );
 	}
 
-	$.extend($.linkSettings.converters, {
-		format: function( value, type ) {
-			switch( type ) {
-				case "upper":
-					return value.toUpperCase();
-				default:
-					return value;
-			}
+	function format( value, type ) {
+		switch( type ) {
+			case "upper":
+				return value.toUpperCase();
+			default:
+				return value;
 		}
-	});
+	}
 </script>
 
 <!--================ End of Demo Section ================-->
