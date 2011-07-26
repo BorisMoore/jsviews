@@ -92,8 +92,6 @@
 		});
 
 	$( "#movieDetail" )
-		.link( [], "#detailViewTemplate" )
-
 		.delegate( "#addLanguageBtn", "click", function () {
 			var languages = $.view( this ).data.Languages;
 			$.observable( languages ).insert( languages.length, {
@@ -120,10 +118,23 @@
 
 	$( app ).bind( "propertyChange", function( event, args ) {
 		if ( args.path === "selectedItem" ) {
-			$( "#movieDetail" )
-				.link( args.value ? [ args.value.data ] : [] );
+			$( "#movieDetail" ).link((args.value ? args.value : []).data, "#detailViewTemplate" );
 		}
 	});
+
+////	The following is an alternative 'declarative binding' approach to bind the detail view to the app[selectedItem],
+////	replacing the $( app ).bind statement above:
+
+//	$( "#movieDetail" )
+//		// Link #movieDetail content to the selectedItem data, using the detailView template
+//		.addLinks( app, {
+//				from: "html:$('#detailViewTemplate').render(app[selectedItem].data)"
+//			}, {
+//			afterChange: function() {
+//				// link the HTML content to the data
+//				$( this.target ).link( this.source.selectedItem.data );
+//			}
+//		})
 
 	function bgColor( index, selectedItem ) {
 		return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );

@@ -190,8 +190,6 @@
 		});
 
 	$( "#movieDetail" )
-		.link( [], "#detailViewTemplate" )
-
 		.delegate( "#addLanguageBtn", "click", function () {
 			$.view( this ).data.addLanguage( "NewLanguage" );
 		})
@@ -211,7 +209,7 @@
 	$( viewModel ).bind( "propertyChange", function( event, args ) {
 		if ( args.path === "selectedMovie" ) {
 			$( "#movieDetail" )
-				.link( args.value ? [ args.value ] : [] );
+				$( "#movieDetail" ).link( args.value, "#detailViewTemplate" );
 		}
 	});
 

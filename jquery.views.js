@@ -62,8 +62,8 @@ function elemChangeHandler( ev ) {
 					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
 					cnvt = linkToInfo[ 3 ];
 					if ( cnvt ) {
-						sourceValue = getConvertedValue( 
-							{ source: source, target: target, convert: cnvt, path: toPath }, 
+						sourceValue = getConvertedValue(
+							{ source: source, target: target, convert: cnvt, path: toPath },
 							data, view, cnvt, sourceValue );
 					}
 					if ( target ) {
@@ -91,7 +91,7 @@ function propertyChangeHandler( ev, eventArgs ) {
 		sourcePath = eventArgs && eventArgs.path || ev.path,
 		options = link.options || {},
 		beforeChange = options.beforeChange,
-		view = $.view( target )
+		view = $.view( target ),
 		pathInfos = getLinkFromDataInfo( target, source ).paths[ sourcePath ],
 		l = pathInfos && pathInfos.length;
 
@@ -101,13 +101,13 @@ function propertyChangeHandler( ev, eventArgs ) {
 		&& (!view || view.onDataChanged( eventArgs ) !== FALSE )) {
 
 			attr = pathInfo.attr;
-			
+
 			sourceValue = getConvertedValue( link, link.source, view, pathInfo.expr, eventArgs && eventArgs.value );
-			
+
 			if ( $.isFunction( sourceValue )) {
 				sourceValue = sourceValue.call( source );
 			}
-			
+
 			if ( !attr ) {
 				// Merge in the default attribute bindings for this target element
 				attr = settings.merge[ target.nodeName.toLowerCase() ];
@@ -128,7 +128,7 @@ function propertyChangeHandler( ev, eventArgs ) {
 					$target.attr( attr, sourceValue );
 				}
 			}
-			
+
 			if ( eventArgs && changed && options.afterChange ) {
 				options.afterChange.call( link, ev, eventArgs );
 			}
@@ -206,7 +206,7 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 		} else {
 			if ( path ) {
 				data = getDataAndOptions( data, parentView, path );
-				
+
 				if ( data[ 1 ]) {
 					//options
 //TODO 					$.extend( self, data[ 1 ]);
@@ -310,14 +310,14 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 //=======================
 
 function getDataAndOptions( source, view, paramString ) {
-	return Function( "$", "$data", "$view", "$options", 
+	return Function( "$", "$data", "$view", "$options",
 		"with($data){ return [" + paramString+ "];}")
 		( $, source, view, view.options );
 }
 
 function getConvertedValue( context, source, view, expression, value ) {
 	try {
-		return Function( "$", "$data", "$view", "$options", "$value", 
+		return Function( "$", "$data", "$view", "$options", "$value",
 			"with($data){return " + expression + ";}")
 			.call( context, $, source, view, view.options, value );
 	} catch(e) {
@@ -328,8 +328,8 @@ function getConvertedValue( context, source, view, expression, value ) {
 
 function getTargetObject( source, view, expression ) {
 	try {
-		return expression 
-			? Function( "$", "$data", "$view", "$options", 
+		return expression
+			? Function( "$", "$data", "$view", "$options",
 				"with($data){return " + expression  + ";}")
 				( $, source, view, view.options )
 			: source;
@@ -347,7 +347,7 @@ function link( from, to, links, options ) {
 	options
 	 = $.isFunction( options )
 		? { beforeChange: options }
-		: 
+		:
 		options || {};
 
 	if ( links ) {
@@ -419,7 +419,7 @@ function link( from, to, links, options ) {
 
 function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 	var param, cnvtParam, i, l, lastChar, attr, openParenIndex, get, object, cnvtParams, view,
-		triggers = [], 
+		triggers = [],
 		cnvt = "";
 
 	linkFrom = splitParams( (linkFrom ? linkFrom + "," : "") + (getFrom ? "|," + getFrom + ",": ""), TRUE );
@@ -474,7 +474,7 @@ function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 			while ( l-- ) {
 				var trigger = triggers[ l ],
 					path = trigger[ 1 ],
-					fromOb = getTargetObject( source, view, trigger[ 0 ]), 
+					fromOb = getTargetObject( source, view, trigger[ 0 ]),
 					link = { source: source, target: target, options: options },
 					innerPath = path.split("."),
 					innerOb = fromOb;
@@ -819,7 +819,7 @@ $.extend({
 				}
 			},
 			render: function() {
-				var arrayChange, html = 
+				var arrayChange, html =
 					$.render( this.tmpl, this.data, this.options ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
@@ -836,7 +836,7 @@ $.extend({
 				return this;
 			},
 			addViews: function( index, dataItems, tmpl ) {
-				var parent, options, 
+				var parent, options,
 					itemsCount = dataItems.length,
 					views = this.views;
 
@@ -846,7 +846,7 @@ $.extend({
 						options = getDataAndOptions( parent.data, parent, this.path )[1];
 						if ( options && parent.options ) {
 //TODO						options = $.extend( {}, parent.options, options );
-						} 
+						}
 					}
 					var html = $.render( tmpl || this.tmpl, dataItems, options ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
@@ -958,8 +958,11 @@ $.fn.extend({
 		} else {
 			tmpl = $.template( tmpl );
 			if ( tmpl ) {
-				this.empty().append( $.render( tmpl, data, options ));
-				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
+				this.empty();
+				if ( data ) {
+					this.append( $.render( tmpl, data, options ));
+					// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
+				}
 			}
 		}
 		return link( this, data, undefined, options );
