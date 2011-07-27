@@ -24,13 +24,14 @@ var FALSE = false, TRUE = true,
 	jsvData = "_jsvData";
 
 function elemChangeHandler( ev ) {
-	var setter, cancel, fromAttr, toPath, linkToInfo, sourceValue, link, cnvt, view, reg, target,
+	var setter, cancel, fromAttr, toPath, linkToInfo, linkContext, sourceValue, link, cnvt, reg, target,
 		data = this.target,
 		source = ev.target,
 		$source = $( source ),
+		view = $.view( source );
 		links = this.links,
-		options = this.options || {},
-		beforeChange = options.beforeChange,
+		context = view.ctx,
+		beforeChange = context.beforeChange,
 		l = links.length;
 
 	while ( l-- && !cancel ) {
@@ -44,7 +45,7 @@ function elemChangeHandler( ev ) {
 			}
 			setter = fnSetters[ fromAttr ];
 			sourceValue = $.isFunction( fromAttr ) ? fromAttr( source ) : setter ? $source[setter]() : $source.attr( fromAttr );
-			if ((!beforeChange || !(cancel = beforeChange( ev ) === FALSE )) && sourceValue !== undefined ) {
+			if ((!beforeChange || !(cancel = beforeChange.call( view, ev ) === FALSE )) && sourceValue !== undefined ) {
 				// Find linkToInfo using link.to, or if not specified, use declarative specification
 				// provided by decl.applyLinkToInfo, applied to source element
 				linkToInfo = link.to || $.trim( source.getAttribute( settings.linkToAttr ));
@@ -53,23 +54,26 @@ function elemChangeHandler( ev ) {
 					cnvt = link.convert;
 					linkToInfo = splitParams( linkToInfo );
 					target = linkToInfo[ 0 ].slice( 0, -1 );
-					view = $.view( source );
 					data = view && view.data || data;
 					// data is the current view data, or the top-level target of linkTo.
 //TODO make sure we are not missing intermediate levels.
 					// get the target object
 					target = getTargetObject( data, view, target );
-					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
 					cnvt = linkToInfo[ 3 ];
+					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
+					linkContext = {
+						source: source,
+						target: target,
+						convert: cnvt,
+						path: toPath
+					};
 					if ( cnvt ) {
-						sourceValue = getConvertedValue(
-							{ source: source, target: target, convert: cnvt, path: toPath },
-							data, view, cnvt, sourceValue );
+						sourceValue = getConvertedValue( linkContext, data, view, cnvt, sourceValue );
 					}
 					if ( target ) {
 						$.observable( target ).setProperty( toPath, sourceValue );
-						if ( options.afterChange ) {
-							options.afterChange( ev );
+						if ( context.afterChange ) {
+							context.afterChange.call( linkContext, source, ev );
 						}
 					}
 					ev.stopPropagation(); // Stop bubbling
@@ -89,9 +93,9 @@ function propertyChangeHandler( ev, eventArgs ) {
 		$target = $( target ),
 		source = ev.target,
 		sourcePath = eventArgs && eventArgs.path || ev.path,
-		options = link.options || {},
-		beforeChange = options.beforeChange,
 		view = $.view( target ),
+		context = view.ctx,
+		beforeChange = context.beforeChange,
 		pathInfos = getLinkFromDataInfo( target, source ).paths[ sourcePath ],
 		l = pathInfos && pathInfos.length;
 
@@ -129,8 +133,8 @@ function propertyChangeHandler( ev, eventArgs ) {
 				}
 			}
 
-			if ( eventArgs && changed && options.afterChange ) {
-				options.afterChange.call( link, ev, eventArgs );
+			if ( eventArgs && changed && context.afterChange ) {
+				context.afterChange.call( link, ev, eventArgs );
 			}
 		}
 	}
@@ -138,15 +142,15 @@ function propertyChangeHandler( ev, eventArgs ) {
 
 function arrayChangeHandler( ev, eventArgs ) {
 	var cancel,
-		options = this.options || {},
-		beforeChange = options.beforeChange,
+		context = this.ctx,
+		beforeChange = context.beforeChange,
 		sourceValue = eventArgs ? eventArgs.change : settings.linkToAttr;  // linkToAttr used as a marker of trigger events
 
-	if ((!beforeChange || !(cancel = beforeChange( ev, eventArgs ) === FALSE ))
+	if ((!beforeChange || !(cancel = beforeChange.call( this, ev, eventArgs ) === FALSE ))
 		&& sourceValue !== undefined ) {
 		this.onDataChanged( eventArgs );
-		if ( options.afterChange ) {
-			options.afterChange( ev, eventArgs );
+		if ( context.afterChange ) {
+			context.afterChange.call( this, ev, eventArgs );
 		}
 	}
 }
@@ -178,12 +182,23 @@ function setArrayChangeLink( view ) {
 // view hierarchy
 //===============
 
-function View( options, node, path, template, parentView, parentElViews, data ) {
+function setViewContext( view, context, merge ) {
+	var parentContext = view.parent && view.parent.ctx,
+		viewContext = view._ctx;
+		// Propagate inherited context through children
+	view.ctx = merge
+		? (viewContext && parentContext ? $.extend( {}, parentContext, viewContext ) : parentContext || viewContext)
+		: context && context !== parentContext
+			// Set additional context on this view (which will modify the context inherited from the parent, and be inherited by child views)
+			? (view._ctx = context, (parentContext ? $.extend( {}, parentContext, context ) : context))
+			: parentContext;
+}
+
+function View( context, node, path, template, parentView, parentElViews, data ) {
 	var views, index,
 		self = this;
 
 	$.extend( self, {
-		options: options,
 		views: [],
 		nodes: node ? [] : [ document.body ],
 		tmpl: template || (parentView && parentView.tmpl),
@@ -205,12 +220,8 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 			}
 		} else {
 			if ( path ) {
-				data = getDataAndOptions( data, parentView, path );
-
-				if ( data[ 1 ]) {
-					//options
-//TODO 					$.extend( self, data[ 1 ]);
-				}
+				data = getDataAndContext( data, parentView, path );
+				context = context || data[ 1 ];
 				data = data[ 0 ];
 			}
 			self.index = views.length;
@@ -218,15 +229,15 @@ function View( options, node, path, template, parentView, parentElViews, data ) 
 		}
 	}
 	self.data = data;
+	setViewContext( self, context );
 	setArrayChangeLink( self );
 }
 
-function createNestedViews( node, parent, options, nextNode, depth, data, prevNode, index ) {
+function createNestedViews( node, parent, nextNode, depth, data, prevNode, index, context ) {
 	var tokens, tmplName, parentElViews, get, from, view, existing, parentNode,
 		currentView = parent,
 		viewDepth = depth;
 
-	options = options || parentOptions;
 	index = index || 0;
 	node = prevNode || node;
 
@@ -239,7 +250,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 			getFromInfo = node.getAttribute( settings.getFromAttr );
 
 		if ( linkFromInfo || getFromInfo ) {
-			addLinksFromData( data || parent.data, node, getFromInfo, linkFromInfo, options, TRUE );
+			addLinksFromData( data || parent.data, node, getFromInfo, linkFromInfo, TRUE );
 		}
 		node = node.firstChild;
 	} else {
@@ -248,7 +259,7 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 
 	while ( node && node !== nextNode ) {
 		if ( node.nodeType === 1 ) {
-			createNestedViews( node, currentView, options, nextNode, viewDepth, data );
+			createNestedViews( node, currentView, nextNode, viewDepth, data );
 		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
 			parentNode = node.parentNode;
 			if ( tokens[1]) {
@@ -262,23 +273,22 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 					parentNode.parentNode.insertBefore( node, parentNode.nextSibling );
 					return;
 				}
+				currentView.nextNode = node;
+				if ( currentView.ctx.afterCreate ) {
+					currentView.ctx.afterCreate.call( currentView, currentView );
+				}
 				if ( tokens[2] ) {
 					// An item close tag: <!--/item-->
-					currentView.nextNode = node;
-					currentView.onCreated( currentView );
 					currentView = parent;
-
 				} else {
 					// A tmpl close tag: <!--/tmpl-->
-					currentView.nextNode = node;
-					currentView.onCreated( currentView );
 					return node;
 				}
 			} else {
 				parentElViews = parentElViews || jsViewsData( parentNode, "view", TRUE );
 				if ( tokens[2] ) {
 					// An item open tag: <!--item-->
-					currentView = new View( options, node, index++, undefined, currentView, parentElViews );
+					currentView = new View( context, node, index++, undefined, currentView, parentElViews );
 				} else {
 					// A tmpl open tag: <!--tmpl(path) name-->
 					view = $.view( node );
@@ -287,14 +297,14 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 							existing = view.nextNode;
 						} else {
 							view.data = data;
-							view.render( options );
+							view.render( context );
 							return view.nextNode;
 						}
 					} else {
-						view = new View( options, node, tokens[3], tokens[4], currentView, parentElViews, data );
+						view = new View( context, node, tokens[3], tokens[4], currentView, parentElViews, data );
 					}
 					// Jump to the nextNode of the tmpl view
-					node = existing || createNestedViews( node, view, options, nextNode, 0 );
+					node = existing || createNestedViews( node, view, nextNode, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
@@ -309,17 +319,17 @@ function createNestedViews( node, parent, options, nextNode, depth, data, prevNo
 // Expression evaluation
 //=======================
 
-function getDataAndOptions( source, view, paramString ) {
-	return Function( "$", "$data", "$view", "$options",
+function getDataAndContext( source, view, paramString ) {
+	return Function( "$", "$data", "$view", "$ctx",
 		"with($data){ return [" + paramString+ "];}")
-		( $, source, view, view.options );
+		( $, source, view, view.ctx );
 }
 
 function getConvertedValue( context, source, view, expression, value ) {
 	try {
-		return Function( "$", "$data", "$view", "$options", "$value",
+		return Function( "$", "$data", "$view", "$ctx", "$value",
 			"with($data){return " + expression + ";}")
-			.call( context, $, source, view, view.options, value );
+			.call( context, $, source, view, view.ctx, value );
 	} catch(e) {
 		// in debug mode, throw 'bad syntax error';
 		throw e.message;
@@ -329,9 +339,9 @@ function getConvertedValue( context, source, view, expression, value ) {
 function getTargetObject( source, view, expression ) {
 	try {
 		return expression
-			? Function( "$", "$data", "$view", "$options",
+			? Function( "$", "$data", "$view", "$ctx",
 				"with($data){return " + expression  + ";}")
-				( $, source, view, view.options )
+				( $, source, view, view.ctx )
 			: source;
 	} catch(e) {
 		// in debug mode, throw 'bad syntax error';
@@ -343,12 +353,12 @@ function getTargetObject( source, view, expression ) {
 // data linking
 //===============
 
-function link( from, to, links, options ) {
-	options
-	 = $.isFunction( options )
-		? { beforeChange: options }
-		:
-		options || {};
+function link( from, to, links, context ) {
+//	context
+//	 = $.isFunction( context )
+//		? { beforeChange: context }
+//		:
+//		context || {};
 
 	if ( links ) {
 
@@ -377,7 +387,7 @@ function link( from, to, links, options ) {
 			targetElems.each( function() {
 				// If 'from' path points to a property of a descendant 'leaf object',
 				// link not only from leaf object, but also from intermediate objects
-				addLinksFromData( to, this, link.getFrom, link.from, options );
+				addLinksFromData( to, this, link.getFrom, link.from );
 			});
 		}
 	}
@@ -405,10 +415,10 @@ function link( from, to, links, options ) {
 
 				// Linking object or array to HTML
 				from.each( function() {
-					createNestedViews( this, $.view( this, options ), options, undefined, undefined, to );
+					createNestedViews( this, $.view( this ), undefined, undefined, to, undefined, undefined, context );
 				});
 			}
-			addLinksToData( this, to, toLinks, options );
+			addLinksToData( this, to, toLinks );
 		});
 	}
 	return from;
@@ -417,7 +427,7 @@ function link( from, to, links, options ) {
 //function unlink( from, to, links ) { // TODO
 //}
 
-function addLinksFromData( source, target, getFrom, linkFrom, options ) {
+function addLinksFromData( source, target, getFrom, linkFrom ) {
 	var param, cnvtParam, i, l, lastChar, attr, openParenIndex, get, object, cnvtParams, view,
 		triggers = [],
 		cnvt = "";
@@ -475,7 +485,7 @@ function addLinksFromData( source, target, getFrom, linkFrom, options ) {
 				var trigger = triggers[ l ],
 					path = trigger[ 1 ],
 					fromOb = getTargetObject( source, view, trigger[ 0 ]),
-					link = { source: source, target: target, options: options },
+					link = { source: source, target: target },
 					innerPath = path.split("."),
 					innerOb = fromOb;
 
@@ -528,9 +538,9 @@ function addLinkFromData( source, link, path, expr, attr, get ) {
 	}
 }
 
-function addLinksToData( source, target, links, options ) {
+function addLinksToData( source, target, links ) {
 	var handler = function() {
-			elemChangeHandler.apply( { target: target, links: links, options: options }, arguments );
+			elemChangeHandler.apply( { target: target, links: links }, arguments );
 		};
 
 	// Store handler for unlinking
@@ -703,7 +713,7 @@ $.extend({
 	// jQuery $.view() plugin
 	//=======================
 
-	view: function( node, options ) {
+	view: function( node ) {
 		// $.view() returns top node
 		// $.view( node ) returns view that contains node
 
@@ -711,11 +721,6 @@ $.extend({
 			topNode = document.body;
 
 		node = node || topNode;
-		if ( !node.nodeType && !options && $.isPlainObject( node )) {
-			// $.view( options ) - to set options on top view
-			options = node;
-			node = topNode;
-		}
 		if ( topView && !topView.views.length ) {
 			returnView = topView; // Perf optimization for common case
 		} else {
@@ -723,6 +728,7 @@ $.extend({
 			while( !(parentElViews = jsViewsData( parentNode = node.parentNode || topNode, "view" )).length ) {
 				if ( !parentNode || node === topNode ) {
 					jsViewsData( topNode.parentNode, "view", TRUE ).push( returnView = topView = new View());
+					topView.ctx = {};
 					break;
 				}
 				node = parentNode;
@@ -813,14 +819,9 @@ $.extend({
 				}
 				return TRUE;
 			},
-			onCreated: function( view ) {
-				if ( this.parent ) {
-					this.parent.onCreated( view );
-				}
-			},
 			render: function() {
 				var arrayChange, html =
-					$.render( this.tmpl, this.data, this.options ),
+					$.render( this.tmpl, this.data, this.ctx ),
 					prevNode = this.prevNode,
 					nextNode = this.nextNode,
 					parentNode = prevNode.parentNode;
@@ -831,31 +832,29 @@ $.extend({
 				$( prevNode ).after( html );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, 0 ); //this.index
+				createNestedViews( parentNode, this, nextNode, 0, undefined, prevNode, 0 ); //this.index
 				setArrayChangeLink( this );
 				return this;
 			},
 			addViews: function( index, dataItems, tmpl ) {
-				var parent, options,
+				var parent,
 					itemsCount = dataItems.length,
+					context = this.ctx,
 					views = this.views;
 
 				if ( itemsCount ) {
 					if ( this.path ) {
 						parent = this.parent;
-						options = getDataAndOptions( parent.data, parent, this.path )[1];
-						if ( options && parent.options ) {
-//TODO						options = $.extend( {}, parent.options, options );
-						}
+						context = getDataAndContext( parent.data, parent, this.path )[1];
 					}
-					var html = $.render( tmpl || this.tmpl, dataItems, options ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
+					var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
 						nextNode = prevNode.nextSibling,
 						parentNode = prevNode.parentNode;
 					$( prevNode ).after( html );
 					parentNode.removeChild( prevNode.nextSibling );
 					parentNode.removeChild( nextNode.previousSibling );
-					createNestedViews( parentNode, this, this.options, nextNode, 0, undefined, prevNode, index );
+					createNestedViews( parentNode, this, nextNode, 0, undefined, prevNode, index );
 				}
 				return this;
 			},
@@ -905,6 +904,23 @@ $.extend({
 				}
 				return this;
 			},
+			context: function( context ) {
+				var self = this,
+					parent = self.parent,
+					parentCtx = parent ? parent.ctx : {};
+				if ( !context ) {
+					// Clear context
+					self.each( function( view ) {
+						view.ctx = parentCtx;
+						view._ctx = undefined;
+					});
+				} else if ( context !== self.ctx ) {
+					self.each( function( view ) {
+						setViewContext( view, context, view !== self );
+					});
+				}
+				return this;
+			},
 			each: function( callback ) {
 				callback( this );
 				var l = this.views.length;
@@ -912,10 +928,6 @@ $.extend({
 					this.views[ l ].each( callback );
 				}
 				return this;
-			},
-			view: function( viewOptions ) {
-				// Extends this view with viewOptions.
-				return $.extend( view, viewOptions );
 			},
 			content: function( select ) {
 				return select ? $( select, this.nodes ) : $( this.nodes );
@@ -938,34 +950,34 @@ $.extend({
 //=======================
 
 $.fn.extend({
-	view: function( options ) {
-		return $.view( this[0], options );
+	view: function() {
+		return $.view( this[0] );
 	},
-	addLinks: function( data, links, options ) {
+	addLinks: function( data, links, context ) {
 		// Explicit Linking
-		// if links is a string, corresponds to $("#container").html( $.render( options, data )).activateLinks( data );
-		// If options is a function, cb - shorthand for { beforeChange: cb }
-		return link( this, data, links, options );
+		// if links is a string, corresponds to $("#container").html( $.render( context, data )).activateLinks( data );
+		// If context is a function, cb - shorthand for { beforeChange: cb }
+		return link( this, data, links, context );
 	},
-	removeLinks: function( data, links, options ) { //TODO
-	//	return unlink( this, data, links, options );
+	removeLinks: function( data, links, context ) { //TODO
+	//	return unlink( this, data, links, context );
 	},
-	link: function( data, tmpl, options ) {
+	link: function( data, tmpl, context ) {
 		// Declarative Linking
-		// If options is a function, cb - shorthand for { beforeChange: cb }
+		// If context is a function, cb - shorthand for { beforeChange: cb }
 		if ( $.isPlainObject( tmpl )) {
-			options = tmpl;
+			context = tmpl;
 		} else {
 			tmpl = $.template( tmpl );
 			if ( tmpl ) {
 				this.empty();
 				if ( data ) {
-					this.append( $.render( tmpl, data, options ));
+					this.append( $.render( tmpl, data, context ));
 					// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 				}
 			}
 		}
-		return link( this, data, undefined, options );
+		return link( this, data, undefined, context );
 	}
 });
 
