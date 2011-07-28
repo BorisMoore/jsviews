@@ -15,6 +15,7 @@
 // var TEST_EVENTS = { total:0, change:0, arrayChange:0, propertyChange:0 };
 var FALSE = false, TRUE = true,
 	topView, settings, decl,
+	oldCleanData = $.cleanData,
 	fnSetters = {
 		value: "val",
 		html: "html",
@@ -24,11 +25,11 @@ var FALSE = false, TRUE = true,
 	jsvData = "_jsvData";
 
 function elemChangeHandler( ev ) {
-	var setter, cancel, fromAttr, toPath, linkToInfo, linkContext, sourceValue, link, cnvt, reg, target,
+	var setter, cancel, fromAttr, toPath, linkToInfo, linkContext, sourceValue, link, cnvt, target,
 		data = this.target,
 		source = ev.target,
 		$source = $( source ),
-		view = $.view( source );
+		view = $.view( source ),
 		links = this.links,
 		context = view.ctx,
 		beforeChange = context.beforeChange,
@@ -54,7 +55,7 @@ function elemChangeHandler( ev ) {
 					cnvt = link.convert;
 					linkToInfo = splitParams( linkToInfo );
 					target = linkToInfo[ 0 ].slice( 0, -1 );
-					data = view && view.data || data;
+					data = (view && view.data) || data;
 					// data is the current view data, or the top-level target of linkTo.
 //TODO make sure we are not missing intermediate levels.
 					// get the target object
@@ -87,12 +88,12 @@ function elemChangeHandler( ev ) {
 }
 
 function propertyChangeHandler( ev, eventArgs ) {
-	var pathInfo, setter, cancel, changed, attr,
+	var pathInfo, setter, cancel, changed, attr, sourceValue, css,
 		link = this,
 		target = link.target,
 		$target = $( target ),
 		source = ev.target,
-		sourcePath = eventArgs && eventArgs.path || ev.path,
+		sourcePath = (eventArgs && eventArgs.path) || ev.path,
 		view = $.view( target ),
 		context = view.ctx,
 		beforeChange = context.beforeChange,
@@ -195,7 +196,7 @@ function setViewContext( view, context, merge ) {
 }
 
 function View( context, node, path, template, parentView, parentElViews, data ) {
-	var views, index,
+	var views, index, viewCount,
 		self = this;
 
 	$.extend( self, {
@@ -234,7 +235,7 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 }
 
 function createNestedViews( node, parent, nextNode, depth, data, prevNode, index, context ) {
-	var tokens, tmplName, parentElViews, get, from, view, existing, parentNode,
+	var tokens, parentElViews, view, existing, parentNode,
 		currentView = parent,
 		viewDepth = depth;
 
@@ -321,8 +322,7 @@ function createNestedViews( node, parent, nextNode, depth, data, prevNode, index
 
 function getDataAndContext( source, view, paramString ) {
 	return Function( "$", "$data", "$view", "$ctx",
-		"with($data){ return [" + paramString+ "];}")
-		( $, source, view, view.ctx );
+		"with($data){ return [" + paramString+ "];}")( $, source, view, view.ctx );
 }
 
 function getConvertedValue( context, source, view, expression, value ) {
@@ -340,8 +340,7 @@ function getTargetObject( source, view, expression ) {
 	try {
 		return expression
 			? Function( "$", "$data", "$view", "$ctx",
-				"with($data){return " + expression  + ";}")
-				( $, source, view, view.ctx )
+				"with($data){return " + expression  + ";}")( $, source, view, view.ctx )
 			: source;
 	} catch(e) {
 		// in debug mode, throw 'bad syntax error';
@@ -354,40 +353,35 @@ function getTargetObject( source, view, expression ) {
 //===============
 
 function link( from, to, links, context ) {
-//	context
-//	 = $.isFunction( context )
-//		? { beforeChange: context }
-//		:
-//		context || {};
+	var lnk, filter, targetElems, toLinks, fromLinks, linksToData, i;
 
 	if ( links ) {
 
 		links = $.isArray( links ) ? links : [ links ];
 
-		var link, filter, targetElems,
-			toLinks = [],
-			fromLinks = []
-			i = links.length;
+		toLinks = [];
+		fromLinks = [];
+		i = links.length;
 
 		while ( i-- ) {
-			link = links[ i ];
-			if ( link.to ) {
-				toLinks.push({ to: link.to, filter: link.filter });
+			lnk = links[ i ];
+			if ( lnk.to ) {
+				toLinks.push({ to: lnk.to, filter: lnk.filter });
 			}
-			if ( link.from || link.getFrom ) {
-				fromLinks.push( link );
+			if ( lnk.from || lnk.getFrom ) {
+				fromLinks.push( lnk );
 			}
 		}
 		i = fromLinks.length;
 		while ( i-- ) {
-			link = fromLinks[ i ];
-			filter = link.filter;
+			lnk = fromLinks[ i ];
+			filter = lnk.filter;
 			targetElems = filter ? from.find( filter ).add( $( this ).filter( filter )) : from; // Use future findFilter method in jQuery 1.7?
 
 			targetElems.each( function() {
 				// If 'from' path points to a property of a descendant 'leaf object',
 				// link not only from leaf object, but also from intermediate objects
-				addLinksFromData( to, this, link.getFrom, link.from );
+				addLinksFromData( to, this, lnk.getFrom, lnk.from );
 			});
 		}
 	}
@@ -397,17 +391,17 @@ function link( from, to, links, context ) {
 				// DECLARATIVE DATA LINKING
 
 				// Linking HTML to object or array
-				var linksToData = jsViewsData( this, "to" );
+				linksToData = jsViewsData( this, "to" );
 				i = linksToData.length;
 				while ( i-- ) {
-					link = linksToData[ i ];
-					if ( link.links === declLinkTo ) {
-						if ( link.target === to ) {
+					lnk = linksToData[ i ];
+					if ( lnk.links === declLinkTo ) {
+						if ( lnk.target === to ) {
 							// Already declaratively linked to the same object
 							return;
 						}
 						// Already linked to a different object, so unlink from previous object
-						removeLinksToData( this, link.target, declLinkTo );
+						removeLinksToData( this, lnk.target, declLinkTo );
 						linksToData.splice( i, 1 );
 					}
 				}
@@ -445,7 +439,7 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 			cnvt = $.trim( param );
 			break;
 		case ')':
-			cnvt = cnvt || param
+			cnvt = cnvt || param;
 			break;
 		case ']':
 			triggers = [[ cnvt, param ]];
@@ -457,58 +451,58 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 		case ',':
 			if ( param === '|') {
 				get = TRUE;
-				continue;
-			}
-			// Apply binding
-			if ( openParenIndex ) {
-				cnvtParams = cnvt.slice( openParenIndex );
-				cnvtParams = splitParams( cnvtParams );
-				for ( i = 0, l = cnvtParams.length; i < l; i++ ) {
-					cnvtParam = $.trim(cnvtParams[ i ]);
-					lastChar = cnvtParam.charAt( cnvtParam.length - 1 );
-					cnvtParam = cnvtParam.slice( 0, -1 );
-					if ( lastChar === '[') {
-						cnvtParams[ i ] = object = cnvtParam;
-					} else if ( lastChar === ']') {
-						triggers.push([ object, cnvtParam ]);
-						cnvtParams[ i ] = object ? ("." + cnvtParam) : cnvtParam;
-						object = "";
+			} else {
+				// Apply binding
+				if ( openParenIndex ) {
+					cnvtParams = cnvt.slice( openParenIndex );
+					cnvtParams = splitParams( cnvtParams );
+					for ( i = 0, l = cnvtParams.length; i < l; i++ ) {
+						cnvtParam = $.trim(cnvtParams[ i ]);
+						lastChar = cnvtParam.charAt( cnvtParam.length - 1 );
+						cnvtParam = cnvtParam.slice( 0, -1 );
+						if ( lastChar === '[') {
+							cnvtParams[ i ] = object = cnvtParam;
+						} else if ( lastChar === ']') {
+							triggers.push([ object, cnvtParam ]);
+							cnvtParams[ i ] = object ? ("." + cnvtParam) : cnvtParam;
+							object = "";
+						}
 					}
+					cnvt = cnvt.slice( 0, openParenIndex ) + cnvtParams.join("") + ")";
 				}
-				cnvt = cnvt.slice( 0, openParenIndex ) + cnvtParams.join("") + ")";
-			}
 
-			cnvt += param;
-			view = $.view( target );
-			l = triggers.length;
-			while ( l-- ) {
-				var trigger = triggers[ l ],
-					path = trigger[ 1 ],
-					fromOb = getTargetObject( source, view, trigger[ 0 ]),
-					link = { source: source, target: target },
-					innerPath = path.split("."),
-					innerOb = fromOb;
+				cnvt += param;
+				view = $.view( target );
+				l = triggers.length;
+				while ( l-- ) {
+					var trigger = triggers[ l ],
+						path = trigger[ 1 ],
+						fromOb = getTargetObject( source, view, trigger[ 0 ]),
+						link = { source: source, target: target },
+						innerPath = path.split("."),
+						innerOb = fromOb;
 
-				// If 'from' path points to a property of a descendant 'leaf object',
-				// link not only from leaf object, but also from intermediate objects
-				while ( innerPath.length > 1 ) {
-					innerOb = innerOb[ innerPath.shift() ];
-					if ( innerOb ) {
-						addLinkFromData( innerOb, link, innerPath.join( "." ), cnvt, attr );
+					// If 'from' path points to a property of a descendant 'leaf object',
+					// link not only from leaf object, but also from intermediate objects
+					while ( innerPath.length > 1 ) {
+						innerOb = innerOb[ innerPath.shift() ];
+						if ( innerOb ) {
+							addLinkFromData( innerOb, link, innerPath.join( "." ), cnvt, attr );
+						}
 					}
+					// The last trigger of get bindings will be called on adding the link (to get/initialize the value)
+					addLinkFromData( fromOb, link, path, cnvt, attr, !l && get );
 				}
-				// The last trigger of get bindings will be called on adding the link (to get/initialize the value)
-				addLinkFromData( fromOb, link, path, cnvt, attr, !l && get );
+				openParenIndex = 0;
+				triggers = [];
+				attr = cnvt = "";
 			}
-			openParenIndex = 0;
-			triggers = [];
-			attr = cnvt = "";
 		}
 	}
 }
 
 function addLinkFromData( source, link, path, expr, attr, get ) {
-	var paths, pathInfos,
+	var paths, pathInfos, handler,
 		target = link.target,
 		linkInfo = getLinkFromDataInfo( target, source ),
 		pathInfo = { attr: attr, expr: expr};
@@ -579,14 +573,14 @@ function getLinkFromDataInfo( target, source ) {
 //===============
 
 function clean( i, el ) { // TODO optimize for perf
-	var link, links, l, views, parentView, view;
+	var link, links , l, views, parentView, view;
 
 	if ( jsViewsData( el, "to" ).length ) {
 		$( el ).unbind( "change" );
 //	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
 	}
 
-	links = jsViewsData( el, "from" ),
+	links = jsViewsData( el, "from" );
 	l = links.length;
 
 	while( l-- ) {
@@ -608,7 +602,7 @@ function clean( i, el ) { // TODO optimize for perf
 }
 
 function jsViewsData( el, type, create ) {
-	var jqData = $.data( el, jsvData ) || create && $.data( el, jsvData, { "view": [], "from": [], "to": [] });
+	var jqData = $.data( el, jsvData ) || (create && $.data( el, jsvData, { "view": [], "from": [], "to": [] }));
 	return jqData ? jqData[ type ] : [];
 }
 
@@ -640,8 +634,7 @@ function splitParams( paramString, markParen ) {
 				return --parenDepth
 					? all
 					: (markParen && paramString.charAt( index + 1 ) === ',' )
-						? (openParenIndex -= startIndex,
-							startIndex = index,
+						? (openParenIndex -= startIndex, startIndex = index,
 							all + "\t" + openParenIndex + "\r\t")
 						:all;
 			}
@@ -672,40 +665,9 @@ function splitParams( paramString, markParen ) {
 		.split( "\t" );
 }
 
-function getProperty( object, path ) { // Alternative simpler implementation would use eval
-	if ( object && path ) {
-		var property,
-			leaf = getLeafObject( object, path );
-		object = leaf && leaf[0];
-		if ( object ) {
-			property = object[ leaf[1] ]
-			return $.isFunction( property ) ? property.call( object ) : property;
-		}
-	}
-	return object;
-}
-
-function getLeafObject( object, path ) {
-	if ( object && path ) {
-		var parts = path.split(".");
-
-		path = parts.pop();
-		while ( object && parts.length ) {
-			object = object[ parts.shift() ];
-		}
-	}
-	return object && object[ path ] && [ object, path ];
-}
-
 function inputAttrib( elem ) {
 	return elem.type === "checkbox" ? elem.checked : $( elem ).val();
 }
-
-function myGetValue( value ) {
-	return value;
-}
-
-var oldCleanData = $.cleanData;
 
 $.extend({
 
@@ -800,7 +762,6 @@ $.extend({
 					var self = this,
 						action =  eventArgs.change,
 						index = eventArgs.index,
-						oldIndex = eventArgs.oldIndex,
 						items = eventArgs.items;
 					switch ( action ) {
 						case "insert":
@@ -820,16 +781,14 @@ $.extend({
 				return TRUE;
 			},
 			render: function() {
-				var arrayChange, html =
-					$.render( this.tmpl, this.data, this.ctx ),
-					prevNode = this.prevNode,
+				var prevNode = this.prevNode,
 					nextNode = this.nextNode,
 					parentNode = prevNode.parentNode;
 
 				$( this.nodes ).remove();
 				this.removeViews( 0, this.views.length );
 				this.nodes = [];
-				$( prevNode ).after( html );
+				$( prevNode ).after( $.render( this.tmpl, this.data, this.ctx ) );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
 				createNestedViews( parentNode, this, nextNode, 0, undefined, prevNode, 0 ); //this.index
@@ -860,7 +819,7 @@ $.extend({
 			},
 			removeViews: function( index, itemsCount, keepHtml ) {
 				if ( itemsCount ) {
-					var parentElViews, parentViewsIndex,
+					var parentElViews, parentViewsIndex, viewCount,
 						views = this.views,
 						current = index + itemsCount;
 
@@ -887,7 +846,7 @@ $.extend({
 
 						if ( !keepHtml ) {
 							while ( node !== nextNode ) {
-								node = node.nextSibling
+								node = node.nextSibling;
 								nodes.push( node );
 							}
 							$( nodes ).remove();
@@ -955,16 +914,15 @@ $.fn.extend({
 	},
 	addLinks: function( data, links, context ) {
 		// Explicit Linking
-		// if links is a string, corresponds to $("#container").html( $.render( context, data )).activateLinks( data );
-		// If context is a function, cb - shorthand for { beforeChange: cb }
 		return link( this, data, links, context );
 	},
-	removeLinks: function( data, links, context ) { //TODO
-	//	return unlink( this, data, links, context );
-	},
+//	removeLinks: function( data, links, context ) { //TODO
+//		return unlink( this, data, links, context );
+//	},
 	link: function( data, tmpl, context ) {
 		// Declarative Linking
 		// If context is a function, cb - shorthand for { beforeChange: cb }
+		// if tmpl not a map, corresponds to $("#container").html( $.render( tmpl, data )).link( data );
 		if ( $.isPlainObject( tmpl )) {
 			context = tmpl;
 		} else {
