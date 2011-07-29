@@ -21,7 +21,6 @@ var FALSE = false, TRUE = true,
 		html: "html",
 		text: "text"
 	},
-
 	jsvData = "_jsvData";
 
 function elemChangeHandler( ev ) {
@@ -234,7 +233,7 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 	setArrayChangeLink( self );
 }
 
-function createNestedViews( node, parent, nextNode, depth, data, prevNode, index, context ) {
+function createNestedViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
 	var tokens, parentElViews, view, existing, parentNode,
 		currentView = parent,
 		viewDepth = depth;
@@ -260,7 +259,7 @@ function createNestedViews( node, parent, nextNode, depth, data, prevNode, index
 
 	while ( node && node !== nextNode ) {
 		if ( node.nodeType === 1 ) {
-			createNestedViews( node, currentView, nextNode, viewDepth, data );
+			createNestedViews( node, currentView, nextNode, viewDepth, data, context );
 		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
 			parentNode = node.parentNode;
 			if ( tokens[1]) {
@@ -409,7 +408,7 @@ function link( from, to, links, context ) {
 
 				// Linking object or array to HTML
 				from.each( function() {
-					createNestedViews( this, $.view( this ), undefined, undefined, to, undefined, undefined, context );
+					createNestedViews( this, $.view( this ), undefined, undefined, to, context );
 				});
 			}
 			addLinksToData( this, to, toLinks );
@@ -675,41 +674,62 @@ $.extend({
 	// jQuery $.view() plugin
 	//=======================
 
-	view: function( node ) {
+	view: function( node, inner ) {
 		// $.view() returns top node
 		// $.view( node ) returns view that contains node
+		var returnView, view, parentElViews, i, finish,
+			startTagReg = /^item|^tmpl(\([\w\.]*\))?(\s+[^\s]+)?$/,
+			topNode = document.body,
+			startNode = node;
 
-		var returnView, view, parentElViews, i, parentNode,
-			topNode = document.body;
+		if ( inner ) {
+			// Treat supplied node as a container element, step through content, and return the first view encountered.
+			finish = node.nextSibling || node.parentNode; //
+			while ( finish !== (node = node.firstChild || node.nextSibling || node.parentNode.nextSibling )) {
+				if  ( node.nodeType === 8 && startTagReg.test( node.nodeValue )) {
+					view = $.view( node );
+					if ( view.prevNode === node ) {
+						return view;
+					}
+				}
+			}
+			return;
+		}
 
 		node = node || topNode;
 		if ( topView && !topView.views.length ) {
 			returnView = topView; // Perf optimization for common case
 		} else {
 			// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
-			while( !(parentElViews = jsViewsData( parentNode = node.parentNode || topNode, "view" )).length ) {
-				if ( !parentNode || node === topNode ) {
+			while( !(parentElViews = jsViewsData( finish = node.parentNode || topNode, "view" )).length ) {
+				if ( !finish || node === topNode ) {
 					jsViewsData( topNode.parentNode, "view", TRUE ).push( returnView = topView = new View());
 					topView.ctx = {};
 					break;
 				}
-				node = parentNode;
+				node = finish;
 			}
 			if ( !returnView && node === topNode ) {
 				returnView = parentElViews[0];
 			}
 			while ( !returnView && node ) {
+				// Step back through the nodes, until we find an item or tmpl open tag - in which case that is the view we want
 				if  ( node.nodeType === 8 ) {
 					if (  /^\/item|^\/tmpl$/.test( node.nodeValue )) {
+						// A tmpl or item close tag: <!--/tmpl--> or <!--/item-->
 						i = parentElViews.length;
 						while ( i-- ) {
 							view = parentElViews[ i ];
 							if ( view.nextNode === node ) {
+								// If this was the node originally passed in, this is the view we want.
+								returnView = (node === startNode && view);
+								// If not, jump to the beginning of this item/tmpl and continue from there
 								node = view.prevNode;
 								break;
 							}
 						}
-					} else if ( /^item|^tmpl(\([\w\.]*\))?(\s+[^\s]+)?$/.test( node.nodeValue )) {
+					} else if ( startTagReg.test( node.nodeValue )) {
+						// A tmpl or item open tag: <!--tmpl--> or <!--item-->
 						i = parentElViews.length;
 						while ( i-- ) {
 							view = parentElViews[ i ];
@@ -723,7 +743,7 @@ $.extend({
 				node = node.previousSibling;
 			}
 			// If not within any of the views in the current parentElViews collection, move up through parent nodes to find next parentElViews collection
-			returnView = returnView || $.view( parentNode );
+			returnView = returnView || $.view( finish );
 		}
 		return returnView;
 	},
@@ -791,7 +811,7 @@ $.extend({
 				$( prevNode ).after( $.render( this.tmpl, this.data, this.ctx ) );
 				parentNode.removeChild( prevNode.nextSibling );
 				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, nextNode, 0, undefined, prevNode, 0 ); //this.index
+				createNestedViews( parentNode, this, nextNode, 0, undefined, undefined, prevNode, 0 ); //this.index
 				setArrayChangeLink( this );
 				return this;
 			},
@@ -813,7 +833,7 @@ $.extend({
 					$( prevNode ).after( html );
 					parentNode.removeChild( prevNode.nextSibling );
 					parentNode.removeChild( nextNode.previousSibling );
-					createNestedViews( parentNode, this, nextNode, 0, undefined, prevNode, index );
+					createNestedViews( parentNode, this, nextNode, 0, undefined, undefined, prevNode, index );
 				}
 				return this;
 			},
@@ -909,8 +929,8 @@ $.extend({
 //=======================
 
 $.fn.extend({
-	view: function() {
-		return $.view( this[0] );
+	view: function( inner ) {
+		return $.view( this[0], inner );
 	},
 	addLinks: function( data, links, context ) {
 		// Explicit Linking
