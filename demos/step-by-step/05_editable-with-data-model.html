@@ -84,7 +84,7 @@
 	}
 
 	Language.prototype = {
-		name: function ( value ) {
+		name: function( value ) {
 			if ( value === undefined ) {
 				return this._name;
 			} else {
@@ -108,30 +108,30 @@
 	}
 
 	Movie.prototype = {
-		title: function ( value ) {
+		title: function( value ) {
 			if ( value === undefined ) {
 				return this._title;
 			} else {
 				this._title = value;
 			}
 		},
-		specialOrder: function ( value ) {
+		specialOrder: function( value ) {
 			if ( value === undefined ) {
 				return this._specialOrder;
 			} else {
 				this._specialOrder = value;
 			}
 		},
-		languages: function () {
-			return this._languages
+		languages: function() {
+			return this._languages;
 		},
-		addLanguage: function ( language ) {
+		addLanguage: function( language ) {
 			$.observable( this._languages ).insert( this._languages.length, new Language( language ));
 		},
-		removeLanguage: function ( index ) {
+		removeLanguage: function( index ) {
 			$.observable( this._languages ).remove( index, 1 );
 		},
-		select: function ( value ) {
+		select: function( value ) {
 			$.observable( this ).setProperty( "selected", value );
 		}
 	}
@@ -149,10 +149,10 @@
 
 	Movies.prototype = {
 		selectedMovie: null,
-		movies: function () {
+		movies: function() {
 			return this._movies;
 		},
-		select: function ( selectedMovie ) {
+		select: function( selectedMovie ) {
 			if ( this.selectedMovie !== selectedMovie ) {
 				if ( this.selectedMovie ) {
 					this.selectedMovie.select( false );
@@ -163,10 +163,10 @@
 				$.observable( this ).setProperty( "selectedMovie", selectedMovie );
 			}
 		},
-		addMovie: function ( movieData ) {
+		addMovie: function( movieData ) {
 			$.observable( this._movies ).insert( this._movies.length, new Movie( movieData ));
 		},
-		removeMovie: function ( index ) {
+		removeMovie: function( index ) {
 			this.select();
 			$.observable( this._movies ).remove( index, 1 );
 		}
@@ -181,25 +181,25 @@
 	$( "#movieList" )
 		.link( viewModel.movies(), "#movieTemplate" )
 
-		.delegate( "tr", "click", function () {
+		.delegate( "tr", "click", function() {
 			viewModel.select( $.view( this ).data );
 		})
-		.delegate( ".close", "click", function () {
+		.delegate( ".close", "click", function() {
 			viewModel.removeMovie( $.view( this ).index );
 			return false;
 		});
 
 	$( "#movieDetail" )
-		.delegate( "#addLanguageBtn", "click", function () {
+		.delegate( "#addLanguageBtn", "click", function() {
 			$.view( this ).data.addLanguage( "NewLanguage" );
 		})
 
-		.delegate( ".close", "click", function () {
+		.delegate( ".close", "click", function() {
 			viewModel.selectedMovie.removeLanguage( $.view( this ).index );
 			return false;
 		});
 
-	$( "#addMovieBtn" ).click( function () {
+	$( "#addMovieBtn" ).click( function() {
 		viewModel.addMovie({ title: "NewTitle", languages: [ "NewLanguage" ] });
 
 		// Set selection on the added item

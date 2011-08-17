@@ -70,10 +70,10 @@ function elemChangeHandler( ev ) {
 					if ( cnvt ) {
 						sourceValue = getConvertedValue( linkContext, data, view, cnvt, sourceValue );
 					}
-					if ( target ) {
+					if ( sourceValue !== undefined && target ) {
 						$.observable( target ).setProperty( toPath, sourceValue );
-						if ( context.afterChange ) {
-							context.afterChange.call( linkContext, source, ev );
+						if ( context.afterChange ) {  //TODO only call this if the target property changed
+							context.afterChange.call( linkContext, ev );
 						}
 					}
 					ev.stopPropagation(); // Stop bubbling
@@ -385,7 +385,7 @@ function link( from, to, links, context ) {
 		}
 	}
 	if ( !links || toLinks.length ) {
-		from.each( function () {
+		from.each( function() {
 			if ( !links ) {
 				// DECLARATIVE DATA LINKING
 
@@ -443,6 +443,7 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 		case ']':
 			triggers = [[ cnvt, param ]];
 			cnvt = cnvt ? (cnvt + "." + param) : param;
+			cnvt += $.isFunction( source[ param ]) ? "()": "";
 			break;
 		case '\r':
 			openParenIndex = ++param; // Convert to integer and increment
@@ -464,6 +465,7 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 						} else if ( lastChar === ']') {
 							triggers.push([ object, cnvtParam ]);
 							cnvtParams[ i ] = object ? ("." + cnvtParam) : cnvtParam;
+							cnvtParams[ i ] += $.isFunction( source[ cnvtParam ]) ? "()": "";
 							object = "";
 						}
 					}

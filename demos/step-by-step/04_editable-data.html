@@ -81,30 +81,30 @@
 	$( "#movieList" )
 		.link( movies, "#movieTemplate" )
 
-		.delegate( "tr", "click", function () {
+		.delegate( "tr", "click", function() {
 			select( $.view( this ));
 		})
 
-		.delegate( ".close", "click", function () {
+		.delegate( ".close", "click", function() {
 			select();
 			$.observable( movies ).remove( $.view( this ).index, 1 );
 			return false;
 		});
 
 	$( "#movieDetail" )
-		.delegate( "#addLanguageBtn", "click", function () {
+		.delegate( "#addLanguageBtn", "click", function() {
 			var languages = $.view( this ).data.Languages;
 			$.observable( languages ).insert( languages.length, {
 				Name: "NewLanguage"
 			});
 		})
 
-		.delegate( ".close", "click", function () {
+		.delegate( ".close", "click", function() {
 			$.observable( app.selectedItem.data.Languages).remove( $.view( this ).index, 1 );
 			return false;
 		});
 
-	$( "#addMovieBtn" ).click( function () {
+	$( "#addMovieBtn" ).click( function() {
 		$.observable( movies ).insert( movies.length, {
 			Title: "NewTitle",
 			Languages: [

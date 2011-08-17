@@ -6,8 +6,8 @@
 
 (function( $, undefined ) {
 var htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
-	viewKey = 0, 
-	stack = [], 
+	viewKey = 0,
+	stack = [],
 	autoName = 0,
 	defaultOpen = "$view.calls($view,__,$1,$2);__=[];",
 	defaultClose = ["call=$view.calls();__=call[1].concat($view.", "(call,__));"],
