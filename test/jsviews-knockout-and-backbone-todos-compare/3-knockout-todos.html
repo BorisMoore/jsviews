@@ -10,13 +10,9 @@
 	<script src="knockout-1.2.1.debug.js" type="text/javascript"></script>
 </head>
 <body>
-<!-- Todo App Interface --> 
 
 <div id="todoapp">
-
-	<div class="title">
-		<h1>Todos - KnockoutJs</h1>
-	</div>
+	<h1>Todos - KnockoutJs</h1>
 
 	<div class="content">
 		<div id="create-todo">
@@ -48,7 +44,6 @@
 </ul>
 
 <!-- Templates --> 
-
 <script type="text/template" id="item-template">
 	<li>
 		<div data-bind="css: { done: done }">
@@ -65,6 +60,26 @@
 </script>
 
 <script>
+(function(){
+	// Model
+	function Todo() {
+		this.content = ko.observable('empty todo...');
+		this.done = ko.observable(false);
+		this.edit = function (event) {
+			$(event.target)
+				.closest('li')
+				.addClass('editing')
+				.find('.edit input')
+				.focus();
+		};
+		this.save = function (event) {
+			$(event.target)
+				.closest('li')
+				.removeClass('editing');
+		};
+	};
+
+	// Initialize app
 	ko.bindingHandlers.enter = {
 		init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
 			if (typeof valueAccessor() != "function") {
@@ -81,31 +96,9 @@
 		}
 	};
 
-	window.Todo = function () {
-		this.content = ko.observable('empty todo...');
-
-		this.done = ko.observable(false);
-
-		this.edit = function (event) {
-			$(event.target)
-				.closest('li')
-				.addClass('editing')
-				.find('.edit input')
-				.focus();
-		};
-
-		this.save = function (event) {
-			$(event.target)
-				.closest('li')
-				.removeClass('editing');
-		};
-	};
-
-	var TodoList = {
+	window.TodoList = {
 		items: ko.observableArray(),
-
 		itemToAdd: ko.observable(''),
-
 		addItem: function () {
 			var todo = new Todo;
 			!this.itemToAdd() || todo.content(this.itemToAdd());
@@ -113,7 +106,6 @@
 			this.items.push(todo);
 			this.itemToAdd('');
 		},
-
 		removeItem: function (item) {
 			this.items.remove(item);
 		}
@@ -122,16 +114,14 @@
 	TodoList.done = ko.dependentObservable(function () {
 		return this.items().filter(function (todo) { return todo.done(); });
 	}, TodoList);
-
 	TodoList.remaining = ko.dependentObservable(function () {
 		return this.items().filter(function (todo) { return !todo.done(); });
 	}, TodoList);
-
 	TodoList.clearCompleted = function () {
 		this.items(this.remaining());
 	};
 
-	// Mapping plugin is too complex
+	// Create and initialize model instances, for each stored plain object
 	$.each(JSON.parse(localStorage.getItem("Todos") || "[]"), function (i, obj) {
 		var todo = new Todo;
 		todo.content(obj.content);
@@ -143,8 +133,9 @@
 		localStorage.setItem("Todos", ko.toJSON(TodoList.items))
 	});
 
+	//	Link UI
 	ko.applyBindings(TodoList);
+})();
 </script>
-
 </body>
 </html>

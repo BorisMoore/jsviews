@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!--Sample inspired by Backbone Todos sample: http://documentcloud.github.com/backbone/examples/todos/index.html -->
 <html>
 <head>
 	<title>JsViews Demo: Todos</title>
@@ -105,11 +104,11 @@
 			view.render();
 		}
 	}
+
 	Todos.completed = $( Todos.items ).filter( function( index, val ) { return val.done(); }).length;
 	Todos.remaining = Todos.items.length - Todos.completed;
 
-	// Provide contextual helpers and handlers. (In this case they will be on the top view, so available to all views)
-	$.view().context({
+	$.view().context({	// Contextual helpers and handlers. (In this case they will be on the top view, so available to all views)
 		yesNo: function( yesNo, yes, no ) {
 			return yesNo ? yes : no || "";
 		},
@@ -148,7 +147,6 @@
 			this.value = "";
 		}
 	});
-
 	$( "#todo-list" )
 		.delegate( ".todo-destroy", "click", function() {
 			var view = $.view( this );
@@ -158,8 +156,9 @@
 			Todos.edit( $.view( this ));
 		})
 		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }});
-
-	$( ".todo-clear" ).click( function() { Todos.clearCompleted(); });
+	$( ".todo-clear" ).click( function() {
+		Todos.clearCompleted();
+	});
 })();
  </script>
 </body>

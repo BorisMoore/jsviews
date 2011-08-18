@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!--Sample inspired by Backbone Todos sample: http://documentcloud.github.com/backbone/examples/todos/index.html -->
 <html>
 <head>
 	<title>JsViews Demo: Todos</title>
@@ -132,7 +131,9 @@
 		})
 		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }});
 
-	$( ".todo-clear" ).click( function() { Todos.clearCompleted(); });
+	$( ".todo-clear" ).click( function() {
+		Todos.clearCompleted();
+	});
  </script>
 </body>
 </html>
