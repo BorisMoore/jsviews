@@ -12,7 +12,7 @@
 <body>
 
 <div id="todoapp">
-	<h1>Todos</h1>
+	<h1>Todos - JsViews, Plain Objects</h1>
 
 	<input id="new-todo" placeholder="What needs to be done?"/>
 
@@ -32,7 +32,8 @@
 <script type="text/x-jquery-tmpl" id="item-template">
 	<li>
 		<input data-getfrom="checked:[done]" data-to="[done]" class="check" type="checkbox" />
-		<div data-getfrom="[content], css-text-decoration:$ctx.yesNo([done], 'line-through')" class="todo-content"></div>
+		<div data-getfrom="$ctx.yesNo([content], content, 'empty todo...'), css-text-decoration:$ctx.yesNo([done], 'line-through')"
+			class="todo-content"></div>
 		<span class="todo-destroy"></span>
 	</li>
 </script>

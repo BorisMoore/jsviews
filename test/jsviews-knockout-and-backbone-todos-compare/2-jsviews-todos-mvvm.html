@@ -7,12 +7,12 @@
 	<script src="../../jquery.render.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
-	<link href="../resources/todos.css" rel="stylesheet" type="text/css" />
+	<link href="jsv-todos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
 
 <div id="todoapp">
-	<h1>Todos - JsViews, Simple MVVM</h1>
+	<h1>Todos - JsViews, MVVM</h1>
 
 	<input id="new-todo" placeholder="What needs to be done?"/>
 
@@ -48,16 +48,33 @@
 (function(){
 	// Model
 	function Todo( content, done ) {
-		this.content = content;
-		this.done = done;
+		this._content = content;
+		this._done = !!done;
+	}
+
+	Todo.prototype = {
+		content: function( value ) {
+			if ( value === undefined ) {
+				return this._content;
+			} else {
+				this._content = value;
+			}
+		},
+		done: function( value ) {
+			if ( value === undefined ) {
+				return this._done;
+			} else {
+				this._done = value;
+			}
+		}
 	}
 
 	// Initialize app
-	var items = $.parseJSON( localStorage.getItem( "JsViewsTodos" )) || []; //	Intialize from local storage
+	var items = $.parseJSON( localStorage.getItem( "JsViewsTodosMVVM" )) || []; //	Intialize from local storage
 
 	window.Todos = {
 		items: $.map( items, function( obj ) {
-			return new Todo( obj.content, obj.done );
+			return new Todo( obj._content, obj._done );
 		}),
 		edit: function( view ) {
 			view.tmpl = "#edit-template";
@@ -66,12 +83,12 @@
 		},
 		removeItem: function( index, item ) {
 			$.observable( this.items ).remove( index, 1 );
-			this.doneChanged( item.done ? -1 : 0 );
+			this.doneChanged( item.done() ? -1 : 0 );
 		},
 		clearCompleted: function( index ) {
 			var l = this.items.length;
 			while ( l-- ) {
-				if ( this.items[ l ].done ) {
+				if ( this.items[ l ].done()) {
 					this.removeItem( l, this.items[ l ]);
 				}
 			}
@@ -88,7 +105,7 @@
 			view.render();
 		}
 	}
-	Todos.completed = $( Todos.items ).filter( function( index, val ) { return val.done; }).length;
+	Todos.completed = $( Todos.items ).filter( function( index, val ) { return val.done(); }).length;
 	Todos.remaining = Todos.items.length - Todos.completed;
 
 	// Provide contextual helpers and handlers. (In this case they will be on the top view, so available to all views)
@@ -114,7 +131,7 @@
 							Todos.contentChanged( view );
 					}
 				case "arrayChange":
-					localStorage.setItem( "JsViewsTodos", JSON.stringify( Todos.items ));
+					localStorage.setItem( "JsViewsTodosMVVM", JSON.stringify( Todos.items ));
 			}
 		}
 	});
@@ -131,6 +148,7 @@
 			this.value = "";
 		}
 	});
+
 	$( "#todo-list" )
 		.delegate( ".todo-destroy", "click", function() {
 			var view = $.view( this );

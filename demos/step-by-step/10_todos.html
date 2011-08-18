@@ -12,7 +12,7 @@
 <body>
 
 <div id="todoapp">
-	<h1>Todos</h1>
+	<h1>Todos - JsViews, Plain Objects</h1>
 
 	<input id="new-todo" placeholder="What needs to be done?"/>
 
@@ -32,7 +32,8 @@
 <script type="text/x-jquery-tmpl" id="item-template">
 	<li>
 		<input data-getfrom="checked:[done]" data-to="[done]" class="check" type="checkbox" />
-		<div data-getfrom="[content], css-text-decoration:yesNo([done], 'line-through')" class="todo-content"></div>
+		<div data-getfrom="yesNo([content], content, 'empty todo...'), css-text-decoration:yesNo([done], 'line-through')"
+			class="todo-content"></div>
 		<span class="todo-destroy"></span>
 	</li>
 </script>
@@ -115,7 +116,7 @@
 
 	// UI Event bindings
 	$( "#new-todo" ).keypress( function( ev ) {
-		if ( ev.keyCode === 13 ){
+		if ( ev.keyCode === 13 ) {
 			$.observable( Todos.items ).insert( Todos.items.length, { content: this.value, done: false });
 			Todos.doneChanged( 0 );
 			this.value = "";
