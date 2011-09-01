@@ -1,10 +1,9 @@
-/*!
- * JsViews v1.0pre
+/*! JsViews v1.0pre: http://github.com/BorisMoore/jsviews */
+/*
  * jQuery plugin providing interactive data-driven views, based on integration between jQuery Templates and jQuery Data Link.
  * Requires jquery.render.js (optimized version of jQuery Templates, for rendering to string)
  *    See JsRender at http://github.com/BorisMoore/jsrender
- * and jquery.observable.js.
- *    See JsViews at http://github.com/BorisMoore/jsviews
+ * and jquery.observable.js also at http://github.com/BorisMoore/jsviews
  */
 (function( $, undefined ) {
 
@@ -400,7 +399,7 @@ function link( from, to, links, context ) {
 							return;
 						}
 						// Already linked to a different object, so unlink from previous object
-						removeLinksToData( this, lnk.target, declLinkTo );
+						removeLinksToData( this, declLinkTo );
 						linksToData.splice( i, 1 );
 					}
 				}
@@ -543,14 +542,15 @@ function addLinksToData( source, target, links ) {
 	$( source ).bind( "change", handler );
 }
 
-function removeLinksToData( source, target, links ) {
+function removeLinksToData( source, links ) {
 	var prevLinkInfo,
 		prevLinkInfos = jsViewsData( source, "to" ),
 		l = prevLinkInfos.length;
 	while( l-- ) {
 		prevLinkInfo = prevLinkInfos[ l ];
-		if ( prevLinkInfo.target === target && prevLinkInfo.links === links ) {
+		if ( prevLinkInfo.links === links ) {
 			$( source ).unbind( "change", prevLinkInfo.handler);
+			prevLinkInfos.splice( l, 1 );
 //	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
 		}
 	}
@@ -950,6 +950,7 @@ $.fn.extend({
 		} else {
 			tmpl = $.template( tmpl );
 			if ( tmpl ) {
+				removeLinksToData( this[0], declLinkTo );
 				this.empty();
 				if ( data ) {
 					this.append( $.render( tmpl, data, context ));

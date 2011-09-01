@@ -1,7 +1,6 @@
-/*!
- * jQuery Render Plugin v1.0pre
+/*! JsRender v1.0pre: http://github.com/BorisMoore/jsrender */
+/*
  * Optimized version of jQuery Templates, for rendering to string
- * http://github.com/BorisMoore/jsrender
  */
 
 (function( $, undefined ) {

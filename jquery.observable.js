@@ -1,8 +1,7 @@
-/*!
- * jQuery Observable
+/*! JsObservable: http://github.com/BorisMoore/jsviews */
+/*
  * Subcomponent of JsViews
  * Data change events for data linking
- * See: http://github.com/BorisMoore/jsviews
  */
 (function ( $, undefined ) {
 	$.observable = function( data, options ) {
@@ -45,7 +44,7 @@
 				// Object representation where property name is path and property value is value.
 				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
 				for ( var key in path ) {
-					this.setProperty( key, path[ key ])
+					this.setProperty( key, path[ key ]);
 				}
 			} else {
 				// Simple single property case.
@@ -168,26 +167,5 @@
 			triggerArrayEvent( this._data, { change: "refresh", oldItems: oldItems });
 			return this;
 		}
-	};
-
-	$.fn.bindAll = function bindAll( type, fn ) {
-		// Bind a handler for multiple events on different objects,
-		// or on multiple calls to single event such as grouped propertyChange events.
-		// type is a single type, or, for case of different event types on each object, an array
-		// Example: $([ grid, dataview ]).bindAll( "afterChange", function( gridEventData, dataviewEventData ) { ... })
-		var timeout,
-			argArray = [],
-			typeArray = $.isArray( type );
-		function callHandler() {
-			fn.apply( this, argArray );
-			argArray = [];
-			timeout = undefined
-		}
-		this.each( function( index ) {
-			$( this ).bind( typeArray ? type[index] : type, function(){
-				timeout = timeout || setTimeout( callHandler, 0 );
-				( argArray[ index ] = argArray[ index ] || [] ).push( arguments );
-			});
-		});
 	};
 })(jQuery);
