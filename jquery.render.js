@@ -1,4 +1,4 @@
-/*! JsRender v1.0pre: http://github.com/BorisMoore/jsrender */
+/*! JsRender v1.0pre - (jquery.render.js version: requires jQuery): http://github.com/BorisMoore/jsrender */
 /*
  * Optimized version of jQuery Templates, for rendering to string
  */

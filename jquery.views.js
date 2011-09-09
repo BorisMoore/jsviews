@@ -260,18 +260,11 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 		if ( node.nodeType === 1 ) {
 			createNestedViews( node, currentView, nextNode, viewDepth, data, context );
 		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:tmpl(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
+			// tokens: [ commentText, "/", "item", dataParams, tmplParam ]
+
 			parentNode = node.parentNode;
 			if ( tokens[1]) {
-				if ( parentNode !== currentView.prevNode.parentNode ) {
-					// special case for LIs in IE compat mode. Item annotation is content of preceding LI.
-					if ( tokens[2] ) {
-						// move following <!--item--> or <!--/tmpl--> to after LI element
-						parentNode.parentNode.insertBefore( node.nextSibling, parentNode.nextSibling );
-					}
-					// move <!--/item--> or <!--/tmpl--> to after LI element
-					parentNode.parentNode.insertBefore( node, parentNode.nextSibling );
-					return;
-				}
+				// <!--/item--> or <!--/tmpl-->
 				currentView.nextNode = node;
 				if ( currentView.ctx.afterCreate ) {
 					currentView.ctx.afterCreate.call( currentView, currentView );
@@ -284,6 +277,7 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 					return node;
 				}
 			} else {
+				// <!--item--> or <!--tmpl-->
 				parentElViews = parentElViews || jsViewsData( parentNode, "view", TRUE );
 				if ( tokens[2] ) {
 					// An item open tag: <!--item-->
@@ -320,7 +314,7 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 
 function getDataAndContext( source, view, paramString ) {
 	return Function( "$", "$data", "$view", "$ctx",
-		"with($data){ return [" + paramString+ "];}")( $, source, view, view.ctx );
+		"with($data){ return [" + paramString + "];}")( $, source, view, view.ctx );
 }
 
 function getConvertedValue( context, source, view, expression, value ) {
@@ -406,9 +400,7 @@ function link( from, to, links, context ) {
 				toLinks = declLinkTo; // For declarative case
 
 				// Linking object or array to HTML
-				from.each( function() {
-					createNestedViews( this, $.view( this ), undefined, undefined, to, context );
-				});
+				createNestedViews( this, $.view( this ), undefined, undefined, to, context );
 			}
 			addLinksToData( this, to, toLinks );
 		});
@@ -823,12 +815,17 @@ $.extend({
 					context = this.ctx,
 					views = this.views;
 
+				if ( index && !views[index-1] ) {
+					return; // If subview for provided index does not exist, do nothing
+				}
 				if ( itemsCount ) {
 					if ( this.path ) {
 						parent = this.parent;
 						context = getDataAndContext( parent.data, parent, this.path )[1];
 					}
-					var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ), // Use passed in template if provided, since this added view may use a different template than the original one used to render the array.
+					var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ), 
+						// Use passed-in template if provided, since this added view may use a different template than the original one used to render the array.
+
 						prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
 						nextNode = prevNode.nextSibling,
 						parentNode = prevNode.parentNode;
@@ -922,7 +919,7 @@ $.extend({
 
 	cleanData: function( elems ) {
 		$( elems ).each( clean );  // TODO - look at perf optimization on this
-		oldCleanData( elems );
+		oldCleanData.call( $, elems );
 	}
 });
 
