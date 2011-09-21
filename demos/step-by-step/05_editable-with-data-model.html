@@ -17,45 +17,45 @@
 <button onclick="deleteLastLanguage()">delete last language</button>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
-    <tr class="hover" data-getfrom="css-background-color:bgColor($view[index], [selected])">
-        <td>
-            <span data-getfrom="$view[index]+1"></span>:
-            <span data-getfrom="[title]"></span>
-            <span data-getfrom="html: specialOrderText([specialOrder], $data)"></span>
-        </td>
-        <td>
-            {{tmpl(languages()) "#languageTemplate"}}
-        </td>
-        <td>
-            <img class="close" src="../resources/close.png" />
-        </td>
-    </tr>
+	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index], [selected])">
+		<td>
+			<span data-getfrom="$view[index]+1"></span>:
+			<span data-getfrom="[title]"></span>
+			<span data-getfrom="html: specialOrderText([specialOrder], $data)"></span>
+		</td>
+		<td>
+			{{tmpl(languages()) "#languageTemplate"}}
+		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
+	</tr>
 </script>
 
 <script id="languageTemplate" type="text/x-jquery-tmpl">
-    <div data-getfrom="[name]"></div>
+	<div data-getfrom="[name]"></div>
 </script>
 
 <script id="languageEditTemplate" type="text/x-jquery-tmpl">
-    <input data-getfrom="[name]" data-to="[name]"/><img class="close" src="../resources/close.png" />
+	<input data-getfrom="[name]" data-to="[name]"/><img class="close" src="../resources/close.png" />
 </script>
 
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
-    <div>
-        <div>
-            Special Order: <input type="checkbox" class="special" data-getfrom="checked: [specialOrder]" data-to="[specialOrder]" />
-        </div>
-        <div class="title">Title:</div>
-        <div>
-            <input data-getfrom="[title]" data-to="[title]" />
-        </div>
-        <div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
-        <div>{{tmpl(languages()) "#languageEditTemplate"}}</div>
-    </div>
+	<div>
+		<div>
+			Special Order: <input type="checkbox" class="special" data-getfrom="checked: [specialOrder]" data-to="[specialOrder]" />
+		</div>
+		<div class="title">Title:</div>
+		<div>
+			<input data-getfrom="[title]" data-to="[title]" />
+		</div>
+		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
+		<div>{{tmpl(languages()) "#languageEditTemplate"}}</div>
+	</div>
 </script>
 
 <table><tbody class="header"><tr><th>Title</th><th>Languages</th><th><div id="addMovieBtn">Add</div></th></tr></tbody>
-    <tbody id="movieList"></tbody>
+	<tbody id="movieList"></tbody>
 </table>
 
 <div id="movieDetail"></div>
@@ -240,7 +240,7 @@
 <!--Console-->
 
 <script id="showData" type="text/x-jquery-tmpl">
-    <div><b>Movie:</b> ${$data.title()} <b>Special Order:</b> ${$data.specialOrder()} <b>Languages:</b> {{each $data.languages()}}${$value.name()}&nbsp{{/each}}</div>
+	<div><b>Movie:</b> ${$data.title()} <b>Special Order:</b> ${$data.specialOrder()} <b>Languages:</b> {{each $data.languages()}}${$value.name()}&nbsp{{/each}}</div>
 </script>
 
 <div id="console">

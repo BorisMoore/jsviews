@@ -550,7 +550,7 @@ function removeLinksToData( source, links ) {
 
 function getLinkFromDataInfo( target, source ) {
 	var link,
-		links = jsViewsData( target, "from" );
+		links = jsViewsData( target, "from" ),
 		l = links.length;
 	while( l-- ) {
 		link = links[ l ];

@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender-codeless.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<style type="text/css">
+		.treeView li li {margin-left:24px;}
+		.toggle {cursor:pointer;vertical-align:middle;margin-right:7px;display:inline-block;border:1px solid #555;text-align:center;height:12px;width:12px;line-height:11px;background-color:#f8f8f8;color:Blue;}
+		.treeView, .treeView ul {padding:0;margin:0;} .treeView li {margin-left:8px;list-style-type:none;padding:2px;}
+		.treeView li.folderItem {color:Blue;text-decoration:underline;font-style:italic;margin-bottom:4px;}
+	</style>
+</head>
+<body>
+<a href="index.html">Home</a><br />
+
+<h3>Tree view: using recursive nested {{tmpl}} tags.</h3>
+
+<ul id="foldersList" class="treeView"></ul>
+
+<script id="folderTemplate" type="text/x-jquery-tmpl">
+	<li>
+		{{#if {{hasContent $data}} }}
+			<span class="toggle">{{yesNo expanded "-" "+"}}</span>
+		{{/if}}
+		<span>{{=name}}</span>
+	</li>
+	{{#if expanded}}
+		<li>
+			<ul>{{each $data.folders "#folderTemplate"}}</ul>
+		</li>
+	{{/if}}
+</script>
+
+<script type="text/javascript">
+
+ /* Hierarchy of named folders */
+var rootFolder = {
+	name: "Categories",
+	folders: [
+		{ name: "Drama", folders: [
+			{ name: "Courtroom" },
+			{ name: "Political" }
+		]},
+		{ name: "Classic", folders: [
+			{ name: "Musicals", folders: [
+				{ name: "Jazz"},
+				{ name: "R&B/Soul"}
+			]},
+		]}
+	]
+};
+
+
+/* Declare the functions for getting the items and subfolders, etc. */
+$.registerTags({
+	yesNo: function( yesNo, trueVal, falseVal ) {
+		return yesNo ? trueVal : falseVal;
+	},
+	hasContent: function( folder ) {
+		return folder.expanded || folder.folders && folder.folders.length;
+	}
+});
+
+
+/* Render the folderTemplate with the "movies" data, as data-linked content, to provide interactive views  */
+$( "#foldersList" )
+	.link( rootFolder, "#folderTemplate" )
+
+	.delegate( ".toggle", "click", function() {
+		/* Toggle expanded property on data, then refresh rendering */
+		var view = $.view( this ).parent;
+		view.data.expanded = !view.data.expanded;
+		view.render();
+	})
+	.delegate( ".folderItem", "click", function() {
+		alert( $.view( this ).data.description );
+	});
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+</body>
+</html>
