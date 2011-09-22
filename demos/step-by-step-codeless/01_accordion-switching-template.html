@@ -29,7 +29,7 @@
 		{{=Title}}
 	</td></tr>
 	<tr class='movieDetail row2'><td><b>Languages:</b>
-		{{each Languages "#languageTemplate"}}
+		{{each Languages content="#languageTemplate"}}
 	</td></tr>
 </script>
 
@@ -43,7 +43,7 @@ Click for details:
 <div class="height">
 	<table><tbody id="movieList"></tbody></table>
 </div>
-
+	
 <script type="text/javascript">
 
 	var selectedSubView = null,
