@@ -56,7 +56,7 @@ var rootFolder = {
 
 
 /* Declare the functions for getting the items and subfolders, etc. */
-$.registerTags({
+$.tmpl.registerTags({
 	yesNo: function( yesNo, trueVal, falseVal ) {
 		return yesNo ? trueVal : falseVal;
 	},
@@ -76,6 +76,7 @@ $( "#foldersList" )
 		view.data.expanded = !view.data.expanded;
 		view.render();
 	})
+
 	.delegate( ".folderItem", "click", function() {
 		alert( $.view( this ).data.description );
 	});
