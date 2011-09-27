@@ -2,12 +2,12 @@
 <html>
 <head>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
-	<script src="../../jquery.render.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="../index.html">Home</a><br />
+<a href="index.html">Home</a><br />
 
 <h3>Data Linking to static content in the page, using Declarative or Programmatic approaches</h3>
 
@@ -119,9 +119,9 @@
 <!--Console-->
 
 <script id="showData" type="text/x-jquery-tmpl">
-	<div>${firstName} ${lastName}</div>
-	<div>${address.city}</div>
-	<div>${roleColor}</div>
+	<div>{{=firstName}} {{=lastName}}</div>
+	<div>{{=address.city}}</div>
+	<div>{{=roleColor}}</div>
 </script>
 
 <div id="console"></div>

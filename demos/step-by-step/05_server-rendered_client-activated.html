@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html><head>
+	<script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+	<script type="text/javascript" src="../../jsrender.js"></script>
+	<script type="text/javascript" src="../../jquery.observable.js"></script>
+	<script type="text/javascript" src="../../jquery.views.js"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
+
+</head><body>
+<a href="index.html">Home</a><br>
+
+<h3>Server rendered content, activated in client. With client data 'delta'</h3>
+
+<button onclick="activate()">Activate</button>
+<button onclick="showData()">show data</button>
+<button onclick="deleteLastLanguage()">delete last language</button>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+		<td>
+			<span data-getfrom="$view[index]+1"></span>:
+			<span data-getfrom="[Title]"></span>
+		</td>
+		<td>
+			{{#each Languages}}
+				<div data-getfrom="[Name]"></div>
+			{{/each}}
+		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
+	</tr>
+</script>
+
+<script id="detailViewTemplate" type="text/x-jquery-tmpl">
+	<div>
+		<div class="title">Title:</div>
+		<div><input data-getfrom="[Title]" data-to="[Title]"/></div>
+		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
+		<div>
+			{{#each Languages}}
+				<input data-getfrom="[Name]" data-to="[Name]"/><img class="close" src="../resources/close.png" />
+			{{/each}}
+		</div>
+	</div>
+</script>
+<table><tbody class="header"><tr><th>Title</th><th>Languages</th><th><div id="addMovieBtn">Add</div></th></tr></tbody>
+	<tbody id="movieList">
+	<!--tmpl() _0-->
+	<!--item-->
+		<tr style="background-color: yellow;" class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+			<td>
+				<span data-getfrom="$view[index]+1">1</span>:
+				<span data-getfrom="[Title]">Meet Joe Black</span>
+			</td>
+			<td>
+			<!--tmpl(Languages) _1-->
+			<!--item-->
+				<div data-getfrom="[Name]">English</div>
+			<!--/item-->
+			<!--item-->
+				<div data-getfrom="[Name]">French</div>
+			<!--/item-->
+			<!--/tmpl-->
+			</td>
+			<td>
+				<img class="close" src="../resources/close.png">
+			</td>
+		</tr>
+		<!--/item-->
+		<!--item-->
+		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+			<td>
+				<span data-getfrom="$view[index]+1">2</span>:
+				<span data-getfrom="[Title]">Eyes Wide Shut</span>
+			</td>
+			<td>
+			<!--tmpl(Languages) _1-->
+			<!--item-->
+				<div data-getfrom="[Name]">French</div>
+			<!--/item-->
+			<!--item-->
+				<div data-getfrom="[Name]">German</div>
+			<!--/item-->
+			<!--item-->
+				<div data-getfrom="[Name]">Spanish</div>
+			<!--/item-->
+			<!--/tmpl-->
+			</td>
+			<td>
+				<img class="close" src="../resources/close.png">
+			</td>
+		</tr>
+		<!--/item-->
+		<!--/tmpl-->
+	</tbody>
+</table>
+
+<div id="movieDetail">
+	<!--tmpl() _2-->
+	<div>
+		<div class="title">Title:</div>
+		<div><input value="Meet Jo Black" data-getfrom="[Title]" data-to="[Title]"></div>
+		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
+		<div>
+		<!--tmpl(Languages) _3-->
+		<!--item-->
+			<input value="English" data-getfrom="[Name]" data-to="[Name]"><img class="close" src="../resources/close.png">
+		<!--/item-->
+		<!--item-->
+			<input value="French" data-getfrom="[Name]" data-to="[Name]"><img class="close" src="../resources/close.png">
+		<!--/item-->
+		<!--/tmpl-->
+		</div>
+	</div>
+	<!--/tmpl-->
+</div>
+
+<script type="text/javascript">
+
+	var app = {
+			selectedItem: null
+		},
+
+		movies = [
+		{
+			Title: "Meet Joe Black",
+			Languages: [
+				{ Name: "English" },
+				{ Name: "Extra Language in client data" },
+				{ Name: "French" }
+			]
+		},
+		{
+			Title: "Extra Movie in client data",
+			Languages: [
+				{ Name: "Latin" },
+				{ Name: "Greek" }
+			]
+		},
+		{
+			Title: "Eyes Wide Shut",
+			Languages: [
+				{ Name: "French" },
+				{ Name: "German" },
+				{ Name: "Spanish" }
+			]
+		}
+	];
+
+	function activate() {
+		$( "#movieList" )
+			.link( movies, "#movieTemplate" )
+
+			.delegate( "tr", "click", function() {
+				select( $.view( this ));
+			})
+
+			.delegate( ".close", "click", function() {
+				select();
+				$.observable( movies ).remove( $.view( this ).index, 1 );
+				return false;
+			});
+
+		$( "#movieDetail" )
+			.delegate( "#addLanguageBtn", "click", function() {
+				var languages = $.view( this ).data.Languages;
+				$.observable( languages ).insert( languages.length, {
+					Name: "NewLanguage"
+				});
+			})
+
+			.delegate( ".close", "click", function() {
+				$.observable( app.selectedItem.data.Languages).remove( $.view( this ).index, 1 );
+				return false;
+			});
+
+		$( "#addMovieBtn" ).click( function() {
+			$.observable( movies ).insert( movies.length, {
+				Title: "NewTitle",
+				Languages: [
+					{ Name: "NewLanguage" }
+				]}
+			);
+
+			// Set selection on the added item
+			select( $("#movieList tr:last").view());
+		});
+
+		$( app ).bind( "propertyChange", function( event, args ) {
+			if ( args.path === "selectedItem" ) {
+				$( "#movieDetail" ).link((args.value ? args.value : []).data, "#detailViewTemplate" );
+			}
+		});
+
+		// Set selection on the added item
+		select( $("#movieList tr:first").view());
+	}
+
+	function bgColor( index, selectedItem ) {
+		return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
+	}
+
+	function select( view ) {
+		if ( app.selectedItem != view ) {
+			$.observable( app ).setProperty( "selectedItem", view );
+		}
+	}
+
+	function deleteLastLanguage() {
+		if ( movies.length ) {
+			var languages = movies[ movies.length - 1 ].Languages;
+			$.observable( languages ).remove( languages.length - 1, 1 );
+		}
+	}
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<!--Console-->
+
+<script id="showData" type="text/x-jquery-tmpl">
+	<div><b>Movie:</b> {{=Title}} <b>Languages:</b> {{#each Languages}} {{=Name}}{{/each}}</div>
+</script>
+
+<div id="console">
+</div>
+
+<script type="text/javascript">
+	function showData() {
+		$( ".consoleButtons" ).css( "display", "block" );
+		$( "#console" ).append("<hr/>");
+		$( "#console" ).append( $( "#showData" ).render( movies ));
+	}
+</script>
+
+
+
+
+
+</body></html>

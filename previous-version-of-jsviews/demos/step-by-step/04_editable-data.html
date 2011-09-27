@@ -2,14 +2,14 @@
 <html>
 <head>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
-	<script src="../../jsrender-codeless.js" type="text/javascript"></script>
+	<script src="../../jquery.render.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<a href="../index.html">Home</a><br />
 
 <h3>Fully editable data: Change events with integrated Data Link and Templates</h3>
 
@@ -23,9 +23,7 @@
 			<span data-getfrom="[Title]"></span>
 		</td>
 		<td>
-			{{#each Languages}}
-				<div data-getfrom="[Name]"></div>
-			{{/each}}
+			{{tmpl(Languages) "#languageTemplate"}}
 		</td>
 		<td>
 			<img class="close" src="../resources/close.png" />
@@ -33,16 +31,20 @@
 	</tr>
 </script>
 
+<script id="languageTemplate" type="text/x-jquery-tmpl">
+	<div data-getfrom="[Name]"></div>
+</script>
+
+<script id="languageEditTemplate" type="text/x-jquery-tmpl">
+	<input data-getfrom="[Name]" data-to="[Name]"/><img class="close" src="../resources/close.png" />
+</script>
+
 <script id="detailViewTemplate" type="text/x-jquery-tmpl">
 	<div>
 		<div class="title">Title:</div>
 		<div><input data-getfrom="[Title]" data-to="[Title]"/></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
-		<div>
-			{{#each Languages}}
-				<input data-getfrom="[Name]" data-to="[Name]"/><img class="close" src="../resources/close.png" />
-			{{/each}}
-		</div>
+		<div>{{tmpl(Languages) "#languageEditTemplate"}}</div>
 	</div>
 </script>
 
@@ -157,7 +159,7 @@
 <!--Console-->
 
 <script id="showData" type="text/x-jquery-tmpl">
-	<div><b>Movie:</b> {{=Title}} <b>Languages:</b> {{#each Languages}} {{=Name}}{{/each}}</div>
+	<div><b>Movie:</b> ${Title} <b>Languages:</b> {{each Languages}} ${$value.Name}{{/each}}</div>
 </script>
 
 <div id="console">

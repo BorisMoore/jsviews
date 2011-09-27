@@ -838,7 +838,7 @@ $.extend( viewsNs, {
 					parent = this.parent;
 					context = getDataAndContext( parent.data, parent, this.path )[1];
 				}
-				var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ), 
+				var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ),
 					// Use passed-in template if provided, since this added view may use a different template than the original one used to render the array.
 
 					prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
