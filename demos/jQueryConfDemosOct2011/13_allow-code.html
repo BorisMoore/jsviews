@@ -1,0 +1,91 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="12_custom-helper-tags.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
+
+<h3>17 Allowing code within templates: {{* mycode... }}</h3>
+<p>for program flow, or returning content...</p>
+<br />
+<script id="movieTmpl" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=Title}}</td>
+		<td>
+			{{#each Languages}}
+				{{=Name}}{{*
+
+					if ( $view.itemNumber === $view.parent.data.length - 1 ) {
+
+				}} and {{*
+
+					} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
+
+				}}, {{* } }}
+			{{/each}}
+		</td>
+	</tr>
+</script>
+
+<table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
+	<tbody id="movieList"></tbody>
+</table>
+
+<script type="text/javascript">
+
+	var movie = {
+		Title: "Eyes Wide Shut",
+		Languages: [
+			{ Name: "French" },
+			{ Name: "German" },
+			{ Name: "Spanish" }
+		]
+	};
+
+	$.views.allowCode = true;
+
+	$( "#movieList" ).html(
+		$( "#movieTmpl" ).render( movie )
+	);
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">
+&lt;td>
+    {{#each Languages}}
+        {{=Name}}
+{{*     if ( $view.itemNumber === $view.parent.data.length - 1 ) {       }} 
+            and
+{{*     } else if ( $view.itemNumber &lt; $view.parent.data.length - 1 ) {  }}
+            ,
+{{*     }                                                                }}
+    {{/each}}
+&lt;/td>	
+</pre>
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+$.views.allowCode = true;
+</pre>
+
+<h4>Alternatively - HTML:</h4>
+<pre class="brush: xml;">
+{{*
+	if ( $view.itemNumber === $view.parent.data.length - 1 ) {
+		result+= " and";
+	} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
+		result+= ",";
+	}
+}}
+</pre>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="07_observable2.html">Prev</a> <a href="index.html">Home</a> <a href="08_each-tag.html">Next</a><br />
+
+<h3>10 Two containers data-linked to the same array</h3>
+
+<p><button id="insertPerson">Insert person</button></p>
+
+<!--====== Container ======-->
+<table><tbody id="details"></tbody></table>
+
+<table><tbody id="details2"></tbody></table>
+
+<!--====== Template ======-->
+<script id="personTmpl" type="text/x-jquery-tmpl">
+	<tr>
+		<td data-getfrom="[firstName]" />
+	</tr>
+</script>
+
+<!--====== Template2 ======-->
+<script id="personTmpl2" type="text/x-jquery-tmpl">
+	<tr>
+		<td data-getfrom="[firstName]" />
+		<td>
+			<input data-getfrom="[firstName]" data-to="[firstName]" />
+		</td>
+	</tr>
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+
+var people = [
+	{
+		firstName: "Jeff"
+	},
+	{
+		firstName: "Rebecca"
+	}
+];
+
+// Render to string and data-link to people (compact syntax)
+$( "#details" ).link( people, "#personTmpl" );
+
+$( "#details2" ).link( people, "#personTmpl2" );
+
+// Observable array change
+$( "#insertPerson" ).click( function() {
+	$.observable( people ).insert( 0, { firstName: "NewPerson" });
+});
+
+</script>
+<!--================ End of Demo Section ================-->
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+// Render to string and data-link to people (compact syntax)
+$( "#details" ).link( people, "#personTmpl1" );
+
+$( "#details2" ).link( people, "#personTmpl2" );
+
+// Observable array change
+$( "#insertPerson" ).click( function() {
+	$.observable( people ).insert( 0, { firstName: "NewPerson" });
+});
+</pre>
+</body>
+</html>
+

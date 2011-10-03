@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="01_render-template.html">Prev</a> <a href="index.html">Home</a> <a href="03_compiled-template.html">Next</a><br />
+
+<h3>2 Render template from string</h3>
+
+<!--====== Container ======-->
+<table><tbody id="details"></tbody></table>
+
+<!--====== Template ======-->
+<script id="personTmpl" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=firstName}}</td>
+	</tr>
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+
+var person = {
+	firstName: "Jeff"
+}
+
+// Render to string
+var html = $.render( "<tr><td>{{=firstName}}</td></tr>", person );
+
+// Insert as HTML
+$( "#details" ).html( html );
+
+</script>
+<!--================ End of Demo Section ================-->
+
+<h4>Data:</h4>
+<pre class="brush: js;">
+var person = {
+	firstName: "Jeff"
+}
+</pre>
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+// Render to string
+var html = $.render( "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>", person );
+
+// Insert as HTML
+$( "#details" ).html( html );
+</pre>
+</body>
+</html>
+

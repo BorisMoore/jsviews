@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html><head>
-	<script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
-	<script type="text/javascript" src="../../jsrender.js"></script>
-	<script type="text/javascript" src="../../jquery.observable.js"></script>
-	<script type="text/javascript" src="../../jquery.views.js"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
 
-</head><body>
-<a href="index.html">Home</a><br>
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="10_editable-data.html">Prev</a> <a href="index.html">Home</a> <a href="12_custom-helper-tags.html">Next</a><br />
 
-<h3>Server rendered content, activated in client. With client data 'delta'</h3>
+<h3>15 Progressive enhancement</h3>
+
+<p>Server rendered content, activated in client</p>
+<p>With client data 'delta'...</p>
 
 <button onclick="activate()">Activate</button>
 <button onclick="showData()">show data</button>
@@ -234,4 +240,9 @@
 		$( "#console" ).append( $( "#showData" ).render( movies ));
 	}
 </script>
+
+
+
+
+
 </body></html>

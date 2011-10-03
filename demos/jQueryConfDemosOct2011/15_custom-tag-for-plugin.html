@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<link href="datepicker/jquery-ui-1.8.1.custom.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender-next.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views-next.js" type="text/javascript"></script>
+	<script src="datepicker/jquery-ui-1.8.1.custom.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="14_custom-tags.html">Prev</a> <a href="index.html">Home</a> <a href="16_and-MVVM-MVP-etc.html">Next</a><br />
+
+<h3>19 Custom tag for jQuery plugin: Datepicker</h3>
+
+<script id="movieTemplate" type="text/x-jquery-tmpl">
+	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+		<td>
+			<span data-getfrom="$view[index]+1"></span>:
+			<span data-getfrom="[Title]"></span>
+		</td>
+		<td data-getfrom="[ReleaseDate]"></td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
+	</tr>
+</script>
+
+<script id="detailViewTemplate" type="text/x-jquery-tmpl">
+	<div>
+		<div class="title">Title:</div>
+		<div><input data-getfrom="[Title]" data-to="[Title]"/></div>
+		<div class="title">Release Date:</div>
+		<div>{{datepicker dateFormat="MM d, yy" content="#datepicker"}}</div>
+	</div>
+</script>
+
+<!--====== Template ======-->
+<script type="text/x-jquery-tmpl" id="datepicker">
+	<input data-getfrom="[ReleaseDate]" data-to="[ReleaseDate]" class="date-input" ></input>
+</script>
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">
+&lt;div>{{datepicker dateFormat="MM d, yy" content="#datepicker"}}&lt;/div>
+</pre>
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+$.views.registerTags({
+	datepicker: {
+		plugin: "datepicker"
+	}
+});
+</pre>
+
+<h4>Demo:</h4>
+
+<table><tbody class="header"><tr><th>Title</th><th>Release Date</th><th><div id="addMovieBtn">Add</div></th></tr></tbody>
+	<tbody id="movieList"></tbody>
+</table>
+
+<div id="movieDetail"></div>
+
+<script type="text/javascript">
+
+	var app = {
+			selectedItem: null
+		},
+
+		movies = [
+		{
+			Title: "Meet Joe Black",
+			ReleaseDate: "September 13, 1998"
+		},
+		{
+			Title: "Eyes Wide Shut",
+			ReleaseDate: "April 2, 1999"
+		}
+	];
+
+	$.views.registerTags( "datepicker", {
+		plugin: "datepicker"
+	});
+
+	$( "#movieList" )
+		.link( movies, "#movieTemplate" )
+
+		.delegate( "tr", "click", function() {
+			select( $.view( this ));
+		})
+
+		.delegate( ".close", "click", function() {
+			select();
+			$.observable( movies ).remove( $.view( this ).index, 1 );
+			return false;
+		});
+
+	$( "#movieDetail" )
+		.delegate( ".close", "click", function() {
+			$.observable( app.selectedItem.data.Languages).remove( $.view( this ).index, 1 );
+			return false;
+		});
+
+	$( "#addMovieBtn" ).click( function() {
+		$.observable( movies ).insert( movies.length, {
+			Title: "NewTitle",
+			Languages: [
+				{ Name: "NewLanguage" }
+			],
+			ReleaseDate: "" 
+		});
+
+		// Set selection on the added item
+		select( $("#movieList tr:last").view());
+	});
+
+	$( app ).bind( "propertyChange", function( event, args ) {
+		if ( args.path === "selectedItem" ) {
+			$( "#movieDetail" ).link((args.value ? args.value : []).data, "#detailViewTemplate" );
+		}
+	});
+
+	function bgColor( index, selectedItem ) {
+		return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
+	}
+
+	function select( view ) {
+		if ( app.selectedItem != view ) {
+			$.observable( app ).setProperty( "selectedItem", view );
+		}
+	}
+
+</script>
+
+<!--================ End of Demo Section ================-->
+</body>
+</html>
+
+

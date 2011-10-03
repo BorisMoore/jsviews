@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="04_data-array.html">Prev</a> <a href="index.html">Home</a> <a href="06_data-binding.html">Next</a><br />
+
+<h3>5 Inputs</h3>
+
+<!--====== Container ======-->
+<table><tbody id="details"></tbody></table>
+
+<!--====== Template ======-->
+<script id="personTmpl" type="text/x-jquery-tmpl">
+	<tr>
+		<td>{{=firstName}}</td>
+		<td><input value="{{=firstName}}" /></td>
+	</tr>
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+
+var people = [
+	{
+		firstName: "Jeff"
+	},
+	{
+		firstName: "Rebecca"
+	}
+];
+
+$( "#details" ).html(
+	$( "#personTmpl" ).render( people )
+);
+
+</script>
+<!--================ End of Demo Section ================-->
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">&lt;script id="personTmpl" type="text/x-jquery-tmpl">
+	&lt;tr>
+		&lt;td>{{=firstName}}&lt;/td>
+		&lt;td>
+			&lt;input value="{{=firstName}}" />
+		&lt;/td>
+	&lt;/tr>
+&lt;/script></pre>
+</body>
+</html>
+
