@@ -9,6 +9,8 @@
 
 <h3>jQuery Templates</h3>
 
+<!--=================== Demo Section ===================-->
+
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<li>
 		<b>{{html Name}}</b> ({{html ReleaseYear}})
@@ -25,15 +27,16 @@
 
 
 <script type="text/javascript">
-	var tmpl, res, startTime, endTime, result,
+	var tmpl, res, endTime, result,
 		times = 1000,
 		count = times;
-		movie = { Name: "The Red Violin", ReleaseYear: "1998" };
+		movie = { Name: "The Red Violin", ReleaseYear: "1998" },
+		startTime = +new Date,
+		tmplString = $( "#movieTemplate" )[0].innerHTML;
 
-	startTime = +new Date;
 	while (count--) {
-		tmpl = $( "#movieTemplate" ).template();
-	}
+		tmpl = $.template( tmplString );
+	} 
 	endTime = +new Date;
 	result = ( endTime-startTime )/times;
 	$( "#console" ).append( "compile: " + result + "<br/>" );
@@ -43,7 +46,7 @@
 	startTime = +new Date;
 	while (count--) {
 		res = tmpl($, { data: movie }).join("");
-	}
+	} 
 	endTime = +new Date;
 	result = ( endTime-startTime )/times;
 	$( "#console" ).append( "run: " + result + "<br/>");

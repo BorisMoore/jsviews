@@ -9,6 +9,8 @@
 
 <h3>Strappend</h3>
 
+<!--=================== Demo Section ===================-->
+
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<li>
 		<b>${Name}</b> (${ReleaseYear})
@@ -31,8 +33,8 @@
 		movie = { Name: "The <Red> Violin", ReleaseYear: "1998" };
 	startTime = +new Date;
 	while (count--) {
-		tmpl = $.template( null, $( "#movieTemplate" )[0].innerHTML).tmpl
-	}
+		tmpl = $.template( null, $( "#movieTemplate" )[0].innerHTML).tmpl;
+	} 
 	endTime = +new Date;
 	result = ( endTime-startTime )/times;
 	$( "#console" ).append( "compile: " + result + "<br/>" );
@@ -42,11 +44,11 @@
 	startTime = +new Date;
 	while (count--) {
 		res = tmpl(movie);
-	}
+	} 
 	endTime = +new Date;
 	result = ( endTime-startTime )/times;
 	$( "#console" ).append( "run: " + result + "<br/>");
-
+	
 </script>
 
 <!--================ End of Demo Section ================-->

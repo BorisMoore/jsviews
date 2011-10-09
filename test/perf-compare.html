@@ -3,12 +3,12 @@
 <head>
 	<title>Benchmark JsRender</title>
 	<link href="resources/perf-compare.css" rel="stylesheet" type="text/css" />
-	<script src="../../jquery-1.6.4.js" type="text/javascript"></script>
-	<script src="../../jsrender.js" type="text/javascript"></script>
-	<script src="../../test/benchmarks/jquery.tmpl-JQT.js" type="text/javascript"></script>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../jsrender.js" type="text/javascript"></script>
+	<script src="../test/benchmarks/jquery.tmpl-JQT.js" type="text/javascript"></script>
 	<!--Fixed to avoid collision of $.template with JsRender-->
 
-	<script src="../../test/benchmarks/dot.js" type="text/javascript"></script>
+	<script src="../test/benchmarks/dot.js" type="text/javascript"></script>
 </head>
 <body>
 
@@ -59,8 +59,6 @@
 	</div>
 </script>
 
-<a href="index.html">Home</a> <a href="01_render-template.html">Next</a><br /><br />
-
 <em>Rendered content:</em><br /><br />
 <table><tbody id="output"></tbody></table>
 
@@ -69,7 +67,7 @@
 
 
 <script type="text/javascript">
-	var ret,
+	var ret, tmplString,
 		movie = { Name: "The <i>Red</i> Violin", ReleaseYear: "1998" },
 
 		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML),
@@ -82,13 +80,13 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Render string</b></td></tr>");
 
-	var dotRun = test( "doT render", 100000, function() {
+	var dotRun = test( "doT render", 100000, 2, function() {
 		ret = tmpl_doT(movie);
 	});
-	var jsrRun = test( "JsRender render", 100000, function() {
+	var jsrRun = test( "JsRender render", 100000, 2, function() {
 		ret = tmpl_JsRender( movie );
 	});
-	var jqtRun = test( "jQuery Template render", 100000, function() {
+	var jqtRun = test( "jQuery Template render", 100000, 2, function() {
 		ret = tmpl_jQueryTmpl($, { data: movie }).join("");
 	});
 
@@ -96,60 +94,54 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Compile</b></td></tr>");
 
-	var dotCompile = test( "doT compile", 10000, function() {
-		tmpl_doT = doT.template($( "#dotTemplate" )[0].innerHTML);
+	tmplString = $( "#jsRenderTemplate" )[0].innerHTML;
+	var jsrCompile = test( "JsRender compile", 10000, 0, function() {
+		tmpl_JsRender = $.template( tmplString );
 	});
-	var jsrCompile = test( "JsRender compile", 10000, function() {
-		tmpl_JsRender = $( "#jsRenderTemplate" ).template();
+	tmplString = $( "#jqueryTmplTemplate" )[0].innerHTML;
+	var jqtCompile = test( "jQuery Template compile", 10000, 0, function() {
+		tmpl_jQueryTmpl = $.templateJQT( tmplString );
 	});
-	var jqtCompile = test( "jQuery Template compile", 10000, function() {
-		tmpl_jQueryTmpl = $( "#jqueryTmplTemplate" ).templateJQT();
+		
+	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
+	$( "#console" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
+
+	ret = $( "#output" ).html();
+	test( "JsRender full features - to string", 10000, 0, function() {
+		ret = $.render( tmpl_JsRender, movie );
+	});
+	test( "JsRender full features - inserted in DOM", 10000, 0, function() {
+		$( "#output" ).html( ret = $.render( tmpl_JsRender, movie ));
+	});
+	test( "jQuery Template full features - inserted in DOM", 10000, 0, function() {
+		$( "#output" ).empty();
+		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
 	});
 
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
-	$( "#console" ).append( "<tr><td colspan='2'><b>Compile plus Render</b></td></tr>");
+	$( "#console" ).append( "<tr><td colspan='2'><b>Rendering to string, with HTML encoding</b></td></tr>");
 
-	$( "#console" ).append( "<tr><td>doT comile plus render</td><td class='result'>" + parseInt(dotCompile + dotRun) + "</td></tr>");
-	$( "#console" ).append( "<tr><td>JsRender comile plus render</td><td class='result'>" + parseInt(jsrCompile + jsrRun) + "</td></tr>");
-	$( "#console" ).append( "<tr><td>jQuery Template comile plus render</td><td class='result'>" + parseInt(jqtCompile + jqtRun) + "</td></tr>");
-
-//	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
-//	$( "#console" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
-
-//	ret = $( "#output" ).html();
-//	test( "JsRender full features - to string", 10000, function() {
-//		ret = $.render( tmpl_JsRender, movie );
-//	});
-//	test( "JsRender full features - inserted in DOM", 10000, function() {
-//		$( "#output" ).html( ret = $.render( tmpl_JsRender, movie ));
-//	});
-//	test( "jQuery Template full features - inserted in DOM", 10000, function() {
-//		$( "#output" ).empty();
-//		$.tmpl( tmpl_jQueryTmpl, movie ).appendTo( "#output" );
-//	});
-
-//	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
-//	$( "#console" ).append( "<tr><td colspan='2'><b>Rendering to string, with HTML encoding</b></td></tr>");
-
-//	test( "JsRender Encode", 10000, function() {
-//		ret = tmpl_JsRenderEncode( movie );
-//	});
-//	test( "jQuery Template Encode", 10000, function() {
-//		ret =tmpl_jQueryTmplEncode($, { data: movie }).join("");
-//	});
-//	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
+	test( "JsRender Encode", 10000, 0, function() {
+		ret = tmpl_JsRenderEncode( movie );
+	});
+	test( "jQuery Template Encode", 10000, 0, function() {
+		ret =tmpl_jQueryTmplEncode($, { data: movie }).join("");
+	});
+	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#output" ).html( ret );
 
 
-function test( label, times, cb ) {
-	count = times;
-	startTime = new Date().valueOf();
+function test( label, times, places, cb ) {
+	var endTime, result,
+		count = times,
+		startTime = +new Date().valueOf();
+	
 	while (count--) {
 		cb();
 	}
 	endTime = new Date().valueOf();
-	result = parseInt((( endTime-startTime ) * 10000 ) / times)/10;
-	$( "#console" ).append( "<tr><td>" + label + ": </td><td class='result'>" + result + "</td></tr>");
+	result = ((( endTime-startTime ) * 1000 ) / times);
+	$( "#console" ).append( "<tr><td>" + label + ": </td><td class='result'>" + result.toFixed( places ) + "</td></tr>");
 	return result;
 }
 </script>
