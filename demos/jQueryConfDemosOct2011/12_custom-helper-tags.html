@@ -32,17 +32,17 @@
 
 	$.views.registerTags({
 
-		nextToLast: function( content ) {
+		nextToLast: function( hash ) {
 			if ( this.itemNumber === this.parent.data.length - 1 ) {
-				return $.render( content, this.data );
+				return $.render( hash._content, this.data );
 			}
-			this.onElse = function( val, content ) {
-				return val ? $.render( content, this.data ) : "";
+			this.onElse = function( val, hash ) {
+				return val ? $.render( hash._content, this.data ) : "";
 			};
 			return "";
 		},
 
-		notLast: function( content ) {
+		notLast: function() {
 			return this.itemNumber !== this.parent.data.length;
 		}
 	});
@@ -86,9 +86,9 @@ $.views.registerTags({
         return this.itemNumber !== this.parent.data.length;
     },
 
-	nextToLast: function( content ) {
+	nextToLast: function( hash ) {
 		...
-		$.render( content, this.data );
+		$.render( hash._content, this.data );
 	}
 });
 </pre>

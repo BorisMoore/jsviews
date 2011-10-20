@@ -17,7 +17,7 @@
 	<tr>
 		<td>{{=Title}}</td>
 		<td>
-			{{each Languages content="#languageTmpl"}}
+			{{each Languages _content="#languageTmpl"}}
 		</td>
 	</tr>
 </script>
@@ -55,7 +55,7 @@ $( "#movieList" ).html(
 ...
 &lt;td>{{=Title}}&lt;/td>
 &lt;td>
-	{{each Languages content="#languageTmpl"}}
+	{{each Languages _content="#languageTmpl"}}
 &lt;/td>
 ..
 
