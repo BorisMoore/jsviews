@@ -4,7 +4,7 @@
  */
 window.JsViews || window.jQuery && jQuery.views || (function( window, undefined ) {
 
-var $, viewsNs, tmplEncode, render,
+var $, _$, JsViews, viewsNs, tmplEncode, render, tagRegex, registerTags,
 	FALSE = false, TRUE = true,
 	jQuery = window.jQuery, document = window.document;
 	htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
@@ -41,7 +41,11 @@ if ( jQuery ) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// jQuery is not loaded. Make $ the JsViews object
-	window.JsViews = window.$ = $ = {
+	
+	// Map over the $ in case of overwrite
+	_$ = window.$,
+	
+	window.JsViews = JsViews = window.$ = $ = {
 		extend: function( target, source ) {
 			if ( source === undefined ) {
 				source = target;
@@ -71,6 +75,12 @@ if ( jQuery ) {
 		},
 		isArray: Array.isArray || function( obj ) {
 			return Object.prototype.toString.call( obj ) === "[object Array]";
+		},
+		noConflict: function() {
+			if ( window.$ === JsViews ) {
+				window.$ = _$;
+			}
+			return JsViews;
 		}
 	}
 }
@@ -110,6 +120,34 @@ $.extend({
 		templates: {},
 		tags: {},
 		allowCode: FALSE,
+		debugMode: TRUE,
+//===============
+// setDelimiters
+//===============
+
+		setDelimiters: function( openTag, closeTag ) {
+			var firstCloseChar = closeTag.charAt( 1 ),
+				secondCloseChar = closeTag.charAt( 0 );
+			openTag = openTag.charAt( 0 ) + "\\" + openTag.charAt( 1 ); // Not including first escape '\'
+			closeTag = firstCloseChar + "\\" + secondCloseChar; // Not including first escape '\'
+			tagRegex =
+				//         OPEN
+				"(?:\\" + openTag 
+				
+					// EITHER #?    tagname
+					+ "(?:(\\#)?(\\w+(?=[\\s\\" + firstCloseChar + "!]))"
+					// OR       =
+					+ "|(\\=(?=[\\s\\w\\$\\[]))"
+					// OR   code
+					+ "|\\*((?:[^\\" + firstCloseChar + "]|\\" + firstCloseChar + "(?!\\" + secondCloseChar + "))+)\\" + closeTag + "))"
+				
+				// OR !encoding?      CLOSE
+				+ "|(!(\\w*))?(\\" + closeTag + ")"
+				// OR  {{/closeBlock}}
+				+ "|(?:\\" + openTag + "\\/([\\w\\$\\.\\[\\]]+)\\" + closeTag + ")";
+			
+			tagRegex = new RegExp( tagRegex, "g" );
+		},
 
 //===============
 // renderTag
@@ -157,8 +195,7 @@ $.extend({
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
 			if ( "" + encoding !== encoding ) { // not type string
-				// Last arg is a number, so this is a block tagFn and last arg is the nested template index (integer key)
-				// assign the sub-content template function as last arg
+				// This arg is not a string, so must be the hash
 				hash = encoding;
 				encoding = args.pop(); // In this case, encoding is the next to last arg
 			}
@@ -193,7 +230,7 @@ $.extend({
 //===============
 
 		// Register declarative tag.
-		registerTags: function registerTags( name, tag ) {
+		registerTags: registerTags = function( name, tag ) {
 			if ( typeof name === "object" ) {
 				// Object representation where property name is path and property value is value.
 				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
@@ -317,22 +354,15 @@ $.extend({
 // Built-in tags
 //===============
 
+viewsNs.setDelimiters( "{{", "}}" );
+
 viewsNs.registerTags({
 	"if": function() {
-		function failTest( arg ) {
-			return !arg
-			|| hash.eq !== undefined && arg !== hash.eq
-			|| hash.ne !== undefined && arg === hash.ne
-			|| hash.lt !== undefined && arg >= hash.lt
-			|| hash.gt !== undefined && arg <= hash.gt
-			|| hash.le !== undefined && arg > hash.le
-			|| hash.ge !== undefined && arg < hash.ge;
-		}
 		function ifArgs( args ) {
 			var i = 0,
 				l = args.length - 3
 				hash = args[ l ]; // number of 'condition' parameters, since args are: (conditions..., hash, path, encoding
-			while ( l > -1 && failTest( args[ i++ ])) {
+			while ( l > -1 && !args[ i++ ]) {
 				// Only render content if args.length < 3 (i.e. this is an else with no condition) or if a condition argument is truey
 				if ( i === l ) {
 					return "";
@@ -364,9 +394,6 @@ viewsNs.registerTags({
 	},
 	"*": function( value ) {
 		return value;
-	},
-	"=": function( value, hash ) {
-		return value === undefined ? hash.undef : value;
 	}
 });
 
@@ -405,16 +432,18 @@ function compile( markup ) {
 		}
 	}
 
-	// Build abstract syntax tree: [ tag, params, encoding ]
+	// Build abstract syntax tree: [ tag, params, content, encoding ]
 	markup = markup
 		.replace( /\\'|'/g, "\\\'" ).replace( /\\"|"/g, "\\\"" )  //escape ', and "
 		.split( /\s+/g ).join( " " ) // collapse white-space
 		.replace( /^\s+/, "" ) // trim left
 		.replace( /\s+$/, "" ); // trim right;
 
-	//					 {{		 #		tag							singleCharTag							code						 !encoding  endTag		{{/closeBlock}}
-	markup.replace( /(?:\{\{(?:(\#)?([\w\$\.\[\]]+(?=[\s\}!]))|([^\/\*\>$\w\s\d\x7f\x00-\x1f](?=[\s\w\$\[]))|\*((?:[^\}]|\}(?!\}))+)\}\}))|(!(\w*))?(\}\})|(?:\{\{\/([\w\$\.\[\]]+)\}\})/g,
-		function( all, isBlock, tagName, singleCharTag, code, useEncode, encoding, endTag, closeBlock, index ) {
+// Note: In the case of the default delimiters {{}} tagRegex is:
+//     {{     #   tag               =                code                           !encoding  endTag    {{/closeBlock}}
+// /(?:\{\{(?:(\#)?(\w+(?=[\s\}!]))|(\=(?=[\s\w\$\[]))|\*((?:[^\}]|\}(?!\}))+)\}\}))|(!(\w*))?(\}\})|(?:\{\{\/([\w\$\.\[\]]+)\}\})/g;
+
+	markup.replace( tagRegex, function( all, isBlock, tagName, singleCharTag, code, useEncode, encoding, endTag, closeBlock, index ) {
 			tagName = tagName || singleCharTag;
 			if ( inBlock && endTag || pushPreceedingContent( index )) {
 				return;
@@ -454,12 +483,11 @@ function compile( markup ) {
 // Build javascript compiled template function, from AST
 function buildTmplFunction( nodes ) {
 	var ret, content, node,
-		endsInPlus = TRUE,
 		chainingDepth = 0,
 		nested = [],
 		i = 0,
 		l = nodes.length,
-		code = 'var tag=$.views.renderTag,html=$.views.encode.html,\nresult=""+';
+		code = "try{var views=" + (jQuery ? "jQuery" : "JsViews") + '.views,tag=views.renderTag,enc=views.encode,html=enc.html,\nresult=""+';
 
 	function nestedCall( node, outParams ) {
 		if ( "" + node === node ) { // type string
@@ -472,7 +500,7 @@ function buildTmplFunction( nodes ) {
 			outParams[ 1 ] += key + node[ 1 ]; // key:path for hash
 			return FALSE;
 		}
-		var codeFrag, tokens, j, k, ctx, val, hash, key, out, defaultValue,
+		var codeFrag, tokens, j, k, ctx, val, hash, key, out,
 			tag = node[ 0 ],
 			params = node[ 1 ],
 			encoding = node[ 3 ];
@@ -484,17 +512,20 @@ function buildTmplFunction( nodes ) {
 			params = params[ 0 ];
 			if ( tokens = /^((?:\$view|\$data|\$(itemNumber)|\$(ctx))(?:$|\.))?[\w\.]*$/.exec( params )) {
 				// Can optimize for perf and not go through call to renderTag()
-				codeFrag = tokens[ 1 ]
+				codeFrag = 
+					(encoding
+						? encoding === "none"
+							? ""
+							: "enc." + encoding
+						: "html")  
+					+ "(" + (tokens[ 1 ]
 					? tokens[ 2 ] || tokens[ 3 ]
 						? ('$view.' + params.slice( 1 )) // $itemNumber, $ctx -> $view.itemNumber, $view.ctx
 						: params // $view, $data - unchanged
-					: '$data.' + params; // other paths -> $data.path
-				if ( encoding !== "none" ) {
-					codeFrag = 'html(' + codeFrag + ')';
-				}
+					: '$data.' + params) + "||'')"; // other paths -> $data.path
 			} else {
 				// Cannot optimize here. Must call renderTag() for processing, encoding etc.
-				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")'; // Not able
+				codeFrag = 'tag("=","' + params + '",$view,"' + encoding + '")';
 			}
 		} else {
 			codeFrag = 'tag("' + tag + '",';
@@ -524,16 +555,14 @@ function buildTmplFunction( nodes ) {
 	}
 
 	for ( ; i < l; i++ ) {
-		endsInPlus = TRUE;
 		node = nodes[ i ];
 		if ( node[ 0 ] === "*" ) {
 			code = code.slice( 0, -1 ) + ";" + node[ 1 ] + "result+=";
 		} else {
 			code += nestedCall( node ) + "+";
-			endsInPlus = TRUE;
 		}
 	}
-	ret = new Function( "$data, $view", code.slice( 0, endsInPlus ? -1 : -8 ) + ";\nreturn result;" );
+	ret = new Function( "$data, $view", code.slice( 0, -1) + ";}catch(e){result=" + (viewsNs.debugMode ? "e.message" : '""') + ";}\nreturn result;" );
 	ret.nested = nested;
 	return ret;
 }

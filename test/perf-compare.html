@@ -106,7 +106,6 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#console" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
-	ret = $( "#output" ).html();
 	test( "JsRender full features - to string", 10000, 0, function() {
 		ret = $.render( tmpl_JsRender, movie );
 	});
