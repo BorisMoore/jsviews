@@ -316,7 +316,7 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 
 function getDataAndContext( source, view, paramString ) {
 	return Function( "$", "$data", "$view", "$ctx",
-		"with($data){ return [" + paramString + "];}")( $, source, view, view.ctx );
+		"with($data){return [" + paramString + "];}")( $, source, view, view.ctx );
 }
 
 function getConvertedValue( context, source, view, expression, value ) {
@@ -674,7 +674,7 @@ $.extend({
 		// $.view() returns top node
 		// $.view( node ) returns view that contains node
 		var returnView, view, parentElViews, i, finish,
-			startTagReg = /^item|^tmpl(\([\w\.]*\))?(\s+[^\s]+)?$/,
+			startTagReg = /^item|^tmpl(\(\$?[\w\.]*\))?(\s+[^\s]+)?$/,
 			topNode = document.body,
 			startNode = node;
 
