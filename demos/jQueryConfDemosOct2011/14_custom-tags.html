@@ -13,14 +13,14 @@
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="13_allow-code.html">Prev</a> <a href="index.html">Home</a> <a href="15_custom-tag-for-plugin.html">Next</a><br />
+<a href="13_allow-code.html">Prev</a> <a href="index.html">Home</a> <a href="16_and-MVVM-MVP-etc.html">Next</a><br />
 
 <h3>18 Custom tags for rendering</h3>
 
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" _content="#sortedTemplate"}}</td>
+		<td>{{sort Languages reverse="false" tmpl="#sortedTemplate"}}</td>
 		<td>
 			{{#sort Languages reverse="true"}}
 				<div>
@@ -43,16 +43,16 @@
 
 	$.views.registerTags({
 
-		sort: function( array, hash ){
+		sort: function( array ){
 			var ret = "";
-			if ( hash.reverse === "true" ) {
+			if ( this.reverse ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( hash._content, array[ i - 1 ]);
+					ret += $.render( this.tmpl, array[ i - 1 ]);
 				}
 			} else {
 				// Render in original order
-				ret += $.render( hash._content, array );
+				ret += $.render( this.tmpl, array );
 			}
 			return ret;
 		}
@@ -97,12 +97,12 @@
 <pre class="brush: js;">
 $.views.registerTags({
 
-	sort: function( array, hash ){
+	sort: function( array ){
 		...
-		if ( hash.reverse === "true" ) {
+		if ( this.reverse === "true" ) {
 			// Render in reverse order
 			for ( var l = array.length, i = l; i; i-- ) {
-				ret += $.render( hash._content, array[ i - 1 ]);
+				ret += $.render( this.tmpl, array[ i - 1 ]);
 			}
 		}
 		...

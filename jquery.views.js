@@ -194,7 +194,7 @@ function setViewContext( view, context, merge ) {
 }
 
 function View( context, node, path, template, parentView, parentElViews, data ) {
-	var views, index, viewCount, tag,
+	var views, index, viewCount, tagName, ctx,
 		self = this;
 
 	$.extend( self, {
@@ -217,6 +217,9 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 			while ( index++ < viewCount-1 ) {
 				$.observable( views[ index ] ).setProperty( "index", index );
 			}
+			if ( tagName = parentView.tag ) {
+				self.tag = tagName;
+			}
 		} else {
 			// TODO getDataAndContext and passing of context and data from tags needs work. Also, consider more 'codeless' approach, and more consistent syntax with codeless tag markup
 			if ( path ) {
@@ -226,17 +229,30 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 			}
 			self.index = views.length;
 			views.push( self );
+			if ( template.slice( 0, 4 ) === "tag:" ) {
+				tagName = self.tag = template.slice( 4 );
+			}
 		}
 	}
 	self.data = data;
-	self.tag = tag;
 	setViewContext( self, context );
 	setArrayChangeLink( self );
+
+	if ( (tagName = self.tag) && !$.isArray( data )) { 
+		// This view is from a registered presenter
+		presenter = viewsNs.tags[ tagName ];
+		if ( presenter && presenter.pstr ) {
+			ctx = presenter.context || {};
+			ctx[ tagName ] = new presenter.pstr( self );
+			// Make presenter available off the ctx object
+			self.context( ctx );
+		}
+	}
 }
 
 function createNestedViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
-	var tokens, parentElViews, view, existing, parentNode, elem, elem2, params, tag,
-		currentView = parent,
+	var tokens, parentElViews, view, existing, parentNode, elem, elem2, params, presenter, tagName, ctx,
+		currentView = parent, 
 		viewDepth = depth;
 
 	index = index || 0;
@@ -268,8 +284,12 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 			if ( tokens[ 1 ]) {
 				// <!--/item--> or <!--/tmpl-->
 				currentView.nextNode = node;
-				if ( currentView.ctx.afterCreate ) {
-					currentView.ctx.afterCreate.call( currentView, currentView );
+				if (( tagName = currentView.tag ) && ( ctx = currentView.ctx[ tagName ]) && ctx.onAfterCreate ) {
+					// This view is from a registered presenter which has registered an onAfterCreate callback
+					ctx.onAfterCreate();
+				}
+				if ( currentView.ctx.onAfterCreate ) {
+					currentView.ctx.onAfterCreate.call( currentView, currentView );
 				}
 				if ( tokens[ 2 ]) {
 					// An item close tag: <!--/item-->
@@ -590,7 +610,7 @@ function clean( i, el ) { // TODO optimize for perf
 		while( l-- ) {
 			view = views[ l ];
 			if ( view.parent === parentView ) {
-				parentView.removeViews( view.index, 1 );  // NO - ONLY remove view if its top-level nodes are all
+				parentView.removeViews( view.index, 1 );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
 			}
 		}
 	}
@@ -761,6 +781,7 @@ $.extend({
 viewsNs = $.views = $.views || {};
 
 $.extend( viewsNs, {
+	pstrs: {},
 	activeViews: true,
 	getProperty: function( data, value ) {
 		// support for property getter on data
@@ -778,6 +799,29 @@ $.extend( viewsNs, {
 				toAttr: "value"
 			}
 		}
+	},
+
+	//===============
+	// registerPresenters
+	//===============
+
+	// Register declarative tag.
+	registerPresenters: registerPresenters = function( name, presenter ) {
+		var key;
+		if ( typeof name === "object" ) {
+			// Object representation where property name is path and property value is value.
+			// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
+			for ( key in name ) {
+				registerPresenters( key, name[ key ]);
+			}
+		} else {
+			// Simple single property case.
+			viewsNs.pstrs[ name ] = presenter;
+			if ( presenter.tag ) {
+				viewsNs.tags[ name ] = presenter;
+			}
+		}
+		return this;
 	},
 
 	//=======================
@@ -947,6 +991,9 @@ $.fn.extend({
 		// Declarative Linking
 		// If context is a function, cb - shorthand for { beforeChange: cb }
 		// if tmpl not a map, corresponds to $("#container").html( $.render( tmpl, data )).link( data );
+		if ( !this.length ) {
+			return this;
+		}
 		if ( $.isPlainObject( tmpl )) {
 			context = tmpl;
 		} else {

@@ -9,25 +9,16 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="12_custom-helper-tags.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
+<a href="11_server-rendered_client-activated.html">Prev</a> <a href="index.html">Home</a> <a href="13_allow-code.html">Next</a><br />
 
-<h3>17 Allowing code within templates: {{* mycode... }}</h3>
-<p>for program flow, or returning content...</p>
-<br />
+<h3>16 Codeless tags - so use custom helper functions for computed parameters</h3>
+
 <script id="movieTmpl" type="text/x-jquery-tmpl">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{=Title!}}</td>
 		<td>
 			{{#each Languages}}
-				{{=Name}}{{*
-
-					if ( $view.itemNumber === $view.parent.data.length - 1 ) {
-
-				}} and {{*
-
-					} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
-
-				}}, {{* } }}
+				{{=Name}}{{#if $ctx.nextToLast($view)}} and {{else $ctx.notLast($view)}}, {{/if}}
 			{{/each}}
 		</td>
 	</tr>
@@ -39,6 +30,17 @@
 
 <script type="text/javascript">
 
+	$.views.registerHelpers({
+
+		nextToLast: function( view ) {
+			return view.itemNumber === view.parent.data.length - 1;
+		},
+
+		notLast: function( view ) {
+			return view.itemNumber !== view.parent.data.length;
+		}
+	});
+
 	var movie = {
 		Title: "Eyes Wide Shut",
 		Languages: [
@@ -47,8 +49,6 @@
 			{ Name: "Spanish" }
 		]
 	};
-
-	$.views.allowCode = true;
 
 	$( "#movieList" ).html(
 		$( "#movieTmpl" ).render( movie )
@@ -63,29 +63,28 @@
 &lt;td>
     {{#each Languages}}
         {{=Name}}
-{{*     if ( $view.itemNumber === $view.parent.data.length - 1 ) {       }} 
+        {{#if $ctx.nextToLast($view)}}
             and
-{{*     } else if ( $view.itemNumber &lt; $view.parent.data.length - 1 ) {  }}
+        {{else $ctx.notLast($view)}}
             ,
-{{*     }                                                                }}
+        {{/if}}
     {{/each}}
-&lt;/td>	
+&lt;/td>
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-$.views.allowCode = true;
+$.views.registerHelpers({
+
+	nextToLast: function( view ) {
+		return view.itemNumber === view.parent.data.length - 1;
+	},
+
+	notLast: function( view ) {
+		return view.itemNumber !== view.parent.data.length;
+	}
+});
 </pre>
 
-<h4>Alternatively - HTML:</h4>
-<pre class="brush: xml;">
-{{*
-	if ( $view.itemNumber === $view.parent.data.length - 1 ) {
-		result+= " and";
-	} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
-		result+= ",";
-	}
-}}
-</pre>
 </body>
 </html>

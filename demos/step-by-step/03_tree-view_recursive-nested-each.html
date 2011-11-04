@@ -23,14 +23,14 @@
 
 <script id="folderTemplate" type="text/x-jquery-tmpl">
 	<li>
-		{{#if {{hasContent $data}} }}
+		{{#if $ctx.hasContent($data)}}
 			<span class="toggle">{{yesNo expanded "-" "+"}}</span>
 		{{/if}}
 		<span>{{=name}}</span>
 	</li>
 	{{#if expanded}}
 		<li>
-			<ul>{{each $data.folders _content="#folderTemplate"}}</ul>
+			<ul>{{each $data.folders tmpl="#folderTemplate"}}</ul>
 		</li>
 	{{/if}}
 </script>
@@ -59,7 +59,10 @@ var rootFolder = {
 $.views.registerTags({
 	yesNo: function( yesNo, trueVal, falseVal ) {
 		return yesNo ? trueVal : falseVal;
-	},
+	}
+});
+
+$.views.registerHelpers({
 	hasContent: function( folder ) {
 		return folder.expanded || folder.folders && folder.folders.length;
 	}
