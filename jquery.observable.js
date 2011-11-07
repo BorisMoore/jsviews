@@ -2,6 +2,9 @@
 /*
  * Subcomponent of JsViews
  * Data change events for data linking
+ *
+ * Copyright 2011, Boris Moore and Brad Olenick
+ * Released under the MIT License.
  */
 (function ( $, undefined ) {
 	$.observable = function( data, options ) {

@@ -4,6 +4,9 @@
  * Requires jquery.render.js (optimized version of jQuery Templates, for rendering to string)
  *    See JsRender at http://github.com/BorisMoore/jsrender
  * and jquery.observable.js also at http://github.com/BorisMoore/jsviews
+ *
+ * Copyright 2011, Boris Moore
+ * Released under the MIT License.
  */
 (function( $, undefined ) {
 
@@ -861,7 +864,7 @@ $.extend( viewsNs, {
 			$( this.nodes ).remove();
 			this.removeViews( 0, this.views.length );
 			this.nodes = [];
-			$( prevNode ).after( $.render( this.tmpl, this.data, this.ctx ) );
+			$( prevNode ).after( $.render( this.data, this.tmpl, this.ctx ) );
 			parentNode.removeChild( prevNode.nextSibling );
 			parentNode.removeChild( nextNode.previousSibling );
 			createNestedViews( parentNode, this, nextNode, 0, undefined, undefined, prevNode, 0 ); //this.index
@@ -882,7 +885,7 @@ $.extend( viewsNs, {
 					parent = this.parent;
 					context = getDataAndContext( parent.data, parent, this.path )[1];
 				}
-				var html = $.render( tmpl || this.tmpl, dataItems, context, this, TRUE ), 
+				var html = $.render( dataItems, tmpl || this.tmpl, context, this, TRUE ), 
 					// Use passed-in template if provided, since this added view may use a different template than the original one used to render the array.
 
 					prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
@@ -990,7 +993,7 @@ $.fn.extend({
 	link: function( data, tmpl, context ) {
 		// Declarative Linking
 		// If context is a function, cb - shorthand for { beforeChange: cb }
-		// if tmpl not a map, corresponds to $("#container").html( $.render( tmpl, data )).link( data );
+		// if tmpl not a map, corresponds to $("#container").html( $.render( data , tmpl)).link( data );
 		if ( !this.length ) {
 			return this;
 		}
@@ -1002,7 +1005,7 @@ $.fn.extend({
 				removeLinksToData( this[0], declLinkTo );
 				this.empty();
 				if ( data ) {
-					this.append( $.render( tmpl, data, context ));
+					this.append( $.render( data, tmpl, context ));
 					// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 				}
 			}

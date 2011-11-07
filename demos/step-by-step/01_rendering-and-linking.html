@@ -53,12 +53,12 @@
 	$( "#textOnlyTemplate" ).template( "textOnlyTemplate" );
 
 	$( "#movieList1" ).html(
-		$.render( "movieTemplate", movies )
+		$.render( movies, "movieTemplate" )
 	);
 
 //	// Render the template with the movies data, and insert between other content.
 	$( "#movieList2" ).append(
-		"The current movies are: " + $.render( "textOnlyTemplate", movies ) + ". <i>More to follow!</i>"
+		"The current movies are: " + $.render( movies, "textOnlyTemplate" ) + ". <i>More to follow!</i>"
 	)
 //	// Link to the data, for live updates.
 	.link( movies );

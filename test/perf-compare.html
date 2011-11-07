@@ -5,10 +5,10 @@
 	<link href="resources/perf-compare.css" rel="stylesheet" type="text/css" />
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../jsrender.js" type="text/javascript"></script>
-	<script src="../test/benchmarks/jquery.tmpl-JQT.js" type="text/javascript"></script>
+	<script src="resources/jquery.tmpl-JQT.js" type="text/javascript"></script>
 	<!--Fixed to avoid collision of $.template with JsRender-->
 
-	<script src="../test/benchmarks/dot.js" type="text/javascript"></script>
+	<script src="resources/dot.js" type="text/javascript"></script>
 </head>
 <body>
 
@@ -107,10 +107,10 @@
 	$( "#console" ).append( "<tr><td colspan='2'><b>Full features - view hierarchy etc.</b></td></tr>");
 
 	test( "JsRender full features - to string", 5000, 0, function() {
-		ret = $.render( tmpl_JsRender, movie );
+		ret = $.render( movie, tmpl_JsRender );
 	});
 	test( "JsRender full features - inserted in DOM", 5000, 0, function() {
-		$( "#output" ).html( ret = $.render( tmpl_JsRender, movie ));
+		$( "#output" ).html( ret = $.render( movie, tmpl_JsRender ));
 	});
 	test( "jQuery Template full features - inserted in DOM", 5000, 0, function() {
 		$( "#output" ).empty();

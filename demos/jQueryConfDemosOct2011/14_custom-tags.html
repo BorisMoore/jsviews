@@ -48,11 +48,11 @@
 			if ( this.reverse ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( this.tmpl, array[ i - 1 ]);
+					ret += $.render( array[ i - 1 ], this.tmpl );
 				}
 			} else {
 				// Render in original order
-				ret += $.render( this.tmpl, array );
+				ret += $.render( array, this.tmpl );
 			}
 			return ret;
 		}
@@ -102,7 +102,7 @@ $.views.registerTags({
 		if ( this.reverse === "true" ) {
 			// Render in reverse order
 			for ( var l = array.length, i = l; i; i-- ) {
-				ret += $.render( this.tmpl, array[ i - 1 ]);
+				ret += $.render( array[ i - 1 ], this.tmpl );
 			}
 		}
 		...

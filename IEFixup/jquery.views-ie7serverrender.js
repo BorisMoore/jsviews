@@ -2,6 +2,9 @@
 /*
  * Adds fixup code to ensure correct behavior for linking server-rendered content
  * (with JsViews comment tags included) when in IE7 or earlier, or equivalent compat mode
+ *
+ * Copyright 2011, Boris Moore
+ * Released under the MIT License.
  */
 (function( $, undefined ) {
 var oldLink = $.fn.link;

@@ -34,7 +34,7 @@ var person = {
 $.template( "detailsTmpl", "<tr><td>{{=firstName}}</td></tr>" );
 
 // Render to string
-var html = $.render( "detailsTmpl", person );
+var html = $.render( person, "detailsTmpl" );
 
 // Insert as HTML
 $( "#details" ).html( html );
@@ -55,7 +55,7 @@ var person = {
 $.template( "detailsTmpl", "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>" );
 
 // Render to string
-var html = $.render( "detailsTmpl", person );
+var html = $.render( person, "detailsTmpl" );
 
 // Insert as HTML
 $( "#details" ).html( html );

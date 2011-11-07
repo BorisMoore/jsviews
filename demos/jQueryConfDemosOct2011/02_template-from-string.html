@@ -31,7 +31,7 @@ var person = {
 }
 
 // Render to string
-var html = $.render( "<tr><td>{{=firstName}}</td></tr>", person );
+var html = $.render( person, "<tr><td>{{=firstName}}</td></tr>" );
 
 // Insert as HTML
 $( "#details" ).html( html );
@@ -49,7 +49,7 @@ var person = {
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Render to string
-var html = $.render( "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>", person );
+var html = $.render( person, "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>" );
 
 // Insert as HTML
 $( "#details" ).html( html );
