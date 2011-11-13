@@ -58,7 +58,6 @@ function elemChangeHandler( ev ) {
 					target = linkToInfo[ 0 ].slice( 0, -1 );
 					data = (view && view.data) || data;
 					// data is the current view data, or the top-level target of linkTo.
-//TODO make sure we are not missing intermediate levels.
 					// get the target object
 					target = getTargetObject( data, view, target );
 					cnvt = linkToInfo[ 3 ];
@@ -197,7 +196,7 @@ function setViewContext( view, context, merge ) {
 }
 
 function View( context, node, path, template, parentView, parentElViews, data ) {
-	var views, index, viewCount, tagName, ctx,
+	var views, index, viewCount, tagInfo, ctx, presenter, options,
 		self = this;
 
 	$.extend( self, {
@@ -220,33 +219,45 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 			while ( index++ < viewCount-1 ) {
 				$.observable( views[ index ] ).setProperty( "index", index );
 			}
-			if ( tagName = parentView.tag ) {
-				self.tag = tagName;
-			}
+			self.tag = parentView.tag;
 		} else {
-			// TODO getDataAndContext and passing of context and data from tags needs work. Also, consider more 'codeless' approach, and more consistent syntax with codeless tag markup
 			if ( path ) {
+				// TODO getDataAndContext and passing of context and data from tags needs work. 
+				// Also, consider more 'codeless' approach, and more consistent syntax with codeless tag markup
 				data = getDataAndContext( data, parentView, path );
 				context = context || data[ 1 ];
 				data = data[ 0 ];
 			}
 			self.index = views.length;
 			views.push( self );
-			if ( template.slice( 0, 4 ) === "tag:" ) {
-				tagName = self.tag = template.slice( 4 );
+			if ( context.tag ) {
+				self.tag = [context.tag];
+			} else {
+				template = template.split( "=" );
+				if ( template.shift() === "tag" ) { 
+					self.tag = template;
+				}
 			}
 		}
 	}
 	self.data = data;
 	setViewContext( self, context );
 	setArrayChangeLink( self );
-
-	if ( (tagName = self.tag) && !$.isArray( data )) { 
+	
+	if ( (tagInfo = self.tag) && !$.isArray( data )) { 
 		// This view is from a registered presenter
-		presenter = viewsNs.tags[ tagName ];
-		if ( presenter && presenter.pstr ) {
-			ctx = presenter.context || {};
-			ctx[ tagName ] = new presenter.pstr( self );
+		presenter = viewsNs.tags[ tagInfo[ 0 ]];
+		if ( presenter && presenter.presenter ) {
+			ctx = presenter.ctx || {};
+			options = tagInfo[1] 
+				? getTargetObject( parentView.data, parentView, "{" + tagInfo[ 1 ] + "}" )
+				// Declarative presenter {{foo}}
+				: parentView.ctx;
+				// Imperative: link( data, foo )
+			$.extend( options, presenter.options || {} );
+			// attach plugin to content of view
+	
+			ctx[ tagInfo[ 0 ]] = new presenter.presenter( options, self );
 			// Make presenter available off the ctx object
 			self.context( ctx );
 		}
@@ -254,10 +265,10 @@ function View( context, node, path, template, parentView, parentElViews, data ) 
 }
 
 function createNestedViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
-	var tokens, parentElViews, view, existing, parentNode, elem, elem2, params, presenter, tagName, ctx,
-		currentView = parent, 
+	var tokens, parentElViews, view, existing, parentNode, elem, elem2, params, presenter, tagInfo, ctx,
+		currentView = parent,
 		viewDepth = depth;
-
+	context = context || {};
 	index = index || 0;
 	node = prevNode || node;
 
@@ -287,7 +298,7 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 			if ( tokens[ 1 ]) {
 				// <!--/item--> or <!--/tmpl-->
 				currentView.nextNode = node;
-				if (( tagName = currentView.tag ) && ( ctx = currentView.ctx[ tagName ]) && ctx.onAfterCreate ) {
+				if (( tagInfo = currentView.tag ) && ( ctx = currentView.ctx[ tagInfo[ 0 ]]) && ctx.onAfterCreate ) {
 					// This view is from a registered presenter which has registered an onAfterCreate callback
 					ctx.onAfterCreate();
 				}
@@ -784,7 +795,7 @@ $.extend({
 viewsNs = $.views = $.views || {};
 
 $.extend( viewsNs, {
-	pstrs: {},
+	presenters: {},
 	activeViews: true,
 	getProperty: function( data, value ) {
 		// support for property getter on data
@@ -808,21 +819,36 @@ $.extend( viewsNs, {
 	// registerPresenters
 	//===============
 
-	// Register declarative tag.
+	// Register a 'control' - which associates a Presenter object with a template
+	// Optionally associate with a tag, for declarative use. (Rendering of template and instantiation/attaching of presenter).
 	registerPresenters: registerPresenters = function( name, presenter ) {
-		var key;
+		var key, tag;
+		
 		if ( typeof name === "object" ) {
-			// Object representation where property name is path and property value is value.
-			// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
 			for ( key in name ) {
 				registerPresenters( key, name[ key ]);
 			}
 		} else {
 			// Simple single property case.
-			viewsNs.pstrs[ name ] = presenter;
-			if ( presenter.tag ) {
-				viewsNs.tags[ name ] = presenter;
+			presenter.ctx = presenter.ctx || {};
+			
+			tag = (tag = presenter.tag) === undefined ? name : tag;
+			// If tag not set to null or empty string, then register a tag for this control 
+			if ( tag ) {
+				presenter.tag = tag;
+				viewsNs.tags[ tag ] = presenter;
 			}
+
+			plugin = (plugin = presenter.plugin) === undefined ? name : plugin; 
+			// If plugin not set to null or empty string, then register create a generated jQuery plugin for this control 
+			if ( plugin ) {
+				//Generated jQuery plugin
+				$.fn[ plugin ] = $.fn[ plugin ]  || function( data, options ) {
+					return this.link( data, presenter, options );
+				}
+				presenter.plugin = plugin;
+			}
+			viewsNs.presenters[ name ] = presenter;
 		}
 		return this;
 	},
@@ -993,15 +1019,22 @@ $.fn.extend({
 	link: function( data, tmpl, context ) {
 		// Declarative Linking
 		// If context is a function, cb - shorthand for { beforeChange: cb }
-		// if tmpl not a map, corresponds to $("#container").html( $.render( data , tmpl)).link( data );
+		// if tmpl not a map, corresponds to $("#container").html( $.render( data, tmpl )).link( data );
 		if ( !this.length ) {
 			return this;
 		}
-		if ( $.isPlainObject( tmpl )) {
-			context = tmpl;
-		} else {
-			tmpl = $.template( tmpl );
-			if ( tmpl ) {
+
+		if ( tmpl ) {
+			tmpl = tmpl.tag && tmpl === $.views.tags[ tmpl.tag ]
+				? (context.tag = tmpl.tag, context.tmpl || tmpl.tmpl)
+				// Special case: tmpl is a presenter
+				: $.isPlainObject( tmpl )
+					? (context = tmpl, FALSE)
+					// Linking only. (context was passed in as second parameter, no template parameter passed)
+					: tmpl;
+					// Linking and rendering (passing a template)
+		
+			if ( tmpl && (tmpl = $.template( tmpl ))) {
 				removeLinksToData( this[0], declLinkTo );
 				this.empty();
 				if ( data ) {
