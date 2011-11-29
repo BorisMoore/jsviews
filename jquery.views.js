@@ -123,6 +123,14 @@ function propertyChangeHandler( ev, eventArgs ) {
 				if ( changed = $target.css( css ) !== sourceValue ) {
 					$target.css( css, sourceValue );
 				}
+			} else if ( css = attr.indexOf( "class-") === 0 && attr.substr( 6 )) {
+				if ( changed = (sourceValue && true) !== $target.hasClass( css ) ) {
+					if (sourceValue) {
+						$target.addClass( css );
+					} else {
+						$target.removeClass( css );
+					}
+				}
 			} else {
 				setter = fnSetters[ attr ];
 				if ( setter ) {
