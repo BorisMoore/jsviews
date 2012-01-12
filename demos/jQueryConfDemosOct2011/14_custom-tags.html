@@ -1,4 +1,4 @@
-﻿	<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
@@ -20,7 +20,7 @@
 <script id="movieTemplate" type="text/x-jquery-tmpl">
 	<tr>
 		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" tmpl="#sortedTemplate"}}</td>
+		<td>{{sort Languages tmpl="#sortedTemplate"}}</td>
 		<td>
 			{{#sort Languages reverse="true"}}
 				<div>
@@ -45,7 +45,7 @@
 
 		sort: function( array ){
 			var ret = "";
-			if ( this.reverse ) {
+			if ( this.reverse === "true" ) {
 				// Render in reverse order
 				for ( var l = array.length, i = l; i; i-- ) {
 					ret += $.render( array[ i - 1 ], this.tmpl );
