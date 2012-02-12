@@ -318,7 +318,7 @@ extend( $, {
 			l = data.length;
 			for ( i = 0, l = data.length; i < l; i++ ) {
 				dataItem = data[ i ];
-				content = dataItem ? tmpl( dataItem, new View( context, path, arrayView, dataItem, tmpl, this )) : "";
+				content = null != dataItem ? tmpl( dataItem, new View( context, path, arrayView, dataItem, tmpl, this )) : "";
 				result += viewsNs.activeViews ? "<!--item-->" + content + "<!--/item-->" : content;
 			}
 		} else {
