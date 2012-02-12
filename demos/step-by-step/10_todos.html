@@ -130,7 +130,9 @@
 		.delegate( "li", "dblclick", function( ev ) {
 			Todos.edit( $.view( this ));
 		})
-		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }});
+		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }})
+		.delegate("li.editing", "blur", function(ev) { Todos.contentChanged( $.view(this) ); }); /* jsw: blur to end editing of item */
+
 
 	$( ".todo-clear" ).click( function() { Todos.clearCompleted(); });
  </script>

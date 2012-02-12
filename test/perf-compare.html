@@ -129,6 +129,24 @@
 	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );
 	$( "#output" ).html( ret );
 
+	// jsw: test truthiness of 0, null, undefined, and false.
+	var nrun = 5000, falsy={"Qty":0,"nil":null,"bool":false};
+
+	$( "#console" ).append( "<tr><td colspan='2'><b>Testing with 'falsy' input: 0, null, undefined, and false</b></td></tr>");
+	ret = $.template("NONE", "Qty: {{=Qty!}}, null:{{=nil!}}, undefined:{{=blank!}}, bool:{{=bool!}}")(falsy);
+	test( "No encoding! Can get 'undefined' or 'null' values", nrun, 1, function() {
+			ret = $.template("NONE")(falsy);
+	});
+	$( "#console" ).append("<tr><td colspan='2'> " +  ret + "</td></tr>" );
+
+	ret = $.template("HTML", "Qty: {{=Qty}}, null:{{=nil}}, undefined:{{=blank}}, bool:{{=bool}}")(falsy);
+	test( "HTML encoding, will hide undefined or null values", nrun, 1, function() {
+		ret = $.template("HTML")(falsy);
+	});	
+	$( "#console" ).append("<tr><td colspan='2'>" +  ret + "</td></tr>" );
+
+	$( "#console" ).append( "<tr><td colspan='2'>____________________________________________</td></tr>" );	
+
 
 function test( label, times, places, cb ) {
 	var endTime, result,

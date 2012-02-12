@@ -248,7 +248,8 @@ extend( $, {
 			"html": function( text ) {
 				// HTML encoding helper: Replace < > & and ' and " by corresponding entities.
 				// Implementation, from Mike Samuel <msamuel@google.com>
-				return String( text ).replace( htmlSpecialChar, replacerForHtml );
+				return null == text ? '' : String( text ).replace( htmlSpecialChar, replacerForHtml );
+				// jsw: replace null and undefined text with '', but leave false and 0 alone.
 			}
 			//TODO add URL encoding, and perhaps other encoding helpers...
 		},
@@ -317,7 +318,7 @@ extend( $, {
 			l = data.length;
 			for ( i = 0, l = data.length; i < l; i++ ) {
 				dataItem = data[ i ];
-				content = dataItem ? tmpl( dataItem, new View( context, path, arrayView, dataItem, tmpl, this )) : "";
+				content = null != dataItem ? tmpl( dataItem, new View( context, path, arrayView, dataItem, tmpl, this )) : "";
 				result += viewsNs.activeViews ? "<!--item-->" + content + "<!--/item-->" : content;
 			}
 		} else {
@@ -532,7 +533,7 @@ function buildTmplFunction( nodes ) {
 				content = node[ 2 ],
 				obj = node[ 3 ],
 				params = node[ 4 ],
-				paramsOrEmptyString = params + '||"")+';
+				paramsOrEmptyString = params + ')+'; // + '||"")+'; // jsw: pushed logic into html encoder 
 
 			if( content ) {
 				nested.push( buildTmplFunction( content ));
