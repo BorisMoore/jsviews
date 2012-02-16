@@ -469,7 +469,7 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 			break;
 		case ']':
 			triggers = [[ cnvt, param ]];
-			cnvt = cnvt ? (cnvt + "." + param) : param;
+			cnvt = cnvt && cnvt.valueOf() ? (cnvt + "." + param) : param;
 			cnvt += $.isFunction( source[ param ]) ? "()": "";
 			break;
 		case '\r':
