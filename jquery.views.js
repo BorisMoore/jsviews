@@ -50,7 +50,7 @@ function elemChangeHandler( ev ) {
 			if ((!beforeChange || !(cancel = beforeChange.call( view, ev ) === FALSE )) && sourceValue !== undefined ) {
 				// Find linkToInfo using link.to, or if not specified, use declarative specification
 				// provided by decl.applyLinkToInfo, applied to source element
-				linkToInfo = link.to || $.trim( source.getAttribute( viewsNs.linkToAttr ));
+				linkToInfo = link.to || $.trim( source.getAttribute( viewsNs.linkToAttr ).valueOf() );
 				// linkTo does not support multiple targets - use imperative linking for that scenario...
 				if ( linkToInfo ) {
 					cnvt = link.convert;
@@ -61,7 +61,7 @@ function elemChangeHandler( ev ) {
 					// get the target object
 					target = getTargetObject( data, view, target );
 					cnvt = linkToInfo[ 3 ];
-					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
+					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ) ).valueOf();
 					linkContext = {
 						source: source,
 						target: target,
@@ -459,10 +459,10 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 		param = param.slice( 0, -1 );
 		switch ( lastChar ) {
 		case ':':
-			attr = $.trim( param );
+			attr = $.trim( param ).valueOf();
 			break;
 		case '[':
-			cnvt = $.trim( param );
+			cnvt = $.trim( param ).valueOf();
 			break;
 		case ')':
 			cnvt = cnvt || param;
@@ -484,7 +484,7 @@ function addLinksFromData( source, target, getFrom, linkFrom ) {
 					cnvtParams = cnvt.slice( openParenIndex );
 					cnvtParams = splitParams( cnvtParams );
 					for ( i = 0, l = cnvtParams.length; i < l; i++ ) {
-						cnvtParam = $.trim(cnvtParams[ i ]);
+						cnvtParam = $.trim( cnvtParams[ i ] ).valueOf();
 						lastChar = cnvtParam.charAt( cnvtParam.length - 1 );
 						cnvtParam = cnvtParam.slice( 0, -1 );
 						if ( lastChar === '[') {
@@ -533,7 +533,7 @@ function addLinkFromData( source, link, path, expr, attr, get ) {
 	var paths, pathInfos, handler,
 		target = link.target,
 		linkInfo = getLinkFromDataInfo( target, source ),
-		pathInfo = { attr: attr, expr: expr};
+		pathInfo = { attr: attr, expr: expr };
 
 	if ( linkInfo ) {
 		// Set path info for this path
