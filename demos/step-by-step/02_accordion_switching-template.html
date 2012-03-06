@@ -18,22 +18,22 @@
 
 <h3>Accordion: Using dynamic switching of templates</h3>
 
-<script id="summaryTemplate" type="text/x-jquery-tmpl">
+<script id="summaryTemplate" type="text/x-jsrender">
 	<tr class='movieSummary'><td>
-		{{=Title}}
+		{{:title}}
 	</td></tr>
 </script>
 
-<script id="detailTemplate" type="text/x-jquery-tmpl">
+<script id="detailTemplate" type="text/x-jsrender">
 	<tr class='movieDetail row1'><td>
-		{{=Title}}
+		{{:title}}
 	</td></tr>
 	<tr class='movieDetail row2'><td><b>Languages:</b>
-		{{#each Languages}}
+		{{for languages}}
 			<div>
-				<em>{{=Name}}</em>
+				<em>{{:name}}</em>
 			</div>
-		{{/each}}
+		{{/for}}
 	</td></tr>
 </script>
 
@@ -48,33 +48,33 @@ Click for details:
 
 		movies = [
 			{
-				Title: "The Red Violin",
-				Languages: [
-					{ Name: "English" },
-					{ Name: "French" }
+				title: "The Red Violin",
+				languages: [
+					{ name: "English" },
+					{ name: "French" }
 				]
 			},
 			{
-				Title: "Eyes Wide Shut",
-				Languages: [
-					{ Name: "French" },
-					{ Name: "German" },
-					{ Name: "Spanish" }
+				title: "Eyes Wide Shut",
+				languages: [
+					{ name: "French" },
+					{ name: "German" },
+					{ name: "Spanish" }
 				]
 			},
 			{
-				Title: "The Inheritance",
-				ReleaseYear: "1976",
-				Languages: [
-					{ Name: "English" },
-					{ Name: "Dutch" }
+				title: "The Inheritance",
+				releaseYear: "1976",
+				languages: [
+					{ name: "English" },
+					{ name: "Dutch" }
 				]
 			}
 		],
 
-		detailTemplate = $( "#detailTemplate" ).template(),
+		detailTemplate = $.templates( "#detailTemplate" ),
 
-		summaryTemplate = $( "#summaryTemplate" ).template();
+		summaryTemplate = $.templates( "#summaryTemplate" );
 
 	function unselect() {
 		/* Switch template of the selected view back to the summary template */
@@ -85,14 +85,11 @@ Click for details:
 		}
 	}
 
-	/* Render the movies array as data-linked content under the movieList <ul>, using the summaryTemplate */
+	/* onclick handler for movie subviews when not selected */
 	$( "#movieList" )
-		.link( movies, "#summaryTemplate" )
-
-		/* onclick handler for movie subviews when not selected */
 		.delegate( ".movieSummary", "click", function() {
 			/* Unselect the currently selected view */
-			unselect( selectedSubView );
+			unselect();
 
 			/* Get the view which this clicked element
 			   belongs to, and make it the selected view */
@@ -109,9 +106,9 @@ Click for details:
 			unselect();
 		});
 
+	/* Render the movies array as data-linked content under the movieList <ul>, using the summaryTemplate */
+	summaryTemplate.link( "#movieList", movies );
+
 </script>
-
-<!--================ End of Demo Section ================-->
-
 </body>
 </html>

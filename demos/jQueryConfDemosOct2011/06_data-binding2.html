@@ -19,11 +19,11 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-getfrom="[firstName]" />
+		<td data-link="firstName" />
 		<td>
-			<input data-getfrom="[firstName]" data-to="[firstName]" />
+			<input data-link="firstName" />
 		</td>
 	</tr>
 </script>
@@ -40,27 +40,35 @@ var people = [
 	}
 ];
 
-// Render to string and data-link to people (compact syntax)
-$( "#details" ).link( people, "#personTmpl" );
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
 
+// Render and link (compact syntax): data-link people to the 
+// details container, using the personTmpl template
+$.link.personTmpl( "#details", people );
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 <!-- Template, with declarative data binding expressions -->
-...	
-	&lt;td data-getfrom="[firstName]" />
-	&lt;td>
-		&lt;input data-getfrom="[firstName]" data-to="[firstName]" />
-	&lt;/td>
+...
+    &lt;td data-link="firstName" />
+    &lt;td>
+        &lt;input data-link="firstName" />
+    &lt;/td>
 ...
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-// Render to string and data-link to people (compact syntax)
-$( "#details" ).link( people, "#personTmpl" );
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
+
+// Render and link (compact syntax): data-link details
+// container element to people, using the personTmpl template
+$.link.personTmpl( "#details", people );
 </pre>
 </body>
 </html>

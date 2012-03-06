@@ -11,26 +11,25 @@
 		.treeView li li {margin-left:24px;}
 		.toggle {cursor:pointer;vertical-align:middle;margin-right:7px;display:inline-block;border:1px solid #555;text-align:center;height:12px;width:12px;line-height:11px;background-color:#f8f8f8;color:Blue;}
 		.treeView, .treeView ul {padding:0;margin:0;} .treeView li {margin-left:8px;list-style-type:none;padding:2px;}
-		.treeView li.folderItem {color:Blue;text-decoration:underline;font-style:italic;margin-bottom:4px;}
 	</style>
 </head>
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Tree view: using recursive nested {{each}} tags.</h3>
+<h3>Tree view: using recursive nested {{for}} tags.</h3>
 
 <ul id="foldersList" class="treeView"></ul>
 
-<script id="folderTemplate" type="text/x-jquery-tmpl">
+<script id="folderTemplate" type="text/x-jsrender">
 	<li>
-		{{#if $ctx.hasContent($data)}}
-			<span class="toggle">{{yesNo expanded "-" "+"}}</span>
+		{{if ~hasContent(#data) link=true}}
+			<span class="toggle">{{:expanded ? "-" : "+"}}</span>
 		{{/if}}
-		<span>{{=name}}</span>
+		<span>{{:name}}</span>
 	</li>
-	{{#if expanded}}
+	{{if expanded link=true}}
 		<li>
-			<ul>{{each $data.folders tmpl="#folderTemplate"}}</ul>
+			<ul>{{for folders tmpl="folderTmpl" link=true/}}</ul>
 		</li>
 	{{/if}}
 </script>
@@ -54,25 +53,16 @@ var rootFolder = {
 	]
 };
 
-
 /* Declare the functions for getting the items and subfolders, etc. */
-$.views.registerTags({
-	yesNo: function( yesNo, trueVal, falseVal ) {
-		return yesNo ? trueVal : falseVal;
-	}
-});
-
-$.views.registerHelpers({
+$.views.helpers({
 	hasContent: function( folder ) {
 		return folder.expanded || folder.folders && folder.folders.length;
 	}
 });
 
+$.templates( "folderTmpl", "#folderTemplate" );
 
-/* Render the folderTemplate with the "movies" data, as data-linked content, to provide interactive views  */
 $( "#foldersList" )
-	.link( rootFolder, "#folderTemplate" )
-
 	.delegate( ".toggle", "click", function() {
 		/* Toggle expanded property on data, then refresh rendering */
 		var view = $.view( this ).parent;
@@ -80,13 +70,8 @@ $( "#foldersList" )
 		view.render();
 	})
 
-	.delegate( ".folderItem", "click", function() {
-		alert( $.view( this ).data.description );
-	});
+$.link.folderTmpl( "#foldersList", rootFolder )
 
 </script>
-
-<!--================ End of Demo Section ================-->
-
 </body>
 </html>

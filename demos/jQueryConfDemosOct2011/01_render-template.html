@@ -17,9 +17,9 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{=firstName}}</td>
+		<td>{{:firstName}}</td>
 	</tr>
 </script>
 
@@ -28,7 +28,7 @@
 
 var person = {
 	firstName: "Jeff"
-}
+};
 
 // Render to string
 var html = $( "#personTmpl" ).render( person );
@@ -43,10 +43,10 @@ $( "#details" ).html( html );
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 <!--====== Template ======-->
-&lt;script id="personTmpl" type="text/x-jquery-tmpl">
-	&lt;tr>
-		&lt;td>{{=firstName}}&lt;/td>
-	&lt;/tr>
+&lt;script id="personTmpl" type="text/x-jsrender">
+    &lt;tr>
+        &lt;td>{{:firstName}}&lt;/td>
+    &lt;/tr>
 &lt;/script>
 
 <!--====== Container ======-->
@@ -55,8 +55,8 @@ $( "#details" ).html( html );
 <h4>Data:</h4>
 <pre class="brush: js;">
 var person = {
-	firstName: "Jeff"
-}
+    firstName: "Jeff"
+};
 </pre>
 
 <h4>Script:</h4>

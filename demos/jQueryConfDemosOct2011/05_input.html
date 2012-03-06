@@ -17,10 +17,10 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{=firstName}}</td>
-		<td><input value="{{=firstName}}" /></td>
+		<td>{{:firstName}}</td>
+		<td><input value="{{:firstName}}" /></td>
 	</tr>
 </script>
 
@@ -41,16 +41,17 @@ $( "#details" ).html(
 );
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>HTML:</h4>
-<pre class="brush: xml;">&lt;script id="personTmpl" type="text/x-jquery-tmpl">
-	&lt;tr>
-		&lt;td>{{=firstName}}&lt;/td>
-		&lt;td>
-			&lt;input value="{{=firstName}}" />
-		&lt;/td>
-	&lt;/tr>
+<pre class="brush: xml;">&lt;script id="personTmpl" type="text/x-jsrender">
+    &lt;tr>
+        &lt;td>{{:firstName}}&lt;/td>
+        &lt;td>
+            &lt;input value="{{:firstName}}" />
+        &lt;/td>
+    &lt;/tr>
 &lt;/script></pre>
 </body>
 </html>

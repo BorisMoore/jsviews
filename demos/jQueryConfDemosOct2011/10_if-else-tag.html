@@ -9,18 +9,18 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="08b_each-composition.html">Prev</a> <a href="index.html">Home</a> <a href="10_editable-data.html">Next</a><br />
+<a href="09_for-composition.html">Prev</a> <a href="index.html">Home</a> <a href="11_editable-data.html">Next</a><br />
 
 <h3>13 Using {{if}} and {{else}} to render conditional sections</h3>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{#if Languages}}
-				Alternative languages: <em>{{=Languages}}</em>.
-			{{else Subtitles}}
-				Subtitles in <em>{{=Subtitles}}</em>.
+			{{if languages}}
+				Alternative languages: <em>{{:languages}}</em>.
+			{{else subtitles}}
+				Subtitles in <em>{{:subtitles}}</em>.
 			{{else}}
 				Original version only, without subtitles.
 			{{/if}}
@@ -36,16 +36,16 @@
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: "English and French",
-			Subtitles: "English"
+			title: "Meet Joe Black",
+			languages: "English and French",
+			subtitles: "English"
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Subtitles: "French and Spanish"
+			title: "Eyes Wide Shut",
+			subtitles: "French and Spanish"
 		},
 		{
-			Title: "The Mighty"
+			title: "The Mighty"
 		}
 	];
 
@@ -60,29 +60,29 @@
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 &lt;td>
-	{{#if Languages}}
-		...
-	{{else Subtitles}}
-		....
-	{{else}}
-		...
-	{{/if}}
+    {{if languages}}
+        ...
+    {{else subtitles}}
+        ....
+    {{else}}
+        ...
+    {{/if}}
 &lt;/td>
 </pre>
 
 <h4>Data:</h4>
 <pre class="brush: js;">
 var movies = [
-	{
-		Title: "Meet Joe Black",
-		Languages: "English and French",
-		Subtitles: "English"
-	},
-	{
-		Title: "Eyes Wide Shut",
-		Subtitles: "French and Spanish"
-	},
-	...
+    {
+        title: "Meet Joe Black",
+        languages: "English and French",
+        subtitles: "English"
+    },
+    {
+        title: "Eyes Wide Shut",
+        subtitles: "French and Spanish"
+    },
+    ...
 ];
 </pre>
 

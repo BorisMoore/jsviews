@@ -404,11 +404,6 @@
 	background-color: #F8F8F8 !important;
 }
 
-.syntaxhighlighter .line .content .block
-{
-	background: url(wrapping.png) 0 1.1em no-repeat !important;
-}
-
 .syntaxhighlighter .ruler
 {
 	color: silver !important;

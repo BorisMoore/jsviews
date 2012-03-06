@@ -16,46 +16,40 @@
 <!--====== Container ======-->
 <table><tbody id="details"></tbody></table>
 
-<!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
-	<tr>
-		<td>{{=firstName}}</td>
-	</tr>
-</script>
-
 <!--====== Script ======-->
 <script type="text/javascript">
 
 var person = {
 	firstName: "Jeff"
-}
+};
 
-// Compile as named template
-$.template( "detailsTmpl", "<tr><td>{{=firstName}}</td></tr>" );
+// Compile from string, as named template
+$.templates( "detailsTmpl", "<tr><td>{{:firstName}}</td></tr>" );
 
 // Render to string
-var html = $.render( person, "detailsTmpl" );
+var html = $.render.detailsTmpl( person );
 
 // Insert as HTML
 $( "#details" ).html( html );
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>Data:</h4>
 <pre class="brush: js;">
 var person = {
-	firstName: "Jeff"
-}
+    firstName: "Jeff"
+};
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Compile as named template
-$.template( "detailsTmpl", "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>" );
+$.templates( "detailsTmpl", "&lt;tr>&lt;td>{{:firstName}}&lt;/td>&lt;/tr>" );
 
 // Render to string
-var html = $.render( person, "detailsTmpl" );
+var html = $.render.detailsTmpl( person );
 
 // Insert as HTML
 $( "#details" ).html( html );

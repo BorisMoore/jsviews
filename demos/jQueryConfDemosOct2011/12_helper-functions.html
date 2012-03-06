@@ -9,17 +9,17 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="11_server-rendered_client-activated.html">Prev</a> <a href="index.html">Home</a> <a href="13_allow-code.html">Next</a><br />
+<a href="11_editable-data.html">Prev</a> <a href="index.html">Home</a> <a href="13_allow-code.html">Next</a><br />
 
-<h3>16 Codeless tags - so use custom helper functions for computed parameters</h3>
+<h3>15 Custom helper functions for computed parameters</h3>
 
-<script id="movieTmpl" type="text/x-jquery-tmpl">
+<script id="movieTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title!}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{#each Languages}}
-				{{=Name}}{{#if $ctx.nextToLast($view)}} and {{else $ctx.notLast($view)}}, {{/if}}
-			{{/each}}
+			{{for languages}}
+				{{:name}}{{if ~nextToLast(#view)}} and {{else ~notLast(#view)}}, {{/if}}
+			{{/for}}
 		</td>
 	</tr>
 </script>
@@ -30,23 +30,22 @@
 
 <script type="text/javascript">
 
-	$.views.registerHelpers({
-
+	$.views.helpers({
 		nextToLast: function( view ) {
-			return view.itemNumber === view.parent.data.length - 1;
+			return view.index === view.parent.data.length - 2;
 		},
 
 		notLast: function( view ) {
-			return view.itemNumber !== view.parent.data.length;
+			return view.index !== view.parent.data.length - 1;
 		}
 	});
 
 	var movie = {
-		Title: "Eyes Wide Shut",
-		Languages: [
-			{ Name: "French" },
-			{ Name: "German" },
-			{ Name: "Spanish" }
+		title: "Eyes Wide Shut",
+		languages: [
+			{ name: "French" },
+			{ name: "German" },
+			{ name: "Spanish" }
 		]
 	};
 
@@ -61,28 +60,28 @@
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 &lt;td>
-    {{#each Languages}}
-        {{=Name}}
-        {{#if $ctx.nextToLast($view)}}
+    {{for languages}}
+        {{:name}}
+        {{if ~nextToLast(#view)}}
             and
-        {{else $ctx.notLast($view)}}
+        {{else ~notLast(#view)}}
             ,
         {{/if}}
-    {{/each}}
+    {{/for}}
 &lt;/td>
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-$.views.registerHelpers({
+$.views.helpers({
 
-	nextToLast: function( view ) {
-		return view.itemNumber === view.parent.data.length - 1;
-	},
+    nextToLast: function( view ) {
+        return view.index === view.parent.data.length - 2;
+    },
 
-	notLast: function( view ) {
-		return view.itemNumber !== view.parent.data.length;
-	}
+    notLast: function( view ) {
+        return view.index !== view.parent.data.length - 1;
+    }
 });
 </pre>
 

@@ -1,9 +1,9 @@
 /*! jsObservable: http://github.com/BorisMoore/jsviews */
 /*
  * Subcomponent of JsViews
- * Data change events for data linking
+ * Data change events for data-linking
  *
- * Copyright 2011, Boris Moore and Brad Olenick
+ * Copyright 2012, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
 (function ( $, undefined ) {

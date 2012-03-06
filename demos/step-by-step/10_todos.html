@@ -12,15 +12,15 @@
 <body>
 
 <div id="todoapp">
-	<h1>Todos - JsViews, Plain Objects</h1>
+	<h1>Todos</h1>
 
-	<input id="new-todo" placeholder="What needs to be done?"/>
+	<input id="new-todo" placeholder="What needs to be done?" />
 
 	<ul id="todo-list"></ul>
 
 	<div id="todo-stats">
-		<span data-getfrom="remainingMessage([remaining])"></span>
-		<a href="#" data-getfrom="completedMessage([completed]), css-visible:[completed]" class="todo-clear"></a>
+		<span data-link="~remainingMessage(remaining)"></span>
+		<a href="#" data-link="{:~completedMessage(completed)} css-visible{:completed}" class="todo-clear"></a>
 	</div>
 </div>
 
@@ -29,27 +29,28 @@
 </ul>
 
 <!-- Templates -->
-<script type="text/x-jquery-tmpl" id="item-template">
+<script type="text/x-jsrender" id="item-template">
 	<li>
-		<input data-getfrom="checked:[done]" data-to="[done]" class="check" type="checkbox" />
-		<div data-getfrom="yesNo([content], content, 'empty todo...'), css-text-decoration:yesNo([done], 'line-through')"
+		<input data-link="done" class="check" type="checkbox" />
+		<div data-link="{:content || 'empty todo...'} css-text-decoration{:done ? 'line-through' : ''}"
 			class="todo-content"></div>
 		<span class="todo-destroy"></span>
 	</li>
 </script>
 
-<script type="text/x-jquery-tmpl" id="edit-template">
+<script type="text/x-jsrender" id="edit-template">
 	<li class="editing">
-		<input data-getfrom="[content]" data-to="[content]" class="todo-input"/>
+		<input data-link="content" class="todo-input" />
 	</li>
 </script>
 
 <script>
+(function(){
 	// Initialize app
-	window.Todos = {
+	Todos = {
 		items: $.parseJSON( localStorage.getItem( "JsViewsTodos" )) || [], //	Intialize from local storage
 		edit: function( view ) {
-			view.tmpl = "#edit-template";
+			view.tmpl = "editTemplate";
 			view.render();
 			$( view.nodes ).find('input').focus();
 		},
@@ -73,7 +74,7 @@
 			});
 		},
 		contentChanged: function( view ) {
-			view.tmpl = "#item-template";
+			view.tmpl = "itemTemplate";
 			view.render();
 		}
 	}
@@ -81,22 +82,18 @@
 	Todos.remaining = Todos.items.length - Todos.completed;
 
 	// Helper functions
-	function remainingMessage( remaining ) {
-		return remaining ? ( remaining + " item" + ( remaining > 1 ? "s" : "" ) + " left" ) : "";
-	}
-	function completedMessage( completed ) {
-		return completed ? ( "Clear " + completed + " completed item" + ( completed > 1 ? "s" : "" )) : "";
-	}
-	function yesNo( yesNo, yes, no ) {
-		return yesNo ? yes : no || "";
-	}
-
-	// Provide afterChange handler for datalinking. (In this case it will be on the top view, so available to all views)
-	$.view().context({
+	$.views.helpers({
+		remainingMessage: function( remaining ) {
+			return remaining ? ( remaining + " item" + ( remaining > 1 ? "s" : "" ) + " left" ) : "";
+		},
+		completedMessage: function( completed ) {
+			return completed ? ( "Clear " + completed + " completed item" + ( completed > 1 ? "s" : "" )) : "";
+		},		
+		// Provide afterChange handler for datalinking. (In this case it will be on the top view, so available to all views)
 		afterChange: function( ev ) {
 			switch( ev.type ) {
 				case "change":
-					var view = $.view( this.source );
+					var view = $.view( this.src );
 					switch( this.path ) {
 						case "done":
 							Todos.doneChanged( view.data.done ? 1 : -1 );
@@ -110,9 +107,15 @@
 		}
 	});
 
-	//	Link UI, and handle changes to 'done' and 'content' properties of Todo items
-	$( "#todo-list" ).link( Todos.items, "#item-template" );
-	$( "#todo-stats" ).link( Todos );
+	// Compile template
+	$.templates({ 
+		itemTemplate: "#item-template",
+		editTemplate: "#edit-template"
+	});
+
+//	Link UI, and handle changes to 'done' and 'content' properties of Todo items
+	$.link.itemTemplate( "#todo-list", Todos.items );
+	$.link( "#todo-stats", Todos );
 
 	// UI Event bindings
 	$( "#new-todo" ).keypress( function( ev ) {
@@ -133,7 +136,8 @@
 		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }});
 
 	$( ".todo-clear" ).click( function() { Todos.clearCompleted(); });
- </script>
+})();
+</script>
 </body>
 </html>
 

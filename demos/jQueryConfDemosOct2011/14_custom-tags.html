@@ -9,50 +9,48 @@
 
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
-	<script src="../../jquery.observable.js" type="text/javascript"></script>
-	<script src="../../jquery.views.js" type="text/javascript"></script>
 </head>
 <body>
 <a href="13_allow-code.html">Prev</a> <a href="index.html">Home</a> <a href="16_and-MVVM-MVP-etc.html">Next</a><br />
 
-<h3>18 Custom tags for rendering</h3>
+<h3>17 Custom tags for rendering</h3>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
+<script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
-		<td>{{sort Languages reverse="false" tmpl="#sortedTemplate"}}</td>
+		<td>{{:title}}</td>
+		<td>{{sort languages tmpl="#sortedTemplate"/}}</td>
 		<td>
-			{{#sort Languages reverse="true"}}
+			{{sort languages reverse=true}}
 				<div>
-					<b>{{=Name}}</b>
+					<b>{{:name}}</b>
 				</div>
 			{{/sort}}
 		</td>
 	</tr>
 </script>
 
-<script id="sortedTemplate" type="text/x-jquery-tmpl">
-	<div>{{=Name}}</div>
+<script id="sortedTemplate" type="text/x-jsrender">
+	<div>{{:name}}</div>
 </script>
 
 <table><tbody class="header"><tr><th>Title</th><th>Orginal order</th><th>Reverse order</th></tr></tbody>
 	<tbody id="movieList"></tbody>
 </table>
-
+<div id="cons"></div>
 <script type="text/javascript">
 
-	$.views.registerTags({
+	$.views.tags({
 
 		sort: function( array ){
 			var ret = "";
-			if ( this.reverse ) {
+			if ( this.props.reverse ) {
 				// Render in reverse order
-				for ( var l = array.length, i = l; i; i-- ) {
-					ret += $.render( array[ i - 1 ], this.tmpl );
-				}
+				for ( var i = array.length; i; i-- ) {
+					ret += this.tmpl.render( array[ i - 1 ] );
+				}		
 			} else {
 				// Render in original order
-				ret += $.render( array, this.tmpl );
+				ret += this.tmpl.render( array );
 			}
 			return ret;
 		}
@@ -61,18 +59,18 @@
 
 	var movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "French" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "German" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "German" },
+				{ name: "Spanish" }
 			]
 		}
 	];
@@ -87,31 +85,31 @@
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 &lt;td>
-	{{#sort Languages reverse="true"}}
-		&lt;div>{{=Name}}&lt;/div>
-	{{/sort}}
+    {{sort languages reverse="true"}}
+        &lt;div>{{:name}}&lt;/div>
+    {{/sort}}
 &lt;/td>
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-$.views.registerTags({
+$.views.tags({
 
-	sort: function( array ){
-		...
-		if ( this.reverse === "true" ) {
-			// Render in reverse order
-			for ( var l = array.length, i = l; i; i-- ) {
-				ret += $.render( array[ i - 1 ], this.tmpl );
-			}
-		}
-		...
-		return ret;
-	}
+    sort: function( array ){
+        ...
+        if ( this.props.reverse === "true" ) {
+            // Render in reverse order
+            for ( var l = array.length, i = l; i; i-- ) {
+                ret += $.render( array[ i - 1 ], this.tmpl );
+            }
+        }
+        ...
+        return ret;
+    }
 
 });
 </pre>
-	
+
 </body>
 </html>
 

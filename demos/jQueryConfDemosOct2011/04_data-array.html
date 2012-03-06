@@ -17,9 +17,9 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{=firstName}}</td>
+		<td>{{:firstName}}</td>
 	</tr>
 </script>
 
@@ -42,17 +42,18 @@ var html = $( "#personTmpl" ).render( people );
 $( "#details" ).html( html );
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>Data:</h4>
 <pre class="brush: js;">
 var people = [
-	{
-		firstName: "Jeff"
-	},
-	{
-		firstName: "Rebecca"
-	}
+    {
+        firstName: "Jeff"
+    },
+    {
+        firstName: "Rebecca"
+    }
 ];
 </pre>
 

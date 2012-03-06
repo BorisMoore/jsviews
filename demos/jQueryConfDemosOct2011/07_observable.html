@@ -21,11 +21,11 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-getfrom="[firstName]" />
+		<td data-link="firstName" />
 		<td>
-			<input data-getfrom="[firstName]" data-to="[firstName]" />
+			<input data-link="firstName" />
 		</td>
 	</tr>
 </script>
@@ -37,8 +37,11 @@ var person = {
 	firstName: "Jeff"
 };
 
-// Render to string and data-link to people (compact syntax)
-$( "#details" ).link( person, "#personTmpl" );
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
+
+// Data-link details container to person, using the personTmpl template
+$.link.personTmpl( "#details", person , {link:false});
 
 // Observable property change
 $( "#changeName" ).click( function() {
@@ -46,25 +49,27 @@ $( "#changeName" ).click( function() {
 });
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>HTML:</h4>
 <pre class="brush: xml;">
-...	
-	&lt;td data-getfrom="[firstName]" />
-	&lt;td>
-		&lt;input data-getfrom="[firstName]" data-to="[firstName]" />
-	&lt;/td>
+...
+    &lt;td data-link="firstName" />
+    &lt;td>
+        &lt;input data-link="firstName" />
+    &lt;/td>
 ...
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-$( "#details" ).link( person, "#personTmpl" );
+// Data-link details container to person, using the personTmpl template
+$.link.personTmpl( "#details", person  );
 
 // Observable property change
 $( "#changeName" ).click( function() {
-	$.observable( person ).setProperty( "firstName", person.firstName + "Plus" );
+    $.observable( person ).setProperty( "firstName", person.firstName + "Plus" );
 });
 </pre>
 </body>

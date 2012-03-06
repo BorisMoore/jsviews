@@ -1,154 +1,164 @@
 /*! JsViews v1.0pre: http://github.com/BorisMoore/jsviews */
 /*
- * jQuery plugin providing interactive data-driven views, based on integration between jQuery Templates and jQuery Data Link.
- * Requires jquery.render.js (optimized version of jQuery Templates, for rendering to string)
+ * Interactive data-driven views using templates and data-linking.
+ * Requires jQuery, and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
  *    See JsRender at http://github.com/BorisMoore/jsrender
- * and jquery.observable.js also at http://github.com/BorisMoore/jsviews
  *
- * Copyright 2011, Boris Moore
+ * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-(function( $, undefined ) {
 
-//===============
-// event handlers
-//===============
+window = window || global;
+window.jsviews && jsviews.link || window.jQuery && jQuery.link || (function( window, undefined ) {
 
-// var TEST_EVENTS = { total:0, change:0, arrayChange:0, propertyChange:0 };
-var FALSE = false, TRUE = true,
-	topView, viewsNs, decl,
-	oldCleanData = $.cleanData,
+//========================== Top-level vars ==========================
+
+var versionNumber = "v1.0pre",
+
+	rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
+	$ = window.jQuery,
+
+	// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
+	jsv = window.jsviews || $.views,
+	sub = jsv.sub,
+	FALSE = false, TRUE = true,
+	topView = jsv.topView,
+	templates = jsv.templates,
+	observable = $.observable,
+	jsvData = "_jsvData",
+	linkStr = "link",
+	viewStr = "view",
+	propertyChangeStr = "propertyChange",
+	arrayChangeStr = "arrayChange",
 	fnSetters = {
 		value: "val",
 		html: "html",
 		text: "text"
 	},
-	jsvData = "_jsvData";
+	oldCleanData = $.cleanData,
+	oldJsvDelimiters = jsv.delimiters,
+	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,)]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+	rStartTag = /^item|^tmpl(\(\$?[\w.,]*\))?(\s+[^\s]+)?$/;
+
+//====================
+// Linked View Methods
+//====================
+
+if ( !$.fn ) {
+	// jQuery is not loaded.
+	throw "requires jQuery"; // for Beta (at least) we require jQuery
+}
+
+if( !(jsv )) {
+	throw "requires JsRender";
+}
+
+//========================== Top-level functions ==========================
+
+//===============
+// event handlers
+//===============
 
 function elemChangeHandler( ev ) {
-	var setter, cancel, fromAttr, toPath, linkToInfo, linkContext, sourceValue, link, cnvt, target,
-		data = this.target,
+	var setter, cancel, fromAttr, to, linkContext, sourceValue, cnvtBack, target,
 		source = ev.target,
 		$source = $( source ),
 		view = $.view( source ),
-		links = this.links,
 		context = view.ctx,
-		beforeChange = context.beforeChange,
-		l = links.length;
+		beforeChange = context.beforeChange;
 
-	while ( l-- && !cancel ) {
-		link = links[ l ];
-		if ( !link.filter || (link.filter && $source.is( link.filter ))) {
-			fromAttr = link.fromAttr;
-			if ( !fromAttr ) {
-				// Merge in the default attribute bindings for this source element
-				fromAttr = viewsNs.merge[ source.nodeName.toLowerCase() ];
-				fromAttr = fromAttr ? fromAttr.from.fromAttr : "text";
+	if ( source.getAttribute( jsv.linkAttr ) && (to = jsViewsData( source, "to" ))) {
+		fromAttr = defaultAttr( source );
+		setter = fnSetters[ fromAttr ];
+		sourceValue = $.isFunction( fromAttr ) ? fromAttr( source ) : setter ? $source[setter]() : $source.attr( fromAttr );
+
+		if ((!beforeChange || !(cancel = beforeChange.call( view, ev ) === FALSE )) && sourceValue !== undefined ) {
+			cnvtBack = jsv.converters[ to[ 2 ]];
+			target = to[ 0 ];
+			to = to[ 1 ];
+			linkContext = {
+				src: source,
+				tgt: target,
+				cnvtBack: cnvtBack,
+				path: to
+			};
+			if ( cnvtBack ) {
+				sourceValue = cnvtBack( sourceValue );
 			}
-			setter = fnSetters[ fromAttr ];
-			sourceValue = $.isFunction( fromAttr ) ? fromAttr( source ) : setter ? $source[setter]() : $source.attr( fromAttr );
-			if ((!beforeChange || !(cancel = beforeChange.call( view, ev ) === FALSE )) && sourceValue !== undefined ) {
-				// Find linkToInfo using link.to, or if not specified, use declarative specification
-				// provided by decl.applyLinkToInfo, applied to source element
-				linkToInfo = link.to || $.trim( source.getAttribute( viewsNs.linkToAttr ));
-				// linkTo does not support multiple targets - use imperative linking for that scenario...
-				if ( linkToInfo ) {
-					cnvt = link.convert;
-					linkToInfo = splitParams( linkToInfo );
-					target = linkToInfo[ 0 ].slice( 0, -1 );
-					data = (view && view.data) || data;
-					// data is the current view data, or the top-level target of linkTo.
-					// get the target object
-					target = getTargetObject( data, view, target );
-					cnvt = linkToInfo[ 3 ];
-					toPath = $.trim( linkToInfo[ 1 ].slice( 0, -1 ));
-					linkContext = {
-						source: source,
-						target: target,
-						convert: cnvt,
-						path: toPath
-					};
-					if ( cnvt ) {
-						sourceValue = getConvertedValue( linkContext, data, view, cnvt, sourceValue );
-					}
-					if ( sourceValue !== undefined && target ) {
-						$.observable( target ).setProperty( toPath, sourceValue );
-						if ( context.afterChange ) {  //TODO only call this if the target property changed
-							context.afterChange.call( linkContext, ev );
-						}
-					}
-					ev.stopPropagation(); // Stop bubbling
+			if ( sourceValue !== undefined && target ) {
+				observable( target ).setProperty( to, sourceValue );
+				if ( context.afterChange ) {  //TODO only call this if the target property changed
+					context.afterChange.call( linkContext, ev );
 				}
 			}
-			if ( cancel ) {
-				ev.stopImmediatePropagation();
-			}
+			ev.stopPropagation(); // Stop bubbling
+		}
+		if ( cancel ) {
+			ev.stopImmediatePropagation();
 		}
 	}
 }
 
-function propertyChangeHandler( ev, eventArgs ) {
-	var pathInfo, setter, cancel, changed, attr, sourceValue, css,
+function propertyChangeHandler( ev, eventArgs, bind ) {
+	var setter, changed, sourceValue, css,
 		link = this,
-		target = link.target,
+		source = link.src,
+		target = link.tgt,
 		$target = $( target ),
-		source = ev.target,
-		sourcePath = (eventArgs && eventArgs.path) || ev.path,
-		view = $.view( target ),
+		attr = link.attr || defaultAttr( target, TRUE ),
+		view = link.view,
 		context = view.ctx,
-		beforeChange = context.beforeChange,
-		pathInfos = getLinkFromDataInfo( target, source ).paths[ sourcePath ],
-		l = pathInfos && pathInfos.length;
+		beforeChange = context.beforeChange;
 
-	while ( l-- ) {
-		pathInfo = pathInfos[ l ];
-		if ((!beforeChange || !(eventArgs && (cancel = beforeChange.call( this, ev, eventArgs ) === FALSE )))
-		&& (!view || view.onDataChanged( eventArgs ) !== FALSE )) {
+// TODO for <input data-link="a.b" />
+//Currently the following scenarios do work:
+//$.observable(model).setProperty("a.b", "bar");
+//$.observable(model.a).setProperty("b", "bar");
+// TODO Add support for $.observable(model).setProperty("a", { b: "bar" });
+//	var testsourceValue = ev.expr( source, view, jsv, ev.bind );
 
-			attr = pathInfo.attr;
+	//	TODO call beforeChange on data-link initialization.
+	//			if ( changed && context.afterChange ) {
+	//				context.afterChange.call( link, ev, eventArgs );
+	//			}
 
-			sourceValue = getConvertedValue( link, link.source, view, pathInfo.expr, eventArgs && eventArgs.value );
 
-			if ( $.isFunction( sourceValue )) {
-				sourceValue = sourceValue.call( source );
+	if ((!beforeChange || !(eventArgs && beforeChange.call( this, ev, eventArgs ) === FALSE ))
+		// && (!view || view.onDataChanged( eventArgs ) !== FALSE ) // Not currently supported or needed for property change
+	) {
+		sourceValue = link.fn( source, link.view, jsv, bind || returnVal );
+		if ( $.isFunction( sourceValue )) {
+			sourceValue = sourceValue.call( source );
+		}
+		if ( css = attr.lastIndexOf( "css-", 0 ) === 0 && attr.substr( 4 )) {
+			if ( changed = $target.css( css ) !== sourceValue ) {
+				$target.css( css, sourceValue );
 			}
-
-			if ( !attr ) {
-				// Merge in the default attribute bindings for this target element
-				attr = viewsNs.merge[ target.nodeName.toLowerCase() ];
-				attr = attr ? attr.to.toAttr : "text";
-			}
-
-			if ( css = attr.indexOf( "css-" ) === 0 && attr.substr( 4 )) {
-				if ( changed = $target.css( css ) !== sourceValue ) {
-					$target.css( css, sourceValue );
-				}
-			} else {
-				setter = fnSetters[ attr ];
-				if ( setter ) {
-					if ( changed = $target[setter]() !== sourceValue ) {
-						$target[setter]( sourceValue );
+		} else {
+			setter = fnSetters[ attr ];
+			if ( setter ) {
+				if ( changed = $target[setter]() !== sourceValue ) {
+					$target[setter]( sourceValue );
+					if ( target.nodeName.toLowerCase() === "input" ) {
+						$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
 					}
-				} else if ( changed = $target.attr( attr ) !== sourceValue ) {
-					$target.attr( attr, sourceValue );
 				}
+			} else if ( changed = $target.attr( attr ) !== sourceValue ) {
+				$target.attr( attr, sourceValue );
 			}
+		}
 
-			if ( eventArgs && changed && context.afterChange ) {
-				context.afterChange.call( link, ev, eventArgs );
-			}
+		if ( eventArgs && changed && context.afterChange ) {
+			context.afterChange.call( link, ev, eventArgs );
 		}
 	}
 }
 
 function arrayChangeHandler( ev, eventArgs ) {
-	var cancel,
-		context = this.ctx,
-		beforeChange = context.beforeChange,
-		sourceValue = eventArgs ? eventArgs.change : viewsNs.linkToAttr;  // linkToAttr used as a marker of trigger events
+	var context = this.ctx,
+		beforeChange = context.beforeChange;
 
-	if ((!beforeChange || !(cancel = beforeChange.call( this, ev, eventArgs ) === FALSE ))
-		&& sourceValue !== undefined ) {
+	if ( !beforeChange || beforeChange.call( this, ev, eventArgs ) !== FALSE ) {
 		this.onDataChanged( eventArgs );
 		if ( context.afterChange ) {
 			context.afterChange.call( this, ev, eventArgs );
@@ -165,111 +175,232 @@ function setArrayChangeLink( view ) {
 		if ( onArrayChange[ 1 ] === data ) {
 			return;
 		}
-		$([ onArrayChange[ 1 ]]).unbind( "arrayChange", onArrayChange[ 0 ]);
-//	$( "#console" ).append( --TEST_EVENTS.total + " - arrayChange " + --(TEST_EVENTS.arrayChange) + "<br/>");
+		$([ onArrayChange[ 1 ]]).unbind( arrayChangeStr, onArrayChange[ 0 ]);
 	}
 
 	if ( $.isArray( data )) {
 		handler = function() {
 			arrayChangeHandler.apply( view, arguments );
 		};
-		$([ data ]).bind( "arrayChange", handler );
+		$([ data ]).bind( arrayChangeStr, handler );
 		view._onArrayChange = [ handler, data ];
-//	$( "#console" ).append( ++TEST_EVENTS.total + " + arrayChange " + ++(TEST_EVENTS.arrayChange) + "<br/>");
 	}
+}
+
+function defaultAttr( elem, to ) {
+	// Merge in the default attribute bindings for this target element
+	var attr = jsv.merge[ elem.nodeName.toLowerCase() ];
+	return attr
+		? (to
+			? attr.to.toAttr
+			: attr.from.fromAttr)
+		: "html";
+}
+
+function returnVal( value ) {
+	return value;
 }
 
 //===============
 // view hierarchy
 //===============
 
-function setViewContext( view, context, merge ) {
-	var parentContext = view.parent && view.parent.ctx,
-		viewContext = view._ctx;
-		// Propagate inherited context through children
-	view.ctx = merge
-		? (viewContext && parentContext ? $.extend( {}, parentContext, viewContext ) : parentContext || viewContext)
-		: context && context !== parentContext
-			// Set additional context on this view (which will modify the context inherited from the parent, and be inherited by child views)
-			? (view._ctx = context, (parentContext ? $.extend( {}, parentContext, context ) : context))
-			: parentContext;
+function linkedView( view ) {
+	if ( !view.render ) {
+		view.onDataChanged = view_onDataChanged;
+		view.render = view_render;
+		view.addViews = view_addViews;
+		view.removeViews = view_removeViews;
+		view.content = view_content;
+
+		var i, views, viewsCount;
+		if ( !$.isArray( view.data ))  {
+			view.nodes = [];
+			view._lnk = 0; // compiled link index.
+		}
+		views = view.parent.views;
+		if ( $.isArray( views ))  {
+			i = view.index;
+			viewsCount = views.length;
+			while ( i++ < viewsCount-1 ) {
+				observable( views[ i ] ).setProperty( "index", i );
+			}
+		}
+		setArrayChangeLink( view );
+	}
+	return view;
 }
 
-function View( context, node, path, template, parentView, parentElViews, data ) {
-	var views, index, viewCount, tagInfo, ctx, presenter, options,
-		self = this;
+// Additional methods on view object for linked views (i.e. when JsViews is loaded)
 
-	$.extend( self, {
-		views: [],
-		nodes: node ? [] : [ document.body ],
-		tmpl: template || (parentView && parentView.tmpl),
-		path: path,
-		parent: parentView,
-		prevNode: node
-	});
-	if ( parentView ) {
-		views = parentView.views;
-		parentElViews.push( self );
-		data = data || parentView.data;
-		if ( $.isArray( parentView.data ))  {
-			self.index = index = path;
-			views.splice( index, 0, self );
-			viewCount = views.length;
-			data = data[ index ];
-			while ( index++ < viewCount-1 ) {
-				$.observable( views[ index ] ).setProperty( "index", index );
+function view_onDataChanged( eventArgs ) {
+	if ( eventArgs ) {
+		// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
+		var self = this,
+			action =  eventArgs.change,
+			index = eventArgs.index,
+			items = eventArgs.items;
+		switch ( action ) {
+			case "insert":
+				self.addViews( index, items );
+			break;
+			case "remove":
+				self.removeViews( index, items.length );
+			break;
+			case "move":
+				self.render(); // Could optimize this
+			break;
+			case "refresh":
+				self.render();
+			// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
+		}
+	}
+	return TRUE;
+}
+
+function view_render() {
+	var self = this,
+		tmpl = self.tmpl = getTemplate( self.tmpl ),
+		prevNode = self.prevNode,
+		nextNode = self.nextNode,
+		parentNode = prevNode.parentNode;
+
+	if ( tmpl ) {
+		// Remove HTML nodes
+		$( self.nodes ).remove(); // Also triggers cleanData which removes child views.
+		// Remove child views
+		self.removeViews();
+		self.nodes = [];
+		$( prevNode ).after( tmpl.render( self.data, self.ctx, self, self.path, true ) );
+		// Need to the update the annotation info on the prevNode comment marker
+// TODO - Include the following two lines, but modified, to keep <!-- item --> comments, but add template info: <!-- item fooTemplate -->
+//			prevNode.nodeValue = prevNode.nextSibling.nodeValue;
+//			nextNode.nodeValue = nextNode.previousSibling.nodeValue;
+		// Remove the extra comment nodes
+		parentNode.removeChild( prevNode.nextSibling );
+		parentNode.removeChild( nextNode.previousSibling );
+		// Link the new HTML nodes to the data
+		linkViews( parentNode, self, nextNode, 0, undefined, undefined, prevNode, 0 ); //this.index
+		setArrayChangeLink( self );
+	}
+	return self;
+}
+
+function view_addViews( index, dataItems, tmpl ) {
+	var self = this,
+		itemsCount = dataItems.length,
+		context = self.ctx,
+		views = self.views;
+
+	if ( index && !views[index-1] ) {
+		return; // If subview for provided index does not exist, do nothing
+	}
+	if ( itemsCount && (tmpl = getTemplate( tmpl || self.tmpl ))) {
+		var	prevNode = index ? views[ index-1 ].nextNode : self.prevNode,
+			nextNode = prevNode.nextSibling,
+			parentNode = prevNode.parentNode;
+
+		// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
+		$( prevNode ).after( tmpl.render( dataItems, context, self, undefined, index ) );
+		// Need to the update the annotation info on the prevNode comment marker
+	//	self.prevNode.nodeValue = prevNode.nextSibling.nodeValue;
+		// Remove the extra comment nodes
+		parentNode.removeChild( prevNode.nextSibling );
+		parentNode.removeChild( nextNode.previousSibling );
+		// Link the new HTML nodes to the data
+		linkViews( parentNode, self, nextNode, 0, undefined, undefined, prevNode, index );
+	}
+	return self;
+}
+
+function view_removeViews( index, itemsCount ) {
+	// view.removeViews() removes all the child views
+	// view.removeViews( index ) removes the child view with specified index or key
+	// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
+	function removeView( index ) {
+		var view = views[ index ],
+			node = view.prevNode,
+			nextNode = view.nextNode,
+			nodes = [ node ],
+			parentElViews = parentElViews || jsViewsData( view.nextNode.parentNode, viewStr ),
+			i = parentElViews.length;
+
+		if ( i ) {
+			view.removeViews();
+		}
+
+		// Remove this view from the parentElViews collection
+		while ( i-- ) {
+			if ( parentElViews[ i ] === view ) {
+				parentElViews.splice( i, 1 );
+				break;
 			}
-			self.tag = parentView.tag;
-		} else {
-			if ( path ) {
-				// TODO getDataAndContext and passing of context and data from tags needs work. 
-				// Also, consider more 'codeless' approach, and more consistent syntax with codeless tag markup
-				data = getDataAndContext( data, parentView, path );
-				context = context || data[ 1 ];
-				data = data[ 0 ];
-			}
-			self.index = views.length;
-			views.push( self );
-			if ( context.tag ) {
-				self.tag = [context.tag];
+		}
+		// Remove the HTML nodes from the DOM
+		while ( node !== nextNode ) {
+			node = node.nextSibling;
+			nodes.push( node );
+		}
+		$( nodes ).remove();
+		view.data = undefined;
+		setArrayChangeLink( view );
+	}
+
+	var current,
+		self = this,
+		views = self.views,
+		viewsCount = views.length;
+
+	if ( index === undefined ) {
+		// Remove all child views
+		for ( index in views ) {
+			removeView( index );
+		}
+		self.views = [];
+	} else {
+		if ( itemsCount === undefined ) {
+			if ( viewsCount === undefined ) {
+				// Remove child view with key 'index'
+				removeView( index );
+				delete views[ index ];
 			} else {
-				template = template.split( "=" );
-				if ( template.shift() === "tag" ) { 
-					self.tag = template;
+				// The parentView is data array view.
+				// Set itemsCount to 1, to remove this item
+				itemsCount = 1;
+			}
+		}
+		if ( itemsCount ) {
+			current = index + itemsCount;
+			// Remove indexed items (parentView is data array view);
+			while ( current-- > index ) {
+				removeView( current );
+			}
+			views.splice( index, itemsCount );
+			if ( viewsCount = views.length ) {
+				// Fixup index on following view items...
+				while ( index < viewsCount ) {
+					observable( views[ index ] ).setProperty( "index", index++ );
 				}
 			}
 		}
 	}
-	self.data = data;
-	setViewContext( self, context );
-	setArrayChangeLink( self );
-	
-	if ( (tagInfo = self.tag) && !$.isArray( data )) { 
-		// This view is from a registered presenter
-		presenter = viewsNs.tags[ tagInfo[ 0 ]];
-		if ( presenter && presenter.presenter ) {
-			ctx = presenter.ctx || {};
-			options = tagInfo[1] 
-				? getTargetObject( parentView.data, parentView, "{" + tagInfo[ 1 ] + "}" )
-				// Declarative presenter {{foo}}
-				: parentView.ctx;
-				// Imperative: link( data, foo )
-			$.extend( options, presenter.options || {} );
-			// attach plugin to content of view
-	
-			ctx[ tagInfo[ 0 ]] = new presenter.presenter( options, self );
-			// Make presenter available off the ctx object
-			self.context( ctx );
-		}
-	}
+	return this;
 }
 
-function createNestedViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
-	var tokens, parentElViews, view, existing, parentNode, elem, elem2, params, presenter, tagInfo, ctx,
+function view_content( select ) {
+	return select ? $( select, this.nodes ) : $( this.nodes );
+}
+
+//===============
+// data-linking
+//===============
+
+function linkViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
+
+	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, view, existing, parentNode, linkMarkup,
 		currentView = parent,
 		viewDepth = depth;
 	context = context || {};
-	index = index || 0;
 	node = prevNode || node;
 
 	if ( !prevNode && node.nodeType === 1 ) {
@@ -277,11 +408,53 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 			// Add top-level element nodes to view.nodes
 			currentView.nodes.push( node );
 		}
-		var linkFromInfo = node.getAttribute( viewsNs.linkFromAttr ),
-			getFromInfo = node.getAttribute( viewsNs.getFromAttr );
-
-		if ( linkFromInfo || getFromInfo ) {
-			addLinksFromData( data || parent.data, node, getFromInfo, linkFromInfo, TRUE );
+		if ( linkMarkup = node.getAttribute( jsv.linkAttr ) ) {
+			linkIndex = currentView._lnk++;
+			// Compiled linkFn expressions are stored in the tmpl.links array of the template
+			links = currentView.links || currentView.tmpl.links;
+			if ( !(link = links[ linkIndex ] )) {
+				link = links [ linkIndex ] = {};
+				if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
+					// Simplified syntax is used: data-link="expression"
+					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
+					linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
+				}
+				while( tokens = rTag.exec( linkMarkup )) {
+					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
+					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
+					attr = tokens[ 1 ];
+					if ( tokens[ 5 ]) {
+						// Only for {:} link"
+						if ( !attr && (convertBack = /.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+							convertBack = convertBack[ 1 ];
+						}
+						if ( convertBack === null ) {
+							convertBack = undefined;
+						}
+					}
+					// Compile the linkFn expression which evaluates and binds a data-link expression
+					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
+					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
+				//	if ( linkMarkup !== ("{" + tokens[2] + " "  + linkedParams + "}")) debugger;
+					link[ attr ] = jsv.tmplFn( delimOpen0 + tokens[2] + delimClose1, undefined, TRUE );
+					if ( !attr && convertBack !== undefined ) {
+						link[ attr ].to = convertBack;
+					}
+				}
+			}
+			for ( attr in link ) {
+				bindDataLinkTarget(
+					currentView.data|| data, //source
+					node,                    //target
+					attr,                    //attr
+					link[ attr ],            //compiled link markup expression
+					currentView              //view
+				);
+			}
+// TODO - Add one-way-to-source support
+//			if ( linkMarkup.lastIndexOf( "toSrc{", 0 ) === 0 ) {
+//				linkMarkup = "{toSrc " + linkMarkup.slice(6);
+//			}
 		}
 		node = node.firstChild;
 	} else {
@@ -290,18 +463,13 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 
 	while ( node && node !== nextNode ) {
 		if ( node.nodeType === 1 ) {
-			createNestedViews( node, currentView, nextNode, viewDepth, data, context );
-		} else if ( node.nodeType === 8 && (tokens = /^(\/?)(?:(item)|(?:(tmpl)(?:\((.*)\))?(?:\s+([^\s]+))?))$/.exec( node.nodeValue ))) {
-			// tokens: [ commentText, "/", "item", dataParams, tmplParam ]
-
+			linkViews( node, currentView, nextNode, viewDepth, data, context );
+		} else if ( node.nodeType === 8 && (tokens = rTmplOrItemComment.exec( node.nodeValue ))) {
+			// tokens: [ all, slash, 'item', 'tmpl', path, index, tmplParam ]
 			parentNode = node.parentNode;
 			if ( tokens[ 1 ]) {
 				// <!--/item--> or <!--/tmpl-->
 				currentView.nextNode = node;
-				if (( tagInfo = currentView.tag ) && ( ctx = currentView.ctx[ tagInfo[ 0 ]]) && ctx.onAfterCreate ) {
-					// This view is from a registered presenter which has registered an onAfterCreate callback
-					ctx.onAfterCreate();
-				}
 				if ( currentView.ctx.onAfterCreate ) {
 					currentView.ctx.onAfterCreate.call( currentView, currentView );
 				}
@@ -314,26 +482,22 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 				}
 			} else {
 				// <!--item--> or <!--tmpl-->
-				parentElViews = parentElViews || jsViewsData( parentNode, "view", TRUE );
+				parentElViews = parentElViews || jsViewsData( parentNode, viewStr, TRUE );
 				if ( tokens[ 2 ]) {
 					// An item open tag: <!--item-->
-					currentView = new View( context, node, index++, undefined, currentView, parentElViews );
+					parentElViews.push(
+						currentView = linkedView( currentView.views[ index ] )
+					);
+					index++;
+					currentView.prevNode = node;
 				} else {
 					// A tmpl open tag: <!--tmpl(path) name-->
-					view = $.view( node );
-					if ( view && view.prevNode === node ) {
-						if ( view.data === data ) {
-							existing = view.nextNode;
-						} else {
-							view.data = data;
-							view.render( context );
-							return view.nextNode;
-						}
-					} else {
-						view = new View( context, node, tokens[ 4 ], tokens[ 5 ], currentView, parentElViews, data );
-					}
+					parentElViews.push(
+						view = linkedView( currentView.views[ tokens[ 5 ]] )
+					);
+					view.prevNode = node;
 					// Jump to the nextNode of the tmpl view
-					node = existing || createNestedViews( node, view, nextNode, 0 );
+					node = existing || linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
@@ -344,257 +508,39 @@ function createNestedViews( node, parent, nextNode, depth, data, context, prevNo
 	}
 }
 
-//=======================
-// Expression evaluation
-//=======================
-
-function getDataAndContext( source, view, paramString ) {
-	return Function( "$", "$data", "$view", "$ctx",
-		"with($data){return [" + paramString + "];}")( $, source, view, view.ctx );
-}
-
-function getConvertedValue( context, source, view, expression, value ) {
-	try {
-		return Function( "$", "$data", "$view", "$ctx", "$value",
-			"with($data){return " + expression + ";}")
-			.call( context, $, source, view, view.ctx, value );
-	} catch(e) {
-		// in debug mode, throw 'bad syntax error';
-		throw e.message;
-	}
-}
-
-function getTargetObject( source, view, expression ) {
-	try {
-		return expression
-			? Function( "$", "$data", "$view", "$ctx",
-				"with($data){return " + expression  + ";}")( $, source, view, view.ctx )
-			: source;
-	} catch(e) {
-		// in debug mode, throw 'bad syntax error';
-		throw e.message;
-	}
-}
-
-//===============
-// data linking
-//===============
-
-function link( from, to, links, context ) {
-	var lnk, filter, targetElems, toLinks, fromLinks, linksToData, i;
-
-	if ( links ) {
-
-		links = $.isArray( links ) ? links : [ links ];
-
-		toLinks = [];
-		fromLinks = [];
-		i = links.length;
-
-		while ( i-- ) {
-			lnk = links[ i ];
-			if ( lnk.to ) {
-				toLinks.push({ to: lnk.to, filter: lnk.filter });
-			}
-			if ( lnk.from || lnk.getFrom ) {
-				fromLinks.push( lnk );
-			}
-		}
-		i = fromLinks.length;
-		while ( i-- ) {
-			lnk = fromLinks[ i ];
-			filter = lnk.filter;
-			targetElems = filter ? from.find( filter ).add( $( this ).filter( filter )) : from; // Use future findFilter method in jQuery 1.7?
-
-			targetElems.each( function() {
-				// If 'from' path points to a property of a descendant 'leaf object',
-				// link not only from leaf object, but also from intermediate objects
-				addLinksFromData( to, this, lnk.getFrom, lnk.from );
-			});
-		}
-	}
-	if ( !links || toLinks.length ) {
-		from.each( function() {
-			if ( !links ) {
-				// DECLARATIVE DATA LINKING
-
-				// Linking HTML to object or array
-				linksToData = jsViewsData( this, "to" );
-				i = linksToData.length;
-				while ( i-- ) {
-					lnk = linksToData[ i ];
-					if ( lnk.links === declLinkTo ) {
-						if ( lnk.target === to ) {
-							// Already declaratively linked to the same object
-							return;
-						}
-						// Already linked to a different object, so unlink from previous object
-						removeLinksToData( this, declLinkTo );
-						linksToData.splice( i, 1 );
-					}
-				}
-				toLinks = declLinkTo; // For declarative case
-
-				// Linking object or array to HTML
-				createNestedViews( this, $.view( this ), undefined, undefined, to, context );
-			}
-			addLinksToData( this, to, toLinks );
-		});
-	}
-	return from;
-}
-
-//function unlink( from, to, links ) { // TODO
-//}
-
-function addLinksFromData( source, target, getFrom, linkFrom ) {
-	var param, cnvtParam, i, l, lastChar, attr, openParenIndex, get, object, cnvtParams, view,
-		triggers = [],
-		cnvt = "";
-
-	linkFrom = splitParams( (linkFrom ? linkFrom + "," : "") + (getFrom ? "|," + getFrom + ",": ""), TRUE );
-	while ( param = linkFrom.shift() ) {
-		l = param.length;
-		lastChar = param.charAt( l - 1 );
-		param = param.slice( 0, -1 );
-		switch ( lastChar ) {
-		case ':':
-			attr = $.trim( param );
-			break;
-		case '[':
-			cnvt = $.trim( param );
-			break;
-		case ')':
-			cnvt = cnvt || param;
-			break;
-		case ']':
-			triggers = [[ cnvt, param ]];
-			cnvt = cnvt ? (cnvt + "." + param) : param;
-			cnvt += $.isFunction( source[ param ]) ? "()": "";
-			break;
-		case '\r':
-			openParenIndex = ++param; // Convert to integer and increment
-			break;
-		case ',':
-			if ( param === '|') {
-				get = TRUE;
-			} else {
-				// Apply binding
-				if ( openParenIndex ) {
-					cnvtParams = cnvt.slice( openParenIndex );
-					cnvtParams = splitParams( cnvtParams );
-					for ( i = 0, l = cnvtParams.length; i < l; i++ ) {
-						cnvtParam = $.trim(cnvtParams[ i ]);
-						lastChar = cnvtParam.charAt( cnvtParam.length - 1 );
-						cnvtParam = cnvtParam.slice( 0, -1 );
-						if ( lastChar === '[') {
-							cnvtParams[ i ] = object = cnvtParam;
-						} else if ( lastChar === ']') {
-							triggers.push([ object, cnvtParam ]);
-							cnvtParams[ i ] = object ? ("." + cnvtParam) : cnvtParam;
-							cnvtParams[ i ] += $.isFunction( source[ cnvtParam ]) ? "()": "";
-							object = "";
-						}
-					}
-					cnvt = cnvt.slice( 0, openParenIndex ) + cnvtParams.join("") + ")";
-				}
-
-				cnvt += param;
-				view = $.view( target );
-				l = triggers.length;
-				while ( l-- ) {
-					var trigger = triggers[ l ],
-						path = trigger[ 1 ],
-						fromOb = getTargetObject( source, view, trigger[ 0 ]),
-						link = { source: source, target: target },
-						innerPath = path.split("."),
-						innerOb = fromOb;
-
-					// If 'from' path points to a property of a descendant 'leaf object',
-					// link not only from leaf object, but also from intermediate objects
-					while ( innerPath.length > 1 ) {
-						innerOb = innerOb[ innerPath.shift() ];
-						if ( innerOb ) {
-							addLinkFromData( innerOb, link, innerPath.join( "." ), cnvt, attr );
-						}
-					}
-					// The last trigger of get bindings will be called on adding the link (to get/initialize the value)
-					addLinkFromData( fromOb, link, path, cnvt, attr, !l && get );
-				}
-				openParenIndex = 0;
-				triggers = [];
-				attr = cnvt = "";
-			}
-		}
-	}
-}
-
-function addLinkFromData( source, link, path, expr, attr, get ) {
-	var paths, pathInfos, handler,
-		target = link.target,
-		linkInfo = getLinkFromDataInfo( target, source ),
-		pathInfo = { attr: attr, expr: expr};
-
-	if ( linkInfo ) {
-		// Set path info for this path
-		pathInfos = linkInfo.paths[ path ] = linkInfo.paths[ path ] || [];
-		pathInfos.push( pathInfo );
-		// get handler
-		handler = linkInfo.handler;
-	} else {
+function bindDataLinkTarget( source, target, attr, linkFn, view ) {
+	//Add data link bindings for a link expression in data-link attribute markup
+	var boundParams = [],
+		storedLinks = jsViewsData( target, linkStr, TRUE ),
 		handler = function() {
-			propertyChangeHandler.apply( link, arguments );
+			propertyChangeHandler.apply({ tgt: target, src: source, attr: attr, fn: linkFn, view: view }, arguments );
 		};
 
-		// Store handler for unlinking
-		if ( target ) {
-			paths = {};
-			paths[ path ] = [ pathInfo ];
-			jsViewsData( target, "from", TRUE ).push({ source: source, paths: paths, handler: handler });
+	// Store for unbinding
+	storedLinks[ attr ] = { srcs: boundParams, hlr: handler };
+
+	// Call the handler for initialization and parameter binding
+	handler( undefined, undefined, function ( object, leafToken ) {
+		// Binding callback called on each dependent object (parameter) that the link expression depends on.
+		// For each path add a propertyChange binding to the leaf object, to trigger the compiled link expression,
+		// and upate the target attribute on the target element
+		boundParams.push( object );
+		if ( linkFn.to !== undefined ) {
+			// If this link is a two-way binding, add the linkTo info to JsViews stored data
+			$.data( target, jsvData ).to = [ object, leafToken, linkFn.to ];
+			// For two-way binding, there should be only one path. If not, will bind to the last one.
 		}
-		$( source ).bind( "propertyChange", handler );
-	}
-//	$( "#console" ).append( ++TEST_EVENTS.total + " + propertyChange " + ++(TEST_EVENTS.propertyChange) + "<br/>");
-	if ( get ) {
-		handler({ target: source, path: path });
-	}
-}
-
-function addLinksToData( source, target, links ) {
-	var handler = function() {
-			elemChangeHandler.apply( { target: target, links: links }, arguments );
-		};
-
-	// Store handler for unlinking
-	jsViewsData( source, "to", TRUE ).push({ target: target, links: links, handler: handler });
-	$( source ).bind( "change", handler );
-}
-
-function removeLinksToData( source, links ) {
-	var prevLinkInfo,
-		prevLinkInfos = jsViewsData( source, "to" ),
-		l = prevLinkInfos.length;
-	while( l-- ) {
-		prevLinkInfo = prevLinkInfos[ l ];
-		if ( prevLinkInfo.links === links ) {
-			$( source ).unbind( "change", prevLinkInfo.handler);
-			prevLinkInfos.splice( l, 1 );
-//	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
+		if ( $.isArray( object )) {
+			$([ object ]).bind( arrayChangeStr, function() {
+				handler();
+			});
+		} else {
+			$( object ).bind( propertyChangeStr, handler );
 		}
-	}
-}
-
-function getLinkFromDataInfo( target, source ) {
-	var link,
-		links = jsViewsData( target, "from" ),
-		l = links.length;
-	while( l-- ) {
-		link = links[ l ];
-		if ( link.source === source ) {
-			// Set path info for this path
-			return link;
-		}
-	}
+		return object;
+	});
+	// Note that until observable deals with managing listeners on object graphs, we can't support changing objects higher up the chain, so there is no reason
+	// to attach listeners to them. Even $.observable( person ).setProperty( "address.city", ... ); is in fact triggering propertyChange on the leaf object (address)
 }
 
 //===============
@@ -602,101 +548,120 @@ function getLinkFromDataInfo( target, source ) {
 //===============
 
 function clean( i, el ) { // TODO optimize for perf
-	var link, links , l, views, parentView, view;
+	var link, l, attr, parentView, view, srcs,
+		links = jsViewsData( el, linkStr ),
+		views = jsViewsData( el, viewStr );
+// Not necessary: jQuery does this.
+//	if ( jsViewsData( el, "to" ).length ) {
+//		$( el ).unbind( "change" );
+//	}
 
-	if ( jsViewsData( el, "to" ).length ) {
-		$( el ).unbind( "change" );
-//	$( "#console" ).append( --TEST_EVENTS.total + " - change " + --(TEST_EVENTS.change) + "<br/>");
+	for ( attr in links) {
+		link = links[ attr ];
+		srcs = link.srcs;
+		l = srcs.length;
+		while( l-- ) {
+			$( srcs[ l ] ).unbind( propertyChangeStr, link.hlr );
+		}
 	}
 
-	links = jsViewsData( el, "from" );
-	l = links.length;
-
-	while( l-- ) {
-		link = links[ l ];
-		$( link.source ).unbind( "propertyChange", link.handler );
-//	$( "#console" ).append( --TEST_EVENTS.total + " - propertyChange " + --(TEST_EVENTS.propertyChange) + "<br/>");
-	}
-
-	views = jsViewsData( el, "view" );
 	if ( l = views.length ) {
 		parentView = $.view( el );
 		while( l-- ) {
 			view = views[ l ];
 			if ( view.parent === parentView ) {
-				parentView.removeViews( view.index, 1 );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
+				parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
 			}
 		}
 	}
 }
 
 function jsViewsData( el, type, create ) {
-	var jqData = $.data( el, jsvData ) || (create && $.data( el, jsvData, { "view": [], "from": [], "to": [] }));
-	return jqData ? jqData[ type ] : [];
-}
-
-function splitParams( paramString, markParen ) {
-	// Split into params (or values in an array literal, or keys and values in an object literal)
-	// (Achieved by splitting before top-level ':' or ',' chars)
-	var openParenIndex,
-		startIndex = 0,
-		parenDepth = 0,
-		quoted = FALSE, // boolean for string content in double qoutes
-		aposed = FALSE; // boolean for string content in single qoutes
-
-	paramString = paramString.replace( /\s+/g, " " );
-
-	return paramString
-		.replace( /(\))|([\:\,])|(\')|(\")|([\(\[\{])|([\}\]])/g, function( all, cnvt, colon, apos, quot, leftParen, rightParen, index ) {
-			if ( aposed ) {
-				// within single-quoted string
-				aposed = !apos;
-				return all;
-			}
-			if ( quoted ) {
-				// within double-quoted string
-				quoted = !quot;
-				return all;
-			}
-			if ( cnvt ) {
-				// follow top-level ':' or ',' with '\t'
-				return --parenDepth
-					? all
-					: (markParen && paramString.charAt( index + 1 ) === ',' )
-						? (openParenIndex -= startIndex, startIndex = index,
-							all + "\t" + openParenIndex + "\r\t")
-						:all;
-			}
-			if ( colon ) {
-				// follow top-level ':' or ',' with '\t'
-				return parenDepth
-					? all
-					: (startIndex = index+1, all + "\t");
-			}
-			if ( leftParen ) {
-				if ( parenDepth++ ) {
-					return all;
-				}
-				if ( all === '(' ) {
-					openParenIndex = index;
-				}
-				// follow top-level '[' by '\t'
-				return all !== '[' ? all : "[\t";
-			}
-			if ( rightParen ) {
-				// follow top-level ']' by '\t'
-				return ( --parenDepth || all !== ']' ) ? all : "]\t";
-			}
-			aposed = apos;
-			quoted = quot;
-			return all;
-		})
-		.split( "\t" );
+	var jqData = $.data( el, jsvData ) || (create && $.data( el, jsvData, { view: [], link: {} }));
+	return jqData ? jqData[ type ] : {};
 }
 
 function inputAttrib( elem ) {
 	return elem.type === "checkbox" ? elem.checked : $( elem ).val();
 }
+
+function getTemplate( tmpl ) {
+	// Get nested templates from path
+	if ( "" + tmpl === tmpl ) {
+		var tokens = tmpl.split("[");
+		tmpl = templates[ tokens.shift() ];
+		while( tmpl && tokens.length ) {
+			tmpl = tmpl.tmpls[ tokens.shift().slice( 0, -1 )];
+		}
+	}
+	return tmpl;
+}
+
+//========================== Initialize ==========================
+
+topView._lnk = 0;
+topView.links = [];
+topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
+
+//=======================
+// JsRender integration
+//=======================
+
+sub.onStoreItem = function( store, name, item, process ) {
+
+	if ( name && item && store === templates ) {
+		item.link = function( container, data, context, parentView ) {
+			$.link( container, data, context, parentView, item );
+		};
+		item.unlink = function( container, data, context, parentView ) {
+			$.unlink( container, data, context, parentView, item );
+		};
+
+		$.link[ name ] = function() {
+			return item.link.apply( item, arguments );
+		};
+		$.unlink[ name ] = function() {
+			return item.unlink.apply( item, arguments );
+		};
+	}
+};
+sub.onRenderItem = function( value, props ) {
+	return "<!--item-->" + value + "<!--/item-->";
+};
+sub.onRenderItems = function( value, path, index, tmpl, props ) {
+	return "<!--tmpl(" + (path||"") + "," + index + ") " + tmpl.name + "-->" + value + "<!--/tmpl-->";
+};
+
+//=======================
+// Extend $.views namespace
+//=======================
+
+$.extend( jsv, {
+	linkAttr: "data-link",
+	merge: {
+		input: {
+			from: {
+				fromAttr: inputAttrib
+			},
+			to: {
+				toAttr: "value"
+			}
+		}
+	},
+	delimiters: function( openChars, closeChars ) {
+		oldJsvDelimiters( openChars, closeChars );
+		rTag = new RegExp( "(?:^|s*)([\\w-]*)("  + jsv.rTag + ")", "g" );
+		delimOpen0 = openChars.charAt( 0 );
+		delimOpen1 = openChars.charAt( 1 );
+		delimClose0 = closeChars.charAt( 0 );
+		delimClose1 = closeChars.charAt( 1 );
+		return this;
+	}
+});
+
+//=======================
+// Extend jQuery namespace
+//=======================
 
 $.extend({
 
@@ -707,16 +672,18 @@ $.extend({
 	view: function( node, inner ) {
 		// $.view() returns top node
 		// $.view( node ) returns view that contains node
+		// $.view( selector ) returns view that contains first selected element
+
+		node = ("" + node === node ? $( node )[0] : node);
 		var returnView, view, parentElViews, i, finish,
-			startTagReg = /^item|^tmpl(\(\$?[\w\.]*\))?(\s+[^\s]+)?$/,
-			topNode = document.body,
+			topNode = window.document.body,
 			startNode = node;
 
 		if ( inner ) {
 			// Treat supplied node as a container element, step through content, and return the first view encountered.
-			finish = node.nextSibling || node.parentNode; //
+			finish = node.nextSibling || node.parentNode;
 			while ( finish !== (node = node.firstChild || node.nextSibling || node.parentNode.nextSibling )) {
-				if  ( node.nodeType === 8 && startTagReg.test( node.nodeValue )) {
+				if  ( node.nodeType === 8 && rStartTag.test( node.nodeValue )) {
 					view = $.view( node );
 					if ( view.prevNode === node ) {
 						return view;
@@ -727,23 +694,26 @@ $.extend({
 		}
 
 		node = node || topNode;
-		if ( topView && !topView.views.length ) {
+		if ( $.isEmptyObject( topView.views )) {
 			returnView = topView; // Perf optimization for common case
 		} else {
 			// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
-			while( !(parentElViews = jsViewsData( finish = node.parentNode || topNode, "view" )).length ) {
+			while( !(parentElViews = jsViewsData( finish = node.parentNode || topNode, viewStr )).length ) {
 				if ( !finish || node === topNode ) {
-					jsViewsData( topNode.parentNode, "view", TRUE ).push( returnView = topView = new View());
-					topView.ctx = {};
+					jsViewsData( topNode.parentNode, viewStr, TRUE ).push( returnView = topView );
 					break;
 				}
 				node = finish;
 			}
 			if ( !returnView && node === topNode ) {
-				returnView = parentElViews[0];
+				returnView = topView; //parentElViews[0];
 			}
 			while ( !returnView && node ) {
 				// Step back through the nodes, until we find an item or tmpl open tag - in which case that is the view we want
+				if ( node === finish ) {
+					returnView = view;
+					break;
+				}
 				if  ( node.nodeType === 8 ) {
 					if (  /^\/item|^\/tmpl$/.test( node.nodeValue )) {
 						// A tmpl or item close tag: <!--/tmpl--> or <!--/item-->
@@ -758,7 +728,7 @@ $.extend({
 								break;
 							}
 						}
-					} else if ( startTagReg.test( node.nodeValue )) {
+					} else if ( rStartTag.test( node.nodeValue )) {
 						// A tmpl or item open tag: <!--tmpl--> or <!--item-->
 						i = parentElViews.length;
 						while ( i-- ) {
@@ -777,6 +747,36 @@ $.extend({
 		}
 		return returnView;
 	},
+	
+	link: function( container, data, context, parentView, template ) {
+		// Bind elementChange on the root element, for links from elements within the content, to data;
+		function dataToElem() {
+			elemChangeHandler.apply({
+				tgt: data
+			}, arguments );
+		}
+
+		parentView = parentView || topView;
+		template = template && (templates[ template ] || (template.markup ? template : $.templates( template )));
+		context = context || parentView.ctx;
+		context.link = TRUE;
+		container = $( container )
+		//	.unbind( "change" )  // TODO complete this, by calling unlink? - TODO/BUG. Consider both top-level and template-driven linking
+			.bind( "change", dataToElem );
+
+		if ( template ) {
+			// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
+			// So TODO: make it smart about when to render and when to link on already rendered content
+			container.html( template.render( data, context, parentView )); // Supply non-jQuery version of this...
+		}
+		linkViews( container[0], parentView, undefined, undefined, data, context );
+	},
+
+	unlink: function( container ) {
+		container = $( container )
+			.unbind( "change" );
+		container.empty(); // Supply non-jQuery version of this...
+	},
 
 	//=======================
 	// override cleanData
@@ -788,266 +788,7 @@ $.extend({
 	}
 });
 
-//=======================
-// $.views (namespace)
-//=======================
+// Initialize default delimiters
+jsv.delimiters( "{{", "}}" );
 
-viewsNs = $.views = $.views || {};
-
-$.extend( viewsNs, {
-	presenters: {},
-	activeViews: true,
-	getProperty: function( data, value ) {
-		// support for property getter on data
-		return $.isFunction( value ) ? value.call(data) : value;
-	},
-	linkToAttr: "data-to",
-	linkFromAttr: "data-from",
-	getFromAttr: "data-getfrom",
-	merge: {
-		input: {
-			from: {
-				fromAttr: inputAttrib
-			},
-			to: {
-				toAttr: "value"
-			}
-		}
-	},
-
-	//===============
-	// registerPresenters
-	//===============
-
-	// Register a 'control' - which associates a Presenter object with a template
-	// Optionally associate with a tag, for declarative use. (Rendering of template and instantiation/attaching of presenter).
-	registerPresenters: registerPresenters = function( name, presenter ) {
-		var key, tag;
-		
-		if ( typeof name === "object" ) {
-			for ( key in name ) {
-				registerPresenters( key, name[ key ]);
-			}
-		} else {
-			// Simple single property case.
-			presenter.ctx = presenter.ctx || {};
-			
-			tag = (tag = presenter.tag) === undefined ? name : tag;
-			// If tag not set to null or empty string, then register a tag for this control 
-			if ( tag ) {
-				presenter.tag = tag;
-				viewsNs.tags[ tag ] = presenter;
-			}
-
-			plugin = (plugin = presenter.plugin) === undefined ? name : plugin; 
-			// If plugin not set to null or empty string, then register create a generated jQuery plugin for this control 
-			if ( plugin ) {
-				//Generated jQuery plugin
-				$.fn[ plugin ] = $.fn[ plugin ]  || function( data, options ) {
-					return this.link( data, presenter, options );
-				}
-				presenter.plugin = plugin;
-			}
-			viewsNs.presenters[ name ] = presenter;
-		}
-		return this;
-	},
-
-	//=======================
-	// view prototype
-	//=======================
-
-	view: {
-		onDataChanged: function( eventArgs ) {
-			if ( eventArgs ) {
-				// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
-				var self = this,
-					action =  eventArgs.change,
-					index = eventArgs.index,
-					items = eventArgs.items;
-				switch ( action ) {
-					case "insert":
-						self.addViews( index, items );
-					break;
-					case "remove":
-						self.removeViews( index, items.length );
-					break;
-					case "move":
-						self.render(); // Could optimize this
-					break;
-					case "refresh":
-						self.render();
-					// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
-				}
-			}
-			return TRUE;
-		},
-		render: function() {
-			var prevNode = this.prevNode,
-				nextNode = this.nextNode,
-				parentNode = prevNode.parentNode;
-
-			$( this.nodes ).remove();
-			this.removeViews( 0, this.views.length );
-			this.nodes = [];
-			$( prevNode ).after( $.render( this.data, this.tmpl, this.ctx ) );
-			parentNode.removeChild( prevNode.nextSibling );
-			parentNode.removeChild( nextNode.previousSibling );
-			createNestedViews( parentNode, this, nextNode, 0, undefined, undefined, prevNode, 0 ); //this.index
-			setArrayChangeLink( this );
-			return this;
-		},
-		addViews: function( index, dataItems, tmpl ) {
-			var parent,
-				itemsCount = dataItems.length,
-				context = this.ctx,
-				views = this.views;
-
-			if ( index && !views[index-1] ) {
-				return; // If subview for provided index does not exist, do nothing
-			}
-			if ( itemsCount ) {
-				if ( this.path ) {
-					parent = this.parent;
-					context = getDataAndContext( parent.data, parent, this.path )[1];
-				}
-				var html = $.render( dataItems, tmpl || this.tmpl, context, this, TRUE ), 
-					// Use passed-in template if provided, since this added view may use a different template than the original one used to render the array.
-
-					prevNode = index ? views[ index-1 ].nextNode : this.prevNode,
-					nextNode = prevNode.nextSibling,
-					parentNode = prevNode.parentNode;
-				$( prevNode ).after( html );
-				parentNode.removeChild( prevNode.nextSibling );
-				parentNode.removeChild( nextNode.previousSibling );
-				createNestedViews( parentNode, this, nextNode, 0, undefined, undefined, prevNode, index );
-			}
-			return this;
-		},
-		removeViews: function( index, itemsCount, keepHtml ) {
-			if ( itemsCount ) {
-				var parentElViews, parentViewsIndex, viewCount,
-					views = this.views,
-					current = index + itemsCount;
-
-				while ( current-- > index ) {
-					var view = views[ current ],
-						i = view.views.length,
-						node = view.prevNode,
-						nextNode = view.nextNode,
-						nodes = [ node ];
-
-					if ( i ) {
-						view.removeViews( 0, i, keepHtml );
-					}
-
-					// Remove this view from the parentElViews collection
-					parentElViews = parentElViews || jsViewsData( view.nextNode.parentNode, "view" );
-					i = parentElViews.length;
-					while ( i-- && parentViewsIndex === undefined ) {
-						if ( parentElViews[ i ] === view ) {
-							parentViewsIndex = i;
-						}
-					}
-					parentElViews.splice( parentViewsIndex, 1 );
-
-					if ( !keepHtml ) {
-						while ( node !== nextNode ) {
-							node = node.nextSibling;
-							nodes.push( node );
-						}
-						$( nodes ).remove();
-					}
-					view.data = undefined;
-					setArrayChangeLink( view );
-				}
-				views.splice( index, itemsCount );
-				viewCount = views.length;
-
-				while ( index < viewCount ) {
-					$.observable( views[ index ] ).setProperty( "index", index++ );
-				}
-			}
-			return this;
-		},
-		context: function( context ) {
-			var self = this,
-				parent = self.parent,
-				parentCtx = parent ? parent.ctx : {};
-			if ( !context ) {
-				// Clear context
-				self.each( function( view ) {
-					view.ctx = parentCtx;
-					view._ctx = undefined;
-				});
-			} else if ( context !== self.ctx ) {
-				self.each( function( view ) {
-					setViewContext( view, context, view !== self );
-				});
-			}
-			return this;
-		},
-		each: function( callback ) {
-			callback( this );
-			var l = this.views.length;
-			while ( l-- ) {
-				this.views[ l ].each( callback );
-			}
-			return this;
-		},
-		content: function( select ) {
-			return select ? $( select, this.nodes ) : $( this.nodes );
-		}
-	}
-});
-
-//=======================
-// jQuery plugins
-//=======================
-
-$.fn.extend({
-	view: function( inner ) {
-		return $.view( this[0], inner );
-	},
-	addLinks: function( data, links, context ) {
-		// Explicit Linking
-		return link( this, data, links, context );
-	},
-//	removeLinks: function( data, links, context ) { //TODO
-//		return unlink( this, data, links, context );
-//	},
-	link: function( data, tmpl, context ) {
-		// Declarative Linking
-		// If context is a function, cb - shorthand for { beforeChange: cb }
-		// if tmpl not a map, corresponds to $("#container").html( $.render( data, tmpl )).link( data );
-		if ( !this.length ) {
-			return this;
-		}
-
-		if ( tmpl ) {
-			tmpl = tmpl.tag && tmpl === $.views.tags[ tmpl.tag ]
-				? (context.tag = tmpl.tag, context.tmpl || tmpl.tmpl)
-				// Special case: tmpl is a presenter
-				: $.isPlainObject( tmpl )
-					? (context = tmpl, FALSE)
-					// Linking only. (context was passed in as second parameter, no template parameter passed)
-					: tmpl;
-					// Linking and rendering (passing a template)
-		
-			if ( tmpl && (tmpl = $.template( tmpl ))) {
-				removeLinksToData( this[0], declLinkTo );
-				this.empty();
-				if ( data ) {
-					this.append( $.render( data, tmpl, context ));
-					// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
-				}
-			}
-		}
-		return link( this, data, undefined, context );
-	}
-});
-
-View.prototype = viewsNs.view;
-decl = viewsNs.decl;
-declLinkTo = [{ filter: "input[" + viewsNs.linkToAttr + "]" }];
-})( jQuery );
+})( window );

@@ -19,18 +19,17 @@
 <table><tbody id="details"></tbody></table>
 
 <!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
+<script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-getfrom="[firstName]" />
+		<td data-link="firstName" />
 		<td>
-			<input data-getfrom="[firstName]" data-to="[firstName]" />
+			<input data-link="firstName" />
 		</td>
 	</tr>
 </script>
 
 <!--====== Script ======-->
 <script type="text/javascript">
-
 var people = [
 	{
 		firstName: "Jeff"
@@ -40,46 +39,51 @@ var people = [
 	}
 ];
 
-// Render to string, and insert as HTML
-var html = $( "#personTmpl" ).render( people );
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
 
-// Insert as HTML ... and data-link to people
-$( "#details" )
-	.html( html )
-	.link( people );
+// Render to string, and insert as HTML
+$( "#details" ).html(
+	$.render.personTmpl( people )
+)
+
+// ... and data-link to people
+$.link( "#details", people , {link:0});
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 <!-- Template, with declarative data binding expressions -->
-...	
-	&lt;td data-getfrom="[firstName]" />
-	&lt;td>
-		&lt;input data-getfrom="[firstName]" data-to="[firstName]" />
-	&lt;/td>
+...
+    &lt;td data-link="firstName" />
+    &lt;td>
+        &lt;input data-link="firstName" />
+    &lt;/td>
 ...
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-// Render to string, and insert as HTML
-var html = $( "#personTmpl" ).render( people );
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
 
-// Insert as HTML ... and data-link to people
-$( "#details" )
-	.html( html )
-	.link( people );
+// Render to string, and insert as HTML
+$( "#details" ).html(
+    $.render.personTmpl( people )
+);
+
+// ... and data-link to people
+$.link( "#details", people );
 </pre>
 
 
 <h4>Other possible data-binding paths:</h4>
 <pre class="brush: xml;">
-&lt;input data-getfrom="title:fullName( manager[firstName], manager[lastName] )" ... />
+&lt;input data-link="{convert:manager.firstName:convertBack} title{:manager.firstName + manager.lastName}" ... />
 </pre>
-		
-
 </body>
 </html>
 

@@ -9,7 +9,7 @@
 <body>
 <a href="index.html">Home</a><br />
 
-<h3>Data Linking to static content in the page, using Declarative or Programmatic approaches</h3>
+<h3>Data-Linking to static content in the page</h3>
 
 <button onclick="showData()">show data</button>
 
@@ -18,76 +18,29 @@
 <hr /><br />
 
 <div id="myLinkedContent">
-	<h3>Declarative</h3>
-	<p data-getfrom="css-background-color: [roleColor]">
-		Name: <span data-getfrom="[firstName]"></span> <span data-getfrom="[lastName]"></span>
+	<p data-link="css-background-color{:roleColor}">
+		Name: <span data-link="firstName"></span> <span data-link="lastName"></span>
 	</p>
 	<p>
-		<input data-to="[firstName]" data-getfrom="[firstName]" />
-		<input data-to="[lastName]" data-getfrom="[lastName], title: homeTown([firstName], [lastName], [address.city])" />
-		<input data-to="[address.city]" data-getfrom="[address.city]" />
-		<input data-to="[roleColor]:format( $value, 'upper' )" data-getfrom="[roleColor]" />
+		<input data-link="firstName" />
+		<input data-link="{:lastName:} title{:~homeTown(firstName, lastName, address.city)}" />
+		<input data-link="address.city" />
+		<input data-link="{upper:roleColor:}" />
 	</p>
 	<p>
-		<span data-getfrom="html: homeTown([firstName], [lastName], address[city], true)"></span>
-	</p>
-	<h3>Explicit</h3>
-	<p class="cityWrapper">
-		City: <span class="city"></span>
-		<input name="city" />
-		<input class="city2" />
-		<input class="city2" />
+		<span data-link="{:~homeTown(firstName, lastName, address.city, true)}"></span>
 	</p>
 </div>
 
 <script type="text/javascript">
-	var app = {
-			selectedItem: null,
-			editMode: true,
-
-			yesNo: function( value, yes, no ) {
-				return value ? yes : no;
-			}
-		},
-
-		person = {
+	var person = {
 			firstName: "Jo",
 			lastName: "Proctor",
 			address: {
 				city: "Redmond"
 			},
-			roleColor: "YELLOW"
+			roleColor: "yellow"
 		};
-
-	$( ".city2" )
-		.addLinks( person, {
-			getFrom: "address[city]",
-			to: "address[city]"
-		});
-
-	$( "#myLinkedContent" ).addLinks( person, [
-		{
-			filter: ".city",
-			getFrom: "address.city"
-		},
-		{
-			filter: ".cityWrapper",
-			getFrom: "css-background-color:[roleColor]"
-		},
-		{
-			filter: "input[name = city]",
-			getFrom: "[address.city], title: homeTown([firstName], [lastName], [address.city])",
-			to: "[address.city]"
-		}]);
-
-	$( "#myLinkedContent" )
-		.link( person );
-
-	function homeTown( firstName, lastName, city, html ) {
-		return html
-			? ("<b>" + firstName + " " + lastName + "</b> lives in <i>" + city +  "</i>")
-			: (firstName + " " + lastName + " lives in " + city);
-	}
 
 	function setNameAndCityAndColor() {
 		$.observable( person )
@@ -99,29 +52,35 @@
 	}
 
 	function setCity() {
-		// Either of these will work, thanks to the binding to intermediate objects
 		$.observable( person ).setProperty( "address.city", person.address.city + "Add" );
-	//	$.observable( person.address ).setProperty( "city", person.address.city + "Add" );
+// This will also work:
+//		$.observable( person.address ).setProperty( "city", person.address.city + "Add" );
 	}
 
-	function format( value, type ) {
-		switch( type ) {
-			case "upper":
-				return value.toUpperCase();
-			default:
-				return value;
+	$.views.helpers({
+		homeTown: function( firstName, lastName, city, html ) {
+			return html
+				? ("<b>" + firstName + " " + lastName + "</b> lives in <i>" + city +  "</i>")
+				: (firstName + " " + lastName + " lives in " + city);
 		}
-	}
+	});
+
+	$.views.converters({
+		upper: function( val ) {
+			return val.toUpperCase();
+		}
+	});
+
+	$.link( "#myLinkedContent", person );
 </script>
 
 <!--================ End of Demo Section ================-->
 
 <!--Console-->
 
-<script id="showData" type="text/x-jquery-tmpl">
-	<div>{{=firstName}} {{=lastName}}</div>
-	<div>{{=address.city}}</div>
-	<div>{{=roleColor}}</div>
+<script id="showData" type="text/x-jsrender">
+	<div>{{:firstName}} {{:lastName}}</div>
+	<div>{{:address.city}}</div>
 </script>
 
 <div id="console"></div>

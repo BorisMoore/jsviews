@@ -1,66 +1,42 @@
 <!DOCTYPE html>
-<html><head>
-	<script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
-	<script type="text/javascript" src="../../jsrender.js"></script>
-	<script type="text/javascript" src="../../jquery.observable.js"></script>
-	<script type="text/javascript" src="../../jquery.views.js"></script>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
-
-</head><body>
+</head>
+<body>
 <a href="index.html">Home</a><br>
 
-<h3>Server rendered content, activated in client. With client data 'delta'</h3>
+<h3>Server rendered content, activated in client. With client data 'delta'...</h3>
 
-<button onclick="activate()">Activate</button>
-<button onclick="showData()">show data</button>
-<button onclick="deleteLastLanguage()">delete last language</button>
+<div class="buttons">
+	<button onclick="activate()">Activate</button>
+	<button onclick="showData()">show data</button>
+	<button onclick="deleteLastLanguage()">delete last language</button>
+</div>
 
-<script id="movieTemplate" type="text/x-jquery-tmpl">
-	<tr class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
-		<td>
-			<span data-getfrom="$view[index]+1"></span>:
-			<span data-getfrom="[Title]"></span>
-		</td>
-		<td>
-			{{#each Languages}}
-				<div data-getfrom="[Name]"></div>
-			{{/each}}
-		</td>
-		<td>
-			<img class="close" src="../resources/close.png" />
-		</td>
-	</tr>
-</script>
+<div class="comment">First activate, and then click to select and edit</div>
 
-<script id="detailViewTemplate" type="text/x-jquery-tmpl">
-	<div>
-		<div class="title">Title:</div>
-		<div><input data-getfrom="[Title]" data-to="[Title]"/></div>
-		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
-		<div>
-			{{#each Languages}}
-				<input data-getfrom="[Name]" data-to="[Name]"/><img class="close" src="../resources/close.png" />
-			{{/each}}
-		</div>
-	</div>
-</script>
 <table><tbody class="header"><tr><th>Title</th><th>Languages</th><th><div id="addMovieBtn">Add</div></th></tr></tbody>
 	<tbody id="movieList">
-	<!--tmpl() _0-->
-	<!--item-->
-		<tr style="background-color: yellow;" class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+		<!--tmpl(,_0) movieTmpl-->
+		<!--item-->
+		<tr style="background-color: yellow;" class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
 			<td>
-				<span data-getfrom="$view[index]+1">1</span>:
-				<span data-getfrom="[Title]">Meet Joe Black</span>
+				<span data-link="#index+1">1</span>:
+				<span data-link="title">Meet Joe Black</span>
 			</td>
 			<td>
-			<!--tmpl(Languages) _1-->
+			<!--tmpl(data.languages,_1) movieTmpl[0]-->
 			<!--item-->
-				<div data-getfrom="[Name]">English</div>
+				<div data-link="name">English</div>
 			<!--/item-->
 			<!--item-->
-				<div data-getfrom="[Name]">French</div>
+				<div data-link="name">French</div>
 			<!--/item-->
 			<!--/tmpl-->
 			</td>
@@ -70,21 +46,21 @@
 		</tr>
 		<!--/item-->
 		<!--item-->
-		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-getfrom="css-background-color:bgColor($view[index], app[selectedItem])">
+		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
 			<td>
-				<span data-getfrom="$view[index]+1">2</span>:
-				<span data-getfrom="[Title]">Eyes Wide Shut</span>
+				<span data-link="$view[index]+1">2</span>:
+				<span data-link="title">Eyes Wide Shut</span>
 			</td>
 			<td>
-			<!--tmpl(Languages) _1-->
+			<!--tmpl(data.languages,_2) movieTmpl[0]-->
 			<!--item-->
-				<div data-getfrom="[Name]">French</div>
+				<div data-link="name">French</div>
 			<!--/item-->
 			<!--item-->
-				<div data-getfrom="[Name]">German</div>
+				<div data-link="name">German</div>
 			<!--/item-->
 			<!--item-->
-				<div data-getfrom="[Name]">Spanish</div>
+				<div data-link="name">Spanish</div>
 			<!--/item-->
 			<!--/tmpl-->
 			</td>
@@ -98,18 +74,18 @@
 </table>
 
 <div id="movieDetail">
-	<!--tmpl() _2-->
+	<!--tmpl(,_3) detailTmpl-->
 	<div>
 		<div class="title">Title:</div>
-		<div><input value="Meet Jo Black" data-getfrom="[Title]" data-to="[Title]"></div>
+		<div><input value="Meet Jo Black" data-link="title" ></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>
-		<!--tmpl(Languages) _3-->
+		<!--tmpl(data.languages,_4) detailTmpl[0]-->
 		<!--item-->
-			<input value="English" data-getfrom="[Name]" data-to="[Name]"><img class="close" src="../resources/close.png">
+			<input value="English" data-link="name" ><img class="close" src="../resources/close.png">
 		<!--/item-->
 		<!--item-->
-			<input value="French" data-getfrom="[Name]" data-to="[Name]"><img class="close" src="../resources/close.png">
+			<input value="French" data-link="name" ><img class="close" src="../resources/close.png">
 		<!--/item-->
 		<!--/tmpl-->
 		</div>
@@ -117,42 +93,74 @@
 	<!--/tmpl-->
 </div>
 
-<script type="text/javascript">
+<script id="movieTemplate" type="text/x-jsrender">
+	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
+		<td>
+			<span data-link="#index+1"></span>:
+			<span data-link="title"></span>
+		</td>
+		<td>
+			{{for languages}}
+				<div data-link="name"></div>
+			{{/for}}
+		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
+	</tr>
+</script>
 
+<script id="detailViewTemplate" type="text/x-jsrender">
+	<div>
+		<div class="title">Title:</div>
+		<div><input data-link="title" /></div>
+		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
+		<div>
+			{{for languages}}
+				<input data-link="name" /><img class="close" src="../resources/close.png" />
+			{{/for}}
+		</div>
+	</div>
+</script>
+
+<script type="text/javascript">
 	var app = {
 			selectedItem: null
 		},
 
 		movies = [
 		{
-			Title: "Meet Joe Black",
-			Languages: [
-				{ Name: "English" },
-				{ Name: "Extra Language in client data" },
-				{ Name: "French" }
+			title: "Meet Joe Black",
+			languages: [
+				{ name: "English" },
+				{ name: "Extra Language in client data" },
+				{ name: "French" }
 			]
 		},
 		{
-			Title: "Extra Movie in client data",
-			Languages: [
-				{ Name: "Latin" },
-				{ Name: "Greek" }
+			title: "Extra Movie in client data",
+			languages: [
+				{ name: "Latin" },
+				{ name: "Greek" }
 			]
 		},
 		{
-			Title: "Eyes Wide Shut",
-			Languages: [
-				{ Name: "French" },
-				{ Name: "German" },
-				{ Name: "Spanish" }
+			title: "Eyes Wide Shut",
+			languages: [
+				{ name: "French" },
+				{ name: "German" },
+				{ name: "Spanish" }
 			]
 		}
 	];
 
+	$.templates({
+		movieTmpl: "#movieTemplate",
+		detailTmpl: "#detailViewTemplate"
+	});
+
 	function activate() {
 		$( "#movieList" )
-			.link( movies, "#movieTemplate" )
-
 			.delegate( "tr", "click", function() {
 				select( $.view( this ));
 			})
@@ -165,41 +173,53 @@
 
 		$( "#movieDetail" )
 			.delegate( "#addLanguageBtn", "click", function() {
-				var languages = $.view( this ).data.Languages;
+				var languages = $.view( this ).data.languages;
 				$.observable( languages ).insert( languages.length, {
-					Name: "NewLanguage"
+					name: "NewLanguage"
 				});
 			})
 
 			.delegate( ".close", "click", function() {
-				$.observable( app.selectedItem.data.Languages).remove( $.view( this ).index, 1 );
+				var view = $.view( this );
+				$.observable( view.parent.data ).remove( view.index, 1 );
+// Or equivalently:	$.observable( app.selectedItem.data.languages).remove( view.index, 1 );
 				return false;
 			});
 
 		$( "#addMovieBtn" ).click( function() {
 			$.observable( movies ).insert( movies.length, {
-				Title: "NewTitle",
-				Languages: [
-					{ Name: "NewLanguage" }
+				title: "NewTitle",
+				languages: [
+					{ name: "NewLanguage" }
 				]}
 			);
 
 			// Set selection on the added item
-			select( $("#movieList tr:last").view());
+			select( $.view( "#movieList tr:last" ));
 		});
 
 		$( app ).bind( "propertyChange", function( event, args ) {
 			if ( args.path === "selectedItem" ) {
-				$( "#movieDetail" ).link((args.value ? args.value : []).data, "#detailViewTemplate" );
+				var selectedView = args.value;
+				if ( selectedView ) {
+					$.link.detailTmpl( "#movieDetail", selectedView.data );
+				} else {
+					$( "#movieDetail" ).empty();
+				}
 			}
 		});
 
-		// Set selection on the added item
-		select( $("#movieList tr:first").view());
-	}
+		$.views.helpers({
+			bgColor: function ( index, selectedItem ) {
+				return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
+			},
+			app: app
+		});
 
-	function bgColor( index, selectedItem ) {
-		return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
+		$.link.movieTmpl( "#movieList", movies );
+
+		// Set selection on the last item
+		select( $.view( "#movieList tr:last" ));
 	}
 
 	function select( view ) {
@@ -210,7 +230,7 @@
 
 	function deleteLastLanguage() {
 		if ( movies.length ) {
-			var languages = movies[ movies.length - 1 ].Languages;
+			var languages = movies[ movies.length - 1 ].languages;
 			$.observable( languages ).remove( languages.length - 1, 1 );
 		}
 	}
@@ -220,8 +240,8 @@
 
 <!--Console-->
 
-<script id="showData" type="text/x-jquery-tmpl">
-	<div><b>Movie:</b> {{=Title}} <b>Languages:</b> {{#each Languages}} {{=Name}}{{/each}}</div>
+<script id="showData" type="text/x-jsrender">
+	<div><b>Movie:</b> {{:title}} <b>languages:</b> {{for languages}} {{:name}}{{/for}}</div>
 </script>
 
 <div id="console">
@@ -229,7 +249,6 @@
 
 <script type="text/javascript">
 	function showData() {
-		$( ".consoleButtons" ).css( "display", "block" );
 		$( "#console" ).append("<hr/>");
 		$( "#console" ).append( $( "#showData" ).render( movies ));
 	}

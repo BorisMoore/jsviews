@@ -16,40 +16,34 @@
 <!--====== Container ======-->
 <table><tbody id="details"></tbody></table>
 
-<!--====== Template ======-->
-<script id="personTmpl" type="text/x-jquery-tmpl">
-	<tr>
-		<td>{{=firstName}}</td>
-	</tr>
-</script>
-
 <!--====== Script ======-->
 <script type="text/javascript">
 
 var person = {
 	firstName: "Jeff"
-}
+};
 
 // Render to string
-var html = $.render( person, "<tr><td>{{=firstName}}</td></tr>" );
+var html = $.templates( "<tr><td>{{:firstName}}</td></tr>" ).render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );
 
 </script>
+
 <!--================ End of Demo Section ================-->
 
 <h4>Data:</h4>
 <pre class="brush: js;">
 var person = {
-	firstName: "Jeff"
-}
+    firstName: "Jeff"
+};
 </pre>
 
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Render to string
-var html = $.render( person, "&lt;tr>&lt;td>{{=firstName}}&lt;/td>&lt;/tr>" );
+var html = $.templates( "&lt;tr>&lt;td>{{:firstName}}&lt;/td>&lt;/tr>" ).render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );

@@ -9,26 +9,26 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="12_custom-helper-tags.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
+<a href="12_helper-functions.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
 
-<h3>17 Allowing code within templates: {{* mycode... }}</h3>
+<h3>16 Allowing code within templates: {{* mycode... }}</h3>
 <p>for program flow, or returning content...</p>
 <br />
-<script id="movieTmpl" type="text/x-jquery-tmpl">
+<script id="movieTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{=Title}}</td>
+		<td>{{:title}}</td>
 		<td>
-			{{#each Languages}}
-				{{=Name}}{{*
+			{{for languages}}
+				{{:name}}{{*
 
-					if ( $view.itemNumber === $view.parent.data.length - 1 ) {
+					if ( view.index === view.parent.data.length - 2 ) {
 
 				}} and {{*
 
-					} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
+					} else if ( view.index < view.parent.data.length - 1 ) {
 
 				}}, {{* } }}
-			{{/each}}
+			{{/for}}
 		</td>
 	</tr>
 </script>
@@ -40,18 +40,21 @@
 <script type="text/javascript">
 
 	var movie = {
-		Title: "Eyes Wide Shut",
-		Languages: [
-			{ Name: "French" },
-			{ Name: "German" },
-			{ Name: "Spanish" }
+		title: "Eyes Wide Shut",
+		languages: [
+			{ name: "French" },
+			{ name: "German" },
+			{ name: "Spanish" }
 		]
 	};
 
-	$.views.allowCode = true;
+	$.templates( "movieTmpl", {
+		markup: "#movieTmpl",
+		allowCode: true
+	});
 
 	$( "#movieList" ).html(
-		$( "#movieTmpl" ).render( movie )
+		$.render.movieTmpl( movie )
 	);
 
 </script>
@@ -60,16 +63,14 @@
 
 <h4>HTML:</h4>
 <pre class="brush: xml;">
-&lt;td>
-    {{#each Languages}}
-        {{=Name}}
-{{*     if ( $view.itemNumber === $view.parent.data.length - 1 ) {       }} 
-            and
-{{*     } else if ( $view.itemNumber &lt; $view.parent.data.length - 1 ) {  }}
-            ,
+    {{for languages}}
+        {{:name}}
+{{*     if ( view.index === view.parent.data.length - 2 ) {       }} 
+        and
+{{*     } else if ( view.index < view.parent.data.length - 1 ) {  }}
+        ,
 {{*     }                                                                }}
-    {{/each}}
-&lt;/td>	
+    {{/for}}
 </pre>
 
 <h4>Script:</h4>
@@ -80,11 +81,11 @@ $.views.allowCode = true;
 <h4>Alternatively - HTML:</h4>
 <pre class="brush: xml;">
 {{*
-	if ( $view.itemNumber === $view.parent.data.length - 1 ) {
-		result+= " and";
-	} else if ( $view.itemNumber < $view.parent.data.length - 1 ) {
-		result+= ",";
-	}
+    if ( view.index === view.parent.data.length - 2 ) {
+        ret += " and";
+    } else if ( view.index < view.parent.data.length - 1 ) {
+        ret += ",";
+    }
 }}
 </pre>
 </body>
