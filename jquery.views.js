@@ -40,10 +40,6 @@ var versionNumber = "v1.0pre",
 	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,)]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
 	rStartTag = /^item|^tmpl(\(\$?[\w.,]*\))?(\s+[^\s]+)?$/;
 
-//====================
-// Linked View Methods
-//====================
-
 if ( !$.fn ) {
 	// jQuery is not loaded.
 	throw "requires jQuery"; // for Beta (at least) we require jQuery
@@ -767,7 +763,8 @@ $.extend({
 		if ( template ) {
 			// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
 			// So TODO: make it smart about when to render and when to link on already rendered content
-			container.html( template.render( data, context, parentView )); // Supply non-jQuery version of this...
+			container.empty().append( template.render( data, context, parentView )); // Supply non-jQuery version of this...
+			// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
 		}
 		linkViews( container[0], parentView, undefined, undefined, data, context );
 	},

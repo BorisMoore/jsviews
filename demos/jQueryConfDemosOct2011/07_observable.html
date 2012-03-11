@@ -41,7 +41,7 @@ var person = {
 $.templates( "personTmpl", "#personTmpl" );
 
 // Data-link details container to person, using the personTmpl template
-$.link.personTmpl( "#details", person , {link:false});
+$.link.personTmpl( "#details", person );
 
 // Observable property change
 $( "#changeName" ).click( function() {

@@ -47,39 +47,40 @@
 <script>
 (function(){
 	// Initialize app
-	Todos = {
-		items: $.parseJSON( localStorage.getItem( "JsViewsTodos" )) || [], //	Intialize from local storage
-		edit: function( view ) {
-			view.tmpl = "editTemplate";
-			view.render();
-			$( view.nodes ).find('input').focus();
-		},
-		removeItem: function( index, item ) {
-			$.observable( this.items ).remove( index, 1 );
-			this.doneChanged( item.done ? -1 : 0 );
-		},
-		clearCompleted: function( index ) {
-			var l = this.items.length;
-			while ( l-- ) {
-				if ( this.items[ l ].done ) {
-					this.removeItem( l, this.items[ l ]);
+	var useStorage = window.JSON && window.localStorage,
+		todos = {
+			items: useStorage && $.parseJSON( localStorage.getItem( "JsViewsTodos" )) || [], //	Intialize from local storage
+			edit: function( view ) {
+				view.tmpl = "editTemplate";
+				view.render();
+				$( view.nodes ).find('input').focus();
+			},
+			removeItem: function( index, item ) {
+				$.observable( this.items ).remove( index, 1 );
+				this.doneChanged( item.done ? -1 : 0 );
+			},
+			clearCompleted: function( index ) {
+				var l = this.items.length;
+				while ( l-- ) {
+					if ( this.items[ l ].done ) {
+						this.removeItem( l, this.items[ l ]);
+					}
 				}
+			},
+			doneChanged: function( incr ) {
+				var completed = this.completed + incr;
+				$.observable( this ).setProperty({
+					remaining: this.items.length - completed,
+					completed: completed
+				});
+			},
+			contentChanged: function( view ) {
+				view.tmpl = "itemTemplate";
+				view.render();
 			}
-		},
-		doneChanged: function( incr ) {
-			var completed = this.completed + incr;
-			$.observable( this ).setProperty({
-				remaining: this.items.length - completed,
-				completed: completed
-			});
-		},
-		contentChanged: function( view ) {
-			view.tmpl = "itemTemplate";
-			view.render();
 		}
-	}
-	Todos.completed = $( Todos.items ).filter( function( index, val ) { return val.done; }).length;
-	Todos.remaining = Todos.items.length - Todos.completed;
+		todos.completed = $( todos.items ).filter( function( index, val ) { return val.done; }).length;
+		todos.remaining = todos.items.length - todos.completed;
 
 	// Helper functions
 	$.views.helpers({
@@ -96,13 +97,15 @@
 					var view = $.view( this.src );
 					switch( this.path ) {
 						case "done":
-							Todos.doneChanged( view.data.done ? 1 : -1 );
+							todos.doneChanged( view.data.done ? 1 : -1 );
 							break;
 						case "content":
-							Todos.contentChanged( view );
+							todos.contentChanged( view );
 					}
 				case "arrayChange":
-					localStorage.setItem( "JsViewsTodos", JSON.stringify( Todos.items ));
+					if ( useStorage ) {
+						localStorage.setItem( "JsViewsTodos", JSON.stringify( todos.items ));
+					}
 			}
 		}
 	});
@@ -114,28 +117,28 @@
 	});
 
 //	Link UI, and handle changes to 'done' and 'content' properties of Todo items
-	$.link.itemTemplate( "#todo-list", Todos.items );
-	$.link( "#todo-stats", Todos );
+	$.link.itemTemplate( "#todo-list", todos.items );
+	$.link( "#todo-stats", todos );
 
 	// UI Event bindings
 	$( "#new-todo" ).keypress( function( ev ) {
 		if ( ev.keyCode === 13 ) {
-			$.observable( Todos.items ).insert( Todos.items.length, { content: this.value, done: false });
-			Todos.doneChanged( 0 );
+			$.observable( todos.items ).insert( todos.items.length, { content: this.value, done: false });
+			todos.doneChanged( 0 );
 			this.value = "";
 		}
 	});
 	$( "#todo-list" )
 		.delegate( ".todo-destroy", "click", function() {
 			var view = $.view( this );
-			Todos.removeItem( view.index, view.data );
+			todos.removeItem( view.index, view.data );
 		})
 		.delegate( "li", "dblclick", function( ev ) {
-			Todos.edit( $.view( this ));
+			todos.edit( $.view( this ));
 		})
 		.delegate( "input", "keypress", function( ev ) { if (ev.keyCode === 13){ this.blur(); }});
 
-	$( ".todo-clear" ).click( function() { Todos.clearCompleted(); });
+	$( ".todo-clear" ).click( function() { todos.clearCompleted(); });
 })();
 </script>
 </body>
