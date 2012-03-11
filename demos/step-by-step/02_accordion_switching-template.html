@@ -87,7 +87,7 @@ Click for details:
 
 	/* onclick handler for movie subviews when not selected */
 	$( "#movieList" )
-		.delegate( ".movieSummary", "click", function() {
+		.on( "click", ".movieSummary", function() {
 			/* Unselect the currently selected view */
 			unselect();
 
@@ -101,7 +101,7 @@ Click for details:
 		})
 
 		/* onclick handler for movie subviews when selected */
-		.delegate( ".movieDetail", "click", function() {
+		.on( "click", ".movieDetail", function() {
 			/* Unselect the currently selected view */
 			unselect();
 		});

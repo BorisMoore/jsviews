@@ -62,48 +62,48 @@
 		},
 
 		movies = [
-		{
-			title: "Meet Joe Black",
-			languages: [
-				{ name: "English" },
-				{ name: "French" }
-			]
-		},
-		{
-			title: "Eyes Wide Shut",
-			languages: [
-				{ name: "French" },
-				{ name: "German" },
-				{ name: "Spanish" }
-			]
-		}
-	];
+			{
+				title: "Meet Joe Black",
+				languages: [
+					{ name: "English" },
+					{ name: "French" }
+				]
+			},
+			{
+				title: "Eyes Wide Shut",
+				languages: [
+					{ name: "French" },
+					{ name: "German" },
+					{ name: "Spanish" }
+				]
+			}
+		];
 
 	$.templates({
 		movieTmpl: "#movieTemplate",
 		detailTmpl: "#detailViewTemplate"
 	});
-	
+
 	$( "#movieList" )
-		.delegate( "tr", "click", function() {
+		.on( "click", "tr", function() {
 			select( $.view( this ));
 		})
 
-		.delegate( ".close", "click", function() {
+		.on( "click", ".close", function() {
 			select();
 			$.observable( movies ).remove( $.view( this ).index, 1 );
 			return false;
 		});
 
 	$( "#movieDetail" )
-		.delegate( "#addLanguageBtn", "click", function() {
+		.on( "click", "#addLanguageBtn", function() {
 			var languages = $.view( this ).data.languages;
 			$.observable( languages ).insert( languages.length, {
 				name: "NewLanguage"
 			});
 		})
 
-		.delegate( ".close", "click", function() {
+		.on( "click", ".close", function() {
 			var view = $.view( this );
 			$.observable( view.parent.data ).remove( view.index, 1 );
 // Or equivalently:	$.observable( app.selectedItem.data.languages).remove( view.index, 1 );
@@ -141,7 +141,7 @@
 	});
 
 	$.link.movieTmpl( "#movieList", movies );
-		
+
 	function select( view ) {
 		if ( app.selectedItem !== view ) {
 			$.observable( app ).setProperty( "selectedItem", view );

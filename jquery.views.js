@@ -743,7 +743,7 @@ $.extend({
 		}
 		return returnView;
 	},
-	
+
 	link: function( container, data, context, parentView, template ) {
 		// Bind elementChange on the root element, for links from elements within the content, to data;
 		function dataToElem() {
