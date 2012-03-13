@@ -349,7 +349,7 @@ function view_removeViews( index, itemsCount ) {
 
 	if ( index === undefined ) {
 		// Remove all child views
-		for ( index = 0; i < views.length; i++ ) {
+		for ( index = 0; index < views.length; index++ ) {
 			removeView( index );
 		}
 		self.views = [];
