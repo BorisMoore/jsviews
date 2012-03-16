@@ -135,7 +135,7 @@ function propertyChangeHandler( ev, eventArgs, bind ) {
 			if ( setter ) {
 				if ( changed = $target[setter]() !== sourceValue ) {
 					$target[setter]( sourceValue );
-					if ( target.nodeName.toLowerCase() === "input" ) {
+					if (isInputNode(target)) {
 						$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
 					}
 				}
@@ -413,7 +413,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 				if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
 					// Simplified syntax is used: data-link="expression"
 					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
-					linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
+					linkMarkup = delimOpen1 + ":" + linkMarkup + (isInputNode(node) ? ":" : "") + delimClose0;
 				}
 				while( tokens = rTag.exec( linkMarkup )) {
 					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
@@ -421,8 +421,9 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					attr = tokens[ 1 ];
 					if ( tokens[ 5 ]) {
 						// Only for {:} link"
-						if ( !attr && (convertBack = /.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
-							convertBack = convertBack[ 1 ];
+						if ( !attr && tokens[4]) {
+						    // use specific converter, if specified
+						    convertBack = tokens[4];
 						}
 						if ( convertBack === null ) {
 							convertBack = undefined;
@@ -593,6 +594,10 @@ function getTemplate( tmpl ) {
 	return tmpl;
 }
 
+function isInputNode(target) {
+    return target.nodeName.toLowerCase() === "input" || target.nodeName.toLowerCase() === "select" || target.nodeName.toLowerCase() === "textarea";
+}
+
 //========================== Initialize ==========================
 
 topView._lnk = 0;
@@ -636,6 +641,22 @@ $.extend( jsv, {
 	linkAttr: "data-link",
 	merge: {
 		input: {
+			from: {
+				fromAttr: inputAttrib
+			},
+			to: {
+				toAttr: "value"
+			}
+		},
+		textarea: {
+			from: {
+				fromAttr: inputAttrib
+			},
+			to: {
+				toAttr: "value"
+			}
+		},
+		select: {
 			from: {
 				fromAttr: inputAttrib
 			},
