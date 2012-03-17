@@ -756,17 +756,24 @@ $.extend({
 		template = template && (templates[ template ] || (template.markup ? template : $.templates( template )));
 		context = context || parentView.ctx;
 		context.link = TRUE;
-		container = $( container )
-		//	.unbind( "change" )  // TODO complete this, by calling unlink? - TODO/BUG. Consider both top-level and template-driven linking
-			.bind( "change", dataToElem );
-
-		if ( template ) {
-			// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
-			// So TODO: make it smart about when to render and when to link on already rendered content
-			container.empty().append( template.render( data, context, parentView )); // Supply non-jQuery version of this...
-			// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
+		var jqueryContainer = $( container );
+		if ( jqueryContainer.length > 0) {
+			jqueryContainer = jqueryContainer
+			//	.unbind( "change" )  // TODO complete this, by calling unlink? - TODO/BUG. Consider both top-level and template-driven linking
+				.bind( "change", dataToElem );
+	
+			if ( template ) {
+				// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
+				// So TODO: make it smart about when to render and when to link on already rendered content
+				jqueryContainer.empty().append( template.render( data, context, parentView )); // Supply non-jQuery version of this...
+				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
+			}
+			linkViews( jqueryContainer[0], parentView, undefined, undefined, data, context );
+		} else if (typeof(container)=="string") {
+			throw container +": does not select a DOM element. Template has no place to be inserted.";
+		} else {
+			throw "No DOM element selected. Template has no place to be inserted.";
 		}
-		linkViews( container[0], parentView, undefined, undefined, data, context );
 	},
 
 	unlink: function( container ) {
