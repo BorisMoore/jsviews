@@ -393,7 +393,7 @@ function view_content( select ) {
 
 function linkViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
 
-	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, view, existing, parentNode, linkMarkup,
+	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, cbLength, view, existing, parentNode, linkMarkup, expression,
 		currentView = parent,
 		viewDepth = depth;
 	context = context || {};
@@ -419,10 +419,16 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
 					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
 					attr = tokens[ 1 ];
+					expression = tokens[ 2 ];
 					if ( tokens[ 5 ]) {
 						// Only for {:} link"
-						if ( !attr && (convertBack = /.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+						if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+							// two-way binding
 							convertBack = convertBack[ 1 ];
+							if ( cbLength = convertBack.length ) {
+								// There is a convertBack function
+								expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
+							}
 						}
 						if ( convertBack === null ) {
 							convertBack = undefined;
@@ -431,8 +437,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					// Compile the linkFn expression which evaluates and binds a data-link expression
 					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
 					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-				//	if ( linkMarkup !== ("{" + tokens[2] + " "  + linkedParams + "}")) debugger;
-					link[ attr ] = jsv.tmplFn( delimOpen0 + tokens[2] + delimClose1, undefined, TRUE );
+					link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
 					if ( !attr && convertBack !== undefined ) {
 						link[ attr ].to = convertBack;
 					}

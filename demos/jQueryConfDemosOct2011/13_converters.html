@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<a href="12_helper-functions.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
+
+<h3>16 Use converters for custom encoding, data formatting, localization, etc.</h3>
+
+<div class="subhead">Converter in tags - not linked:</div>
+<em>{{convert:dataPath}}</em>
+<table><tr class="header"><th>Data</th><th>DayOff</th></tr>
+<tbody id="notLinked"></tbody></table>
+
+<div class="subhead">Convert and convertBack converters with data linking:</div>
+<em>data-link="{convert:dataPath:convertBack}"</em>
+<table class="three"><tr class="header"><th>Data</th><th>DayOff</th><th>Choose day off</th></tr>
+<tbody id="linked"></tbody></table>
+<div><em>To edit, enter part of the name, or the number, or click here:</em> <button id="changeDay">Change day</button></div>
+
+<script id="notLinkedTmpl" type="text/x-jsrender">
+	<tr>
+		<td>{{:dayOff}}</td>
+		<td>{{intToDay:dayOff}}</td>
+	</tr>
+</script>
+
+<script id="linkedTmpl" type="text/x-jsrender">
+	<tr>
+		<td data-link="dayOff" />
+		<td data-link="{intToDay:dayOff}" />
+		<td><input data-link="{intToDay:dayOff:dayToInt} title{:dayOff}" /></td>
+	</tr>
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+
+var days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],
+	myWeek = {
+	dayOff: 1
+};
+
+$.templates({
+	notLinkedTmpl: "#notLinkedTmpl",
+	linkedTmpl: "#linkedTmpl"
+});
+
+$.views.converters({
+	dayToInt: function( val ) {
+		for ( var i = 0; i < 7; i++ ) {
+			if ( days[ i ].toLowerCase().slice( 0, val.length ) === val.toLowerCase()) {
+				return i;
+			}
+		}
+		return parseInt(val) || val;
+	},
+	intToDay: function( val ) {
+		return days[ val ] || val;
+	}
+});
+
+// Observable property change
+$( "#changeDay" ).click( function() {
+	var dayOff = myWeek.dayOff;
+	$.observable( myWeek ).setProperty( "dayOff", dayOff < 6 ? dayOff + 1 : 0);
+});
+
+$( "#notLinked" ).html( $.render.notLinkedTmpl( myWeek ));
+$.link.linkedTmpl( "#linked", myWeek );
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">
+    &lt;!-- RENDERING with tags -->
+    &lt;!-- data value, no converter: -->
+    &lt;td>{{:dayOff}}&lt;/td>
+
+    &lt;!-- render from data, convert to display name -->
+    &lt;td>{{intToDay:dayOff}}&lt;/td>
+
+
+    &lt;!-- DATA LINKING with data-link expressions -->
+    &lt;!-- link from data value, no converter -->
+    &lt;td data-link="dayOff" />
+
+    &lt;!-- link from data, converted to display name -->
+    &lt;td data-link="{intToDay:dayOff}" />
+
+    &lt;!-- two-way data linking with convert and convertBack between data format (integer) and display name (text) -->
+    &lt;!-- Also show data value as tooltip -->
+    &lt;td>&lt;input data-link="{intToDay:dayOff:dayToInt title{:dayOff}}" />&lt;/td>
+</pre>
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+// Data
+var days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],
+
+// Convert and ConvertBack
+$.views.converters({
+    dayToInt: function( val ) {
+        ...
+    },
+    intToDay: function( val ) {
+        ...
+    }
+});
+</pre>
+</body>
+</html>
