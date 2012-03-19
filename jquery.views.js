@@ -8,18 +8,18 @@
  * Released under the MIT License.
  */
 
-window = window || global;
-window.jsviews && jsviews.link || window.jQuery && jQuery.link || (function( window, undefined ) {
+this.jQuery && jQuery.link || (function( global, undefined ) {
+// global is the this object, which is window when running in the usual browser environment.
 
 //========================== Top-level vars ==========================
 
 var versionNumber = "v1.0pre",
 
 	rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
-	$ = window.jQuery,
+	$ = global.jQuery,
 
 	// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
-	jsv = window.jsviews || $.views,
+	jsv = $.views,
 	sub = jsv.sub,
 	FALSE = false, TRUE = true,
 	topView = jsv.topView,
@@ -37,10 +37,13 @@ var versionNumber = "v1.0pre",
 	},
 	oldCleanData = $.cleanData,
 	oldJsvDelimiters = jsv.delimiters,
-	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,)]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\((.*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+	// tokens: [ all,     slash,    'item', 'tmpl',     path, index,               tmplParam ]
+	//rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,R]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+
 	rStartTag = /^item|^tmpl(\(\$?[\w.,]*\))?(\s+[^\s]+)?$/;
 
-if ( !$.fn ) {
+if ( !$ ) {
 	// jQuery is not loaded.
 	throw "requires jQuery"; // for Beta (at least) we require jQuery
 }
@@ -202,6 +205,7 @@ function returnVal( value ) {
 //===============
 
 function linkedView( view ) {
+	var i, views, viewsCount;
 	if ( !view.render ) {
 		view.onDataChanged = view_onDataChanged;
 		view.render = view_render;
@@ -209,7 +213,6 @@ function linkedView( view ) {
 		view.removeViews = view_removeViews;
 		view.content = view_content;
 
-		var i, views, viewsCount;
 		if ( !$.isArray( view.data ))  {
 			view.nodes = [];
 			view._lnk = 0; // compiled link index.
@@ -349,10 +352,21 @@ function view_removeViews( index, itemsCount ) {
 
 	if ( index === undefined ) {
 		// Remove all child views
-		for ( index in views ) {
-			removeView( index );
+		if ( viewsCount === undefined ) {
+			// views and data are objects
+			for ( index in views ) {
+				// Remove by key
+				removeView( index );
+			}
+			self.views = {};
+		} else {
+			// views and data are arrays
+			current = viewsCount;
+			while ( current-- ) {
+				removeView( current );
+			}
+			self.views = [];
 		}
-		self.views = [];
 	} else {
 		if ( itemsCount === undefined ) {
 			if ( viewsCount === undefined ) {
@@ -393,7 +407,7 @@ function view_content( select ) {
 
 function linkViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
 
-	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, cbLength, view, existing, parentNode, linkMarkup, expression,
+	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, cbLength, view, parentNode, linkMarkup, expression,
 		currentView = parent,
 		viewDepth = depth;
 	context = context || {};
@@ -498,7 +512,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					);
 					view.prevNode = node;
 					// Jump to the nextNode of the tmpl view
-					node = existing || linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
+					node = linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
@@ -677,7 +691,7 @@ $.extend({
 
 		node = ("" + node === node ? $( node )[0] : node);
 		var returnView, view, parentElViews, i, finish,
-			topNode = window.document.body,
+			topNode = global.document.body,
 			startNode = node;
 
 		if ( inner ) {
@@ -793,4 +807,4 @@ $.extend({
 // Initialize default delimiters
 jsv.delimiters( "{{", "}}" );
 
-})( window );
+})( this );

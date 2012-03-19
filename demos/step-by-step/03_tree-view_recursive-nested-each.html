@@ -22,7 +22,7 @@
 
 <script id="folderTemplate" type="text/x-jsrender">
 	<li>
-		{{if ~hasContent(#data) link=true}}
+		{{if ~hasContent() link=true}}
 			<span class="toggle">{{:expanded ? "-" : "+"}}</span>
 		{{/if}}
 		<span>{{:name}}</span>
@@ -55,7 +55,8 @@ var rootFolder = {
 
 /* Declare the functions for getting the items and subfolders, etc. */
 $.views.helpers({
-	hasContent: function( folder ) {
+	hasContent: function() {
+		var folder = this.data;
 		return folder.expanded || folder.folders && folder.folders.length;
 	}
 });
