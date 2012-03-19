@@ -7,6 +7,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
+// informal pre beta commit counter: 0
 
 this.jQuery && jQuery.link || (function( global, undefined ) {
 // global is the this object, which is window when running in the usual browser environment.
@@ -212,20 +213,21 @@ function linkedView( view ) {
 		view.addViews = view_addViews;
 		view.removeViews = view_removeViews;
 		view.content = view_content;
-
-		if ( !$.isArray( view.data ))  {
-			view.nodes = [];
-			view._lnk = 0; // compiled link index.
-		}
-		views = view.parent.views;
-		if ( $.isArray( views ))  {
-			i = view.index;
-			viewsCount = views.length;
-			while ( i++ < viewsCount-1 ) {
-				observable( views[ i ] ).setProperty( "index", i );
+		if (view.parent) {
+			if ( !$.isArray( view.data ))  {
+				view.nodes = [];
+				view._lnk = 0; // compiled link index.
 			}
+			views = view.parent.views;
+			if ( $.isArray( views ))  {
+				i = view.index;
+				viewsCount = views.length;
+				while ( i++ < viewsCount-1 ) {
+					observable( views[ i ] ).setProperty( "index", i );
+				}
+			}
+			setArrayChangeLink( view );
 		}
-		setArrayChangeLink( view );
 	}
 	return view;
 }
@@ -562,35 +564,6 @@ function bindDataLinkTarget( source, target, attr, linkFn, view ) {
 // helpers
 //===============
 
-function clean( i, el ) { // TODO optimize for perf
-	var link, l, attr, parentView, view, srcs,
-		links = jsViewsData( el, linkStr ),
-		views = jsViewsData( el, viewStr );
-// Not necessary: jQuery does this.
-//	if ( jsViewsData( el, "to" ).length ) {
-//		$( el ).unbind( "change" );
-//	}
-
-	for ( attr in links) {
-		link = links[ attr ];
-		srcs = link.srcs;
-		l = srcs.length;
-		while( l-- ) {
-			$( srcs[ l ] ).unbind( propertyChangeStr, link.hlr );
-		}
-	}
-
-	if ( l = views.length ) {
-		parentView = $.view( el );
-		while( l-- ) {
-			view = views[ l ];
-			if ( view.parent === parentView ) {
-				parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
-			}
-		}
-	}
-}
-
 function jsViewsData( el, type, create ) {
 	var jqData = $.data( el, jsvData ) || (create && $.data( el, jsvData, { view: [], link: {} }));
 	return jqData ? jqData[ type ] : {};
@@ -614,10 +587,6 @@ function getTemplate( tmpl ) {
 
 //========================== Initialize ==========================
 
-topView._lnk = 0;
-topView.links = [];
-topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
-
 //=======================
 // JsRender integration
 //=======================
@@ -628,15 +597,8 @@ sub.onStoreItem = function( store, name, item, process ) {
 		item.link = function( container, data, context, parentView ) {
 			$.link( container, data, context, parentView, item );
 		};
-		item.unlink = function( container, data, context, parentView ) {
-			$.unlink( container, data, context, parentView, item );
-		};
-
 		$.link[ name ] = function() {
 			return item.link.apply( item, arguments );
-		};
-		$.unlink[ name ] = function() {
-			return item.unlink.apply( item, arguments );
 		};
 	}
 };
@@ -776,7 +738,6 @@ $.extend({
 		context = context || parentView.ctx;
 		context.link = TRUE;
 		container = $( container )
-		//	.unbind( "change" )  // TODO complete this, by calling unlink? - TODO/BUG. Consider both top-level and template-driven linking
 			.bind( "change", dataToElem );
 
 		if ( template ) {
@@ -788,23 +749,50 @@ $.extend({
 		linkViews( container[0], parentView, undefined, undefined, data, context );
 	},
 
-	unlink: function( container ) {
-		container = $( container )
-			.unbind( "change" );
-		container.empty(); // Supply non-jQuery version of this...
-	},
-
 	//=======================
-	// override cleanData
+	// override $.cleanData
 	//=======================
-
 	cleanData: function( elems ) {
-		$( elems ).each( clean );  // TODO - look at perf optimization on this
+		var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
+			i = elems.length; 
+		while ( i-- ) {
+			el = elems[ i ];
+			if ( linksAndViews = $.data( el, jsvData )) {
+	
+				// Get links and unbind propertyChange
+				collData = linksAndViews.link; 
+				for ( attr in collData) {
+					link = collData[ attr ];
+					srcs = link.srcs;
+					l = srcs.length;
+					while( l-- ) {
+						$( srcs[ l ] ).unbind( propertyChangeStr, link.hlr );
+					}
+				}
+
+				// Get views and remove from parent view
+				collData = linksAndViews.view; 
+				if ( l = collData.length ) {
+					parentView = $.view( el );
+					while( l-- ) {
+						view = collData[ l ];
+						if ( view.parent === parentView ) {
+							parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
+						}
+					}
+				}
+			}
+		}
 		oldCleanData.call( $, elems );
 	}
 });
 
 // Initialize default delimiters
 jsv.delimiters( "{{", "}}" );
+
+topView._lnk = 0;
+topView.links = [];
+topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
+linkedView(topView);
 
 })( this );
