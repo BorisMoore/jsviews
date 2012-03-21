@@ -7,7 +7,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 0
+// informal pre beta commit counter: 2
 
 this.jQuery && jQuery.link || (function( global, undefined ) {
 // global is the this object, which is window when running in the usual browser environment.
@@ -319,13 +319,17 @@ function view_removeViews( index, itemsCount ) {
 	// view.removeViews( index ) removes the child view with specified index or key
 	// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 	function removeView( index ) {
-		var view = views[ index ],
+		var parentElViews, i,
+			view = views[ index ],
 			node = view.prevNode,
 			nextNode = view.nextNode,
-			nodes = [ node ],
-			parentElViews = parentElViews || jsViewsData( view.nextNode.parentNode, viewStr ),
-			i = parentElViews.length;
-
+			nodes = [ node ];
+		if ( !nextNode ) {
+			// this view has not been linked, so nothing to remove.
+			return;
+		}
+		parentElViews = parentElViews || jsViewsData( nextNode.parentNode, viewStr );
+		i = parentElViews.length;
 		if ( i ) {
 			view.removeViews();
 		}
@@ -431,7 +435,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
 					linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
 				}
-				while( tokens = rTag.exec( linkMarkup )) {
+				while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
 					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
 					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
 					attr = tokens[ 1 ];
