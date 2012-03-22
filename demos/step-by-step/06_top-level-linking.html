@@ -26,9 +26,12 @@
 		<input data-link="{:lastName:} title{:~homeTown(firstName, lastName, address.city)}" />
 		<input data-link="address.city" />
 		<input data-link="{upper:roleColor:}" />
+		<span data-link="price"></span>
+		<span data-link="number"></span>
+		<span data-link="price * number"></span>
 	</p>
 	<p>
-		<span data-link="{:~homeTown(firstName, lastName, address.city, true)}"></span>
+		<span data-link="~homeTown(firstName, lastName, address.city, true)"></span>
 	</p>
 </div>
 
@@ -36,6 +39,8 @@
 	var person = {
 			firstName: "Jo",
 			lastName: "Proctor",
+			price: 10,
+			number:13,
 			address: {
 				city: "Redmond"
 			},
@@ -45,6 +50,8 @@
 	function setNameAndCityAndColor() {
 		$.observable( person )
 			.setProperty({
+				price: person.price+1,
+				number: person.number-1,
 				lastName: person.lastName + "Plus",
 				"address.city": person.address.city + "More",
 				roleColor: "#8DD"
