@@ -9,7 +9,7 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="11_editable-data.html">Prev</a> <a href="index.html">Home</a> <a href="13_allow-code.html">Next</a><br />
+<a href="11_editable-data.html">Prev</a> <a href="index.html">Home</a> <a href="13_converters.html">Next</a><br />
 
 <h3>15 Custom helper functions for computed parameters</h3>
 
@@ -18,7 +18,7 @@
 		<td>{{:title}}</td>
 		<td>
 			{{for languages}}
-				{{:name}}{{if ~nextToLast(#view)}} and {{else ~notLast(#view)}}, {{/if}}
+				{{:name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
 			{{/for}}
 		</td>
 	</tr>
@@ -31,11 +31,13 @@
 <script type="text/javascript">
 
 	$.views.helpers({
-		nextToLast: function( view ) {
+		nextToLast: function() {
+			var view = this;
 			return view.index === view.parent.data.length - 2;
 		},
 
-		notLast: function( view ) {
+		notLast: function() {
+			var view = this;
 			return view.index !== view.parent.data.length - 1;
 		}
 	});
@@ -62,9 +64,9 @@
 &lt;td>
     {{for languages}}
         {{:name}}
-        {{if ~nextToLast(#view)}}
+        {{if ~nextToLast()}}
             and
-        {{else ~notLast(#view)}}
+        {{else ~notLast()}}
             ,
         {{/if}}
     {{/for}}
@@ -75,11 +77,13 @@
 <pre class="brush: js;">
 $.views.helpers({
 
-    nextToLast: function( view ) {
+    nextToLast: function() {
+        var view = this;
         return view.index === view.parent.data.length - 2;
     },
 
-    notLast: function( view ) {
+    notLast: function() {
+        var view = this;
         return view.index !== view.parent.data.length - 1;
     }
 });

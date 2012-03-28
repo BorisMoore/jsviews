@@ -7,19 +7,20 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
+// informal pre beta commit counter: 2
 
-window = window || global;
-window.jsviews && jsviews.link || window.jQuery && jQuery.link || (function( window, undefined ) {
+this.jQuery && jQuery.link || (function( global, undefined ) {
+// global is the this object, which is window when running in the usual browser environment.
 
 //========================== Top-level vars ==========================
 
 var versionNumber = "v1.0pre",
 
 	rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
-	$ = window.jQuery,
+	$ = global.jQuery,
 
 	// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
-	jsv = window.jsviews || $.views,
+	jsv = $.views,
 	sub = jsv.sub,
 	FALSE = false, TRUE = true,
 	topView = jsv.topView,
@@ -37,10 +38,13 @@ var versionNumber = "v1.0pre",
 	},
 	oldCleanData = $.cleanData,
 	oldJsvDelimiters = jsv.delimiters,
-	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,)]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\((.*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+	// tokens: [ all,     slash,    'item', 'tmpl',     path, index,               tmplParam ]
+	//rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,R]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
+
 	rStartTag = /^item|^tmpl(\(\$?[\w.,]*\))?(\s+[^\s]+)?$/;
 
-if ( !$.fn ) {
+if ( !$ ) {
 	// jQuery is not loaded.
 	throw "requires jQuery"; // for Beta (at least) we require jQuery
 }
@@ -202,14 +206,14 @@ function returnVal( value ) {
 //===============
 
 function linkedView( view ) {
+	var i, views, viewsCount;
 	if ( !view.render ) {
 		view.onDataChanged = view_onDataChanged;
 		view.render = view_render;
 		view.addViews = view_addViews;
 		view.removeViews = view_removeViews;
 		view.content = view_content;
-
-		var i, views, viewsCount;
+		if (view.parent) {
 		if ( !$.isArray( view.data ))  {
 			view.nodes = [];
 			view._lnk = 0; // compiled link index.
@@ -223,6 +227,7 @@ function linkedView( view ) {
 			}
 		}
 		setArrayChangeLink( view );
+	}
 	}
 	return view;
 }
@@ -314,13 +319,17 @@ function view_removeViews( index, itemsCount ) {
 	// view.removeViews( index ) removes the child view with specified index or key
 	// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 	function removeView( index ) {
-		var view = views[ index ],
+		var parentElViews, i,
+			view = views[ index ],
 			node = view.prevNode,
 			nextNode = view.nextNode,
-			nodes = [ node ],
-			parentElViews = parentElViews || jsViewsData( view.nextNode.parentNode, viewStr ),
+			nodes = [ node ];
+		if ( !nextNode ) {
+			// this view has not been linked, so nothing to remove.
+			return;
+		}
+		parentElViews = parentElViews || jsViewsData( nextNode.parentNode, viewStr );
 			i = parentElViews.length;
-
 		if ( i ) {
 			view.removeViews();
 		}
@@ -349,10 +358,21 @@ function view_removeViews( index, itemsCount ) {
 
 	if ( index === undefined ) {
 		// Remove all child views
+		if ( viewsCount === undefined ) {
+			// views and data are objects
 		for ( index in views ) {
+				// Remove by key
 			removeView( index );
 		}
+			self.views = {};
+		} else {
+			// views and data are arrays
+			current = viewsCount;
+			while ( current-- ) {
+				removeView( current );
+			}
 		self.views = [];
+		}
 	} else {
 		if ( itemsCount === undefined ) {
 			if ( viewsCount === undefined ) {
@@ -393,7 +413,7 @@ function view_content( select ) {
 
 function linkViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
 
-	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, view, existing, parentNode, linkMarkup,
+	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, cbLength, view, parentNode, linkMarkup, expression,
 		currentView = parent,
 		viewDepth = depth;
 	context = context || {};
@@ -415,14 +435,20 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
 					linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
 				}
-				while( tokens = rTag.exec( linkMarkup )) {
+				while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
 					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
 					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
 					attr = tokens[ 1 ];
+					expression = tokens[ 2 ];
 					if ( tokens[ 5 ]) {
 						// Only for {:} link"
-						if ( !attr && (convertBack = /.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+						if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+							// two-way binding
 							convertBack = convertBack[ 1 ];
+							if ( cbLength = convertBack.length ) {
+								// There is a convertBack function
+								expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
+							}
 						}
 						if ( convertBack === null ) {
 							convertBack = undefined;
@@ -431,8 +457,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					// Compile the linkFn expression which evaluates and binds a data-link expression
 					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
 					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-				//	if ( linkMarkup !== ("{" + tokens[2] + " "  + linkedParams + "}")) debugger;
-					link[ attr ] = jsv.tmplFn( delimOpen0 + tokens[2] + delimClose1, undefined, TRUE );
+					link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
 					if ( !attr && convertBack !== undefined ) {
 						link[ attr ].to = convertBack;
 					}
@@ -493,7 +518,7 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 					);
 					view.prevNode = node;
 					// Jump to the nextNode of the tmpl view
-					node = existing || linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
+					node = linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
 				}
 			}
 		} else if ( viewDepth === 0 ) {
@@ -543,35 +568,6 @@ function bindDataLinkTarget( source, target, attr, linkFn, view ) {
 // helpers
 //===============
 
-function clean( i, el ) { // TODO optimize for perf
-	var link, l, attr, parentView, view, srcs,
-		links = jsViewsData( el, linkStr ),
-		views = jsViewsData( el, viewStr );
-// Not necessary: jQuery does this.
-//	if ( jsViewsData( el, "to" ).length ) {
-//		$( el ).unbind( "change" );
-//	}
-
-	for ( attr in links) {
-		link = links[ attr ];
-		srcs = link.srcs;
-		l = srcs.length;
-		while( l-- ) {
-			$( srcs[ l ] ).unbind( propertyChangeStr, link.hlr );
-		}
-	}
-
-	if ( l = views.length ) {
-		parentView = $.view( el );
-		while( l-- ) {
-			view = views[ l ];
-			if ( view.parent === parentView ) {
-				parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
-			}
-		}
-	}
-}
-
 function jsViewsData( el, type, create ) {
 	var jqData = $.data( el, jsvData ) || (create && $.data( el, jsvData, { view: [], link: {} }));
 	return jqData ? jqData[ type ] : {};
@@ -595,10 +591,6 @@ function getTemplate( tmpl ) {
 
 //========================== Initialize ==========================
 
-topView._lnk = 0;
-topView.links = [];
-topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
-
 //=======================
 // JsRender integration
 //=======================
@@ -609,15 +601,8 @@ sub.onStoreItem = function( store, name, item, process ) {
 		item.link = function( container, data, context, parentView ) {
 			$.link( container, data, context, parentView, item );
 		};
-		item.unlink = function( container, data, context, parentView ) {
-			$.unlink( container, data, context, parentView, item );
-		};
-
 		$.link[ name ] = function() {
 			return item.link.apply( item, arguments );
-		};
-		$.unlink[ name ] = function() {
-			return item.unlink.apply( item, arguments );
 		};
 	}
 };
@@ -672,7 +657,7 @@ $.extend({
 
 		node = ("" + node === node ? $( node )[0] : node);
 		var returnView, view, parentElViews, i, finish,
-			topNode = window.document.body,
+			topNode = global.document.body,
 			startNode = node;
 
 		if ( inner ) {
@@ -776,18 +761,40 @@ $.extend({
 		}
 	},
 
-	unlink: function( container ) {
-		container = $( container )
-			.unbind( "change" );
-		container.empty(); // Supply non-jQuery version of this...
-	},
-
 	//=======================
-	// override cleanData
+	// override $.cleanData
 	//=======================
-
 	cleanData: function( elems ) {
-		$( elems ).each( clean );  // TODO - look at perf optimization on this
+		var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
+			i = elems.length; 
+		while ( i-- ) {
+			el = elems[ i ];
+			if ( linksAndViews = $.data( el, jsvData )) {
+	
+				// Get links and unbind propertyChange
+				collData = linksAndViews.link; 
+				for ( attr in collData) {
+					link = collData[ attr ];
+					srcs = link.srcs;
+					l = srcs.length;
+					while( l-- ) {
+						$( srcs[ l ] ).unbind( propertyChangeStr, link.hlr );
+					}
+				}
+
+				// Get views and remove from parent view
+				collData = linksAndViews.view; 
+				if ( l = collData.length ) {
+					parentView = $.view( el );
+					while( l-- ) {
+						view = collData[ l ];
+						if ( view.parent === parentView ) {
+							parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
+						}
+					}
+				}
+			}
+		}
 		oldCleanData.call( $, elems );
 	}
 });
@@ -795,4 +802,9 @@ $.extend({
 // Initialize default delimiters
 jsv.delimiters( "{{", "}}" );
 
-})( window );
+topView._lnk = 0;
+topView.links = [];
+topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
+linkedView(topView);
+
+})( this );

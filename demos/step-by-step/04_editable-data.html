@@ -135,6 +135,8 @@
 
 	$.views.helpers({
 		bgColor: function ( index, selectedItem ) {
+			// index could also be obtained from the view, which is the 'this' context for this function
+			// var index = this.index
 			return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 		},
 		app: app

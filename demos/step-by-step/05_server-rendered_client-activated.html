@@ -25,7 +25,7 @@
 	<tbody id="movieList">
 		<!--tmpl(,_0) movieTmpl-->
 		<!--item-->
-		<tr style="background-color: yellow;" class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
+		<tr style="background-color: yellow;" class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
 			<td>
 				<span data-link="#index+1">1</span>:
 				<span data-link="title">Meet Joe Black</span>
@@ -46,7 +46,7 @@
 		</tr>
 		<!--/item-->
 		<!--item-->
-		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
+		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
 			<td>
 				<span data-link="$view[index]+1">2</span>:
 				<span data-link="title">Eyes Wide Shut</span>
@@ -94,7 +94,7 @@
 </div>
 
 <script id="movieTemplate" type="text/x-jsrender">
-	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
+	<tr class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
 		<td>
 			<span data-link="#index+1"></span>:
 			<span data-link="title"></span>
@@ -214,7 +214,8 @@
 		});
 
 		$.views.helpers({
-			bgColor: function ( index, selectedItem ) {
+			bgColor: function ( selectedItem ) {
+				var index = this.index; // 'this' is the view.
 				return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 			},
 			app: app
