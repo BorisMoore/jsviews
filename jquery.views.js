@@ -214,20 +214,20 @@ function linkedView( view ) {
 		view.removeViews = view_removeViews;
 		view.content = view_content;
 		if (view.parent) {
-		if ( !$.isArray( view.data ))  {
-			view.nodes = [];
-			view._lnk = 0; // compiled link index.
-		}
-		views = view.parent.views;
-		if ( $.isArray( views ))  {
-			i = view.index;
-			viewsCount = views.length;
-			while ( i++ < viewsCount-1 ) {
-				observable( views[ i ] ).setProperty( "index", i );
+			if ( !$.isArray( view.data ))  {
+				view.nodes = [];
+				view._lnk = 0; // compiled link index.
 			}
+			views = view.parent.views;
+			if ( $.isArray( views ))  {
+				i = view.index;
+				viewsCount = views.length;
+				while ( i++ < viewsCount-1 ) {
+					observable( views[ i ] ).setProperty( "index", i );
+				}
+			}
+			setArrayChangeLink( view );
 		}
-		setArrayChangeLink( view );
-	}
 	}
 	return view;
 }
@@ -329,7 +329,7 @@ function view_removeViews( index, itemsCount ) {
 			return;
 		}
 		parentElViews = parentElViews || jsViewsData( nextNode.parentNode, viewStr );
-			i = parentElViews.length;
+		i = parentElViews.length;
 		if ( i ) {
 			view.removeViews();
 		}
@@ -360,10 +360,10 @@ function view_removeViews( index, itemsCount ) {
 		// Remove all child views
 		if ( viewsCount === undefined ) {
 			// views and data are objects
-		for ( index in views ) {
+			for ( index in views ) {
 				// Remove by key
-			removeView( index );
-		}
+				removeView( index );
+			}
 			self.views = {};
 		} else {
 			// views and data are arrays
@@ -371,7 +371,7 @@ function view_removeViews( index, itemsCount ) {
 			while ( current-- ) {
 				removeView( current );
 			}
-		self.views = [];
+			self.views = [];
 		}
 	} else {
 		if ( itemsCount === undefined ) {
