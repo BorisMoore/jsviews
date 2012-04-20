@@ -5,17 +5,19 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
 <h3>Data-Linking to static content in the page</h3>
 
-<button onclick="showData()">show data</button>
-
-<button onclick="setNameAndCityAndColorAndCars()">Modify name, city, color and cars</button>
-<button onclick="setCity()">Modify city</button>
-<hr /><br />
+<div class="buttons">
+	<button onclick="showData()">show data</button>
+	<button onclick="setNameAndCityAndColorAndCars()">Modify name, city, color and cars</button>
+	<button onclick="setCity()">Modify city</button>
+</div>
+<hr />
 
 <div id="myLinkedContent">
 	<p data-link="css-background-color{:roleColor}">
