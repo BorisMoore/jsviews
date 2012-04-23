@@ -9,7 +9,7 @@
 	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
 <h3>Fully editable data: Change events with integrated Data-Link and Templates</h3>
 
@@ -20,7 +20,8 @@
 
 <div class="comment">Click to select and edit</div>
 
-<table><tbody class="header"><tr><th>Title</th><th>Languages</th><th><div id="addMovieBtn">Add</div></th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th><th><span id="addMovieBtn">Add</span></th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 

@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
-	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+	<link href="../resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.min.js" type="text/javascript"></script>
 
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
@@ -11,19 +11,23 @@
 	<script src="../../jquery.views.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="12_helper-functions.html">Prev</a> <a href="index.html">Home</a> <a href="14_custom-tags.html">Next</a><br />
+<div class="nav"><a href="12_helper-functions.html">Prev</a> <a href="index.html">Index</a> <a href="14_custom-tags.html">Next</a></div>
 
-<h3>16 Use converters for custom encoding, data formatting, localization, etc.</h3>
+<h3>JsRender and JsViews: Use converters for custom encoding, data formatting, localization, etc.</h3>
 
 <div class="subhead">Converter in tags - not linked:</div>
 <em>{{convert:dataPath}}</em>
-<table><tr class="header"><th>Data</th><th>DayOff</th></tr>
-<tbody id="notLinked"></tbody></table>
+<table>
+	<thead><tr><th>Data</th><th>DayOff</th></tr></thead>
+	<tbody id="notLinked"></tbody>
+</table>
 
 <div class="subhead">Convert and convertBack converters with data linking:</div>
 <em>data-link="{convert:dataPath:convertBack}"</em>
-<table class="three"><tr class="header"><th>Data</th><th>DayOff</th><th>Choose day off</th></tr>
-<tbody id="linked"></tbody></table>
+<table class="three">
+	<thead><tr><th>Data</th><th>DayOff</th><th>Choose day off</th></tr></thead>
+	<tbody id="linked"></tbody>
+</table>
 <div><em>To edit, enter part of the name, or the number, or click here:</em> <button id="changeDay">Change day</button></div>
 
 <script id="notLinkedTmpl" type="text/x-jsrender">

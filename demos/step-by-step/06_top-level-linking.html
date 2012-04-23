@@ -5,17 +5,19 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
 <h3>Data-Linking to static content in the page</h3>
 
-<button onclick="showData()">show data</button>
-
-<button onclick="setNameAndCityAndColor()">set name city and color</button>
-<button onclick="setCity()">set city</button>
-<hr /><br />
+<div class="buttons">
+	<button onclick="showData()">show data</button>
+	<button onclick="setNameAndCityAndColorAndCars()">Modify name, city, color and cars</button>
+	<button onclick="setCity()">Modify city</button>
+</div>
+<hr />
 
 <div id="myLinkedContent">
 	<p data-link="css-background-color{:roleColor}">
@@ -23,15 +25,17 @@
 	</p>
 	<p>
 		<input data-link="firstName" />
-		<input data-link="{:lastName:} title{:~homeTown(firstName, lastName, address.city)}" />
+		<input data-link="{:lastName:} title{:~infoSummary(firstName, lastName, address.city, cars.quantity)}" />
 		<input data-link="address.city" />
 		<input data-link="{upper:roleColor:}" />
-		<span data-link="price"></span>
-		<span data-link="number"></span>
-		<span data-link="price * number"></span>
+	</p>
+	<p>Cars:
+		<em>Quantity</em> <input data-link="cars.quantity" />
+		<em>Price</em> <input data-link="cars.price" />
+		<em>Total Value:</em> <span data-link="cars.price * cars.quantity"></span>
 	</p>
 	<p>
-		<span data-link="~homeTown(firstName, lastName, address.city, true)"></span>
+		<span data-link="{:~infoSummary(firstName, lastName, address.city, cars.quantity, true)}"></span>
 	</p>
 </div>
 
@@ -39,22 +43,24 @@
 	var person = {
 			firstName: "Jo",
 			lastName: "Proctor",
-			price: 10,
-			number:13,
+			cars: {
+				quantity:13,
+				price: 150
+			},
 			address: {
 				city: "Redmond"
 			},
 			roleColor: "yellow"
 		};
 
-	function setNameAndCityAndColor() {
+	function setNameAndCityAndColorAndCars() {
 		$.observable( person )
 			.setProperty({
-				price: person.price+1,
-				number: person.number-1,
+				"cars.quantity": person.cars.quantity+1,
+				"cars.price": person.cars.price-3,
 				lastName: person.lastName + "Plus",
 				"address.city": person.address.city + "More",
-				roleColor: "#8DD"
+				roleColor: (person.roleColor === "yellow" ? "#8DD" : "yellow")
 			});
 	}
 
@@ -65,10 +71,10 @@
 	}
 
 	$.views.helpers({
-		homeTown: function( firstName, lastName, city, html ) {
+		infoSummary: function( firstName, lastName, city, cars, html ) {
 			return html
-				? ("<b>" + firstName + " " + lastName + "</b> lives in <i>" + city +  "</i>")
-				: (firstName + " " + lastName + " lives in " + city);
+				? ("<b>" + firstName + " " + lastName + "</b> lives in <i>" + city +  "</i> and owns " + cars + " cars.")
+				: (firstName + " " + lastName + " lives in " + city + " and owns " + cars + " cars.");
 		}
 	});
 
@@ -88,6 +94,7 @@
 <script id="showData" type="text/x-jsrender">
 	<div>{{:firstName}} {{:lastName}}</div>
 	<div>{{:address.city}}</div>
+	<div>{{:cars.quantity}}: {{:cars.price}}</div>
 </script>
 
 <div id="console"></div>

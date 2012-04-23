@@ -1,17 +1,17 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<link href="resources/presentation.css" rel="stylesheet" type="text/css" />
-	<link href="resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
-	<script src="resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+	<link href="../resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../resources/syntaxhighlighter.min.js" type="text/javascript"></script>
 
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<a href="11_editable-data.html">Prev</a> <a href="index.html">Home</a> <a href="13_converters.html">Next</a><br />
+<div class="nav"><a href="11_editable-data.html">Prev</a> <a href="index.html">Index</a> <a href="13_converters.html">Next</a></div>
 
-<h3>15 Custom helper functions for computed parameters</h3>
+<h3>JsRender: Custom helper functions for computed parameters</h3>
 
 <script id="movieTmpl" type="text/x-jsrender">
 	<tr>
@@ -24,7 +24,8 @@
 	</tr>
 </script>
 
-<table><tbody class="header"><tr><th>Title</th><th>Languages</th></tr></tbody>
+<table>
+	<thead><tr><th>Title</th><th>Languages</th></tr></thead>
 	<tbody id="movieList"></tbody>
 </table>
 

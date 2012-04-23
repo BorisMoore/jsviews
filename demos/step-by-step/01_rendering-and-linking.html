@@ -5,9 +5,10 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<a href="index.html">Home</a><br />
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<li>
@@ -22,22 +23,24 @@
 
 <h3>Rendering templates, and linking to changes in data:</h3>
 
-<h4>Insert HTML from a rendered template, as innerHTML under a container element. (Uses only JsRender.)</h4>
+<div class="subhead">Insert HTML from a rendered template, as innerHTML under a container element. (Uses only JsRender.)</div>
+<div class="box">
+	<ul id="movieList1"></ul>
+</div>
 
-<ul id="movieList1"></ul>
+<div class="subhead">Insert HTML from a rendered template between other content, and then data-link the content, for live updates. (Uses JsViews for data-linking.)</div>
+<div class="box">
+	<div class="buttons">
+		<button onclick="addMovie()">add Movie</button>
+		<button onclick="removeMovie()">remove last Movie</button>
+	</div>
+	<div id="movieList2"><b>Our Movies</b><br /></div>
+</div>
 
-<h4>Insert HTML from a rendered template between other content, and then data-link the content, for live updates. (Uses JsViews for data-linking.)</h4>
-
-<p>
-<button onclick="addMovie()">add Movie</button>
-<button onclick="removeMovie()">remove last Movie</button>
-</p>
-
-<div id="movieList2"><b>Our Movies</b><br /></div>
-
-<h4>Use JsViews to link content of an HTML container element directly to data, by associating with a template.</h4>
-
-<ul id="movieList3"></ul>
+<div class="subhead">Use JsViews to link content of an HTML container element directly to data, by associating with a template.</div>
+<div class="box">
+	<ul id="movieList3"></ul>
+</div>
 
 <script type="text/javascript">
 
