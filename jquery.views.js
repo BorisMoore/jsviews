@@ -7,7 +7,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 2
+// informal pre beta commit counter: 3
 
 this.jQuery && jQuery.link || (function( global, undefined ) {
 // global is the this object, which is window when running in the usual browser environment.
@@ -419,113 +419,115 @@ function linkViews( node, parent, nextNode, depth, data, context, prevNode, inde
 	context = context || {};
 	node = prevNode || node;
 
-	if ( !prevNode && node.nodeType === 1 ) {
-		if ( viewDepth++ === 0 ) {
-			// Add top-level element nodes to view.nodes
-			currentView.nodes.push( node );
-		}
-		if ( linkMarkup = node.getAttribute( jsv.linkAttr ) ) {
-			linkIndex = currentView._lnk++;
-			// Compiled linkFn expressions are stored in the tmpl.links array of the template
-			links = currentView.links || currentView.tmpl.links;
-			if ( !(link = links[ linkIndex ] )) {
-				link = links [ linkIndex ] = {};
-				if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
-					// Simplified syntax is used: data-link="expression"
-					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
-					linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
-				}
-				while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
-					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
-					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
-					attr = tokens[ 1 ];
-					expression = tokens[ 2 ];
-					if ( tokens[ 5 ]) {
-						// Only for {:} link"
-						if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
-							// two-way binding
-							convertBack = convertBack[ 1 ];
-							if ( cbLength = convertBack.length ) {
-								// There is a convertBack function
-								expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
+	if ( node ) {
+		if ( !prevNode && node.nodeType === 1 ) {
+			if ( viewDepth++ === 0 ) {
+				// Add top-level element nodes to view.nodes
+				currentView.nodes.push( node );
+			}
+			if ( linkMarkup = node.getAttribute( jsv.linkAttr ) ) {
+				linkIndex = currentView._lnk++;
+				// Compiled linkFn expressions are stored in the tmpl.links array of the template
+				links = currentView.links || currentView.tmpl.links;
+				if ( !(link = links[ linkIndex ] )) {
+					link = links [ linkIndex ] = {};
+					if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
+						// Simplified syntax is used: data-link="expression"
+						// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
+						linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
+					}
+					while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
+						// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
+						// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
+						attr = tokens[ 1 ];
+						expression = tokens[ 2 ];
+						if ( tokens[ 5 ]) {
+							// Only for {:} link"
+							if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+								// two-way binding
+								convertBack = convertBack[ 1 ];
+								if ( cbLength = convertBack.length ) {
+									// There is a convertBack function
+									expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
+								}
+							}
+							if ( convertBack === null ) {
+								convertBack = undefined;
 							}
 						}
-						if ( convertBack === null ) {
-							convertBack = undefined;
+						// Compile the linkFn expression which evaluates and binds a data-link expression
+						// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
+						//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
+						link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
+						if ( !attr && convertBack !== undefined ) {
+							link[ attr ].to = convertBack;
 						}
 					}
-					// Compile the linkFn expression which evaluates and binds a data-link expression
-					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
-					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-					link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
-					if ( !attr && convertBack !== undefined ) {
-						link[ attr ].to = convertBack;
+				}
+				for ( attr in link ) {
+					bindDataLinkTarget(
+						currentView.data || data, //source
+						node,                     //target
+						attr,                     //attr
+						link[ attr ],             //compiled link markup expression
+						currentView               //view
+					);
+				}
+	// TODO - Add one-way-to-source support
+	//			if ( linkMarkup.lastIndexOf( "toSrc{", 0 ) === 0 ) {
+	//				linkMarkup = "{toSrc " + linkMarkup.slice(6);
+	//			}
+			}
+			node = node.firstChild;
+		} else {
+			node = node.nextSibling;
+		}
+
+		while ( node && node !== nextNode ) {
+			if ( node.nodeType === 1 ) {
+				linkViews( node, currentView, nextNode, viewDepth, data, context );
+			} else if ( node.nodeType === 8 && (tokens = rTmplOrItemComment.exec( node.nodeValue ))) {
+				// tokens: [ all, slash, 'item', 'tmpl', path, index, tmplParam ]
+				parentNode = node.parentNode;
+				if ( tokens[ 1 ]) {
+					// <!--/item--> or <!--/tmpl-->
+					currentView.nextNode = node;
+					if ( currentView.ctx.onAfterCreate ) {
+						currentView.ctx.onAfterCreate.call( currentView, currentView );
+					}
+					if ( tokens[ 2 ]) {
+						// An item close tag: <!--/item-->
+						currentView = parent;
+					} else  {
+						// A tmpl close tag: <!--/tmpl-->
+						return node;
+					}
+				} else {
+					// <!--item--> or <!--tmpl-->
+					parentElViews = parentElViews || jsViewsData( parentNode, viewStr, TRUE );
+					if ( tokens[ 2 ]) {
+						// An item open tag: <!--item-->
+						parentElViews.push(
+							currentView = linkedView( currentView.views[ index ] )
+						);
+						index++;
+						currentView.prevNode = node;
+					} else {
+						// A tmpl open tag: <!--tmpl(path) name-->
+						parentElViews.push(
+							view = linkedView( currentView.views[ tokens[ 5 ]] )
+						);
+						view.prevNode = node;
+						// Jump to the nextNode of the tmpl view
+						node = linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
 					}
 				}
+			} else if ( viewDepth === 0 ) {
+				// Add top-level non-element nodes to view.nodes
+				currentView.nodes.push( node );
 			}
-			for ( attr in link ) {
-				bindDataLinkTarget(
-					currentView.data|| data, //source
-					node,                    //target
-					attr,                    //attr
-					link[ attr ],            //compiled link markup expression
-					currentView              //view
-				);
-			}
-// TODO - Add one-way-to-source support
-//			if ( linkMarkup.lastIndexOf( "toSrc{", 0 ) === 0 ) {
-//				linkMarkup = "{toSrc " + linkMarkup.slice(6);
-//			}
+			node = node.nextSibling;
 		}
-		node = node.firstChild;
-	} else {
-		node = node.nextSibling;
-	}
-
-	while ( node && node !== nextNode ) {
-		if ( node.nodeType === 1 ) {
-			linkViews( node, currentView, nextNode, viewDepth, data, context );
-		} else if ( node.nodeType === 8 && (tokens = rTmplOrItemComment.exec( node.nodeValue ))) {
-			// tokens: [ all, slash, 'item', 'tmpl', path, index, tmplParam ]
-			parentNode = node.parentNode;
-			if ( tokens[ 1 ]) {
-				// <!--/item--> or <!--/tmpl-->
-				currentView.nextNode = node;
-				if ( currentView.ctx.onAfterCreate ) {
-					currentView.ctx.onAfterCreate.call( currentView, currentView );
-				}
-				if ( tokens[ 2 ]) {
-					// An item close tag: <!--/item-->
-					currentView = parent;
-				} else  {
-					// A tmpl close tag: <!--/tmpl-->
-					return node;
-				}
-			} else {
-				// <!--item--> or <!--tmpl-->
-				parentElViews = parentElViews || jsViewsData( parentNode, viewStr, TRUE );
-				if ( tokens[ 2 ]) {
-					// An item open tag: <!--item-->
-					parentElViews.push(
-						currentView = linkedView( currentView.views[ index ] )
-					);
-					index++;
-					currentView.prevNode = node;
-				} else {
-					// A tmpl open tag: <!--tmpl(path) name-->
-					parentElViews.push(
-						view = linkedView( currentView.views[ tokens[ 5 ]] )
-					);
-					view.prevNode = node;
-					// Jump to the nextNode of the tmpl view
-					node = linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
-				}
-			}
-		} else if ( viewDepth === 0 ) {
-			// Add top-level non-element nodes to view.nodes
-			currentView.nodes.push( node );
-		}
-		node = node.nextSibling;
 	}
 }
 
