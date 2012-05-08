@@ -58,8 +58,8 @@ $.templates({
 });
 
 // Data-link people to the details container, using the personTmpl template
-$.link.personTmpl( "#details", people );
-$.link.personTmpl2( "#details2", people );
+$.link.personTmpl( people, "#details" );
+$.link.personTmpl2( people, "#details2" );
 
 // Observable array change: insert two new people
 $( "#insertPerson" ).click( function() {
@@ -78,7 +78,7 @@ $( "#insertPerson" ).click( function() {
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Data-link people to the details container, using the personTmpl template
-$.link.personTmpl( "#details", people );
+$.link.personTmpl( people, "#details" );
 $.link.personTmpl2( people, "#details2" );
 
 // Observable array change: insert two new people at index 1

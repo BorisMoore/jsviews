@@ -8,32 +8,40 @@
 	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
+
+
 <div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
 <h3>Data-Linking to static content in the page</h3>
 
 <div class="buttons">
-	<button onclick="showData()">show data</button>
 	<button onclick="setNameAndCityAndColorAndCars()">Modify name, city, color and cars</button>
 	<button onclick="setCity()">Modify city</button>
 </div>
+
 <hr />
 
 <div id="myLinkedContent">
+
+	<div class="subhead">Linking to data values and expressions</div>
+
 	<p data-link="css-background-color{:roleColor}">
 		Name: <span data-link="firstName"></span> <span data-link="lastName"></span>
 	</p>
+
 	<p>
 		<input data-link="firstName" />
 		<input data-link="{:lastName:} title{:~infoSummary(firstName, lastName, address.city, cars.quantity)}" />
 		<input data-link="address.city" />
 		<input data-link="{upper:roleColor:}" />
 	</p>
+
 	<p>Cars:
 		<em>Quantity</em> <input data-link="cars.quantity" />
 		<em>Price</em> <input data-link="cars.price" />
 		<em>Total Value:</em> <span data-link="cars.price * cars.quantity"></span>
 	</p>
+
 	<p>
 		<span data-link="{:~infoSummary(firstName, lastName, address.city, cars.quantity, true)}"></span>
 	</p>
@@ -84,26 +92,7 @@
 		}
 	});
 
-	$.link( "#myLinkedContent", person );
+	$.link( person, "#myLinkedContent" );
 </script>
-
-<!--================ End of Demo Section ================-->
-
-<!--Console-->
-
-<script id="showData" type="text/x-jsrender">
-	<div>{{:firstName}} {{:lastName}}</div>
-	<div>{{:address.city}}</div>
-	<div>{{:cars.quantity}}: {{:cars.price}}</div>
-</script>
-
-<div id="console"></div>
-<script type="text/javascript">
-	function showData() {
-		$( "#console" ).append("<hr/>");
-		$( "#console" ).append( $( "#showData" ).render( person ));
-	}
-</script>
-
 </body>
 </html>

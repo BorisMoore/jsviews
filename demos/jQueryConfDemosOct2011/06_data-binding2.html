@@ -41,11 +41,13 @@ var people = [
 ];
 
 // Compile template
+
 $.templates( "personTmpl", "#personTmpl" );
 
 // Render and link (compact syntax): data-link people to the
 // details container, using the personTmpl template
-$.link.personTmpl( "#details", people );
+
+$.link.personTmpl( people, "#details" );
 </script>
 
 <!--================ End of Demo Section ================-->
@@ -64,11 +66,13 @@ $.link.personTmpl( "#details", people );
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Compile template
+
 $.templates( "personTmpl", "#personTmpl" );
 
-// Render and link (compact syntax): data-link details
-// container element to people, using the personTmpl template
-$.link.personTmpl( "#details", people );
+// Render and link (compact syntax): data-link people to the
+// details container, using the personTmpl template
+
+$.link.personTmpl( people, "#details" );
 </pre>
 </body>
 </html>

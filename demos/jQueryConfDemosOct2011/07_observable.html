@@ -41,7 +41,7 @@ var person = {
 $.templates( "personTmpl", "#personTmpl" );
 
 // Data-link details container to person, using the personTmpl template
-$.link.personTmpl( "#details", person );
+$.link.personTmpl( person, "#details" );
 
 // Observable property change
 $( "#changeName" ).click( function() {
@@ -65,7 +65,7 @@ $( "#changeName" ).click( function() {
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Data-link details container to person, using the personTmpl template
-$.link.personTmpl( "#details", person  );
+$.link.personTmpl( person, "#details" );
 
 // Observable property change
 $( "#changeName" ).click( function() {

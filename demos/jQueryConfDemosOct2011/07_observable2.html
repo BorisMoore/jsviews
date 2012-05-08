@@ -46,7 +46,7 @@ var people = [
 $.templates( "personTmpl", "#personTmpl" );
 
 // Data-link details container to people, using the personTmpl template
-$.link.personTmpl( "#details", people );
+$.link.personTmpl( people, "#details" );
 
 // Observable array change
 $( "#insertPerson" ).click( function() {
@@ -69,7 +69,7 @@ $( "#insertPerson" ).click( function() {
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-$.link.personTmpl( "#details", people );
+$.link.personTmpl( people, "#details" );
 
 // Observable array change
 $( "#insertPerson" ).click( function() {

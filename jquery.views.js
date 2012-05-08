@@ -7,7 +7,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 3
+// informal pre beta commit counter: 7
 
 this.jQuery && jQuery.link || (function( global, undefined ) {
 // global is the this object, which is window when running in the usual browser environment.
@@ -22,7 +22,7 @@ var versionNumber = "v1.0pre",
 	// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
 	jsv = $.views,
 	sub = jsv.sub,
-	FALSE = false, TRUE = true,
+	FALSE = false, TRUE = true, NULL = null,
 	topView = jsv.topView,
 	templates = jsv.templates,
 	observable = $.observable,
@@ -33,17 +33,15 @@ var versionNumber = "v1.0pre",
 	arrayChangeStr = "arrayChange",
 	fnSetters = {
 		value: "val",
+		input: "val",
 		html: "html",
 		text: "text"
 	},
 	oldCleanData = $.cleanData,
 	oldJsvDelimiters = jsv.delimiters,
-	rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\((.*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
-	// tokens: [ all,     slash,    'item', 'tmpl',     path, index,               tmplParam ]
-	//rTmplOrItemComment = /^(\/?)(?:(item)|(?:(tmpl)(?:\(([^,R]*),([^,)]*)\))?(?:\s+([^\s]+))?))$/,
 
-	rStartTag = /^item|^tmpl(\(\$?[\w.,]*\))?(\s+[^\s]+)?$/;
-
+	rStartTag = /^jsvi|^jsv:/,
+	rFirstElem = /^\s*<(\w+)[>\s]/;
 if ( !$ ) {
 	// jQuery is not loaded.
 	throw "requires jQuery"; // for Beta (at least) we require jQuery
@@ -83,7 +81,7 @@ function elemChangeHandler( ev ) {
 				path: to
 			};
 			if ( cnvtBack ) {
-				sourceValue = cnvtBack( sourceValue );
+				sourceValue = cnvtBack.call( linkContext, sourceValue );
 			}
 			if ( sourceValue !== undefined && target ) {
 				observable( target ).setProperty( to, sourceValue );
@@ -100,12 +98,12 @@ function elemChangeHandler( ev ) {
 }
 
 function propertyChangeHandler( ev, eventArgs, bind ) {
-	var setter, changed, sourceValue, css,
+	var setter, changed, sourceValue, css, prev,
 		link = this,
 		source = link.src,
 		target = link.tgt,
 		$target = $( target ),
-		attr = link.attr || defaultAttr( target, TRUE ),
+		attr = link.attr || defaultAttr( target, TRUE ), // attr for binding data value to the element
 		view = link.view,
 		context = view.ctx,
 		beforeChange = context.beforeChange;
@@ -122,23 +120,47 @@ function propertyChangeHandler( ev, eventArgs, bind ) {
 	//				context.afterChange.call( link, ev, eventArgs );
 	//			}
 
-
 	if ((!beforeChange || !(eventArgs && beforeChange.call( this, ev, eventArgs ) === FALSE ))
+		// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
+		&& !(eventArgs && ev.data !== eventArgs.path))
 		// && (!view || view.onDataChanged( eventArgs ) !== FALSE ) // Not currently supported or needed for property change
-	) {
+	{
 		sourceValue = link.fn( source, link.view, jsv, bind || returnVal );
 		if ( $.isFunction( sourceValue )) {
 			sourceValue = sourceValue.call( source );
+		}
+		if ( attr === "visible" ) {
+			attr = "css-display";
+			sourceValue = sourceValue ? "block" : "none";
 		}
 		if ( css = attr.lastIndexOf( "css-", 0 ) === 0 && attr.substr( 4 )) {
 			if ( changed = $target.css( css ) !== sourceValue ) {
 				$target.css( css, sourceValue );
 			}
 		} else {
+			if ( attr === "value" ) {
+				if ( target.type === "radio" ) {
+					if ( target.value === sourceValue ) {
+						sourceValue = TRUE;
+						attr = "checked";
+					} else {
+						return;
+					}
+				}
+			}
 			setter = fnSetters[ attr ];
+
 			if ( setter ) {
 				if ( changed = $target[setter]() !== sourceValue ) {
-					$target[setter]( sourceValue );
+					if ( attr === "html" ) {
+						$target[setter]( sourceValue );
+						if ( eventArgs ) {
+							view.link(source, target, undefined, null);
+							// This is a data-link=html{...} update, so need to link new content
+						}
+					} else {
+						$target[setter]( sourceValue );
+					}
 					if ( target.nodeName.toLowerCase() === "input" ) {
 						$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
 					}
@@ -188,13 +210,16 @@ function setArrayChangeLink( view ) {
 }
 
 function defaultAttr( elem, to ) {
+	// to: true - default attribute for setting data value on HTML element; false: default attribute for getting value from HTML element
 	// Merge in the default attribute bindings for this target element
 	var attr = jsv.merge[ elem.nodeName.toLowerCase() ];
 	return attr
 		? (to
 			? attr.to.toAttr
 			: attr.from.fromAttr)
-		: "html";
+		: to
+			? "html"
+			: "";
 }
 
 function returnVal( value ) {
@@ -205,14 +230,18 @@ function returnVal( value ) {
 // view hierarchy
 //===============
 
-function linkedView( view ) {
+function linkedView( view, parentElem, prevNode, parentElViews ) {
 	var i, views, viewsCount;
-	if ( !view.render ) {
+	if ( !view.link ) {
+		parentElViews && parentElViews.push( view );
 		view.onDataChanged = view_onDataChanged;
 		view.render = view_render;
+		view.link = view_link;
 		view.addViews = view_addViews;
 		view.removeViews = view_removeViews;
 		view.content = view_content;
+		view.prevNode = prevNode;
+		view.parentElem = parentElem;
 		if (view.parent) {
 			if ( !$.isArray( view.data ))  {
 				view.nodes = [];
@@ -259,12 +288,9 @@ function view_onDataChanged( eventArgs ) {
 	return TRUE;
 }
 
-function view_render() {
+function view_render( context ) {
 	var self = this,
-		tmpl = self.tmpl = getTemplate( self.tmpl ),
-		prevNode = self.prevNode,
-		nextNode = self.nextNode,
-		parentNode = prevNode.parentNode;
+		tmpl = self.tmpl = getTemplate( self.tmpl );
 
 	if ( tmpl ) {
 		// Remove HTML nodes
@@ -272,46 +298,55 @@ function view_render() {
 		// Remove child views
 		self.removeViews();
 		self.nodes = [];
-		$( prevNode ).after( tmpl.render( self.data, self.ctx, self, self.path, true ) );
-		// Need to the update the annotation info on the prevNode comment marker
-// TODO - Include the following two lines, but modified, to keep <!-- item --> comments, but add template info: <!-- item fooTemplate -->
-//			prevNode.nodeValue = prevNode.nextSibling.nodeValue;
-//			nextNode.nodeValue = nextNode.previousSibling.nodeValue;
-		// Remove the extra comment nodes
-		parentNode.removeChild( prevNode.nextSibling );
-		parentNode.removeChild( nextNode.previousSibling );
-		// Link the new HTML nodes to the data
-		linkViews( parentNode, self, nextNode, 0, undefined, undefined, prevNode, 0 ); //this.index
+
+		renderAndLink( self, self.index, self.parent.views, self.data, tmpl.render( self.data, context, undefined, TRUE, self ), context );
 		setArrayChangeLink( self );
 	}
 	return self;
 }
 
 function view_addViews( index, dataItems, tmpl ) {
-	var self = this,
-		itemsCount = dataItems.length,
-		context = self.ctx,
-		views = self.views;
+	var self = this;
 
-	if ( index && !views[index-1] ) {
-		return; // If subview for provided index does not exist, do nothing
-	}
-	if ( itemsCount && (tmpl = getTemplate( tmpl || self.tmpl ))) {
-		var	prevNode = index ? views[ index-1 ].nextNode : self.prevNode,
-			nextNode = prevNode.nextSibling,
-			parentNode = prevNode.parentNode;
-
+	if ( dataItems.length && (tmpl = getTemplate( tmpl || self.tmpl ))) {
 		// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
-		$( prevNode ).after( tmpl.render( dataItems, context, self, undefined, index ) );
-		// Need to the update the annotation info on the prevNode comment marker
-	//	self.prevNode.nodeValue = prevNode.nextSibling.nodeValue;
-		// Remove the extra comment nodes
-		parentNode.removeChild( prevNode.nextSibling );
-		parentNode.removeChild( nextNode.previousSibling );
-		// Link the new HTML nodes to the data
-		linkViews( parentNode, self, nextNode, 0, undefined, undefined, prevNode, index );
+		renderAndLink( self, index, self.views, dataItems, tmpl.render( dataItems, self.ctx, undefined, index, self ), self.ctx );
 	}
 	return self;
+}
+
+function renderAndLink( view, index, views, data, html, context ) {
+	var prevView, prevNode, linkToNode, linkFromNode,
+		elLinked = !view.prevNode;
+		parentNode = view.parentElem;
+
+	if ( index && ("" + index !== index)  ) {
+		prevView = views[index-1];
+		if ( !prevView ) {
+			return; // If subview for provided index does not exist, do nothing
+		}
+		prevNode = elLinked ? prevView.following : prevView.nextNode;
+	} else {
+		prevNode = elLinked ? view.preceding : view.prevNode.previousSibling;
+	}
+
+	if ( prevNode ) {
+		linkToNode = prevNode.nextSibling;
+		$( prevNode ).after( html );
+		prevNode = prevNode.nextSibling;
+	} else {
+		linkToNode = parentNode.firstChild;
+		$( parentNode ).prepend( html );
+		prevNode = parentNode.firstChild;
+	}
+	linkFromNode = prevNode && prevNode.previousSibling;
+
+	// Remove the extra tmpl annotation nodes which wrap the inserted items
+	parentNode.removeChild( prevNode );
+	parentNode.removeChild( linkToNode ? linkToNode.previousSibling : parentNode.lastChild );
+
+	// Link the new HTML nodes to the data
+	view.link( data, parentNode, context, linkFromNode, linkToNode, index );
 }
 
 function view_removeViews( index, itemsCount ) {
@@ -319,16 +354,14 @@ function view_removeViews( index, itemsCount ) {
 	// view.removeViews( index ) removes the child view with specified index or key
 	// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 	function removeView( index ) {
-		var parentElViews, i,
+		var	i,
 			view = views[ index ],
 			node = view.prevNode,
 			nextNode = view.nextNode,
-			nodes = [ node ];
-		if ( !nextNode ) {
-			// this view has not been linked, so nothing to remove.
-			return;
-		}
-		parentElViews = parentElViews || jsViewsData( nextNode.parentNode, viewStr );
+			nodes = node
+				? [ node ]
+				// view.prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
+				: view.nodes;
 		i = parentElViews.length;
 		if ( i ) {
 			view.removeViews();
@@ -354,7 +387,8 @@ function view_removeViews( index, itemsCount ) {
 	var current,
 		self = this,
 		views = self.views,
-		viewsCount = views.length;
+		viewsCount = views.length,
+		parentElViews = parentElViews || jsViewsData( self.parentElem, viewStr );
 
 	if ( index === undefined ) {
 		// Remove all child views
@@ -411,123 +445,176 @@ function view_content( select ) {
 // data-linking
 //===============
 
-function linkViews( node, parent, nextNode, depth, data, context, prevNode, index ) {
+function view_link( data, parentNode, context, prevNode, nextNode, index ) {
+	var self = this,
+		views = self.views;
+	index = index || 0;
+	parentNode = ("" + parentNode === parentNode ? $( parentNode )[0] : parentNode);
 
-	var tokens, links, link, attr, linkIndex, parentElViews, convertBack, cbLength, view, parentNode, linkMarkup, expression,
-		currentView = parent,
-		viewDepth = depth;
-	context = context || {};
-	node = prevNode || node;
+	function linkSiblings( parent, prev, next, top ) {
+		var view, isElem, type, key, parentElViews, nextSibling, onAfterCreate;
 
-	if ( node ) {
-		if ( !prevNode && node.nodeType === 1 ) {
-			if ( viewDepth++ === 0 ) {
-				// Add top-level element nodes to view.nodes
-				currentView.nodes.push( node );
-			}
-			if ( linkMarkup = node.getAttribute( jsv.linkAttr ) ) {
-				linkIndex = currentView._lnk++;
-				// Compiled linkFn expressions are stored in the tmpl.links array of the template
-				links = currentView.links || currentView.tmpl.links;
-				if ( !(link = links[ linkIndex ] )) {
-					link = links [ linkIndex ] = {};
-					if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
-						// Simplified syntax is used: data-link="expression"
-						// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
-						linkMarkup = delimOpen1 + ":" + linkMarkup + ($.nodeName( node, "input" ) ? ":" : "") + delimClose0;
-					}
-					while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
-						// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
-						// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
-						attr = tokens[ 1 ];
-						expression = tokens[ 2 ];
-						if ( tokens[ 5 ]) {
-							// Only for {:} link"
-							if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
-								// two-way binding
-								convertBack = convertBack[ 1 ];
-								if ( cbLength = convertBack.length ) {
-									// There is a convertBack function
-									expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
-								}
-							}
-							if ( convertBack === null ) {
-								convertBack = undefined;
-							}
-						}
-						// Compile the linkFn expression which evaluates and binds a data-link expression
-						// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
-						//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-						link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
-						if ( !attr && convertBack !== undefined ) {
-							link[ attr ].to = convertBack;
-						}
-					}
-				}
-				for ( attr in link ) {
-					bindDataLinkTarget(
-						currentView.data || data, //source
-						node,                     //target
-						attr,                     //attr
-						link[ attr ],             //compiled link markup expression
-						currentView               //view
-					);
-				}
-	// TODO - Add one-way-to-source support
-	//			if ( linkMarkup.lastIndexOf( "toSrc{", 0 ) === 0 ) {
-	//				linkMarkup = "{toSrc " + linkMarkup.slice(6);
-	//			}
-			}
-			node = node.firstChild;
-		} else {
-			node = node.nextSibling;
+		// If we are linking the parent itself (not just content from first onwards) then bind also the data-link attributes
+		if ( prev === undefined ) {
+			bindDataLinkAttributes( parent, self, data );
 		}
 
-		while ( node && node !== nextNode ) {
-			if ( node.nodeType === 1 ) {
-				linkViews( node, currentView, nextNode, viewDepth, data, context );
-			} else if ( node.nodeType === 8 && (tokens = rTmplOrItemComment.exec( node.nodeValue ))) {
-				// tokens: [ all, slash, 'item', 'tmpl', path, index, tmplParam ]
-				parentNode = node.parentNode;
-				if ( tokens[ 1 ]) {
-					// <!--/item--> or <!--/tmpl-->
-					currentView.nextNode = node;
-					if ( currentView.ctx.onAfterCreate ) {
-						currentView.ctx.onAfterCreate.call( currentView, currentView );
+		node = (prev && prev.nextSibling) || parent.firstChild;
+		while ( node && node !== next) {
+			type = node.nodeType;
+			isElem = type === 1;
+			nextSibling = node.nextSibling;
+			if ( isElem && (linkInfo = node.getAttribute("jsvtmpl")) || type === 8 && (linkInfo = node.nodeValue.split("jsv")[1] )) {
+				open = linkInfo.charAt(0) !== "/" && linkInfo;
+				if ( isElem ) {
+					isElem = node.tagName;
+					parent.removeChild( node );
+					node = NULL;
+				}
+				if ( open ) {
+					// open view
+					open = open.slice(1);
+					key = open || index++;
+					parentElViews = parentElViews || jsViewsData( parent, viewStr, TRUE );
+					view = linkedView( self.views[ key ], parent, node, parentElViews ); // Extend and initialize the view object created in JsRender, as a JsViews view
+					if ( isElem && open ) {
+						// open tmpl
+						view.preceding = nextSibling.previousSibling;
+						parentElViews.elLinked = isElem;
 					}
-					if ( tokens[ 2 ]) {
-						// An item close tag: <!--/item-->
-						currentView = parent;
-					} else  {
-						// A tmpl close tag: <!--/tmpl-->
-						return node;
-					}
+					nextSibling = view.link( undefined, parent, undefined, nextSibling.previousSibling );  // TODO DATA AND CONTEXT??
 				} else {
-					// <!--item--> or <!--tmpl-->
-					parentElViews = parentElViews || jsViewsData( parentNode, viewStr, TRUE );
-					if ( tokens[ 2 ]) {
-						// An item open tag: <!--item-->
-						parentElViews.push(
-							currentView = linkedView( currentView.views[ index ] )
-						);
-						index++;
-						currentView.prevNode = node;
-					} else {
-						// A tmpl open tag: <!--tmpl(path) name-->
-						parentElViews.push(
-							view = linkedView( currentView.views[ tokens[ 5 ]] )
-						);
-						view.prevNode = node;
-						// Jump to the nextNode of the tmpl view
-						node = linkViews( node, view, nextNode, 0, undefined, undefined, undefined, 0 );
+					// close view
+					self.nextNode = node;
+					if ( isElem && linkInfo === "/i" ) {
+						parentNode.insertBefore( self.following = document.createTextNode(" "), nextSibling );
+						// This is the case where there is no white space between items.
+						// Add a text node to act as marker around template insertion point.
+						// (Needed as placeholder when inserting new items following this one).
+					}
+					if ( isElem && linkInfo === "/t" && nextSibling && nextSibling.tagName && nextSibling.getAttribute("jsvtmpl")) {
+						// This is the case where there is no white space between items.
+						// Add a text node to act as marker around template insertion point.
+						// (Needed as placeholder when the data array is empty).
+						parentNode.insertBefore( document.createTextNode(" "), nextSibling );
+					}
+					if ( onAfterCreate = self.ctx.onAfterCreate ) { // TODO DATA AND CONTEXT??
+						onAfterCreate.call( self, self );
+					}
+					return nextSibling;
+				}
+			} else {
+				if ( top && self.parent && self.nodes ) {
+					// Add top-level nodes to view.nodes
+					self.nodes.push( node );
+				}
+				if ( isElem ) {
+					linkSiblings( node );
+				}
+			}
+			node = nextSibling;
+		}
+	}
+	return linkSiblings( parentNode, prevNode, nextNode, TRUE );
+}
+
+// node, parentView, nextNode, depth, data, context, prevNode, index, parentElViews
+function link( data, container, context, prevNode, nextNode, index, parentView ) {
+	// Bind elementChange on the root element, for links from elements within the content, to data;
+	function dataToElem() {
+		elemChangeHandler.apply({
+			tgt: data
+		}, arguments );
+	}
+
+	container = $( container );
+	var html, target,
+		self = this,
+		containerEl = container[0],
+		tmpl = self.markup && self || self.jquery && $.templates( self[0] );
+
+	if ( containerEl ) {
+		parentView = parentView || $.view( containerEl );
+		context = context || parentView.ctx;
+
+	// TODO use code from JsRender "Set additional context on views" (as reusable code) to merge the context passed in with the link() method, adding it on to the inherited ctx object on parentView.
+
+		context.onRender = (context.link !== FALSE) && addLinkAnnotations;
+		container.bind( "change", dataToElem ); // TODO WHAT IF ALREADY BOUND here or higher up?
+
+		if ( tmpl ) {
+			html = tmpl.render( data, context, undefined, undefined, parentView );
+			if ( context.target === "replace" ) {
+				prevNode = containerEl.previousSibling;
+				nextNode = containerEl.nextSibling;
+				containerEl = containerEl.parentNode;
+				container.replaceWith( html);
+			} else {
+				// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
+				// So TODO: make it smart about when to render and when to link on already rendered content
+				prevNode = nextNode = undefined; // When linking from a template, prevNode and nextNode parameters are ignored
+				container.empty().append(html); // Supply non-jQuery version of this...
+				// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
+			}
+		}
+		parentView.link( data, containerEl, context, prevNode, nextNode, index );
+	}
+}
+
+function bindDataLinkAttributes( node, currentView, data ) {
+	var links, attr, linkIndex, convertBack, cbLength, expression, viewData, prev,
+		linkMarkup = node.getAttribute( jsv.linkAttr );
+	if ( linkMarkup ) {
+		linkIndex = currentView._lnk++;
+		// Compiled linkFn expressions are stored in the tmpl.links array of the template
+		links = currentView.links || currentView.tmpl.links;
+		if ( !(link = links[ linkIndex ] )) {
+			link = links [ linkIndex ] = {};
+			if ( linkMarkup.charAt(linkMarkup.length-1) !== "}" ) {
+				// Simplified syntax is used: data-link="expression"
+				// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
+				linkMarkup = delimOpen1 + ":" + linkMarkup + (defaultAttr( node ) ? ":" : "") + delimClose0;
+			}
+			while( tokens = rTag.exec( linkMarkup )) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
+				// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
+				// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
+				attr = tokens[ 1 ];
+				expression = tokens[ 2 ];
+				if ( tokens[ 5 ]) {
+					// Only for {:} link"
+					if ( !attr && (convertBack = /^.*:([\w$]*)$/.exec( tokens[ 8 ] ))) {
+						// two-way binding
+						convertBack = convertBack[ 1 ];
+						if ( cbLength = convertBack.length ) {
+							// There is a convertBack function
+							expression = tokens[ 2 ].slice( 0, -cbLength - 1 ) + delimClose0; // Remove the convertBack string from expression.
+						}
+					}
+					if ( convertBack === NULL ) {
+						convertBack = undefined;
 					}
 				}
-			} else if ( viewDepth === 0 ) {
-				// Add top-level non-element nodes to view.nodes
-				currentView.nodes.push( node );
+				// Compile the linkFn expression which evaluates and binds a data-link expression
+				// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
+				//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
+				link[ attr ] = jsv.tmplFn( delimOpen0 + expression + delimClose1, undefined, TRUE );
+				if ( !attr && convertBack !== undefined ) {
+					link[ attr ].to = convertBack;
+				}
 			}
-			node = node.nextSibling;
 		}
+		viewData = currentView.data;
+		currentView.data = viewData || data;
+		for ( attr in link ) {
+			bindDataLinkTarget(
+				currentView.data || data, //source
+				node,                     //target
+				attr,                     //attr
+				link[ attr ],             //compiled link markup expression
+				currentView               //view
+			);
+		}
+		currentView.data = viewData;
 	}
 }
 
@@ -558,7 +645,7 @@ function bindDataLinkTarget( source, target, attr, linkFn, view ) {
 				handler();
 			});
 		} else {
-			$( object ).bind( propertyChangeStr, handler );
+			$( object ).bind( propertyChangeStr, leafToken, handler );
 		}
 		return object;
 	});
@@ -598,21 +685,33 @@ function getTemplate( tmpl ) {
 //=======================
 
 sub.onStoreItem = function( store, name, item, process ) {
-
 	if ( name && item && store === templates ) {
-		item.link = function( container, data, context, parentView ) {
-			$.link( container, data, context, parentView, item );
-		};
-		$.link[ name ] = function() {
-			return item.link.apply( item, arguments );
+		$.link[ name ] = item.link = function() {
+			$.link.apply( item, arguments );
 		};
 	}
 };
-sub.onRenderItem = function( value, props ) {
-	return "<!--item-->" + value + "<!--/item-->";
-};
-sub.onRenderItems = function( value, path, index, tmpl, props ) {
-	return "<!--tmpl(" + (path||"") + "," + index + ") " + tmpl.name + "-->" + value + "<!--/tmpl-->";
+
+function addLinkAnnotations( value, tmpl, props, key, path ) {
+	var elemAnnotation,
+		tag = tmpl.tag,
+		linkInfo = "i",
+		closeToken = "/i";
+
+	if ( !tag ) {
+		tag = rFirstElem.exec( tmpl.markup );
+		tag = tmpl.tag = (tag || (tag = rFirstElem.exec( value ))) && tag[ 1 ] ;
+	}
+
+	if ( key ) {
+		linkInfo = ":" + key;
+		closeToken = "/t";
+	}
+	if ( /^(option|optgroup|li|tr|td)$/.test( tag ) ) {
+		elemAnnotation = "<" + tag + ' jsvtmpl="';
+		return elemAnnotation + linkInfo + '"/>' + $.trim(value) + elemAnnotation + closeToken + '"/>';
+	}
+	return "<!--jsv" + linkInfo + "-->" + value + "<!--jsv" + closeToken + "-->";
 };
 
 //=======================
@@ -629,15 +728,31 @@ $.extend( jsv, {
 			to: {
 				toAttr: "value"
 			}
+		},
+		select: {
+			from: {
+				fromAttr: "value"
+			},
+			to: {
+				toAttr: "value"
+			}
+		},
+		optgroup: {
+			from: {
+				fromAttr: "label"
+			},
+			to: {
+				toAttr: "label"
+			}
 		}
 	},
 	delimiters: function( openChars, closeChars ) {
 		oldJsvDelimiters( openChars, closeChars );
-		rTag = new RegExp( "(?:^|s*)([\\w-]*)("  + jsv.rTag + ")", "g" );
 		delimOpen0 = openChars.charAt( 0 );
 		delimOpen1 = openChars.charAt( 1 );
 		delimClose0 = closeChars.charAt( 0 );
 		delimClose1 = closeChars.charAt( 1 );
+		rTag = new RegExp( "(?:^|\\s*)([\\w-]*)("  + jsv.rTag + ")" + delimClose0 + ")", "g" );
 		return this;
 	}
 });
@@ -658,7 +773,7 @@ $.extend({
 		// $.view( selector ) returns view that contains first selected element
 
 		node = ("" + node === node ? $( node )[0] : node);
-		var returnView, view, parentElViews, i, finish,
+		var returnView, view, parentElViews, i, j, finish, elementLinked,
 			topNode = global.document.body,
 			startNode = node;
 
@@ -678,7 +793,7 @@ $.extend({
 
 		node = node || topNode;
 		if ( $.isEmptyObject( topView.views )) {
-			returnView = topView; // Perf optimization for common case
+			return topView; // Perf optimization for common case
 		} else {
 			// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
 			while( !(parentElViews = jsViewsData( finish = node.parentNode || topNode, viewStr )).length ) {
@@ -688,24 +803,36 @@ $.extend({
 				}
 				node = finish;
 			}
-			if ( !returnView && node === topNode ) {
-				returnView = topView; //parentElViews[0];
+			if ( node === topNode ) {
+				return topView; //parentElViews[0];
 			}
-			while ( !returnView && node ) {
+			if ( parentElViews.elLinked ) {
+				i = parentElViews.length;
+				while ( --i ) {
+					view = parentElViews[ i ];
+					j = view.nodes.length;
+					while ( j-- ) {
+						if ( view.nodes[j] === node ) {
+							return view;
+						}
+					}
+				}
+			} else while ( node ) {
 				// Step back through the nodes, until we find an item or tmpl open tag - in which case that is the view we want
 				if ( node === finish ) {
-					returnView = view;
-					break;
+					return view;
 				}
-				if  ( node.nodeType === 8 ) {
-					if (  /^\/item|^\/tmpl$/.test( node.nodeValue )) {
+				if ( node.nodeType === 8 ) {
+					if (  /^jsv\/[it]$/.test( node.nodeValue )) {
 						// A tmpl or item close tag: <!--/tmpl--> or <!--/item-->
 						i = parentElViews.length;
 						while ( i-- ) {
 							view = parentElViews[ i ];
 							if ( view.nextNode === node ) {
 								// If this was the node originally passed in, this is the view we want.
-								returnView = (node === startNode && view);
+								if ( node === startNode ) {
+									return view;
+								}
 								// If not, jump to the beginning of this item/tmpl and continue from there
 								node = view.prevNode;
 								break;
@@ -717,8 +844,7 @@ $.extend({
 						while ( i-- ) {
 							view = parentElViews[ i ];
 							if ( view.prevNode === node ) {
-								returnView = view;
-								break;
+								return view;
 							}
 						}
 					}
@@ -731,42 +857,20 @@ $.extend({
 		return returnView;
 	},
 
-	link: function( container, data, context, parentView, template ) {
-		// Bind elementChange on the root element, for links from elements within the content, to data;
-		function dataToElem() {
-			elemChangeHandler.apply({
-				tgt: data
-			}, arguments );
-		}
-
-		parentView = parentView || topView;
-		template = template && (templates[ template ] || (template.markup ? template : $.templates( template )));
-		context = context || parentView.ctx;
-		context.link = TRUE;
-		container = $( container )
-			.bind( "change", dataToElem );
-
-		if ( template ) {
-			// TODO/BUG Currently this will re-render if called a second time, and will leave stale views under the parentView.views.
-			// So TODO: make it smart about when to render and when to link on already rendered content
-			container.empty().append( template.render( data, context, parentView )); // Supply non-jQuery version of this...
-			// Using append, rather than html, as workaround for issues in IE compat mode. (Using innerHTML leads to initial comments being stripped)
-		}
-		linkViews( container[0], parentView, undefined, undefined, data, context );
-	},
+	link: link,
 
 	//=======================
 	// override $.cleanData
 	//=======================
 	cleanData: function( elems ) {
 		var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
-			i = elems.length; 
+			i = elems.length;
 		while ( i-- ) {
 			el = elems[ i ];
 			if ( linksAndViews = $.data( el, jsvData )) {
-	
+
 				// Get links and unbind propertyChange
-				collData = linksAndViews.link; 
+				collData = linksAndViews.link;
 				for ( attr in collData) {
 					link = collData[ attr ];
 					srcs = link.srcs;
@@ -777,7 +881,7 @@ $.extend({
 				}
 
 				// Get views and remove from parent view
-				collData = linksAndViews.view; 
+				collData = linksAndViews.view;
 				if ( l = collData.length ) {
 					parentView = $.view( el );
 					while( l-- ) {
@@ -793,12 +897,13 @@ $.extend({
 	}
 });
 
+$.fn.link = link;
+
 // Initialize default delimiters
 jsv.delimiters( "{{", "}}" );
 
 topView._lnk = 0;
 topView.links = [];
-topView.ctx.link = TRUE; // Set this as the default, when JsViews is loaded
-linkedView(topView);
+linkedView( topView );
 
 })( this );

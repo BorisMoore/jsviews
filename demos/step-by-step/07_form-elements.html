@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
+
+<h3>Data Linking to Form Elements</h3>
+
+<div id="moviePrices"></div>
+
+<script id="moviePriceTemplate" type="text/x-jsrender">
+	<div class="subhead">Choose a movie</div>
+
+	<select id="selTheater" data-link="selectedMovie">
+		<option value="-1">Choose...</option>
+		{{for movies}}
+			<option value="{{:#index}}">{{:title}}</option>
+		{{/for}}
+	</select>
+
+	<div data-link="visible{:selectedMovie > -1}">
+		<p>
+			<b>Ticket Price:</b> <span data-link="convertedPrice(selectedMovie, currency)" />
+		</p>
+
+		<p>Currency Picker: <input type="checkbox" data-link="chooseCurrency" /></p>
+
+		<div class="box" data-link="visible{:chooseCurrency}">
+			<div class="subhead">Choose Currency:</div>
+			<input type="radio" name="currencyPicker" value="US" data-link="currency" />US Dollars<br/>
+			<input type="radio" name="currencyPicker" value="EUR" data-link="currency" />Euro<br/>
+			<input type="radio" name="currencyPicker" value="GBP" data-link="currency" />Pound<br/>
+		</div>
+	</div>
+</script>
+
+<script type="text/javascript">
+	var currencies = {
+		US: { rate: 1.0, symbol: "$" },
+		EUR: { rate: 0.95, symbol: "€" },
+		GBP: { rate: 0.63, symbol: "£" }
+	};
+
+	var model = {
+		selectedMovie: -1,
+		currency: "US",
+		convertedPrice: function(index, curCode) {
+			var currency = currencies[curCode];
+			if ( index >= 0) {
+				return currency.symbol + parseFloat(this.movies[index].ticketPrice * currency.rate).toFixed(2);
+			}
+		},
+		movies: [
+			{
+				title: "The Red Violin",
+				ticketPrice: 18
+			},
+			{
+				title: "The Inheritance",
+				ticketPrice: 16.5
+			},
+			{
+				title: "The Incredible Hulk",
+				ticketPrice: 21.99
+			}
+		]
+	};
+
+	$("#moviePriceTemplate").link( model, "#moviePrices", {currencies: currencies} );
+</script>
+</body>
+</html>

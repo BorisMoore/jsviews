@@ -39,16 +39,10 @@ var people = [
 	}
 ];
 
-// Compile template
-$.templates( "personTmpl", "#personTmpl" );
+// Render and link: data-link people to the
+// details container, using the personTmpl template
 
-// Render to string, and insert as HTML
-$( "#details" ).html(
-	$.render.personTmpl( people )
-)
-
-// ... and data-link to people
-$.link( "#details", people , {link:0});
+$( "#personTmpl" ).link( people, "#details" );
 
 </script>
 
@@ -67,16 +61,10 @@ $.link( "#details", people , {link:0});
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-// Compile template
-$.templates( "personTmpl", "#personTmpl" );
+// Render and link: data-link people to the
+// details container, using the personTmpl template
 
-// Render to string, and insert as HTML
-$( "#details" ).html(
-    $.render.personTmpl( people )
-);
-
-// ... and data-link to people
-$.link( "#details", people );
+$( "#personTmpl" ).link( people, "#details" );
 </pre>
 
 

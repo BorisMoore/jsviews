@@ -70,16 +70,17 @@ Click for details:
 					{ name: "Dutch" }
 				]
 			}
-		],
+		];
 
-		detailTemplate = $.templates( "#detailTemplate" ),
-
-		summaryTemplate = $.templates( "#summaryTemplate" );
+		$.templates({
+			detailTemplate: "#detailTemplate",
+			summaryTemplate: "#summaryTemplate"
+		});
 
 	function unselect() {
 		/* Switch template of the selected view back to the summary template */
 		if ( selectedSubView ) {
-			selectedSubView.tmpl = summaryTemplate;
+			selectedSubView.tmpl = "summaryTemplate";
 			selectedSubView.render();
 			selectedSubView = null;
 		}
@@ -96,7 +97,7 @@ Click for details:
 			selectedSubView = $.view(this);
 
 			/* Switch the template on this view to the detail template */
-			selectedSubView.tmpl = detailTemplate;
+			selectedSubView.tmpl = "detailTemplate";
 			selectedSubView.render();
 		})
 
@@ -107,7 +108,7 @@ Click for details:
 		});
 
 	/* Render the movies array as data-linked content under the movieList <ul>, using the summaryTemplate */
-	summaryTemplate.link( "#movieList", movies );
+	$.link.summaryTemplate( movies, "#movieList" );
 
 </script>
 </body>

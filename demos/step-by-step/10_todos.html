@@ -120,8 +120,8 @@
 	});
 
 //	Link UI, and handle changes to 'done' and 'content' properties of Todo items
-	$.link.itemTemplate( "#todo-list", todos.items );
-	$.link( "#todo-stats", todos );
+	$.link.itemTemplate( todos.items, "#todo-list" );
+	$.link( todos, "#todo-stats" );
 
 	// UI Event bindings
 	$( "#new-todo" ).keypress( function( ev ) {

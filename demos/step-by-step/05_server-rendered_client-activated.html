@@ -24,74 +24,46 @@
 <table>
 	<thead><tr><th>Title</th><th>Languages</th><th><span id="addMovieBtn">Add</span></th></tr></thead>
 	<tbody id="movieList">
-		<!--tmpl(,_0) movieTmpl-->
-		<!--item-->
 		<tr style="background-color: yellow;" class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
 			<td>
 				<span data-link="#index+1">1</span>:
 				<span data-link="title">Meet Joe Black</span>
 			</td>
 			<td>
-			<!--tmpl(data.languages,_1) movieTmpl[0]-->
-			<!--item-->
 				<div data-link="name">English</div>
-			<!--/item-->
-			<!--item-->
 				<div data-link="name">French</div>
-			<!--/item-->
-			<!--/tmpl-->
 			</td>
 			<td>
-				<img class="close" src="../resources/close.png">
+				<img class="close" src="../resources/close.png"></img>
 			</td>
 		</tr>
-		<!--/item-->
-		<!--item-->
 		<tr style="background-color: rgb(253, 253, 254);" class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
 			<td>
 				<span data-link="$view[index]+1">2</span>:
 				<span data-link="title">Eyes Wide Shut</span>
 			</td>
 			<td>
-			<!--tmpl(data.languages,_2) movieTmpl[0]-->
-			<!--item-->
 				<div data-link="name">French</div>
-			<!--/item-->
-			<!--item-->
 				<div data-link="name">German</div>
-			<!--/item-->
-			<!--item-->
 				<div data-link="name">Spanish</div>
-			<!--/item-->
-			<!--/tmpl-->
 			</td>
 			<td>
-				<img class="close" src="../resources/close.png">
+				<img class="close" src="../resources/close.png"></img>
 			</td>
 		</tr>
-		<!--/item-->
-		<!--/tmpl-->
 	</tbody>
 </table>
 
 <div id="movieDetail">
-	<!--tmpl(,_3) detailTmpl-->
 	<div>
 		<div class="title">Title:</div>
 		<div><input value="Meet Jo Black" data-link="title" ></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>
-		<!--tmpl(data.languages,_4) detailTmpl[0]-->
-		<!--item-->
-			<input value="English" data-link="name" ><img class="close" src="../resources/close.png">
-		<!--/item-->
-		<!--item-->
-			<input value="French" data-link="name" ><img class="close" src="../resources/close.png">
-		<!--/item-->
-		<!--/tmpl-->
+			<input value="English" data-link="name" ><img class="close" src="../resources/close.png"></img>
+			<input value="French" data-link="name" ><img class="close" src="../resources/close.png"></img>
 		</div>
 	</div>
-	<!--/tmpl-->
 </div>
 
 <script id="movieTemplate" type="text/x-jsrender">
@@ -106,7 +78,7 @@
 			{{/for}}
 		</td>
 		<td>
-			<img class="close" src="../resources/close.png" />
+			<img class="close" src="../resources/close.png"></img>
 		</td>
 	</tr>
 </script>
@@ -118,7 +90,7 @@
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>
 			{{for languages}}
-				<input data-link="name" /><img class="close" src="../resources/close.png" />
+				<input data-link="name" /><img class="close" src="../resources/close.png"></img>
 			{{/for}}
 		</div>
 	</div>
@@ -207,7 +179,7 @@
 			if ( args.path === "selectedItem" ) {
 				var selectedView = args.value;
 				if ( selectedView ) {
-					$.link.detailTmpl( "#movieDetail", selectedView.data );
+					$.link.detailTmpl( selectedView.data, "#movieDetail" );
 				} else {
 					$( "#movieDetail" ).empty();
 				}
@@ -222,7 +194,7 @@
 			app: app
 		});
 
-		$.link.movieTmpl( "#movieList", movies );
+		$.link.movieTmpl( movies, "#movieList" );
 
 		// Set selection on the last item
 		select( $.view( "#movieList tr:last" ));
@@ -230,7 +202,7 @@
 	}
 
 	function select( view ) {
-		if ( app.selectedItem != view ) {
+		if ( app.selectedItem !== view ) {
 			$.observable( app ).setProperty( "selectedItem", view );
 		}
 	}
