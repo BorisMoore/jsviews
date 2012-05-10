@@ -7,7 +7,7 @@
  * Copyright 2012, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 7
+// informal pre beta commit counter: 8
 
 this.jQuery && jQuery.link || (function( global, undefined ) {
 // global is the this object, which is window when running in the usual browser environment.
@@ -37,6 +37,7 @@ var versionNumber = "v1.0pre",
 		html: "html",
 		text: "text"
 	},
+	valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value" }};
 	oldCleanData = $.cleanData,
 	oldJsvDelimiters = jsv.delimiters,
 
@@ -249,13 +250,16 @@ function linkedView( view, parentElem, prevNode, parentElViews ) {
 			}
 			views = view.parent.views;
 			if ( $.isArray( views ))  {
-				i = view.index;
+				i = view.key;
 				viewsCount = views.length;
 				while ( i++ < viewsCount-1 ) {
 					observable( views[ i ] ).setProperty( "index", i );
 				}
 			}
 			setArrayChangeLink( view );
+		}
+		if ( view.tmpl.presenter ) {
+			view.presenter = new view.tmpl.presenter( view.ctx, view );
 		}
 	}
 	return view;
@@ -299,7 +303,7 @@ function view_render( context ) {
 		self.removeViews();
 		self.nodes = [];
 
-		renderAndLink( self, self.index, self.parent.views, self.data, tmpl.render( self.data, context, undefined, TRUE, self ), context );
+		renderAndLink( self, self.key, self.parent.views, self.data, tmpl.render( self.data, context, undefined, TRUE, self ), context );
 		setArrayChangeLink( self );
 	}
 	return self;
@@ -452,7 +456,7 @@ function view_link( data, parentNode, context, prevNode, nextNode, index ) {
 	parentNode = ("" + parentNode === parentNode ? $( parentNode )[0] : parentNode);
 
 	function linkSiblings( parent, prev, next, top ) {
-		var view, isElem, type, key, parentElViews, nextSibling, onAfterCreate;
+		var view, isElem, type, key, parentElViews, nextSibling, onAfterCreate, open;
 
 		// If we are linking the parent itself (not just content from first onwards) then bind also the data-link attributes
 		if ( prev === undefined ) {
@@ -722,28 +726,12 @@ $.extend( jsv, {
 	linkAttr: "data-link",
 	merge: {
 		input: {
-			from: {
-				fromAttr: inputAttrib
-			},
-			to: {
-				toAttr: "value"
-			}
+			from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
 		},
-		select: {
-			from: {
-				fromAttr: "value"
-			},
-			to: {
-				toAttr: "value"
-			}
-		},
+		textarea: valueBinding,
+		select: valueBinding,
 		optgroup: {
-			from: {
-				fromAttr: "label"
-			},
-			to: {
-				toAttr: "label"
-			}
+			from: { fromAttr: "label" }, to: { toAttr: "label" }
 		}
 	},
 	delimiters: function( openChars, closeChars ) {
@@ -887,7 +875,7 @@ $.extend({
 					while( l-- ) {
 						view = collData[ l ];
 						if ( view.parent === parentView ) {
-							parentView.removeViews( view.index );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
+							parentView.removeViews( view.key );  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
 						}
 					}
 				}

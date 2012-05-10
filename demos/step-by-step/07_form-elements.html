@@ -16,21 +16,43 @@
 <div id="moviePrices"></div>
 
 <script id="moviePriceTemplate" type="text/x-jsrender">
-	<div class="subhead">Choose a movie</div>
+	<h4>Purchase a movie ticket</h4>
 
-	<select id="selTheater" data-link="selectedMovie">
-		<option value="-1">Choose...</option>
-		{{for movies}}
-			<option value="{{:#index}}">{{:title}}</option>
-		{{/for}}
-	</select>
+	<div class="box">
+		<div class="subhead">Choose a movie</div>
 
-	<div data-link="visible{:selectedMovie > -1}">
-		<p>
-			<b>Ticket Price:</b> <span data-link="convertedPrice(selectedMovie, currency)" />
-		</p>
+		<select id="selTheater" data-link="selectedMovie">
+			<option value="none">Choose...</option>
+			{{for movies}}
+				<option value="{{:#index}}">{{:title}}</option>
+			{{/for}}
+		</select>
 
-		<p>Currency Picker: <input type="checkbox" data-link="chooseCurrency" /></p>
+		<div data-link="visible{: selectedMovie!=='none' }">
+
+			<div class="subhead">Name:</div>
+			<div><input data-link="name" /></div>
+
+			<div class="subhead">Special requests:</div>
+			<div><textarea data-link="request" rows="4" cols="25" /></div>
+
+		</div>
+
+	</div>
+
+	<div data-link="visible{: ~and(selectedMovie!=='none', name) }">
+
+		<h3>Ticket order</h3>
+
+		<div class="box" data-link="visible{:name}">
+			<div>Ticket for <em data-link="name" /> to movie: <em data-link="~selectedTitle(selectedMovie)" /></div>
+			<div data-link="visible{:request}"><em>Your special request:</em> <pre data-link="request" ></pre></div>
+			<div>
+				<b>Ticket Price:</b> <span data-link="convertedPrice(selectedMovie, currency)" />
+			</div>
+		</div>
+
+		<div>Currency Picker: <input type="checkbox" data-link="chooseCurrency" /></div>
 
 		<div class="box" data-link="visible{:chooseCurrency}">
 			<div class="subhead">Choose Currency:</div>
@@ -38,6 +60,7 @@
 			<input type="radio" name="currencyPicker" value="EUR" data-link="currency" />Euro<br/>
 			<input type="radio" name="currencyPicker" value="GBP" data-link="currency" />Pound<br/>
 		</div>
+
 	</div>
 </script>
 
@@ -49,7 +72,8 @@
 	};
 
 	var model = {
-		selectedMovie: -1,
+		name: "",
+		selectedMovie: "none",
 		currency: "US",
 		convertedPrice: function(index, curCode) {
 			var currency = currencies[curCode];
@@ -72,8 +96,17 @@
 			}
 		]
 	};
+	contextHelpers = {
+		currencies: currencies,
+		selectedTitle: function(selectedMovie) {
+			return (selectedMovie!=="none") ? model.movies[selectedMovie].title : "";
+		},
+		and: function(a, b) {
+			return !!a && !!b;
+		}
+	}
 
-	$("#moviePriceTemplate").link( model, "#moviePrices", {currencies: currencies} );
+	$("#moviePriceTemplate").link( model, "#moviePrices", contextHelpers );
 </script>
 </body>
 </html>
