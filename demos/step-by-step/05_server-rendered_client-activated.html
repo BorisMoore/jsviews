@@ -13,6 +13,9 @@
 
 <h3>Server rendered content, activated in client. With client data 'delta'...</h3>
 
+<div class="box label">This sample illustrates static content on the page that could have been server-rendered from data.<br />
+Activation would be run only if JavaScript is enabled in the browser (simulated here by clicking on the 'Activate' button)<br />
+- enabling an 'Unobtrusive JavaScript' approach.</div>
 <div class="buttons">
 	<button onclick="activate()">Activate</button>
 	<button onclick="showData()">show data</button>
@@ -97,7 +100,8 @@
 </script>
 
 <script type="text/javascript">
-	var activated = false,
+	var counter = 0,
+		activated = false,
 		app = {
 			selectedItem: null
 		},
@@ -152,7 +156,7 @@
 			.on( "click", "#addLanguageBtn", function() {
 				var languages = $.view( this ).data.languages;
 				$.observable( languages ).insert( languages.length, {
-					name: "NewLanguage"
+					name: "NewLanguage" + counter++
 				});
 			})
 
@@ -165,9 +169,9 @@
 
 		$( "#addMovieBtn" ).click( function() {
 			$.observable( movies ).insert( movies.length, {
-				title: "NewTitle",
+				title: "NewTitle" + counter,
 				languages: [
-					{ name: "NewLanguage" }
+					{ name: "NewLanguage" + counter++ }
 				]}
 			);
 

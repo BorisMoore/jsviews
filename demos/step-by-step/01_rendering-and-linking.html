@@ -18,7 +18,7 @@
 
 <!--Note that a template does not have to include HTML elements-->
 <script id="textOnlyTemplate" type="text/x-jsrender">
-	- {{:name}}({{:releaseYear}})
+	- {{:name}} ({{:releaseYear}})
 </script>
 
 <h3>Rendering templates, and linking to changes in data:</h3>
@@ -45,11 +45,12 @@
 
 <script type="text/javascript">
 
-	var movies = [
-		{ name: "The Red Violin", releaseYear: "1998" },
-		{ name: "Eyes Wide Shut", releaseYear: "1999" },
-		{ name: "The Inheritance", releaseYear: "1976" }
-	];
+	var counter = 0,
+		movies = [
+			{ name: "The Red Violin", releaseYear: "1998" },
+			{ name: "Eyes Wide Shut", releaseYear: "1999" },
+			{ name: "The Inheritance", releaseYear: "1976" }
+		];
 
 	// JsRender: Render the template with the movies data and insert
 	// the rendered HTML under the "movieList" element
@@ -73,7 +74,7 @@
 	// Modify the data
 	function addMovie() {
 		$.observable( movies ).insert( movies.length, {
-			name: "NewTitle",
+			name: "NewTitle" + counter++,
 			releaseYear: "YYYY"
 		});
 	}

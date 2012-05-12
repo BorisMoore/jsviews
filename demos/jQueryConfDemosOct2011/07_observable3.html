@@ -42,14 +42,15 @@
 <!--====== Script ======-->
 <script type="text/javascript">
 
-var people = [
-	{
-		firstName: "Jeff"
-	},
-	{
-		firstName: "Rebecca"
-	}
-];
+var counter = 0,
+	people = [
+		{
+			firstName: "Jeff"
+		},
+		{
+			firstName: "Rebecca"
+		}
+	];
 
 // Compile templates
 $.templates({
@@ -66,8 +67,8 @@ $( "#insertPerson" ).click( function() {
 	$.observable( people ).insert(
 		1, // insert at index 1
 		[
-			{ firstName: "NewPerson" },
-			{ firstName: "NewPerson2" }
+			{ firstName: "NewPerson" + counter++ },
+			{ firstName: "NewPerson" + counter++ }
 		]);
 });
 

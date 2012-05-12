@@ -58,7 +58,8 @@
 </script>
 
 <script type="text/javascript">
-	var app = {
+	var counter = 0,
+		app = {
 			selectedItem: null
 		},
 
@@ -100,7 +101,7 @@
 		.on( "click", "#addLanguageBtn", function() {
 			var languages = $.view( this ).data.languages;
 			$.observable( languages ).insert( languages.length, {
-				name: "NewLanguage"
+				name: "NewLanguage" + counter++
 			});
 		})
 
@@ -113,9 +114,9 @@
 
 	$( "#addMovieBtn" ).click( function() {
 		$.observable( movies ).insert( movies.length, {
-			title: "NewTitle",
+			title: "NewTitle" + counter ,
 			languages: [
-				{ name: "NewLanguage" }
+				{ name: "NewLanguage" + counter++ }
 			]}
 		);
 
