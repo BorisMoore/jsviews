@@ -86,17 +86,6 @@
 		detailTmpl: "#detailViewTemplate"
 	});
 
-	$( "#movieList" )
-		.on( "click", "tr", function() {
-			select( $.view( this ));
-		})
-
-		.on( "click", ".close", function() {
-			select();
-			$.observable( movies ).remove( $.view( this ).index, 1 );
-			return false;
-		});
-
 	$( "#movieDetail" )
 		.on( "click", "#addLanguageBtn", function() {
 			var languages = $.view( this ).data.languages;
@@ -144,7 +133,15 @@
 		app: app
 	});
 
-	$.link.movieTmpl( movies, "#movieList" );
+	$.link.movieTmpl( movies, "#movieList" )
+		.on( "click", "tr", function() {
+			select( $.view( this ));
+		})
+		.on( "click", ".close", function() {
+			select();
+			$.observable( movies ).remove( $.view( this ).index, 1 );
+			return false;
+		});
 
 	function select( view ) {
 		if ( app.selectedItem !== view ) {

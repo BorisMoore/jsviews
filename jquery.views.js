@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 9
+// informal pre beta commit counter: 10
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -572,6 +572,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			}
 			parentView.link(data, containerEl, context, prevNode, nextNode, index);
 		}
+		return container; // Allow chaining, to attach event handlers, etc.
 	}
 
 	function bindDataLinkAttributes(node, currentView, data) {
@@ -701,7 +702,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	sub.onStoreItem = function(store, name, item, process) {
 		if (item && store === templates) {
 			item.link = function() {
-				$.link.apply(item, arguments);
+				return $.link.apply(item, arguments);
 			};
 			if (name) {
 				$.link[name] = item.link;
