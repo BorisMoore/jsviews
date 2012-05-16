@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 10
+// informal pre beta commit counter: 11
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -16,33 +16,34 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-	rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
-	$ = global.jQuery,
+		rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
+		$ = global.jQuery,
 
-	// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
-	jsv = $.views,
-	sub = jsv.sub,
-	FALSE = false, TRUE = true, NULL = null,
-	topView = jsv.topView,
-	templates = jsv.templates,
-	observable = $.observable,
-	jsvData = "_jsvData",
-	linkStr = "link",
-	viewStr = "view",
-	propertyChangeStr = "propertyChange",
-	arrayChangeStr = "arrayChange",
-	fnSetters = {
-		value: "val",
-		input: "val",
-		html: "html",
-		text: "text"
-	},
-	valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} };
-	oldCleanData = $.cleanData,
-	oldJsvDelimiters = jsv.delimiters,
+		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
+		jsv = $.views,
+		sub = jsv.sub,
+		FALSE = false, TRUE = true, NULL = null,
+		topView = jsv.topView,
+		templates = jsv.templates,
+		observable = $.observable,
+		jsvData = "_jsvData",
+		linkStr = "link",
+		viewStr = "view",
+		propertyChangeStr = "propertyChange",
+		arrayChangeStr = "arrayChange",
+		fnSetters = {
+			value: "val",
+			input: "val",
+			html: "html",
+			text: "text"
+		},
+		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} };
+		oldCleanData = $.cleanData,
+		oldJsvDelimiters = jsv.delimiters,
 
-	rStartTag = /^jsvi|^jsv:/,
-	rFirstElem = /^\s*<(\w+)[>\s]/;
+		rStartTag = /^jsvi|^jsv:/,
+		rFirstElem = /^\s*<(\w+)[>\s]/;
+
 	if (!$) {
 		// jQuery is not loaded.
 		throw "requires jQuery"; // for Beta (at least) we require jQuery
@@ -60,11 +61,11 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function elemChangeHandler(ev) {
 		var setter, cancel, fromAttr, to, linkContext, sourceValue, cnvtBack, target,
-		source = ev.target,
-		$source = $(source),
-		view = $.view(source),
-		context = view.ctx,
-		beforeChange = context.beforeChange;
+			source = ev.target,
+			$source = $(source),
+			view = $.view(source),
+			context = view.ctx,
+			beforeChange = context.beforeChange;
 
 		if (source.getAttribute(jsv.linkAttr) && (to = jsViewsData(source, "to"))) {
 			fromAttr = defaultAttr(source);
@@ -100,14 +101,14 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function propertyChangeHandler(ev, eventArgs, bind) {
 		var setter, changed, sourceValue, css, prev,
-		link = this,
-		source = link.src,
-		target = link.tgt,
-		$target = $(target),
-		attr = link.attr || defaultAttr(target, TRUE), // attr for binding data value to the element
-		view = link.view,
-		context = view.ctx,
-		beforeChange = context.beforeChange;
+			link = this,
+			source = link.src,
+			target = link.tgt,
+			$target = $(target),
+			attr = link.attr || defaultAttr(target, TRUE), // attr for binding data value to the element
+			view = link.view,
+			context = view.ctx,
+			beforeChange = context.beforeChange;
 
 		// TODO for <input data-link="a.b" />
 		//Currently the following scenarios do work:
@@ -179,7 +180,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function arrayChangeHandler(ev, eventArgs) {
 		var context = this.ctx,
-		beforeChange = context.beforeChange;
+			beforeChange = context.beforeChange;
 
 		if (!beforeChange || beforeChange.call(this, ev, eventArgs) !== FALSE) {
 			this._onDataChanged(eventArgs);
@@ -191,8 +192,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function setArrayChangeLink(view) {
 		var handler,
-		data = view.data,
-		onArrayChange = view._onArrayChange;
+			data = view.data,
+			onArrayChange = view._onArrayChange;
 
 		if (onArrayChange) {
 			if (onArrayChange[1] === data) {
@@ -271,9 +272,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		if (eventArgs) {
 			// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
 			var self = this,
-			action = eventArgs.change,
-			index = eventArgs.index,
-			items = eventArgs.items;
+				action = eventArgs.change,
+				index = eventArgs.index,
+				items = eventArgs.items;
+
 			switch (action) {
 				case "insert":
 					self.addViews(index, items);
@@ -294,7 +296,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function view_render(context) {
 		var self = this,
-		tmpl = self.tmpl = getTemplate(self.tmpl);
+			tmpl = self.tmpl = getTemplate(self.tmpl);
 
 		if (tmpl) {
 			// Remove HTML nodes
@@ -321,15 +323,15 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function renderAndLink(view, index, views, data, html, context) {
 		var prevView, prevNode, linkToNode, linkFromNode,
-		elLinked = !view._prevNode;
-		parentNode = view.parentElem;
+			elLinked = !view._prevNode;
+			parentNode = view.parentElem;
 
 		if (index && ("" + index !== index)) {
 			prevView = views[index - 1];
 			if (!prevView) {
 				return; // If subview for provided index does not exist, do nothing
 			}
-			prevNode = elLinked ? prevView._following : prevView._nextNode;
+			prevNode = elLinked ? prevView._following : view._prevNode;
 		} else {
 			prevNode = elLinked ? view._preceding : view._prevNode;
 		}
@@ -357,24 +359,31 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		// view.removeViews() removes all the child views
 		// view.removeViews( index ) removes the child view with specified index or key
 		// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
-		function removeView(index) {
+		function removeView(index, parElVws) {
 			var i,
-			view = views[index],
-			node = view._prevNode,
-			nextNode = view._nextNode,
-			nodes = node
-				? [node]
-			// view._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
-				: view.nodes;
-			i = parentElViews.length;
+				viewToRemove = views[index],
+				node = viewToRemove._prevNode,
+				nextNode = viewToRemove._nextNode,
+				nodes = node
+					? [node]
+			// viewToRemove._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
+					: viewToRemove.nodes;
+
+			// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
+			// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
+			parElVws = parElVws || jsViewsData(viewToRemove.parentElem, viewStr);
+
+			i = parElVws.length;
+
 			if (i) {
-				view.removeViews();
+				// remove child views of the view being removed
+				viewToRemove.removeViews();
 			}
 
 			// Remove this view from the parentElViews collection
 			while (i--) {
-				if (parentElViews[i] === view) {
-					parentElViews.splice(i, 1);
+				if (parElVws[i] === viewToRemove) {
+					parElVws.splice(i, 1);
 					break;
 				}
 			}
@@ -384,50 +393,53 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				nodes.push(node);
 			}
 			$(nodes).remove();
-			view.data = undefined;
-			setArrayChangeLink(view);
+			viewToRemove.data = undefined;
+			setArrayChangeLink(viewToRemove);
 		}
 
-		var current,
-		self = this,
-		views = self.views,
-		viewsCount = views.length,
-		parentElViews = parentElViews || jsViewsData(self.parentElem, viewStr);
+		var current, viewsCount, parentElViews,
+			self = this,
+			isArray = self.isArray,
+			views = self.views;
 
+		if (isArray) {
+			viewsCount = views.length;
+			parentElViews = jsViewsData(self.parentElem, viewStr);
+		}
 		if (index === undefined) {
 			// Remove all child views
-			if (viewsCount === undefined) {
+			if (isArray) {
+				// views and data are arrays
+				current = viewsCount;
+				while (current--) {
+					removeView(current, parentElViews);
+				}
+				self.views = [];
+			} else {
 				// views and data are objects
 				for (index in views) {
 					// Remove by key
 					removeView(index);
 				}
 				self.views = {};
-			} else {
-				// views and data are arrays
-				current = viewsCount;
-				while (current--) {
-					removeView(current);
-				}
-				self.views = [];
 			}
 		} else {
 			if (itemsCount === undefined) {
-				if (viewsCount === undefined) {
-					// Remove child view with key 'index'
-					removeView(index);
-					delete views[index];
-				} else {
+				if (isArray) {
 					// The parentView is data array view.
 					// Set itemsCount to 1, to remove this item
 					itemsCount = 1;
+				} else {
+					// Remove child view with key 'index'
+					removeView(index);
+					delete views[index];
 				}
 			}
-			if (itemsCount) {
+			if (isArray && itemsCount) {
 				current = index + itemsCount;
 				// Remove indexed items (parentView is data array view);
 				while (current-- > index) {
-					removeView(current);
+					removeView(current, parentElViews);
 				}
 				views.splice(index, itemsCount);
 				if (viewsCount = views.length) {
@@ -451,8 +463,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function view_link(data, parentNode, context, prevNode, nextNode, index) {
 		var self = this,
-		views = self.views;
+			views = self.views;
+
 		index = index || 0;
+
 		parentNode = ("" + parentNode === parentNode ? $(parentNode)[0] : parentNode);
 
 		function linkSiblings(parent, prev, next, top) {
@@ -530,14 +544,15 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				tgt: data
 			}, arguments);
 		}
+		container = container.jquery && !container.nodeType ? container : $(container);
+		// If already a jquery object, no need to wrap again as new object
 
-		container = $(container);
-
-		var html, target, 
+		var html, target,
 			self = this,
 			onRender = addLinkAnnotations,
 			containerEl = container[0],
 			tmpl = self.markup && self || self.jquery && $.templates(self[0]);
+			// if this is a tmpl, or a jQuery object containing an element with template content, get the compiled template
 
 		if (containerEl) {
 			parentView = parentView || $.view(containerEl);
@@ -636,10 +651,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	function bindDataLinkTarget(source, target, attr, linkFn, view) {
 		//Add data link bindings for a link expression in data-link attribute markup
 		var boundParams = [],
-		storedLinks = jsViewsData(target, linkStr, TRUE),
-		handler = function() {
-			propertyChangeHandler.apply({ tgt: target, src: source, attr: attr, fn: linkFn, view: view }, arguments);
-		};
+			storedLinks = jsViewsData(target, linkStr, TRUE),
+			handler = function() {
+				propertyChangeHandler.apply({ tgt: target, src: source, attr: attr, fn: linkFn, view: view }, arguments);
+			};
 
 		// Store for unbinding
 		storedLinks[attr] = { srcs: boundParams, hlr: handler };
@@ -712,9 +727,9 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function addLinkAnnotations(value, tmpl, props, key, path) {
 		var elemAnnotation,
-		tag = tmpl.tag,
-		linkInfo = "i",
-		closeToken = "/i";
+			tag = tmpl.tag,
+			linkInfo = "i",
+			closeToken = "/i";
 
 		if (!tag) {
 			tag = rFirstElem.exec(tmpl.markup);
@@ -776,8 +791,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 			node = ("" + node === node ? $(node)[0] : node);
 			var returnView, view, parentElViews, i, j, finish, elementLinked,
-			topNode = global.document.body,
-			startNode = node;
+				topNode = global.document.body,
+				startNode = node;
 
 			if (inner) {
 				// Treat supplied node as a container element, step through content, and return the first view encountered.
@@ -866,7 +881,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		//=======================
 		cleanData: function(elems) {
 			var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
-			i = elems.length;
+				i = elems.length;
+
 			while (i--) {
 				el = elems[i];
 				if (linksAndViews = $.data(el, jsvData)) {
