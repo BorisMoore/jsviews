@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 11
+// informal pre beta commit counter: 12
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -312,26 +312,26 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	}
 
 	function view_addViews(index, dataItems, tmpl) {
+		// if view is not an Array View, do nothing
 		var self = this;
-
-		if (dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
+		if ( self.isArray && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
 			// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
-			renderAndLink(self, index, self.views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx);
+			renderAndLink(self, index, self.views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx, TRUE);
 		}
 		return self;
 	}
 
-	function renderAndLink(view, index, views, data, html, context) {
+	function renderAndLink(view, index, views, data, html, context, addingViewToParent) {
 		var prevView, prevNode, linkToNode, linkFromNode,
 			elLinked = !view._prevNode;
 			parentNode = view.parentElem;
 
 		if (index && ("" + index !== index)) {
-			prevView = views[index - 1];
-			if (!prevView) {
+			if (!views[index]) {
 				return; // If subview for provided index does not exist, do nothing
 			}
-			prevNode = elLinked ? prevView._following : view._prevNode;
+			prevView = views[index - 1];
+			prevNode = elLinked ? prevView._following : addingViewToParent ? prevView._nextNode : view._prevNode;
 		} else {
 			prevNode = elLinked ? view._preceding : view._prevNode;
 		}
@@ -492,9 +492,11 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					if (open) {
 						// open view
 						open = open.slice(1);
+						// If this is a template open, use the key. It it is an item open, use the index, and increment
 						key = open || index++;
 						parentElViews = parentElViews || jsViewsData(parent, viewStr, TRUE);
-						view = linkedView(self.views[key], parent, node, parentElViews); // Extend and initialize the view object created in JsRender, as a JsViews view
+						// Extend and initialize the view object created in JsRender, as a JsViews view
+						view = linkedView(self.views[key], parent, node, parentElViews);
 						if (isElem && open) {
 							// open tmpl
 							view._preceding = nextSibling.previousSibling;
@@ -883,6 +885,9 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
 				i = elems.length;
 
+//TODO - this is only removing views whose parentElem is being removed. Not views whose prevNode nodes and next node are being removed,
+// but whose parentElem is not being removed. This needs to be fixed. In particular, calling link(data, container) twice will add new views, without removing the old ones.
+// Consider unlink method, to do this.
 			while (i--) {
 				el = elems[i];
 				if (linksAndViews = $.data(el, jsvData)) {
