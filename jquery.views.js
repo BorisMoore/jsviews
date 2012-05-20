@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 12
+// informal pre beta commit counter: 13
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -16,7 +16,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-		rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
+		LinkedView, rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
 		$ = global.jQuery,
 
 		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
@@ -31,6 +31,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		viewStr = "view",
 		propertyChangeStr = "propertyChange",
 		arrayChangeStr = "arrayChange",
+		elementChangeStr = "change.jsv",
 		fnSetters = {
 			value: "val",
 			input: "val",
@@ -157,7 +158,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 						if (attr === "html") {
 							$target[setter](sourceValue);
 							if (eventArgs) {
-								view.link(source, target, undefined, null);
+								view.link(source, target, undefined, NULL);
 								// This is a data-link=html{...} update, so need to link new content
 							}
 						} else {
@@ -199,14 +200,14 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			if (onArrayChange[1] === data) {
 				return;
 			}
-			$([onArrayChange[1]]).unbind(arrayChangeStr, onArrayChange[0]);
+			$([onArrayChange[1]]).off(arrayChangeStr, onArrayChange[0]);
 		}
 
-		if ($.isArray(data)) {
+		if (view.isArray) {
 			handler = function() {
 				arrayChangeHandler.apply(view, arguments);
 			};
-			$([data]).bind(arrayChangeStr, handler);
+			$([data]).on(arrayChangeStr, handler);
 			view._onArrayChange = [handler, data];
 		}
 	}
@@ -228,317 +229,12 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		return value;
 	}
 
-	//===============
-	// view hierarchy
-	//===============
-
-	function linkedView(view, parentElem, prevNode, parentElViews) {
-		var i, views, viewsCount;
-		if (!view.link) {
-			parentElViews && parentElViews.push(view);
-			view.render = view_render;
-			view.link = view_link;
-			view.content = view_content;
-			view.parentElem = parentElem;
-			view.addViews = view_addViews;
-			view.removeViews = view_removeViews;
-			view._onDataChanged = view_onDataChanged;
-			view._prevNode = prevNode;
-			if (view.parent) {
-				if (!$.isArray(view.data)) {
-					view.nodes = [];
-					view._lnk = 0; // compiled link index.
-				}
-				views = view.parent.views;
-				if ($.isArray(views)) {
-					i = view.key;
-					viewsCount = views.length;
-					while (i++ < viewsCount - 1) {
-						observable(views[i]).setProperty("index", i);
-					}
-				}
-				setArrayChangeLink(view);
-			}
-			if (view.tmpl.presenter) {
-				view.presenter = new view.tmpl.presenter(view.ctx, view);
-			}
-		}
-		return view;
+	function unlink(container) {
+		container = $(container); // container was an element or selector
+		container.off(elementChangeStr);
+		clean(container[0]);
 	}
 
-	// Additional methods on view object for linked views (i.e. when JsViews is loaded)
-
-	function view_onDataChanged(eventArgs) {
-		if (eventArgs) {
-			// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
-			var self = this,
-				action = eventArgs.change,
-				index = eventArgs.index,
-				items = eventArgs.items;
-
-			switch (action) {
-				case "insert":
-					self.addViews(index, items);
-					break;
-				case "remove":
-					self.removeViews(index, items.length);
-					break;
-				case "move":
-					self.render(); // Could optimize this
-					break;
-				case "refresh":
-					self.render();
-					// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
-			}
-		}
-		return TRUE;
-	}
-
-	function view_render(context) {
-		var self = this,
-			tmpl = self.tmpl = getTemplate(self.tmpl);
-
-		if (tmpl) {
-			// Remove HTML nodes
-			$(self.nodes).remove(); // Also triggers cleanData which removes child views.
-			// Remove child views
-			self.removeViews();
-			self.nodes = [];
-
-			renderAndLink(self, self.index, self.parent.views, self.data, tmpl.render(self.data, context, undefined, TRUE, self), context);
-			setArrayChangeLink(self);
-		}
-		return self;
-	}
-
-	function view_addViews(index, dataItems, tmpl) {
-		// if view is not an Array View, do nothing
-		var self = this;
-		if ( self.isArray && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
-			// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
-			renderAndLink(self, index, self.views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx, TRUE);
-		}
-		return self;
-	}
-
-	function renderAndLink(view, index, views, data, html, context, addingViewToParent) {
-		var prevView, prevNode, linkToNode, linkFromNode,
-			elLinked = !view._prevNode;
-			parentNode = view.parentElem;
-
-		if (index && ("" + index !== index)) {
-			if (!views[index]) {
-				return; // If subview for provided index does not exist, do nothing
-			}
-			prevView = views[index - 1];
-			prevNode = elLinked ? prevView._following : addingViewToParent ? prevView._nextNode : view._prevNode;
-		} else {
-			prevNode = elLinked ? view._preceding : view._prevNode;
-		}
-
-		if (prevNode) {
-			linkToNode = prevNode.nextSibling;
-			$(prevNode).after(html);
-			prevNode = prevNode.nextSibling;
-		} else {
-			linkToNode = parentNode.firstChild;
-			$(parentNode).prepend(html);
-			prevNode = parentNode.firstChild;
-		}
-		linkFromNode = prevNode && prevNode.previousSibling;
-
-		// Remove the extra tmpl annotation nodes which wrap the inserted items
-		parentNode.removeChild(prevNode);
-		parentNode.removeChild(linkToNode ? linkToNode.previousSibling : parentNode.lastChild);
-
-		// Link the new HTML nodes to the data
-		view.link(data, parentNode, context, linkFromNode, linkToNode, index);
-	}
-
-	function view_removeViews(index, itemsCount) {
-		// view.removeViews() removes all the child views
-		// view.removeViews( index ) removes the child view with specified index or key
-		// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
-		function removeView(index, parElVws) {
-			var i,
-				viewToRemove = views[index],
-				node = viewToRemove._prevNode,
-				nextNode = viewToRemove._nextNode,
-				nodes = node
-					? [node]
-			// viewToRemove._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
-					: viewToRemove.nodes;
-
-			// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
-			// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
-			parElVws = parElVws || jsViewsData(viewToRemove.parentElem, viewStr);
-
-			i = parElVws.length;
-
-			if (i) {
-				// remove child views of the view being removed
-				viewToRemove.removeViews();
-			}
-
-			// Remove this view from the parentElViews collection
-			while (i--) {
-				if (parElVws[i] === viewToRemove) {
-					parElVws.splice(i, 1);
-					break;
-				}
-			}
-			// Remove the HTML nodes from the DOM
-			while (node !== nextNode) {
-				node = node.nextSibling;
-				nodes.push(node);
-			}
-			$(nodes).remove();
-			viewToRemove.data = undefined;
-			setArrayChangeLink(viewToRemove);
-		}
-
-		var current, viewsCount, parentElViews,
-			self = this,
-			isArray = self.isArray,
-			views = self.views;
-
-		if (isArray) {
-			viewsCount = views.length;
-			parentElViews = jsViewsData(self.parentElem, viewStr);
-		}
-		if (index === undefined) {
-			// Remove all child views
-			if (isArray) {
-				// views and data are arrays
-				current = viewsCount;
-				while (current--) {
-					removeView(current, parentElViews);
-				}
-				self.views = [];
-			} else {
-				// views and data are objects
-				for (index in views) {
-					// Remove by key
-					removeView(index);
-				}
-				self.views = {};
-			}
-		} else {
-			if (itemsCount === undefined) {
-				if (isArray) {
-					// The parentView is data array view.
-					// Set itemsCount to 1, to remove this item
-					itemsCount = 1;
-				} else {
-					// Remove child view with key 'index'
-					removeView(index);
-					delete views[index];
-				}
-			}
-			if (isArray && itemsCount) {
-				current = index + itemsCount;
-				// Remove indexed items (parentView is data array view);
-				while (current-- > index) {
-					removeView(current, parentElViews);
-				}
-				views.splice(index, itemsCount);
-				if (viewsCount = views.length) {
-					// Fixup index on following view items...
-					while (index < viewsCount) {
-						observable(views[index]).setProperty("index", index++);
-					}
-				}
-			}
-		}
-		return this;
-	}
-
-	function view_content(select) {
-		return select ? $(select, this.nodes) : $(this.nodes);
-	}
-
-	//===============
-	// data-linking
-	//===============
-
-	function view_link(data, parentNode, context, prevNode, nextNode, index) {
-		var self = this,
-			views = self.views;
-
-		index = index || 0;
-
-		parentNode = ("" + parentNode === parentNode ? $(parentNode)[0] : parentNode);
-
-		function linkSiblings(parent, prev, next, top) {
-			var view, isElem, type, key, parentElViews, nextSibling, onAfterCreate, open;
-
-			// If we are linking the parent itself (not just content from first onwards) then bind also the data-link attributes
-			if (prev === undefined) {
-				bindDataLinkAttributes(parent, self, data);
-			}
-
-			node = (prev && prev.nextSibling) || parent.firstChild;
-			while (node && node !== next) {
-				type = node.nodeType;
-				isElem = type === 1;
-				nextSibling = node.nextSibling;
-				if (isElem && (linkInfo = node.getAttribute("jsvtmpl")) || type === 8 && (linkInfo = node.nodeValue.split("jsv")[1])) {
-					open = linkInfo.charAt(0) !== "/" && linkInfo;
-					if (isElem) {
-						isElem = node.tagName;
-						parent.removeChild(node);
-						node = NULL;
-					}
-					if (open) {
-						// open view
-						open = open.slice(1);
-						// If this is a template open, use the key. It it is an item open, use the index, and increment
-						key = open || index++;
-						parentElViews = parentElViews || jsViewsData(parent, viewStr, TRUE);
-						// Extend and initialize the view object created in JsRender, as a JsViews view
-						view = linkedView(self.views[key], parent, node, parentElViews);
-						if (isElem && open) {
-							// open tmpl
-							view._preceding = nextSibling.previousSibling;
-							parentElViews.elLinked = isElem;
-						}
-						nextSibling = view.link(undefined, parent, undefined, nextSibling.previousSibling);  // TODO DATA AND CONTEXT??
-					} else {
-						// close view
-						self._nextNode = node;
-						if (isElem && linkInfo === "/i") {
-							parentNode.insertBefore(self._following = document.createTextNode(" "), nextSibling);
-							// This is the case where there is no white space between items.
-							// Add a text node to act as marker around template insertion point.
-							// (Needed as placeholder when inserting new items following this one).
-						}
-						if (isElem && linkInfo === "/t" && nextSibling && nextSibling.tagName && nextSibling.getAttribute("jsvtmpl")) {
-							// This is the case where there is no white space between items.
-							// Add a text node to act as marker around template insertion point.
-							// (Needed as placeholder when the data array is empty).
-							parentNode.insertBefore(document.createTextNode(" "), nextSibling);
-						}
-						if (onAfterCreate = self.ctx.onAfterCreate) { // TODO DATA AND CONTEXT??
-							onAfterCreate.call(self, self);
-						}
-						return nextSibling;
-					}
-				} else {
-					if (top && self.parent && self.nodes) {
-						// Add top-level nodes to view.nodes
-						self.nodes.push(node);
-					}
-					if (isElem) {
-						linkSiblings(node);
-					}
-				}
-				node = nextSibling;
-			}
-		}
-		return linkSiblings(parentNode, prevNode, nextNode, TRUE);
-	}
-
-	// node, parentView, nextNode, depth, data, context, prevNode, index, parentElViews
 	function link(data, container, context, prevNode, nextNode, index, parentView) {
 		// Bind elementChange on the root element, for links from elements within the content, to data;
 		function dataToElem() {
@@ -546,24 +242,25 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				tgt: data
 			}, arguments);
 		}
-		container = container.jquery && !container.nodeType ? container : $(container);
-		// If already a jquery object, no need to wrap again as new object
+		container = $(container); // container was an element or selector
 
 		var html, target,
 			self = this,
-			onRender = addLinkAnnotations,
 			containerEl = container[0],
+			onRender = addLinkAnnotations,
 			tmpl = self.markup && self || self.jquery && $.templates(self[0]);
 			// if this is a tmpl, or a jQuery object containing an element with template content, get the compiled template
+
 
 		if (containerEl) {
 			parentView = parentView || $.view(containerEl);
 
-			container.bind("change", dataToElem); // TODO WHAT IF ALREADY BOUND here or higher up?
+			unlink(containerEl);
+			container.on(elementChangeStr, dataToElem);
 
 			if (context) {
 				if (parentView.link === FALSE) {
-					context.link = FALSE; // If link=false, don't allow nested context to switch on linking 
+					context.link = FALSE; // If link=false, don't allow nested context to switch on linking
 				}
 				// Set link=false, explicitly, to disable linking within a template nested within a linked template
 				onRender = context.link !== FALSE && onRender;
@@ -573,7 +270,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			}
 
 			if (tmpl) {
+				// Remove previous jsvData on the container elem - e.g. the previous views
+
 				html = tmpl.render(data, context, undefined, undefined, parentView, onRender);
+
 				if (target === "replace") {
 					prevNode = containerEl.previousSibling;
 					nextNode = containerEl.nextSibling;
@@ -673,11 +373,11 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				// For two-way binding, there should be only one path. If not, will bind to the last one.
 			}
 			if ($.isArray(object)) {
-				$([object]).bind(arrayChangeStr, function() {
+				$([object]).on(arrayChangeStr, function() {
 					handler();
 				});
 			} else {
-				$(object).bind(propertyChangeStr, leafToken, handler);
+				$(object).on(propertyChangeStr, NULL, leafToken, handler);
 			}
 			return object;
 		});
@@ -708,6 +408,46 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			}
 		}
 		return tmpl;
+	}
+
+	function clean(elem) {
+		// Remove data-link bindings, or contained views
+
+		// Note that if we remove an element from the DOM which is a top-level node of a view, this code
+		// will NOT remove it from the view.nodes collection. Consider whether we want to support that scenario...
+
+		var l, link, attr, parentView, view, srcs, collData, linksAndViews,
+			jQueryDataOnElement = $.cache[elem[$.expando]];
+
+		// Get jQueryDataOnElement = $.data(elem, jsvData)
+		// (Using a faster but more verbose way of accessing the data - for perf optimization, especially on elements not linked by JsViews)
+		jQueryDataOnElement = jQueryDataOnElement && jQueryDataOnElement.data;
+		linksAndViews = jQueryDataOnElement && jQueryDataOnElement[jsvData];
+
+		if (linksAndViews) {
+			// Get links (propertyChange bindings) on this element and unbind
+			collData = linksAndViews.link;
+			for (attr in collData) {
+				link = collData[attr];
+				srcs = link.srcs;
+				l = srcs.length;
+				while (l--) {
+					$(srcs[l]).off(propertyChangeStr, link.hlr);
+				}
+			}
+
+			// Get views for which this element is the parentElement, and remove from parent view
+			collData = linksAndViews.view;
+			if (l = collData.length) {
+				parentView = $.view(elem);
+				while (l--) {
+					view = collData[l];
+					if (view.parent === parentView) {
+						parentView.removeViews(view.key);
+					}
+				}
+			}
+		}
 	}
 
 	//========================== Initialize ==========================
@@ -747,6 +487,318 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			return elemAnnotation + linkInfo + '"/>' + $.trim(value) + elemAnnotation + closeToken + '"/>';
 		}
 		return "<!--jsv" + linkInfo + "-->" + value + "<!--jsv" + closeToken + "-->";
+	};
+
+	function renderAndLink(view, index, views, data, html, context, addingViewToParent) {
+		var prevView, prevNode, linkToNode, linkFromNode,
+			elLinked = !view._prevNode;
+			parentNode = view.parentElem;
+
+		if (index && ("" + index !== index)) {
+			if (!views[index]) {
+				return; // If subview for provided index does not exist, do nothing
+			}
+			prevView = views[index - 1];
+			prevNode = elLinked ? prevView._after : addingViewToParent ? prevView._nextNode : view._prevNode;
+		} else {
+			prevNode = elLinked ? view._preceding : view._prevNode;
+		}
+
+		if (prevNode) {
+			linkToNode = prevNode.nextSibling;
+			$(prevNode).after(html);
+			prevNode = prevNode.nextSibling;
+		} else {
+			linkToNode = parentNode.firstChild;
+			$(parentNode).prepend(html);
+			prevNode = parentNode.firstChild;
+		}
+		linkFromNode = prevNode && prevNode.previousSibling;
+
+		// Remove the extra tmpl annotation nodes which wrap the inserted items
+		parentNode.removeChild(prevNode);
+		parentNode.removeChild(linkToNode ? linkToNode.previousSibling : parentNode.lastChild);
+
+		// Link the new HTML nodes to the data
+		view.link(data, parentNode, context, linkFromNode, linkToNode, index);
+	}
+
+	//====================================
+	// Additional members for linked views
+	//====================================
+
+	LinkedView = {
+		_onDataChanged: function(eventArgs) {
+			if (eventArgs) {
+				// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
+				var self = this,
+					action = eventArgs.change,
+					index = eventArgs.index,
+					items = eventArgs.items;
+
+				switch (action) {
+					case "insert":
+						self.addViews(index, items);
+						break;
+					case "remove":
+						self.removeViews(index, items.length);
+						break;
+					case "move":
+						self.render(); // Could optimize this
+						break;
+					case "refresh":
+						self.render();
+						// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
+				}
+			}
+			return TRUE;
+		},
+
+		render: function(context) {
+			var self = this,
+				tmpl = self.tmpl = getTemplate(self.tmpl);
+
+			if (tmpl) {
+				// Remove HTML nodes
+				$(self.nodes).remove(); // Also triggers cleanData which removes child views.
+				// Remove child views
+				self.removeViews();
+				self.nodes = [];
+
+				renderAndLink(self, self.index, self.parent.views, self.data, tmpl.render(self.data, context, undefined, TRUE, self), context);
+				setArrayChangeLink(self);
+			}
+			return self;
+		},
+
+		addViews: function(index, dataItems, tmpl) {
+			// if view is not an Array View, do nothing
+			var viewsCount,
+				self = this,
+				views = self.views;
+
+			if ( self.isArray && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
+				// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
+				viewsCount = views.length + dataItems.length;
+				renderAndLink(self, index, views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx, TRUE);
+				while (++index < viewsCount) {
+					observable(views[index]).setProperty("index", index);
+					// TODO - this is fixing up index, but not key, and not index on child views. Consider changing index to be a getter index(),
+					// so we only have to change it on the immediate child view of the Array view, but also so that it notifies all subscriber to #index().
+					// Also have a #context() which can be parameterized to give #parents[#parents.length-1].data or #roots[0]
+					// to get root data, or other similar context getters. Only create an the index on the child view of Arrays, (whether in JsRender or JsViews)
+					// [Otherwise, here, would need to iterate on views[] to set index on children, right down to ArrayViews, which might be too expensive on perf].
+				}
+			}
+			return self;
+		},
+
+		removeViews: function(index, itemsCount) {
+			// view.removeViews() removes all the child views
+			// view.removeViews( index ) removes the child view with specified index or key
+			// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
+			function removeView(index, parElVws) {
+				var i,
+					viewToRemove = views[index],
+					node = viewToRemove._prevNode,
+					nextNode = viewToRemove._nextNode,
+					nodesToRemove = node
+						? [node]
+						// viewToRemove._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
+						: viewToRemove.nodes;
+
+				// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
+				// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
+				parElVws = parElVws || jsViewsData(viewToRemove.parentElem, viewStr);
+
+				i = parElVws.length;
+
+				if (i) {
+					// remove child views of the view being removed
+					viewToRemove.removeViews();
+				}
+
+				// Remove this view from the parentElViews collection
+				while (i--) {
+					if (parElVws[i] === viewToRemove) {
+						parElVws.splice(i, 1);
+						break;
+					}
+				}
+				// Remove the HTML nodes from the DOM, unless they have already been removed
+				while (node && node.parentNode && node !== nextNode) {
+					node = node.nextSibling;
+					nodesToRemove.push(node);
+				}
+				if (viewToRemove._after) {
+					nodesToRemove.push(viewToRemove._after);
+				}
+				$(nodesToRemove).remove();
+				viewToRemove.data = undefined;
+				setArrayChangeLink(viewToRemove);
+			}
+
+			var current, viewsCount, parentElViews,
+				self = this,
+				isArray = self.isArray,
+				views = self.views;
+
+			if (isArray) {
+				viewsCount = views.length;
+				parentElViews = jsViewsData(self.parentElem, viewStr);
+			}
+			if (index === undefined) {
+				// Remove all child views
+				if (isArray) {
+					// views and data are arrays
+					current = viewsCount;
+					while (current--) {
+						removeView(current, parentElViews);
+					}
+					self.views = [];
+				} else {
+					// views and data are objects
+					for (index in views) {
+						// Remove by key
+						removeView(index);
+					}
+					self.views = {};
+				}
+			} else {
+				if (itemsCount === undefined) {
+					if (isArray) {
+						// The parentView is data array view.
+						// Set itemsCount to 1, to remove this item
+						itemsCount = 1;
+					} else {
+						// Remove child view with key 'index'
+						removeView(index);
+						delete views[index];
+					}
+				}
+				if (isArray && itemsCount) {
+					current = index + itemsCount;
+					// Remove indexed items (parentView is data array view);
+					while (current-- > index) {
+						removeView(current, parentElViews);
+					}
+					views.splice(index, itemsCount);
+					if (viewsCount = views.length) {
+						// Fixup index on following view items...
+						while (index < viewsCount) {
+							observable(views[index]).setProperty("index", index++);
+						}
+					}
+				}
+			}
+			return this;
+		},
+
+		content: function(select) {
+			return select ? $(select, this.nodes) : $(this.nodes);
+		},
+
+		//===============
+		// data-linking
+		//===============
+
+		link: function(data, parentNode, context, prevNode, nextNode, index) {
+			var self = this,
+				views = self.views;
+
+			index = index || 0;
+
+			parentNode = ("" + parentNode === parentNode ? $(parentNode)[0] : parentNode);
+
+			function linkSiblings(parentElem, prev, next, top) {
+				var view, isElem, type, key, parentElViews, nextSibling, onAfterCreate, open;
+
+				// If we are linking the parentElem itself (not just content from first onwards) then bind also the data-link attributes
+				if (prev === undefined) {
+					bindDataLinkAttributes(parentElem, self, data);
+				}
+
+				node = (prev && prev.nextSibling) || parentElem.firstChild;
+				while (node && node !== next) {
+					type = node.nodeType;
+					isElem = type === 1;
+					nextSibling = node.nextSibling;
+					if (isElem && (linkInfo = node.getAttribute("jsvtmpl")) || type === 8 && (linkInfo = node.nodeValue.split("jsv")[1])) {
+						open = linkInfo.charAt(0) !== "/" && linkInfo;
+						if (isElem) {
+							isElem = node.tagName;
+							parentElem.removeChild(node);
+							node = NULL;
+						}
+						if (open) {
+							// open view
+							open = open.slice(1);
+							// If this is a template open, use the key. It it is an item open, use the index, and increment
+							key = open || index++;
+							parentElViews = parentElViews || jsViewsData(parentElem, viewStr, TRUE);
+
+							// Extend and initialize the view object created in JsRender, as a JsViews view
+							view = self.views[key];
+							if (!view.link) {
+								$.extend(view, LinkedView);
+
+								view.parentElem = parentElem;
+								view._prevNode = node;
+
+								parentElViews && parentElViews.push(view);
+
+								var i, views, viewsCount, parent;
+								if (parent = view.parent) {
+									if (!view.isArray) {
+										view.nodes = [];
+										view._lnk = 0; // compiled link index.
+									}
+									setArrayChangeLink(view);
+								}
+								if (view.tmpl.presenter) {
+									view.presenter = new view.tmpl.presenter(view.ctx, view);
+								}
+							}
+							if (isElem && open) {
+								// open tmpl
+								view._preceding = nextSibling.previousSibling;
+								parentElViews.elLinked = isElem;
+							}
+							nextSibling = view.link(undefined, parentElem, undefined, nextSibling.previousSibling);  // TODO DATA AND CONTEXT??
+						} else {
+							// close view
+							self._nextNode = node;
+							if (isElem && linkInfo === "/i") {
+								parentNode.insertBefore(self._after = document.createTextNode(""), nextSibling);
+								// This is the case where there is no white space between items.
+								// Add a text node to act as marker around template insertion point.
+								// (Needed as placeholder when inserting new items following this one).
+							}
+							if (isElem && linkInfo === "/t" && nextSibling && nextSibling.tagName && nextSibling.getAttribute("jsvtmpl")) {
+								// This is the case where there is no white space between items.
+								// Add a text node to act as marker around template insertion point.
+								// (Needed as placeholder when the data array is empty).
+								parentNode.insertBefore(document.createTextNode(""), nextSibling);
+							}
+							if (onAfterCreate = self.ctx.onAfterCreate) { // TODO DATA AND CONTEXT??
+								onAfterCreate.call(self, self);
+							}
+							return nextSibling;
+						}
+					} else {
+						if (top && self.parent && self.nodes) {
+							// Add top-level nodes to view.nodes
+							self.nodes.push(node);
+						}
+						if (isElem) {
+							linkSiblings(node);
+						}
+					}
+					node = nextSibling;
+				}
+			}
+			return linkSiblings(parentNode, prevNode, nextNode, TRUE);
+		}
 	};
 
 	//=======================
@@ -790,8 +842,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			// $.view() returns top node
 			// $.view( node ) returns view that contains node
 			// $.view( selector ) returns view that contains first selected element
+			node = node && $(node)[0];
 
-			node = ("" + node === node ? $(node)[0] : node);
 			var returnView, view, parentElViews, i, j, finish, elementLinked,
 				topNode = global.document.body,
 				startNode = node;
@@ -827,7 +879,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				}
 				if (parentElViews.elLinked) {
 					i = parentElViews.length;
-					while (--i) {
+					while (i--) {
 						view = parentElViews[i];
 						j = view.nodes && view.nodes.length;
 						while (j--) {
@@ -877,44 +929,16 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		},
 
 		link: link,
+		unlink: unlink,
 
 		//=======================
 		// override $.cleanData
 		//=======================
 		cleanData: function(elems) {
-			var l, el, link, attr, parentView, view, srcs, linksAndViews, collData,
-				i = elems.length;
+			var i = elems.length;
 
-//TODO - this is only removing views whose parentElem is being removed. Not views whose prevNode nodes and next node are being removed,
-// but whose parentElem is not being removed. This needs to be fixed. In particular, calling link(data, container) twice will add new views, without removing the old ones.
-// Consider unlink method, to do this.
 			while (i--) {
-				el = elems[i];
-				if (linksAndViews = $.data(el, jsvData)) {
-
-					// Get links and unbind propertyChange
-					collData = linksAndViews.link;
-					for (attr in collData) {
-						link = collData[attr];
-						srcs = link.srcs;
-						l = srcs.length;
-						while (l--) {
-							$(srcs[l]).unbind(propertyChangeStr, link.hlr);
-						}
-					}
-
-					// Get views and remove from parent view
-					collData = linksAndViews.view;
-					if (l = collData.length) {
-						parentView = $.view(el);
-						while (l--) {
-							view = collData[l];
-							if (view.parent === parentView) {
-								parentView.removeViews(view.key);  // NO - ONLY remove view if its top-level nodes are all.. (TODO)
-							}
-						}
-					}
-				}
+				clean(elems[i]);
 			}
 			oldCleanData.call($, elems);
 		}
@@ -927,6 +951,6 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	topView._lnk = 0;
 	topView.links = [];
-	linkedView(topView);
+	$.extend(topView, LinkedView);
 
 })(this);

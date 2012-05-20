@@ -113,7 +113,7 @@
 		select( $.view( "#movieList tr:last" ));
 	});
 
-	$( app ).bind( "propertyChange", function( event, args ) {
+	$( app ).on( "propertyChange", function( event, args ) {
 		if ( args.path === "selectedItem" ) {
 			var selectedView = args.value;
 			if ( selectedView ) {
