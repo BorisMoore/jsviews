@@ -68,7 +68,7 @@ $.link.folderTmpl( rootFolder, "#foldersList" )
 		/* Toggle expanded property on data, then refresh rendering */
 		var view = $.view( this ).parent;
 		view.data.expanded = !view.data.expanded;
-		view.render();
+		view.refresh();
 	})
 
 </script>

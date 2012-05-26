@@ -55,7 +55,7 @@
 			edit: function( view ) {
 				editing = view;
 				view.tmpl = "editTemplate";
-				view.render();
+				view.refresh();
 				$( view.nodes ).find('input').focus();
 			},
 			removeItem: function( index, item ) {
@@ -79,7 +79,7 @@
 			},
 			contentChanged: function( view ) {
 				view.tmpl = "itemTemplate";
-				view.render();
+				view.refresh();
 			}
 		}
 		todos.completed = $( todos.items ).filter( function( index, val ) { return val.done; }).length;

@@ -2,6 +2,7 @@
 <html>
 <head>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="http://www.JSON.org/json2.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
@@ -13,48 +14,50 @@
 
 <h3>Data Linking to Form Elements</h3>
 
-<div id="moviePrices"></div>
+<h4>Purchase a movie ticket</h4>
 
-<script id="moviePriceTemplate" type="text/x-jsrender">
-	<h4>Purchase a movie ticket</h4>
+<div id="moviePurchase"></div>
 
+<script id="moviePurchaseTemplate" type="text/x-jsrender">
 	<div class="box">
 		<div class="subhead">Choose a movie</div>
 
 		<select id="selTheater" data-link="selectedMovie">
 			<option value="none">Choose...</option>
-			{{for movies}}
+			{{for ~movies}}
 				<option value="{{:#index}}">{{:title}}</option>
 			{{/for}}
 		</select>
 
-		<div data-link="visible{: selectedMovie!=='none' }">
+			<div data-link="visible{: selectedMovie!=='none' }">
 
-			<div class="subhead">Name:</div>
-			<div><input data-link="name" /></div>
+				<div class="subhead">Name:</div>
+				<div><input data-link="name" /></div>
 
-			<div class="subhead">Special requests:</div>
-			<div><textarea data-link="request" rows="4" cols="25" /></div>
+				<div class="subhead">Special requests:</div>
+				<div><textarea data-link="request" rows="4" cols="25" /></div>
 
-		</div>
-
+			</div>
 	</div>
 
 	<div data-link="visible{: ~and(selectedMovie!=='none', name) }">
 
-		<h3>Ticket order</h3>
+		<h3>Ticket order form</h3>
 
-		<div class="box" data-link="visible{:name}">
+		<div id="orderForm" class="box" data-link="visible{:name}">
 			<div>Ticket for <em data-link="name" /> to movie: <em data-link="~selectedTitle(selectedMovie)" /></div>
 			<div data-link="visible{:request}"><em>Your special request:</em> <pre data-link="request" ></pre></div>
 			<div>
-				<b>Ticket Price:</b> <span data-link="convertedPrice(selectedMovie, currency)" />
+				<b>Ticket Price:</b> <span data-link="~convertedPrice(selectedMovie, currency)" />
+			</div>
+			<div>
+				<button id="submitOrder">Submit order</button>
 			</div>
 		</div>
 
-		<div>Currency Picker: <input type="checkbox" data-link="chooseCurrency" /></div>
+		<div>Currency Picker: <input type="checkbox" data-link="~app.chooseCurrency" /></div>
 
-		<div class="box" data-link="visible{:chooseCurrency}">
+		<div class="box" data-link="visible{:~app.chooseCurrency}">
 			<div class="subhead">Choose Currency:</div>
 			<input type="radio" name="currencyPicker" value="US" data-link="currency" />US Dollars<br/>
 			<input type="radio" name="currencyPicker" value="EUR" data-link="currency" />Euro<br/>
@@ -66,22 +69,19 @@
 
 <script type="text/javascript">
 	var currencies = {
-		US: { rate: 1.0, symbol: "$" },
-		EUR: { rate: 0.95, symbol: "€" },
-		GBP: { rate: 0.63, symbol: "£" }
-	};
-
-	var model = {
-		name: "",
-		selectedMovie: "none",
-		currency: "US",
-		convertedPrice: function(index, curCode) {
-			var currency = currencies[curCode];
-			if ( index >= 0) {
-				return currency.symbol + parseFloat(this.movies[index].ticketPrice * currency.rate).toFixed(2);
-			}
+			US: { rate: 1.0, symbol: "$" },
+			EUR: { rate: 0.95, symbol: "€" },
+			GBP: { rate: 0.63, symbol: "£" }
 		},
-		movies: [
+
+		orderDetails = {
+			name: "",
+			selectedMovie: "none",
+			currency: "US",
+			request: ""
+		},
+
+		movies = [
 			{
 				title: "The Red Violin",
 				ticketPrice: 18
@@ -94,19 +94,31 @@
 				title: "The Incredible Hulk",
 				ticketPrice: 21.99
 			}
-		]
-	};
-	contextHelpers = {
-		currencies: currencies,
-		selectedTitle: function(selectedMovie) {
-			return (selectedMovie!=="none") ? model.movies[selectedMovie].title : "";
-		},
-		and: function(a, b) {
-			return !!a && !!b;
-		}
-	}
+		],
 
-	$( "#moviePriceTemplate" ).link( model, "#moviePrices", contextHelpers );
+		contextHelpers = {
+			app: {},
+			movies: movies,
+			convertedPrice: function(index, curCode) {
+				var currency = currencies[curCode];
+				if ( index >= 0) {
+					return currency.symbol + parseFloat(movies[index].ticketPrice * currency.rate).toFixed(2);
+				}
+			},
+			currencies: currencies,
+			selectedTitle: function(selectedMovie) {
+				return (selectedMovie!=="none") ? movies[selectedMovie].title : "";
+			},
+			and: function(a, b) {
+				return !!a && !!b;
+			}
+		};
+
+	$( "#moviePurchaseTemplate" ).link( orderDetails, "#moviePurchase", contextHelpers );
+
+	$( "#submitOrder" ).on( "click", function() {
+		alert("You ordered a movie ticket as follows:\n" + JSON.stringify(orderDetails, null, 1).slice(1,-1));
+	});
 </script>
 </body>
 </html>

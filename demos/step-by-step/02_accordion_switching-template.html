@@ -81,7 +81,7 @@ Click for details:
 		/* Switch template of the selected view back to the summary template */
 		if ( selectedSubView ) {
 			selectedSubView.tmpl = "summaryTemplate";
-			selectedSubView.render();
+			selectedSubView.refresh();
 			selectedSubView = null;
 		}
 	}
@@ -100,7 +100,7 @@ Click for details:
 
 			/* Switch the template on this view to the detail template */
 			selectedSubView.tmpl = "detailTemplate";
-			selectedSubView.render();
+			selectedSubView.refresh();
 		})
 
 		/* onclick handler for movie subviews when selected */

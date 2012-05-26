@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 13
+// informal pre beta commit counter: 14
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -16,7 +16,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-		LinkedView, rTag, delimOpen0, delimOpen1, delimClose0, delimClose1,
+		LinkedView, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1,
 		$ = global.jQuery,
 
 		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
@@ -192,23 +192,25 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	}
 
 	function setArrayChangeLink(view) {
-		var handler,
-			data = view.data,
-			onArrayChange = view._onArrayChange;
-
-		if (onArrayChange) {
-			if (onArrayChange[1] === data) {
-				return;
-			}
-			$([onArrayChange[1]]).off(arrayChangeStr, onArrayChange[0]);
-		}
-
 		if (view.isArray) {
-			handler = function() {
-				arrayChangeHandler.apply(view, arguments);
-			};
-			$([data]).on(arrayChangeStr, handler);
-			view._onArrayChange = [handler, data];
+			var handler,
+				data = view.data,
+				onArrayChange = view._onArrayChange;
+
+			if (onArrayChange) {
+				// First remove the current handler if there is one
+				$([onArrayChange[1]]).off(arrayChangeStr, onArrayChange[0]);
+				view.onArrayChange = undefined;
+			}
+
+			if (data) {
+				// If this view is not being removed, but the data array has been replaced, then bind to the new data array
+				handler = function() {
+					arrayChangeHandler.apply(view, arguments);
+				};
+				$([data]).on(arrayChangeStr, handler);
+				view._onArrayChange = [handler, data];
+			}
 		}
 	}
 
@@ -221,7 +223,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			? attr.to.toAttr
 			: attr.from.fromAttr)
 		: to
-			? "html"
+			? "text"
 			: "";
 	}
 
@@ -305,10 +307,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				if (linkMarkup.charAt(linkMarkup.length - 1) !== "}") {
 					// Simplified syntax is used: data-link="expression"
 					// Convert to data-link="{:expression}", or for inputs, data-link="{:expression:}" for (default) two-way binding
-					linkMarkup = delimOpen1 + ":" + linkMarkup + (defaultAttr(node) ? ":" : "") + delimClose0;
+					linkMarkup = delimOpenChar1 + ":" + linkMarkup + (defaultAttr(node) ? ":" : "") + delimCloseChar0;
 				}
 				while (tokens = rTag.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
-					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{:~description(firstName, lastName)}"
+					// Iterate over the data-link expressions, for different target attrs, e.g. <input data-link="{:firstName:} title{>~description(firstName, lastName)}"
 					// tokens: [all, attr, tag, converter, colon, html, code, linkedParams]
 					attr = tokens[1];
 					expression = tokens[2];
@@ -319,7 +321,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 							convertBack = convertBack[1];
 							if (cbLength = convertBack.length) {
 								// There is a convertBack function
-								expression = tokens[2].slice(0, -cbLength - 1) + delimClose0; // Remove the convertBack string from expression.
+								expression = tokens[2].slice(0, -cbLength - 1) + delimCloseChar0; // Remove the convertBack string from expression.
 							}
 						}
 						if (convertBack === NULL) {
@@ -329,7 +331,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					// Compile the linkFn expression which evaluates and binds a data-link expression
 					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
 					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-					link[attr] = jsv.tmplFn(delimOpen0 + expression + delimClose1, undefined, TRUE);
+					link[attr] = jsv.tmplFn(delimOpenChar0 + expression + delimCloseChar1, undefined, TRUE);
 					if (!attr && convertBack !== undefined) {
 						link[attr].to = convertBack;
 					}
@@ -339,14 +341,14 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			currentView.data = viewData || data;
 			for (attr in link) {
 				bindDataLinkTarget(
-				currentView.data || data, //source
-				node,                     //target
-				attr,                     //attr
-				link[attr],             //compiled link markup expression
-				currentView               //view
-			);
+					currentView.data || data, //source
+					node,                     //target
+					attr,                     //attr
+					link[attr],               //compiled link markup expression
+					currentView               //view
+				);
 			}
-			currentView.data = viewData;
+//			currentView.data = viewData;
 		}
 	}
 
@@ -544,28 +546,30 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 						self.removeViews(index, items.length);
 						break;
 					case "move":
-						self.render(); // Could optimize this
+						self.refresh(); // Could optimize this
 						break;
 					case "refresh":
-						self.render();
+						self.refresh();
 						// Othercases: (e.g.undefined, for setProperty on observable object) etc. do nothing
 				}
 			}
 			return TRUE;
 		},
 
-		render: function(context) {
+		refresh: function(context) {
 			var self = this,
+				parent = self.parent,
+				index = parent.isArray && self.index,
 				tmpl = self.tmpl = getTemplate(self.tmpl);
 
-			if (tmpl) {
+			if (parent) {
 				// Remove HTML nodes
 				$(self.nodes).remove(); // Also triggers cleanData which removes child views.
 				// Remove child views
 				self.removeViews();
 				self.nodes = [];
 
-				renderAndLink(self, self.index, self.parent.views, self.data, tmpl.render(self.data, context, undefined, TRUE, self), context);
+				renderAndLink(self, index, parent.views, self.data, tmpl.render(self.data, context, undefined, TRUE, self), context);
 				setArrayChangeLink(self);
 			}
 			return self;
@@ -818,12 +822,12 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			}
 		},
 		delimiters: function(openChars, closeChars) {
-			oldJsvDelimiters(openChars, closeChars);
-			delimOpen0 = openChars.charAt(0);
-			delimOpen1 = openChars.charAt(1);
-			delimClose0 = closeChars.charAt(0);
-			delimClose1 = closeChars.charAt(1);
-			rTag = new RegExp("(?:^|\\s*)([\\w-]*)(" + jsv.rTag + ")" + delimClose0 + ")", "g");
+			var delimChars = oldJsvDelimiters.apply(oldJsvDelimiters, arguments);
+			delimOpenChar0 = delimChars[0];
+			delimOpenChar1 = delimChars[1];
+			delimCloseChar0 = delimChars[2];
+			delimCloseChar1 = delimChars[3];
+			rTag = new RegExp("(?:^|\\s*)([\\w-]*)(" + delimOpenChar1 + jsv.rTag + ")" + delimCloseChar0 + ")", "g");
 			return this;
 		}
 	});
@@ -946,8 +950,12 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	$.fn.link = link;
 
+	$.fn.view = function(node){
+		return $.view(this[0]);
+	}
+
 	// Initialize default delimiters
-	jsv.delimiters("{{", "}}");
+	jsv.delimiters();
 
 	topView._lnk = 0;
 	topView.links = [];
