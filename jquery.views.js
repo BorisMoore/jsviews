@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 14
+// informal pre beta commit counter: 15
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -21,9 +21,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
 		jsv = $.views,
+		extend = $.extend,
 		sub = jsv.sub,
 		FALSE = false, TRUE = true, NULL = null,
-		topView = jsv.topView,
+		topView = new jsv.View(jsv.helpers),
 		templates = jsv.templates,
 		observable = $.observable,
 		jsvData = "_jsvData",
@@ -223,8 +224,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			? attr.to.toAttr
 			: attr.from.fromAttr)
 		: to
-			? "text"
-			: "";
+			? "text" // Default is to bind to innerText. Use html{:...} to bind to innerHTML
+			: ""; // Default is not to bind from
 	}
 
 	function returnVal(value) {
@@ -331,7 +332,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					// Compile the linkFn expression which evaluates and binds a data-link expression
 					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
 					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-					link[attr] = jsv.tmplFn(delimOpenChar0 + expression + delimCloseChar1, undefined, TRUE);
+					link[attr] = jsv._tmplFn(delimOpenChar0 + expression + delimCloseChar1, undefined, TRUE);
 					if (!attr && convertBack !== undefined) {
 						link[attr].to = convertBack;
 					}
@@ -744,7 +745,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 							// Extend and initialize the view object created in JsRender, as a JsViews view
 							view = self.views[key];
 							if (!view.link) {
-								$.extend(view, LinkedView);
+								extend(view, LinkedView);
 
 								view.parentElem = parentElem;
 								view._prevNode = node;
@@ -953,12 +954,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	$.fn.view = function(node){
 		return $.view(this[0]);
 	}
-
 	// Initialize default delimiters
 	jsv.delimiters();
 
-	topView._lnk = 0;
-	topView.links = [];
-	$.extend(topView, LinkedView);
+	extend(topView, { tmpl: {}, _lnk: 0, links: [] });
+	extend(topView, LinkedView);
 
 })(this);
