@@ -156,7 +156,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 				return false;
 			});
 
-		$( "#addMovieBtn" ).click( function() {
+		$( "#addMovieBtn" ).on( "click", function() {
 			$.observable( movies ).insert( movies.length, {
 				title: "NewTitle" + counter,
 				languages: [

@@ -73,7 +73,7 @@ $.views.converters({
 });
 
 // Observable property change
-$( "#changeDay" ).click( function() {
+$( "#changeDay" ).on( "click", function() {
 	var dayOff = myWeek.dayOff;
 	$.observable( myWeek ).setProperty( "dayOff", dayOff < 6 ? dayOff + 1 : 0);
 });

@@ -113,7 +113,7 @@
 			return false;
 		});
 
-	$( "#addMovieBtn" ).click( function() {
+	$( "#addMovieBtn" ).on( "click", function() {
 		$.observable( movies ).insert( movies.length, {
 			title: "NewTitle" + counter,
 			languages: [

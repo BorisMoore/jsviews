@@ -128,7 +128,7 @@
 		}
 	});
 
-	$( ".todo-clear" ).click( function() { todos.clearCompleted(); });
+	$( ".todo-clear" ).on( "click", function() { todos.clearCompleted(); });
 
 //	Link UI, and handle changes to 'done' and 'content' properties of Todo items
 	$.link( todos, "#todo-stats" );

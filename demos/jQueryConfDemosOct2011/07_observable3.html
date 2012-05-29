@@ -36,6 +36,9 @@
 		<td>
 			<input data-link="firstName" />
 		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
 	</tr>
 </script>
 
@@ -63,14 +66,21 @@ $.link.personTmpl( people, "#details" );
 $.link.personTmpl2( people, "#details2" );
 
 // Observable array change: insert two new people
-$( "#insertPerson" ).click( function() {
+$( "#insertPerson" ).on( "click", function() {
+	var insertAt = people.length ? 1 : 0;
 	$.observable( people ).insert(
-		1, // insert at index 1
+		insertAt, // insert at index 1
 		[
 			{ firstName: "NewPerson" + counter++ },
 			{ firstName: "NewPerson" + counter++ }
 		]);
 });
+
+// Observable array change: remove
+$( "#details2" )
+	.on( "click", ".close", function() {
+		$.observable( people ).remove( $.view( this ).index, 1 );
+	});
 
 </script>
 
@@ -83,9 +93,9 @@ $.link.personTmpl( people, "#details" );
 $.link.personTmpl2( people, "#details2" );
 
 // Observable array change: insert two new people at index 1
-$( "#insertPerson" ).click( function() {
+$( "#insertPerson" ).on( "click", function() {
     $.observable( people ).insert(
-         1,    // index 1
+        1,    // index 1
         [      // add two new people
             { firstName: "NewPerson" },
             { firstName: "NewPerson2" }

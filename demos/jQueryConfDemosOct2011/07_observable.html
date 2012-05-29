@@ -44,7 +44,7 @@ $.templates( "personTmpl", "#personTmpl" );
 $.link.personTmpl( person, "#details" );
 
 // Observable property change
-$( "#changeName" ).click( function() {
+$( "#changeName" ).on( "click", function() {
 	$.observable( person ).setProperty( "firstName", person.firstName + "Plus" );
 });
 
@@ -68,7 +68,7 @@ $( "#changeName" ).click( function() {
 $.link.personTmpl( person, "#details" );
 
 // Observable property change
-$( "#changeName" ).click( function() {
+$( "#changeName" ).on( "click", function() {
     $.observable( person ).setProperty( "firstName", person.firstName + "Plus" );
 });
 </pre>

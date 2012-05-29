@@ -27,6 +27,9 @@
 		<td>
 			<input data-link="firstName" />
 		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
 	</tr>
 </script>
 
@@ -49,10 +52,16 @@ $.templates( "personTmpl", "#personTmpl" );
 // Data-link details container to people, using the personTmpl template
 $.link.personTmpl( people, "#details" );
 
-// Observable array change
-$( "#insertPerson" ).click( function() {
+// Observable array change: insert
+$( "#insertPerson" ).on( "click", function() {
 	$.observable( people ).insert( 0, { firstName: "NewPerson" + counter++ });
 });
+
+// Observable array change: remove
+$( "#details" )
+	.on( "click", ".close", function() {
+		$.observable( people ).remove( $.view( this ).index, 1 );
+	});
 
 </script>
 
@@ -72,10 +81,17 @@ $( "#insertPerson" ).click( function() {
 <pre class="brush: js;">
 $.link.personTmpl( people, "#details" );
 
-// Observable array change
-$( "#insertPerson" ).click( function() {
+// Observable array change: insert
+$( "#insertPerson" ).on( "click", function() {
     $.observable( people ).insert( 0, { firstName: "NewPerson" + counter++ });
 });
+
+// Observable array change: remove
+$( "#details" )
+    .on( "click", ".close", function() {
+        $.observable( people ).remove( $.view( this ).index, 1 );
+    });
+
 </pre>
 </body>
 </html>
