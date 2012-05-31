@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 15
+// informal pre beta commit counter: 16
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -169,7 +169,9 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 							$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
 						}
 					}
-				} else if (changed = $target.attr(attr) !== sourceValue) {
+				} else if (changed = $target.attr(attr) != sourceValue) {
+					// Setting an attribute to the empty string should remove the attribute
+					sourceValue = sourceValue === "" ? null : sourceValue; 
 					$target.attr(attr, sourceValue);
 				}
 			}
@@ -193,7 +195,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	}
 
 	function setArrayChangeLink(view) {
-		if (view.isArray) {
+		if (!view._useKey) {
 			var handler,
 				data = view.data,
 				onArrayChange = view._onArrayChange;
@@ -560,7 +562,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		refresh: function(context) {
 			var self = this,
 				parent = self.parent,
-				index = parent.isArray && self.index,
+				index = !parent._useKey && self.index,
 				tmpl = self.tmpl = getTemplate(self.tmpl);
 
 			if (parent) {
@@ -582,7 +584,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				self = this,
 				views = self.views;
 
-			if ( self.isArray && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
+			if ( !self._useKey && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
 				// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
 				viewsCount = views.length + dataItems.length;
 				renderAndLink(self, index, views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx, TRUE);
@@ -645,7 +647,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 			var current, viewsCount, parentElViews,
 				self = this,
-				isArray = self.isArray,
+				isArray = !self._useKey,
 				views = self.views;
 
 			if (isArray) {
@@ -754,7 +756,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 								var i, views, viewsCount, parent;
 								if (parent = view.parent) {
-									if (!view.isArray) {
+									if (view._useKey) {
 										view.nodes = [];
 										view._lnk = 0; // compiled link index.
 									}
@@ -774,10 +776,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 							// close view
 							self._nextNode = node;
 							if (isElem && linkInfo === "/i") {
-								parentNode.insertBefore(self._after = document.createTextNode(""), nextSibling);
 								// This is the case where there is no white space between items.
 								// Add a text node to act as marker around template insertion point.
 								// (Needed as placeholder when inserting new items following this one).
+								parentNode.insertBefore(self._after = document.createTextNode(""), nextSibling);
 							}
 							if (isElem && linkInfo === "/t" && nextSibling && nextSibling.tagName && nextSibling.getAttribute("jsvtmpl")) {
 								// This is the case where there is no white space between items.

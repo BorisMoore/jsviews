@@ -24,7 +24,7 @@ var person = {
 };
 
 // Render to string
-var html = $.templates( "<tr><td>{{:firstName}}</td></tr>" ).render( person );
+var html = $.templates( "<tr><td>{{>firstName}}</td></tr>" ).render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );
@@ -43,7 +43,7 @@ var person = {
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Render to string
-var html = $.templates( "&lt;tr>&lt;td>{{:firstName}}&lt;/td>&lt;/tr>" ).render( person );
+var html = $.templates( "&lt;tr>&lt;td>{{>firstName}}&lt;/td>&lt;/tr>" ).render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );

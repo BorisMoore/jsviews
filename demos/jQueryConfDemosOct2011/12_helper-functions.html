@@ -15,10 +15,10 @@
 
 <script id="movieTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
-				{{:name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
+				{{>name}}{{if ~nextToLast()}} and {{else ~notLast()}}, {{/if}}
 			{{/for}}
 		</td>
 	</tr>
@@ -64,7 +64,7 @@
 <pre class="brush: xml;">
 &lt;td>
     {{for languages}}
-        {{:name}}
+        {{>name}}
         {{if ~nextToLast()}}
             and
         {{else ~notLast()}}

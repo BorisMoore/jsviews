@@ -20,18 +20,18 @@
 
 <script id="summaryTemplate" type="text/x-jsrender">
 	<tr class='movieSummary'><td>
-		{{:title}}
+		{{>title}}
 	</td></tr>
 </script>
 
 <script id="detailTemplate" type="text/x-jsrender">
 	<tr class='movieDetail row1'><td>
-		{{:title}}
+		{{>title}}
 	</td></tr>
 	<tr class='movieDetail row2'><td><b>Languages:</b>
 		{{for languages}}
 			<div>
-				<em>{{:name}}</em>
+				<em>{{>name}}</em>
 			</div>
 		{{/for}}
 	</td></tr>

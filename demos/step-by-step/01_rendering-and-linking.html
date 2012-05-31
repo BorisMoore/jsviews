@@ -12,13 +12,13 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<li>
-		<i>{{:name}}</i> ({{:releaseYear}})
+		<i>{{>name}}</i> ({{>releaseYear}})
 	</li>
 </script>
 
 <!--Note that a template does not have to include HTML elements-->
 <script id="textOnlyTemplate" type="text/x-jsrender">
-	- {{:name}} ({{:releaseYear}})
+	- {{>name}} ({{>releaseYear}})
 </script>
 
 <h3>Rendering templates, and linking to changes in data:</h3>

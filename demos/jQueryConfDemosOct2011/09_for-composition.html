@@ -15,7 +15,7 @@
 
 <script id="movieTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages tmpl="#languageTmpl"/}}
 		</td>
@@ -23,7 +23,7 @@
 </script>
 
 <script id="languageTmpl" type="text/x-jsrender">
-	<div>{{:name}}</div>
+	<div>{{>name}}</div>
 </script>
 
 <table>
@@ -54,7 +54,7 @@ $( "#movieList" ).html(
 <pre class="brush: xml;">
 <!--====== Outer Template ======-->
 ...
-&lt;td>{{:title}}&lt;/td>
+&lt;td>{{>title}}&lt;/td>
 &lt;td>
     {{for languages tmpl="#languageTmpl"/}}
 &lt;/td>
@@ -62,7 +62,7 @@ $( "#movieList" ).html(
 
 <!--====== Nested Template ======-->
 &lt;script id="languageTmpl" type="text/x-jsrender">
-    &lt;div>{{:name}}&lt;/div>
+    &lt;div>{{>name}}&lt;/div>
 &lt;/script>
 </pre>
 

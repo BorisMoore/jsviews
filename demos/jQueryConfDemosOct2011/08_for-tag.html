@@ -15,10 +15,10 @@
 
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr>
-		<td>{{:title}}</td>
+		<td>{{>title}}</td>
 		<td>
 			{{for languages}}
-				<div>{{:name}}</div>
+				<div>{{>name}}</div>
 			{{/for}}
 		</td>
 	</tr>
@@ -62,10 +62,10 @@ var movie = {
 
 <h4>HTML:</h4>
 <pre class="brush: xml;">
-&lt;td>{{:title}}&lt;/td>
+&lt;td>{{>title}}&lt;/td>
 &lt;td>
     {{for languages}}
-        &lt;div>{{:name}}&lt;/div>
+        &lt;div>{{>name}}&lt;/div>
     {{/for}}
 &lt;/td>
 </pre>

@@ -24,7 +24,7 @@ var person = {
 };
 
 // Compile from string, as named template
-$.templates( "detailsTmpl", "<tr><td>{{:firstName}}</td></tr>" );
+$.templates( "detailsTmpl", "<tr><td>{{>firstName}}</td></tr>" );
 
 // Render to string
 var html = $.render.detailsTmpl( person );
@@ -46,7 +46,7 @@ var person = {
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Compile as named template
-$.templates( "detailsTmpl", "&lt;tr>&lt;td>{{:firstName}}&lt;/td>&lt;/tr>" );
+$.templates( "detailsTmpl", "&lt;tr>&lt;td>{{>firstName}}&lt;/td>&lt;/tr>" );
 
 // Render to string
 var html = $.render.detailsTmpl( person );

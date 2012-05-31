@@ -23,9 +23,9 @@
 <script id="folderTemplate" type="text/x-jsrender">
 	<li>
 		{{if ~hasContent() link=true}}
-			<span class="toggle">{{:expanded ? "-" : "+"}}</span>
+			<span class="toggle">{{>expanded ? "-" : "+"}}</span>
 		{{/if}}
-		<span>{{:name}}</span>
+		<span>{{>name}}</span>
 	</li>
 	{{if expanded link=true}}
 		<li>

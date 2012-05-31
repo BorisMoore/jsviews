@@ -53,7 +53,7 @@ $.templates( "personTmpl", "#personTmpl" );
 $.link.personTmpl( people, "#details" );
 
 // Observable array change: insert
-$( "#insertPerson" ).on( "click", function() {
+$( "#insertPerson" ).click( function() {
 	$.observable( people ).insert( 0, { firstName: "NewPerson" + counter++ });
 });
 
@@ -61,6 +61,7 @@ $( "#insertPerson" ).on( "click", function() {
 $( "#details" )
 	.on( "click", ".close", function() {
 		$.observable( people ).remove( $.view( this ).index, 1 );
+		return false;
 	});
 
 </script>

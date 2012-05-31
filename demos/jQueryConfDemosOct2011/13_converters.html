@@ -32,7 +32,7 @@
 
 <script id="notLinkedTmpl" type="text/x-jsrender">
 	<tr>
-		<td>{{:dayOff}}</td>
+		<td>{{>dayOff}}</td>
 		<td>{{intToDay:dayOff}}</td>
 	</tr>
 </script>
@@ -90,7 +90,7 @@ $.link.linkedTmpl( myWeek, "#linked" );
 <pre class="brush: xml;">
     &lt;!-- RENDERING with tags -->
     &lt;!-- data value, no converter: -->
-    &lt;td>{{:dayOff}}&lt;/td>
+    &lt;td>{{>dayOff}}&lt;/td>
 
     &lt;!-- render from data, convert to display name -->
     &lt;td>{{intToDay:dayOff}}&lt;/td>

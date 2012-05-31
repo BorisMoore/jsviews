@@ -25,7 +25,7 @@
 		<select id="selTheater" data-link="selectedMovie">
 			<option value="none">Choose...</option>
 			{{for ~movies}}
-				<option value="{{:#index}}">{{:title}}</option>
+				<option value="{{:#index}}">{{>title}}</option>
 			{{/for}}
 		</select>
 
