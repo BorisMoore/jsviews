@@ -39,7 +39,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			html: "html",
 			text: "text"
 		},
-		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} };
+		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = jsv.delimiters,
 
