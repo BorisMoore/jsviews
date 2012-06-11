@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 16
+// informal pre beta commit counter: 17
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -39,7 +39,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			html: "html",
 			text: "text"
 		},
-		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} };
+		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = jsv.delimiters,
 
@@ -614,35 +614,39 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 						// viewToRemove._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
 						: viewToRemove.nodes;
 
-				// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
-				// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
-				parElVws = parElVws || jsViewsData(viewToRemove.parentElem, viewStr);
+				if (nodesToRemove) {
+					// If nodesToRemove is not undefined, so this a linked view. We remove HTML nodes and hanlder for arrayChange data binding
 
-				i = parElVws.length;
+					// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
+					// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
+					parElVws = parElVws || jsViewsData(viewToRemove.parentElem, viewStr);
 
-				if (i) {
-					// remove child views of the view being removed
-					viewToRemove.removeViews();
-				}
+					i = parElVws.length;
 
-				// Remove this view from the parentElViews collection
-				while (i--) {
-					if (parElVws[i] === viewToRemove) {
-						parElVws.splice(i, 1);
-						break;
+					if (i) {
+						// remove child views of the view being removed
+						viewToRemove.removeViews();
 					}
+
+					// Remove this view from the parentElViews collection
+					while (i--) {
+						if (parElVws[i] === viewToRemove) {
+							parElVws.splice(i, 1);
+							break;
+						}
+					}
+					// Remove the HTML nodes from the DOM, unless they have already been removed
+					while (node && node.parentNode && node !== nextNode) {
+						node = node.nextSibling;
+						nodesToRemove.push(node);
+					}
+					if (viewToRemove._after) {
+						nodesToRemove.push(viewToRemove._after);
+					}
+					$(nodesToRemove).remove();
+					viewToRemove.data = undefined;
+					setArrayChangeLink(viewToRemove);
 				}
-				// Remove the HTML nodes from the DOM, unless they have already been removed
-				while (node && node.parentNode && node !== nextNode) {
-					node = node.nextSibling;
-					nodesToRemove.push(node);
-				}
-				if (viewToRemove._after) {
-					nodesToRemove.push(viewToRemove._after);
-				}
-				$(nodesToRemove).remove();
-				viewToRemove.data = undefined;
-				setArrayChangeLink(viewToRemove);
 			}
 
 			var current, viewsCount, parentElViews,
@@ -812,7 +816,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	// Extend $.views namespace
 	//=======================
 
-	$.extend(jsv, {
+	extend(jsv, {
 		linkAttr: "data-link",
 		merge: {
 			input: {
@@ -839,7 +843,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	// Extend jQuery namespace
 	//=======================
 
-	$.extend({
+	extend($, {
 
 		//=======================
 		// jQuery $.view() plugin
