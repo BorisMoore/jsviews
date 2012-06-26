@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 17
+// informal pre beta commit counter: 18
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -17,6 +17,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	var versionNumber = "v1.0pre",
 
 		LinkedView, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1,
+		document = global.document,
 		$ = global.jQuery,
 
 		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
@@ -101,6 +102,20 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		}
 	}
 
+	function getElementDefaultDisplay(el) {
+		var testElem,
+			getComputedStyle = global.getComputedStyle,
+			cStyle = el.currentStyle || getComputedStyle(el, "");
+
+		if (cStyle.display === "none") {
+			testElem = document.createElement(el.nodeName),
+			document.body.appendChild(testElem);
+			cStyle = (getComputedStyle ? getComputedStyle(testElem, "") : testElem.currentStyle).display;
+			document.body.removeChild(testElem);
+		}
+		return cStyle;
+	}
+
 	function propertyChangeHandler(ev, eventArgs, bind) {
 		var setter, changed, sourceValue, css, prev,
 			link = this,
@@ -135,7 +150,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			}
 			if (attr === "visible") {
 				attr = "css-display";
-				sourceValue = sourceValue ? "block" : "none";
+				sourceValue = sourceValue
+					// Make sure we set the correct display style for showing this particular element ("block", "inlin" etc.)
+					? getElementDefaultDisplay(target)
+					: "none";
 			}
 			if (css = attr.lastIndexOf("css-", 0) === 0 && attr.substr(4)) {
 				if (changed = $target.css(css) !== sourceValue) {
@@ -171,7 +189,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					}
 				} else if (changed = $target.attr(attr) != sourceValue) {
 					// Setting an attribute to the empty string should remove the attribute
-					sourceValue = sourceValue === "" ? null : sourceValue; 
+					sourceValue = sourceValue === "" ? null : sourceValue;
 					$target.attr(attr, sourceValue);
 				}
 			}
@@ -236,17 +254,12 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function unlink(container) {
 		container = $(container); // container was an element or selector
-		container.off(elementChangeStr);
+		container.off(elementChangeStr, elemChangeHandler);
 		clean(container[0]);
 	}
 
 	function link(data, container, context, prevNode, nextNode, index, parentView) {
 		// Bind elementChange on the root element, for links from elements within the content, to data;
-		function dataToElem() {
-			elemChangeHandler.apply({
-				tgt: data
-			}, arguments);
-		}
 		container = $(container); // container was an element or selector
 
 		var html, target,
@@ -254,14 +267,13 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			containerEl = container[0],
 			onRender = addLinkAnnotations,
 			tmpl = self.markup && self || self.jquery && $.templates(self[0]);
-			// if this is a tmpl, or a jQuery object containing an element with template content, get the compiled template
 
-
+		// if this is a tmpl, or a jQuery object containing an element with template content, get the compiled template
 		if (containerEl) {
 			parentView = parentView || $.view(containerEl);
 
 			unlink(containerEl);
-			container.on(elementChangeStr, dataToElem);
+			container.on(elementChangeStr, elemChangeHandler);
 
 			if (context) {
 				if (parentView.link === FALSE) {
@@ -277,7 +289,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			if (tmpl) {
 				// Remove previous jsvData on the container elem - e.g. the previous views
 
-				html = tmpl.render(data, context, undefined, undefined, parentView, onRender);
+				html = tmpl.render(data, context, parentView, undefined, undefined, undefined, onRender);
 
 				if (target === "replace") {
 					prevNode = containerEl.previousSibling;
@@ -304,6 +316,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		if (linkMarkup) {
 			linkIndex = currentView._lnk++;
 			// Compiled linkFn expressions are stored in the tmpl.links array of the template
+			// TODO - consider also caching globally so that if {{:foo}} or data-link="foo" occurs in different places, the compiled template for this is cached and only compiled once...
 			links = currentView.links || currentView.tmpl.links;
 			if (!(link = links[linkIndex])) {
 				link = links[linkIndex] = {};
@@ -341,47 +354,45 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				}
 			}
 			viewData = currentView.data;
-			currentView.data = viewData || data;
 			for (attr in link) {
 				bindDataLinkTarget(
-					currentView.data || data, //source
+					data || currentView.data, //source
 					node,                     //target
 					attr,                     //attr
 					link[attr],               //compiled link markup expression
 					currentView               //view
 				);
 			}
-//			currentView.data = viewData;
 		}
 	}
 
 	function bindDataLinkTarget(source, target, attr, linkFn, view) {
-		//Add data link bindings for a link expression in data-link attribute markup
+		// Add data link bindings for a link expression in data-link attribute markup
 		var boundParams = [],
+			boundArrays = [],
 			storedLinks = jsViewsData(target, linkStr, TRUE),
 			handler = function() {
 				propertyChangeHandler.apply({ tgt: target, src: source, attr: attr, fn: linkFn, view: view }, arguments);
 			};
 
 		// Store for unbinding
-		storedLinks[attr] = { srcs: boundParams, hlr: handler };
+		storedLinks[attr] = { srcs: boundParams, arrs: boundArrays, hlr: handler };
 
 		// Call the handler for initialization and parameter binding
 		handler(undefined, undefined, function(object, leafToken) {
 			// Binding callback called on each dependent object (parameter) that the link expression depends on.
 			// For each path add a propertyChange binding to the leaf object, to trigger the compiled link expression,
 			// and upate the target attribute on the target element
-			boundParams.push(object);
 			if (linkFn.to !== undefined) {
 				// If this link is a two-way binding, add the linkTo info to JsViews stored data
 				$.data(target, jsvData).to = [object, leafToken, linkFn.to];
 				// For two-way binding, there should be only one path. If not, will bind to the last one.
 			}
 			if ($.isArray(object)) {
-				$([object]).on(arrayChangeStr, function() {
-					handler();
-				});
+				boundArrays.push(object);
+				$([object]).on(arrayChangeStr, handler);
 			} else {
+				boundParams.push(object);
 				$(object).on(propertyChangeStr, NULL, leafToken, handler);
 			}
 			return object;
@@ -439,6 +450,11 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				while (l--) {
 					$(srcs[l]).off(propertyChangeStr, link.hlr);
 				}
+				srcs = link.arrs;
+				l = srcs.length;
+				while (l--) {
+					$([srcs[l]]).off(arrayChangeStr, link.hlr);
+				}
 			}
 
 			// Get views for which this element is the parentElement, and remove from parent view
@@ -472,7 +488,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		}
 	};
 
-	function addLinkAnnotations(value, tmpl, props, key, path) {
+	function addLinkAnnotations(value, tmpl, props, key) {
 		var elemAnnotation,
 			tag = tmpl.tag,
 			linkInfo = "i",
@@ -496,7 +512,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function renderAndLink(view, index, views, data, html, context, addingViewToParent) {
 		var prevView, prevNode, linkToNode, linkFromNode,
-			elLinked = !view._prevNode;
+			elLinked = !view._prevNode,
 			parentNode = view.parentElem;
 
 		if (index && ("" + index !== index)) {
@@ -506,7 +522,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			prevView = views[index - 1];
 			prevNode = elLinked ? prevView._after : addingViewToParent ? prevView._nextNode : view._prevNode;
 		} else {
-			prevNode = elLinked ? view._preceding : view._prevNode;
+			prevNode = elLinked ? (view._preceding || view.parent._preceding) : view._prevNode;
 		}
 
 		if (prevNode) {
@@ -560,19 +576,24 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		},
 
 		refresh: function(context) {
-			var self = this,
+			var index,
+				self = this,
 				parent = self.parent,
-				index = !parent._useKey && self.index,
 				tmpl = self.tmpl = getTemplate(self.tmpl);
 
 			if (parent) {
+				index = !parent._useKey && self.index,
 				// Remove HTML nodes
 				$(self.nodes).remove(); // Also triggers cleanData which removes child views.
 				// Remove child views
 				self.removeViews();
 				self.nodes = [];
 
-				renderAndLink(self, index, parent.views, self.data, tmpl.render(self.data, context, undefined, TRUE, self), context);
+				renderAndLink(self, index, parent.views, self.data,
+					tmpl.render(self.data, context, self, TRUE, self._useKey), 
+					// Pass in self._useKey as test for layout template (which corresponds to when self._useKey>0 and self.data is an array) 
+					context
+				);
 				setArrayChangeLink(self);
 			}
 			return self;
@@ -584,10 +605,14 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				self = this,
 				views = self.views;
 
-			if ( !self._useKey && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
+			if (!self._useKey && dataItems.length && (tmpl = getTemplate(tmpl || self.tmpl))) {
 				// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
 				viewsCount = views.length + dataItems.length;
-				renderAndLink(self, index, views, dataItems, tmpl.render(dataItems, self.ctx, undefined, index, self), self.ctx, TRUE);
+
+				renderAndLink(self, index, views, dataItems,
+					tmpl.render(dataItems, self.ctx, self, index),
+					self.ctx, TRUE
+				);
 				while (++index < viewsCount) {
 					observable(views[index]).setProperty("index", index);
 					// TODO - this is fixing up index, but not key, and not index on child views. Consider changing index to be a getter index(),
@@ -605,17 +630,15 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			// view.removeViews( index ) removes the child view with specified index or key
 			// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 			function removeView(index, parElVws) {
-				var i,
-					viewToRemove = views[index],
-					node = viewToRemove._prevNode,
-					nextNode = viewToRemove._nextNode,
+				var i, node, nextNode, nodesToRemove,
+					viewToRemove = views[index];
+				if (viewToRemove) {
+					node = viewToRemove._prevNode;
+					nextNode = viewToRemove._nextNode;
 					nodesToRemove = node
 						? [node]
 						// viewToRemove._prevNode is null: this is a view using element annotations, so we will remove the top-level nodes
 						: viewToRemove.nodes;
-
-				if (nodesToRemove) {
-					// If nodesToRemove is not undefined, so this a linked view. We remove HTML nodes and hanlder for arrayChange data binding
 
 					// If parElVws is passed in, this is an 'Array View', so all child views have same parent element
 					// Otherwise, the views are by key, and there may be intervening parent elements, to get parentElViews for each child view that is being removed
@@ -856,7 +879,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			node = node && $(node)[0];
 
 			var returnView, view, parentElViews, i, j, finish, elementLinked,
-				topNode = global.document.body,
+				topNode = document.body,
 				startNode = node;
 
 			if (inner) {
@@ -957,7 +980,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	$.fn.link = link;
 
-	$.fn.view = function(node){
+	$.fn.view = function(node) {
 		return $.view(this[0]);
 	}
 	// Initialize default delimiters

@@ -2,7 +2,6 @@
 <html>
 <head>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
-	<script src="http://www.JSON.org/json2.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
 	<script src="../../jquery.views.js" type="text/javascript"></script>
@@ -117,7 +116,7 @@
 	$( "#moviePurchaseTemplate" ).link( orderDetails, "#moviePurchase", contextHelpers );
 
 	$( "#submitOrder" ).on( "click", function() {
-		alert("You ordered a movie ticket as follows:\n" + JSON.stringify(orderDetails, null, 1).slice(1,-1));
+		alert("You ordered a movie ticket as follows:\n" + (window.JSON ? JSON.stringify(orderDetails, null, 1).slice(1,-1) : orderDetails.selectedMovie));
 	});
 </script>
 </body>
