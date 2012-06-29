@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 18
+// informal pre beta commit counter: 19
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -111,6 +111,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			testElem = document.createElement(el.nodeName),
 			document.body.appendChild(testElem);
 			cStyle = (getComputedStyle ? getComputedStyle(testElem, "") : testElem.currentStyle).display;
+			// Consider caching the result as a hash against nodeName
 			document.body.removeChild(testElem);
 		}
 		return cStyle;

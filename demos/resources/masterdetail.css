@@ -17,7 +17,7 @@ table td { padding: 3px; margin: 3px; }
 #movieDetail div { float: left; clear: both; }
 #movieDetail input.special { float:none; padding: inherit; width:inherit; margin: 3px; border: inherit; }
 #movieDetail .title { padding-top: 8px; }
-.close { float: right; cursor: pointer; margin: 6px; }
+.close { float: right; cursor: pointer; margin: 5px; }
 #addLanguageBtn, #addMovieBtn { float: right; text-decoration: underline; font-style: italic; color: #1010c0; cursor:pointer; padding: 0 5px 0 15px; }
 table input { width: 95%; border: 1px solid #000; padding:4px; }
 #console { float: left; clear:both; }
