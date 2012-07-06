@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 19
+// informal pre beta commit counter: 20
 
 this.jQuery && jQuery.link || (function(global, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -16,18 +16,20 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	var versionNumber = "v1.0pre",
 
-		LinkedView, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1,
+		LinkedView, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1,
 		document = global.document,
 		$ = global.jQuery,
 
-		// jsviews object (=== $.views) Note: JsViews requires jQuery is loaded)
-		jsv = $.views,
-		extend = $.extend,
-		sub = jsv.sub,
+		// jsviews object (=== $.views) Note: JsViews requires jQuery to be loaded
+		$views = $.views,
+		$extend = $.extend,
+		$viewsSub = $views.sub,
 		FALSE = false, TRUE = true, NULL = null,
-		topView = new jsv.View(jsv.helpers),
-		templates = jsv.templates,
-		observable = $.observable,
+		topView = $views.View($views.helpers),
+		$isArray = $.isArray,
+		$templates = $views.templates,
+		$observable = $.observable,
+		$viewsLinkAttr = "data-link",
 		jsvData = "_jsvData",
 		linkStr = "link",
 		viewStr = "view",
@@ -42,8 +44,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		},
 		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
 		oldCleanData = $.cleanData,
-		oldJsvDelimiters = jsv.delimiters,
-
+		oldJsvDelimiters = $views.delimiters,
+		error = $views.error;
 		rStartTag = /^jsvi|^jsv:/,
 		rFirstElem = /^\s*<(\w+)[>\s]/;
 
@@ -52,7 +54,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		throw "requires jQuery"; // for Beta (at least) we require jQuery
 	}
 
-	if (!(jsv)) {
+	if (!($views)) {
 		throw "requires JsRender";
 	}
 
@@ -66,17 +68,17 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		var setter, cancel, fromAttr, to, linkContext, sourceValue, cnvtBack, target,
 			source = ev.target,
 			$source = $(source),
-			view = $.view(source),
+			view = $view(source),
 			context = view.ctx,
 			beforeChange = context.beforeChange;
 
-		if (source.getAttribute(jsv.linkAttr) && (to = jsViewsData(source, "to"))) {
+		if (source.getAttribute($viewsLinkAttr) && (to = jsViewsData(source, "to"))) {
 			fromAttr = defaultAttr(source);
 			setter = fnSetters[fromAttr];
 			sourceValue = $.isFunction(fromAttr) ? fromAttr(source) : setter ? $source[setter]() : $source.attr(fromAttr);
 
 			if ((!beforeChange || !(cancel = beforeChange.call(view, ev) === FALSE)) && sourceValue !== undefined) {
-				cnvtBack = jsv.converters[to[2]];
+				cnvtBack = $views.converters[to[2]];
 				target = to[0];
 				to = to[1];
 				linkContext = {
@@ -89,7 +91,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					sourceValue = cnvtBack.call(linkContext, sourceValue);
 				}
 				if (sourceValue !== undefined && target) {
-					observable(target).setProperty(to, sourceValue);
+					$observable(target).setProperty(to, sourceValue);
 					if (context.afterChange) {  //TODO only call this if the target property changed
 						context.afterChange.call(linkContext, ev);
 					}
@@ -123,7 +125,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			source = link.src,
 			target = link.tgt,
 			$target = $(target),
-			attr = link.attr || defaultAttr(target, TRUE), // attr for binding data value to the element
+			attr = link.attr,
 			view = link.view,
 			context = view.ctx,
 			beforeChange = context.beforeChange;
@@ -145,7 +147,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		&& !(eventArgs && ev.data !== eventArgs.path))
 		// && (!view || view._onDataChanged( eventArgs ) !== FALSE ) // Not currently supported or needed for property change
 		{
-			sourceValue = link.fn(source, link.view, jsv, bind || returnVal);
+			sourceValue = link.fn(source, link.view, $views, bind || returnVal);
 			if ($.isFunction(sourceValue)) {
 				sourceValue = sourceValue.call(source);
 			}
@@ -239,14 +241,14 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	function defaultAttr(elem, to) {
 		// to: true - default attribute for setting data value on HTML element; false: default attribute for getting value from HTML element
 		// Merge in the default attribute bindings for this target element
-		var attr = jsv.merge[elem.nodeName.toLowerCase()];
+		var attr = $views.merge[elem.nodeName.toLowerCase()];
 		return attr
-		? (to
-			? attr.to.toAttr
-			: attr.from.fromAttr)
-		: to
-			? "text" // Default is to bind to innerText. Use html{:...} to bind to innerHTML
-			: ""; // Default is not to bind from
+			? (to
+				? attr.to.toAttr
+				: attr.from.fromAttr)
+			: to
+				? "text" // Default is to bind to innerText. Use html{:...} to bind to innerHTML
+				: ""; // Default is not to bind from
 	}
 
 	function returnVal(value) {
@@ -267,11 +269,11 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			self = this,
 			containerEl = container[0],
 			onRender = addLinkAnnotations,
-			tmpl = self.markup && self || self.jquery && $.templates(self[0]);
+			tmpl = self.markup && self || self.jquery && $templates(self[0]);
 
 		// if this is a tmpl, or a jQuery object containing an element with template content, get the compiled template
 		if (containerEl) {
-			parentView = parentView || $.view(containerEl);
+			parentView = parentView || $view(containerEl);
 
 			unlink(containerEl);
 			container.on(elementChangeStr, elemChangeHandler);
@@ -312,7 +314,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function bindDataLinkAttributes(node, currentView, data) {
 		var links, attr, linkIndex, convertBack, cbLength, expression, viewData, prev,
-			linkMarkup = node.getAttribute(jsv.linkAttr);
+			linkMarkup = node.getAttribute($viewsLinkAttr);
 
 		if (linkMarkup) {
 			linkIndex = currentView._lnk++;
@@ -348,7 +350,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					// Compile the linkFn expression which evaluates and binds a data-link expression
 					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
 					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-					link[attr] = jsv._tmplFn(delimOpenChar0 + expression + delimCloseChar1, undefined, TRUE);
+					link[attr] = $views._tmplFn(delimOpenChar0 + expression + delimCloseChar1, undefined, TRUE);
 					if (!attr && convertBack !== undefined) {
 						link[attr].to = convertBack;
 					}
@@ -373,7 +375,13 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			boundArrays = [],
 			storedLinks = jsViewsData(target, linkStr, TRUE),
 			handler = function() {
-				propertyChangeHandler.apply({ tgt: target, src: source, attr: attr, fn: linkFn, view: view }, arguments);
+				propertyChangeHandler.apply({
+					tgt: target,
+					src: source,
+					attr: attr || defaultAttr(target, TRUE), // attr for binding data value to the element
+					fn: linkFn,
+					view: view
+				}, arguments);
 			};
 
 		// Store for unbinding
@@ -419,7 +427,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		// Get nested templates from path
 		if ("" + tmpl === tmpl) {
 			var tokens = tmpl.split("[");
-			tmpl = templates[tokens.shift()];
+			tmpl = $templates[tokens.shift()];
 			while (tmpl && tokens.length) {
 				tmpl = tmpl.tmpls[tokens.shift().slice(0, -1)];
 			}
@@ -461,7 +469,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			// Get views for which this element is the parentElement, and remove from parent view
 			collData = linksAndViews.view;
 			if (l = collData.length) {
-				parentView = $.view(elem);
+				parentView = $view(elem);
 				while (l--) {
 					view = collData[l];
 					if (view.parent === parentView) {
@@ -478,8 +486,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	// JsRender integration
 	//=======================
 
-	sub.onStoreItem = function(store, name, item, process) {
-		if (item && store === templates) {
+	$viewsSub.onStoreItem = function(store, name, item, process) {
+		if (item && store === $templates) {
 			item.link = function() {
 				return $.link.apply(item, arguments);
 			};
@@ -615,7 +623,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					self.ctx, TRUE
 				);
 				while (++index < viewsCount) {
-					observable(views[index]).setProperty("index", index);
+					$observable(views[index]).setProperty("index", index);
 					// TODO - this is fixing up index, but not key, and not index on child views. Consider changing index to be a getter index(),
 					// so we only have to change it on the immediate child view of the Array view, but also so that it notifies all subscriber to #index().
 					// Also have a #context() which can be parameterized to give #parents[#parents.length-1].data or #roots[0]
@@ -721,7 +729,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					if (viewsCount = views.length) {
 						// Fixup index on following view items...
 						while (index < viewsCount) {
-							observable(views[index]).setProperty("index", index++);
+							$observable(views[index]).setProperty("index", index++);
 						}
 					}
 				}
@@ -775,7 +783,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 							// Extend and initialize the view object created in JsRender, as a JsViews view
 							view = self.views[key];
 							if (!view.link) {
-								extend(view, LinkedView);
+								$extend(view, LinkedView);
 
 								view.parentElem = parentElem;
 								view._prevNode = node;
@@ -840,8 +848,8 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	// Extend $.views namespace
 	//=======================
 
-	extend(jsv, {
-		linkAttr: "data-link",
+	$extend($views, {
+		linkAttr: $viewsLinkAttr,
 		merge: {
 			input: {
 				from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
@@ -858,7 +866,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 			delimOpenChar1 = delimChars[1];
 			delimCloseChar0 = delimChars[2];
 			delimCloseChar1 = delimChars[3];
-			rTag = new RegExp("(?:^|\\s*)([\\w-]*)(" + delimOpenChar1 + jsv.rTag + ")" + delimCloseChar0 + ")", "g");
+			rTag = new RegExp("(?:^|\\s*)([\\w-]*)(" + delimOpenChar1 + $views.rTag + ")" + delimCloseChar0 + ")", "g");
 			return this;
 		}
 	});
@@ -867,28 +875,27 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	// Extend jQuery namespace
 	//=======================
 
-	extend($, {
+	$extend($, {
 
 		//=======================
 		// jQuery $.view() plugin
 		//=======================
 
-		view: function(node, inner) {
+		view: $view = function(node, inner) {
 			// $.view() returns top node
 			// $.view( node ) returns view that contains node
 			// $.view( selector ) returns view that contains first selected element
 			node = node && $(node)[0];
-
 			var returnView, view, parentElViews, i, j, finish, elementLinked,
-				topNode = document.body,
-				startNode = node;
+				startNode = node,
+				body = document.body;
 
 			if (inner) {
 				// Treat supplied node as a container element, step through content, and return the first view encountered.
 				finish = node.nextSibling || node.parentNode;
 				while (finish !== (node = node.firstChild || node.nextSibling || node.parentNode.nextSibling)) {
 					if (node.nodeType === 8 && rStartTag.test(node.nodeValue)) {
-						view = $.view(node);
+						view = $view(node);
 						if (view._prevNode === node) {
 							return view;
 						}
@@ -897,19 +904,19 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 				return;
 			}
 
-			node = node || topNode;
+			node = node || body;
 			if ($.isEmptyObject(topView.views)) {
 				return topView; // Perf optimization for common case
 			} else {
 				// Step up through parents to find an element which is a views container, or if none found, create the top-level view for the page
-				while (!(parentElViews = jsViewsData(finish = node.parentNode || topNode, viewStr)).length) {
-					if (!finish || node === topNode) {
-						jsViewsData(topNode.parentNode, viewStr, TRUE).push(returnView = topView);
+				while (!(parentElViews = jsViewsData(finish = node.parentNode || body, viewStr)).length) {
+					if (!finish || node === body) {
+						jsViewsData(body, viewStr, TRUE).push(returnView = topView);
 						break;
 					}
 					node = finish;
 				}
-				if (node === topNode) {
+				if (node === body) {
 					return topView; //parentElViews[0];
 				}
 				if (parentElViews.elLinked) {
@@ -958,7 +965,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					node = node.previousSibling;
 				}
 				// If not within any of the views in the current parentElViews collection, move up through parent nodes to find next parentElViews collection
-				returnView = returnView || $.view(finish);
+				returnView = returnView || $view(finish);
 			}
 			return returnView;
 		},
@@ -982,12 +989,12 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 	$.fn.link = link;
 
 	$.fn.view = function(node) {
-		return $.view(this[0]);
+		return $view(this[0]);
 	}
 	// Initialize default delimiters
-	jsv.delimiters();
+	$views.delimiters();
 
-	extend(topView, { tmpl: {}, _lnk: 0, links: [] });
-	extend(topView, LinkedView);
+	$extend(topView, { tmpl: {}, _lnk: 0, links: []});
+	$extend(topView, LinkedView);
 
 })(this);
