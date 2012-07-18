@@ -215,6 +215,24 @@
 
 		_trigger: function( eventArgs ) {
 			$([ this._data ]).triggerHandler( "arrayChange", eventArgs );
+		},
+
+		nodesFor: function( index ){
+			index && validateIndex(index);
+
+			var links = [],
+				eventArgs = { index: index, back: function(view){ 
+					if (index >= 0){
+						view && view.views && view.views[index] && links.push.apply(links, view.views[index].nodes) 
+					} else {
+						view && view.views && $.each(view.views, function(i, view){
+							links.push.apply(links, view.nodes);
+						})
+					}
+				} };
+
+			$([ this._data ]).trigger( "pingme", eventArgs );
+			return $(links);
 		}
 	};
 })(jQuery);

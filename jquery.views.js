@@ -211,6 +211,10 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 		var context = this.ctx,
 			beforeChange = context.beforeChange;
 
+		if (ev.type === "pingme"){
+			eventArgs.back && eventArgs.back( this );
+			return
+		}
 		if (!beforeChange || beforeChange.call(this, ev, eventArgs) !== FALSE) {
 			this._onDataChanged(eventArgs);
 			if (context.afterChange) {
@@ -237,6 +241,7 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 					arrayChangeHandler.apply(view, arguments);
 				};
 				$([data]).on(arrayChangeStr, handler);
+				$([data]).on("pingme", handler);
 				view._onArrayChange = [handler, data];
 			}
 		}
