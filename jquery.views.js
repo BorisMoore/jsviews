@@ -205,10 +205,27 @@ this.jQuery && jQuery.link || (function(global, undefined) {
 
 	function arrayChangeHandler(ev, eventArgs) {
 		var context = this.ctx,
-			beforeChange = context.beforeChange;
+			beforeChange = context.beforeChange,
+			skipDefaultHandler;
 
 		if (!beforeChange || beforeChange.call(this, ev, eventArgs) !== FALSE) {
-			this._onDataChanged(eventArgs);
+			if (eventArgs.change && eventArgs.change === 'remove' && context.beforeRemove){
+				// the beforeRemove-handler can return a truthy value denoting that he already has removed the view
+				var view = this, 
+					nodes = view.views[ eventArgs.index ].nodes;
+
+				view.remove = function(){ // convenience wrapper
+					view._onDataChanged(eventArgs);
+				};
+				skipDefaultHandler = context.beforeRemove.call(this, nodes, view, eventArgs); 
+			}
+
+			skipDefaultHandler || this._onDataChanged(eventArgs);
+
+			if (eventArgs.change && eventArgs.change === "insert" && context.afterInsert) {
+				var nodes = this.views[ eventArgs.index ].nodes;
+				context.afterInsert.call(this, nodes, this, eventArgs);
+			}
 			if (context.afterChange) {
 				context.afterChange.call(this, ev, eventArgs);
 			}
