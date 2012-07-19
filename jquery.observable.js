@@ -92,6 +92,20 @@
 
 		_trigger: function( target, eventArgs ) {
 			$( target ).triggerHandler( "propertyChange", eventArgs );
+		},
+
+		nodesFor: function( path ) {
+			var object = this._data,
+				leaf = getLeafObject( object, path );
+
+			path = leaf[1];
+			leaf = leaf[0];
+
+			var links = [],
+			    eventArgs = { path: path, back: function(link){ link.tgt && links.push(link.tgt) } }
+
+			$(leaf).triggerHandler("pingme", eventArgs); // aren't we lucky people: this is a synchronous call
+			return $(links);
 		}
 	};
 
@@ -201,6 +215,24 @@
 
 		_trigger: function( eventArgs ) {
 			$([ this._data ]).triggerHandler( "arrayChange", eventArgs );
+		},
+
+		nodesFor: function( index ){
+			index && validateIndex(index);
+
+			var links = [],
+				eventArgs = { index: index, back: function(view){ 
+					if (index >= 0){
+						view && view.views && view.views[index] && links.push.apply(links, view.views[index].nodes) 
+					} else {
+						view && view.views && $.each(view.views, function(i, view){
+							links.push.apply(links, view.nodes);
+						})
+					}
+				} };
+
+			$([ this._data ]).triggerHandler( "pingme", eventArgs );
+			return $(links);
 		}
 	};
 })(jQuery);
