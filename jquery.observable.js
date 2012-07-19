@@ -231,7 +231,7 @@
 					}
 				} };
 
-			$([ this._data ]).trigger( "pingme", eventArgs );
+			$([ this._data ]).triggerHandler( "pingme", eventArgs );
 			return $(links);
 		}
 	};
