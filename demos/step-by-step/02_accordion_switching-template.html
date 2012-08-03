@@ -87,7 +87,7 @@ Click for details:
 	}
 
 	/* Render the movies array as data-linked content under the movieList <ul>, using the summaryTemplate */
-	$.link.summaryTemplate( movies, "#movieList" )
+	$.link.summaryTemplate( "#movieList", movies )
 
 		/* onclick handler for movie subviews when not selected */
 		.on( "click", ".movieSummary", function() {

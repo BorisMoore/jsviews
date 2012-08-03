@@ -9,9 +9,9 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<div class="nav"><a href="02_template-from-string.html">Prev</a> <a href="index.html">Index</a> <a href="04_data-array.html">Next</a></div>
+<div class="nav"><a href="01_render-template.html">Prev</a> <a href="index.html">Index</a> <a href="03_named-template.html">Next</a></div>
 
-<h3>JsRender: Compile template from string</h3>
+<h3>JsRender: Compile template object from string, and render against data</h3>
 
 <!--====== Container ======-->
 <table><tbody id="details"></tbody></table>
@@ -23,11 +23,11 @@ var person = {
 	firstName: "Jeff"
 };
 
-// Compile from string, as named template
-$.templates( "detailsTmpl", "<tr><td>{{>firstName}}</td></tr>" );
+// Compile from string as template object
+var template = $.templates( "<tr><td>{{>firstName}}</td></tr>" );
 
 // Render to string
-var html = $.render.detailsTmpl( person );
+var html = template.render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );
@@ -45,11 +45,11 @@ var person = {
 
 <h4>Script:</h4>
 <pre class="brush: js;">
-// Compile as named template
-$.templates( "detailsTmpl", "&lt;tr>&lt;td>{{>firstName}}&lt;/td>&lt;/tr>" );
+// Compile from string as template object
+var template = $.templates( "&lt;tr>&lt;td>{{>firstName}}&lt;/td>&lt;/tr>" );
 
 // Render to string
-var html = $.render.detailsTmpl( person );
+var html = template.render( person );
 
 // Insert as HTML
 $( "#details" ).html( html );

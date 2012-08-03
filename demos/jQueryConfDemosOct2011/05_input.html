@@ -36,8 +36,11 @@ var people = [
 	}
 ];
 
+// Register template
+$.templates( "personTmpl", "#personTmpl" );
+
 $( "#details" ).html(
-	$( "#personTmpl" ).render( people )
+	$.render.personTmpl( people )
 );
 
 </script>

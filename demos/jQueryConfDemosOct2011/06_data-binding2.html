@@ -40,14 +40,13 @@ var people = [
 	}
 ];
 
-// Compile template
-
+// Register template
 $.templates( "personTmpl", "#personTmpl" );
 
 // Render and link (compact syntax): data-link people to the
 // details container, using the personTmpl template
 
-$.link.personTmpl( people, "#details" );
+$.link.personTmpl( "#details", people );
 </script>
 
 <!--================ End of Demo Section ================-->
@@ -72,7 +71,7 @@ $.templates( "personTmpl", "#personTmpl" );
 // Render and link (compact syntax): data-link people to the
 // details container, using the personTmpl template
 
-$.link.personTmpl( people, "#details" );
+$.link.personTmpl( "#details", people );
 </pre>
 </body>
 </html>

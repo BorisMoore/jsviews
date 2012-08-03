@@ -39,7 +39,7 @@
 	<p>Cars:
 		<em>Quantity</em> <input data-link="cars.quantity" />
 		<em>Price</em> <input data-link="cars.price" />
-		<em>Total Value:</em> <span data-link="cars.price * cars.quantity"></span>
+		<em>Total Value:</em> <span data-link="cars.quantity * cars.price"></span>
 	</p>
 
 	<p>
@@ -92,7 +92,8 @@
 		}
 	});
 
-	$.link( person, "#myLinkedContent" );
+	// Calling link on an element, with first parameter 'true' link the contents of the element.
+	$("#myLinkedContent").link( true, person );
 </script>
 </body>
 </html>

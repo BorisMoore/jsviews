@@ -63,7 +63,7 @@ $.views.helpers({
 
 $.templates( "folderTmpl", "#folderTemplate" );
 
-$.link.folderTmpl( rootFolder, "#foldersList" )
+$.link.folderTmpl( "#foldersList", rootFolder )
 	.on( "click", ".toggle", function() {
 		/* Toggle expanded property on data, then refresh rendering */
 		var view = $.view( this ).parent;

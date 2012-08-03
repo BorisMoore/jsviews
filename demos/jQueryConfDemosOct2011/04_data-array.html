@@ -9,7 +9,7 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<div class="nav"><a href="03_compiled-template.html">Prev</a> <a href="index.html">Index</a> <a href="05_input.html">Next</a></div>
+<div class="nav"><a href="03_named-template.html">Prev</a> <a href="index.html">Index</a> <a href="05_input.html">Next</a></div>
 
 <h3>JsRender: Data Arrays</h3>
 
@@ -35,8 +35,11 @@ var people = [
 	}
 ];
 
+// Register template
+$.templates( "personTmpl", "#personTmpl" );
+
 // An array renders once for each item (concatenated)
-var html = $( "#personTmpl" ).render( people );
+var html = $.render.personTmpl( people );
 
 // Insert as HTML
 $( "#details" ).html( html );
@@ -60,7 +63,7 @@ var people = [
 <h4>Script:</h4>
 <pre class="brush: js;">
 // An array renders once for each item (concatenated)
-var html = $( "#personTmpl" ).render( people );
+var html = $.render.personTmpl( people );
 
 // Insert as HTML
 $( "#details" ).html( html );

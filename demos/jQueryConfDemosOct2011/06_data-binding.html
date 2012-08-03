@@ -39,10 +39,13 @@ var people = [
 	}
 ];
 
+// Get template object
+var template = $.templates( "#personTmpl" );
+
 // Render and link: data-link people to the
 // details container, using the personTmpl template
 
-$( "#personTmpl" ).link( people, "#details" );
+template.link( "#details", people );
 
 </script>
 
@@ -64,7 +67,7 @@ $( "#personTmpl" ).link( people, "#details" );
 // Render and link: data-link people to the
 // details container, using the personTmpl template
 
-$( "#personTmpl" ).link( people, "#details" );
+$( "#personTmpl" ).link( "#details", people );
 </pre>
 
 

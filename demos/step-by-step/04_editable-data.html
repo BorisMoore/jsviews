@@ -117,7 +117,7 @@
 		if ( args.path === "selectedItem" ) {
 			var selectedView = args.value;
 			if ( selectedView ) {
-				$.link.detailTmpl( selectedView.data, "#movieDetail" );
+				$.link.detailTmpl( "#movieDetail", selectedView.data );
 			} else {
 				$( "#movieDetail" ).empty();
 			}
@@ -133,7 +133,7 @@
 		app: app
 	});
 
-	$.link.movieTmpl( movies, "#movieList" )
+	$.link.movieTmpl( "#movieList", movies )
 		.on( "click", "tr", function() {
 			select( $.view( this ));
 		})

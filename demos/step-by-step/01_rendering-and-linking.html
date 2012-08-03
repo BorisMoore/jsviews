@@ -65,11 +65,11 @@
 
 	// Render the template with the movies data, as data-linked content
 	// replacing an HTML placeholder element
-	$.link.textOnlyTemplate( movies, "#linkedListPlaceholder", { target: "replace" });
+	$.link.textOnlyTemplate( "#linkedListPlaceholder", movies, { target: "replace" });
 
 	// Render the template with the movies data, as data-linked content
 	// of an HTML container element
-	$.link.movieTemplate( movies, "#linkedListContainer");
+	$.link.movieTemplate( "#linkedListContainer", movies );
 
 	// Modify the data
 	function addMovie() {

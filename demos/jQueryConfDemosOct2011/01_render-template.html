@@ -9,9 +9,9 @@
 	<script src="../../jsrender.js" type="text/javascript"></script>
 </head>
 <body>
-<div class="nav">Prev <a href="index.html">Index</a> <a href="02_template-from-string.html">Next</a></div>
+<div class="nav">Prev <a href="index.html">Index</a> <a href="02_compiled-template.html">Next</a></div>
 
-<h3>JsRender: Render template from script block</h3>
+<h3>JsRender: Declare template in script block, and render against data</h3>
 
 <!--====== Container ======-->
 <table><tbody id="details"></tbody></table>
@@ -25,7 +25,6 @@
 
 <!--====== Script ======-->
 <script type="text/javascript">
-
 var person = {
 	firstName: "Jeff"
 };
@@ -69,4 +68,3 @@ $( "#details" ).html( html );
 </pre>
 </body>
 </html>
-

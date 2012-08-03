@@ -28,15 +28,15 @@
 			{{/for}}
 		</select>
 
-			<div data-link="visible{: selectedMovie!=='none' }">
+		<div data-link="visible{: selectedMovie!=='none' }">
 
-				<div class="subhead">Name:</div>
-				<div><input data-link="name" /></div>
+			<div class="subhead">Name:</div>
+			<div><input data-link="name" /></div>
 
-				<div class="subhead">Special requests:</div>
-				<div><textarea data-link="request" rows="4" cols="25" /></div>
+			<div class="subhead">Special requests:</div>
+			<div><textarea data-link="request" rows="4" cols="25" /></div>
 
-			</div>
+		</div>
 	</div>
 
 	<div data-link="visible{: ~and(selectedMovie!=='none', name) }">
@@ -113,7 +113,9 @@
 			}
 		};
 
-	$( "#moviePurchaseTemplate" ).link( orderDetails, "#moviePurchase", contextHelpers );
+	$.templates( "moviePurchaseTemplate", "#moviePurchaseTemplate" );
+
+	$.link.moviePurchaseTemplate( "#moviePurchase", orderDetails, contextHelpers );
 
 	$( "#submitOrder" ).on( "click", function() {
 		alert("You ordered a movie ticket as follows:\n" + (window.JSON ? JSON.stringify(orderDetails, null, 1).slice(1,-1) : orderDetails.selectedMovie));

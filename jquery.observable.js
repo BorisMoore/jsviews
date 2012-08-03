@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 7
+// informal pre beta commit counter: 21
 
 (function ( $, undefined ) {
 	$.observable = function( data, options ) {
@@ -18,10 +18,6 @@
 	var splice = [].splice;
 
 	function ObjectObservable( data ) {
-		if ( !this.data ) {
-			return new ObjectObservable( data );
-		}
-
 		this._data = data;
 		return this;
 	};
@@ -33,10 +29,6 @@
 
 		data: function() {
 			return this._data;
-		},
-
-		afterChange: function( path, callback ) {
-
 		},
 
 		setProperty: function( path, value ) { // TODO in the case of multiple changes (object): raise single propertyChanges event (which may span different objects, via paths) with set of changes.
@@ -109,10 +101,6 @@
 	};
 
 	function ArrayObservable( data ) {
-		if ( !this.data ) {
-			return new ArrayObservable( data );
-		}
-
 		this._data = data;
 		return this;
 	};

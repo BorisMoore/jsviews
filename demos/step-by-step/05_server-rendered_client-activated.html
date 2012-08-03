@@ -172,7 +172,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 			if ( args.path === "selectedItem" ) {
 				var selectedView = args.value;
 				if ( selectedView ) {
-					$.link.detailTmpl( selectedView.data, "#movieDetail" );
+					$.link.detailTmpl( "#movieDetail", selectedView.data );
 				} else {
 					$( "#movieDetail" ).empty();
 				}
@@ -187,7 +187,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 			app: app
 		});
 
-		$.link.movieTmpl( movies, "#movieList" )
+		$.link.movieTmpl( "#movieList", movies )
 			.on( "click", "tr", function() {
 				select( $.view( this ));
 			})

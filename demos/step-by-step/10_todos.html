@@ -94,7 +94,7 @@
 			return completed ? ( "Clear " + completed + " completed item" + ( completed > 1 ? "s" : "" )) : "";
 		},
 		// Provide afterChange handler for datalinking. (In this case it will be on the top view, so available to all views)
-		afterChange: function( ev ) {
+		onAfterChange: function( ev ) {
 			switch( ev.type ) {
 				case "change":
 					var view = $.view( this.src );
@@ -131,9 +131,9 @@
 	$( ".todo-clear" ).on( "click", function() { todos.clearCompleted(); });
 
 //	Link UI, and handle changes to 'done' and 'content' properties of Todo items
-	$.link( todos, "#todo-stats" );
+	$( "#todo-stats" ).link( true, todos );
 
-	$.link.itemTemplate( todos.items, "#todo-list" )
+	$.link.itemTemplate( "#todo-list", todos.items )
 		.on( "click", ".todo-destroy", function() {
 			var view = $.view( this );
 			todos.removeItem( view.index, view.data );
