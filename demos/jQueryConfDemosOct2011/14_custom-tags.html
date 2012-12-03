@@ -44,7 +44,7 @@
 
 		sort: function( array ){
 			var ret = "";
-			if ( this.props.reverse ) {
+			if ( this.tagCtx.props.reverse ) {
 				// Render in reverse order
 				for ( var i = array.length; i; i-- ) {
 					ret += this.renderContent( array[ i - 1 ] );
@@ -98,7 +98,7 @@ $.views.tags({
 
     sort: function( array ){
         ...
-        if ( this.props.reverse === "true" ) {
+        if ( this.tagCtx.props.reverse ) {
             // Render in reverse order
             for ( var l = array.length, i = l; i; i-- ) {
                 ret += $.render( array[ i - 1 ], this.tmpl );

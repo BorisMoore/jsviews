@@ -30,7 +30,7 @@
 	</p>
 
 	<p>
-		<input data-link="firstName" />
+		<input data-link="{:firstName:}" />
 		<input data-link="{:lastName:} title{:~infoSummary(firstName, lastName, address.city, cars.quantity)}" />
 		<input data-link="address.city" />
 		<input data-link="{upper:roleColor:}" />
@@ -92,7 +92,7 @@
 		}
 	});
 
-	// Calling link on an element, with first parameter 'true' link the contents of the element.
+	// Calling link on an element, with first parameter 'true', to link the contents of the element.
 	$("#myLinkedContent").link( true, person );
 </script>
 </body>

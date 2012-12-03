@@ -32,7 +32,7 @@
 <!-- Templates -->
 <script type="text/x-jsrender" id="item-template">
 	<li>
-		<input data-link="checked{:done} {:done:}" class="check" type="checkbox" />
+		<input name="{{:#index}}" data-link="done" class="check" type="checkbox" />
 		<div data-link="{:content || 'empty todo...'} css-text-decoration{:done ? 'line-through' : ''}"
 			class="todo-content"></div>
 		<span class="todo-destroy"></span>
@@ -56,7 +56,7 @@
 				editing = view;
 				view.tmpl = "editTemplate";
 				view.refresh();
-				$( view.nodes ).find('input').focus();
+				$( view.contents('input', true)).focus();
 			},
 			removeItem: function( index, item ) {
 				$.observable( this.items ).remove( index, 1 );
@@ -97,14 +97,15 @@
 		onAfterChange: function( ev ) {
 			switch( ev.type ) {
 				case "change":
-					var view = $.view( this.src );
-					switch( this.path ) {
-						case "done":
+					var view = this;
+					switch(ev.target.className) {
+						case "check":
 							todos.doneChanged( view.data.done ? 1 : -1 );
 							break;
-						case "content":
+						case "todo-input":
 							todos.contentChanged( view );
 					}
+					break;
 				case "arrayChange":
 					if ( useStorage ) {
 						localStorage.setItem( "JsViewsTodos", JSON.stringify( todos.items ));

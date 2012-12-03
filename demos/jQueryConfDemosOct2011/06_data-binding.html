@@ -21,7 +21,7 @@
 <!--====== Template ======-->
 <script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-link="firstName" />
+		<td data-link="firstName"></td>
 		<td>
 			<input data-link="firstName" />
 		</td>
@@ -47,6 +47,10 @@ var template = $.templates( "#personTmpl" );
 
 template.link( "#details", people );
 
+// Alternative syntax:
+//    $("#details").link(template, people);
+// or:
+//    $.link(template, "#details", people);
 </script>
 
 <!--================ End of Demo Section ================-->
@@ -64,10 +68,18 @@ template.link( "#details", people );
 
 <h4>Script:</h4>
 <pre class="brush: js;">
+// Get template object
+var template = $.templates( "#personTmpl" );
+
 // Render and link: data-link people to the
 // details container, using the personTmpl template
 
-$( "#personTmpl" ).link( "#details", people );
+template.link( "#details", people );
+
+// Alternative syntax:
+//    $("#details").link(template, people);
+// or:
+//    $.link(template, "#details", people);
 </pre>
 
 

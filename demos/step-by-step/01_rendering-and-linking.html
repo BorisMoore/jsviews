@@ -29,22 +29,27 @@
 </div>
 
 <div class="subhead">Insert HTML from a rendered template between other content, and then data-link the content, for live updates. (Uses JsViews for data-linking.)</div>
-<div class="buttons">
+<p class="buttons">
 	<button onclick="addMovie()">add Movie</button>
 	<button onclick="removeMovie()">remove last Movie</button>
-</div>
+</p>
+
+<div class="subhead">Binding content to data by rendering a template, inserted between text nodes:</div>
 <div class="box">
-	<b>Our Movies</b><br />The current movies are <span id="linkedListPlaceholder"></span> ... <em>more to follow!</em>
+	Preceding text <span class="linkedListPlaceholder"></span> - Following text
 </div>
 
-<div class="subhead">Use JsViews to link content of an HTML container element directly to data, by associating with a template.</div>
+<div class="subhead">Binding content to data by rendering a template, inserted between elements:</div>
+<div class="box">
+	<b>Preceding element </b><span class="linkedListPlaceholder"></span><b> - Following element</b>
+</div>
+
+<div class="subhead">Binding content to data by rendering a template, inserted as content of an HTML container element:</div>
 <div class="box">
 	<ul id="linkedListContainer"></ul>
 </div>
 
-
 <script type="text/javascript">
-
 	var counter = 0,
 		movies = [
 			{ name: "The Red Violin", releaseYear: "1998" },
@@ -64,8 +69,8 @@
 	);
 
 	// Render the template with the movies data, as data-linked content
-	// replacing an HTML placeholder element
-	$.link.textOnlyTemplate( "#linkedListPlaceholder", movies, { target: "replace" });
+	// replacing an HTML placeholder elements
+	$.link.textOnlyTemplate( ".linkedListPlaceholder", movies, { target: "replace" });
 
 	// Render the template with the movies data, as data-linked content
 	// of an HTML container element
@@ -85,5 +90,3 @@
 </script>
 </body>
 </html>
-
-

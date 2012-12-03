@@ -48,9 +48,9 @@
 		<div class="subhead">Convert and 'convert back' functions using bit-masks on the integer data value:</div>
 
 		<b>Choose amount:</b><br/><br/>
-		<input type="checkbox" value="0" data-link="{setBit:amount:getBit}" /> bit 0<br />
-		<input type="checkbox" value="1" data-link="{setBit:amount:getBit}" /> bit 1<br />
-		<input type="checkbox" value="2" data-link="{setBit:amount:getBit}" /> bit 2<br />
+		<input type="checkbox" data-link="{getBit:amount bit=0 :setBit}" /> bit 0<br />
+		<input type="checkbox" data-link="{getBit:amount bit=1 :setBit}" /> bit 1<br />
+		<input type="checkbox" data-link="{getBit:amount bit=2 :setBit}" /> bit 2<br />
 	</div>
 
 	<b>Amount: <div class="box subhead" data-link="amount"></div></b>
@@ -60,13 +60,15 @@
 <script type="text/javascript">
 
 	$.views.converters({
-		getBit: function (value, context) {
-			var mask = 1 << context.src.value,
-				dataValue = context.tgt[context.path];
-			return value ? dataValue | mask : dataValue & ~mask;
+		setBit: function (value) {
+			// "Convert Back": If checked, set this bit on the data, or if unchecked, unset this bit on the data
+			var mask = 1 << this.tagCtx.props.bit, // Shift first bit, 0, 1 or 2 bits to the left, to create a mask
+				dataValue = this.linkCtx.data[this.linkCtx.paths[0]]; // Take the current data value
+			return value ? (dataValue | mask) : (dataValue & ~mask); // Use the mask to set or unset that bit on the data, and return the modified value
 		},
-		setBit: function (value, context) {
-			return value >> context.tgt.value & 1 == 1;
+		getBit: function (value) {
+			// "Convert": Get the bit from the data, and check or uncheck the checkbox
+			return (value >> this.tagCtx.props.bit & 1) === 1; // Shift 0, 1 or 2 bits to the right, and see if the first bit is set.
 		},
 		intToStr: function (value) {
 			return "" + value;

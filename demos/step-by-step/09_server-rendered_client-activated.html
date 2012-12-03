@@ -70,7 +70,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 </div>
 
 <script id="movieTemplate" type="text/x-jsrender">
-	<tr class="hover" data-link="css-background-color{:~bgColor(~app.selectedItem)}">
+	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
 		<td>
 			<span data-link="#index+1"></span>:
 			<span data-link="title"></span>
@@ -180,8 +180,9 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 		});
 
 		$.views.helpers({
-			bgColor: function ( selectedItem ) {
-				var index = this.index; // 'this' is the view.
+			bgColor: function ( index, selectedItem ) {
+				// index could also be obtained from the view, which is available as the 'this' context for this function
+				// var index = this.index
 				return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 			},
 			app: app

@@ -11,7 +11,17 @@
 <body>
 <div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
-<h3>Fully editable data: Change events with integrated Data-Link and Templates</h3>
+<h3>Fully editable data: Change events with templates and data-bound template tags</h3>
+
+<br />
+<div class="subhead">Example of data-bound tags:</div>
+<pre>
+...
+&lt;td>
+    {^{:#index + 1}}: {^{>title}}
+&lt;/td>
+...
+</pre>
 
 <div class="buttons">
 	<button onclick="showData()">show data</button>
@@ -30,12 +40,11 @@
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
 		<td>
-			<span data-link="#index+1"></span>:
-			<span data-link="title"></span>
+			{^{:#index + 1}}: {^{>title}}
 		</td>
 		<td>
 			{{for languages}}
-				<div data-link="name"></div>
+				<div>{^{>name}}</div>
 			{{/for}}
 		</td>
 		<td>
@@ -65,17 +74,17 @@
 
 		movies = [
 			{
-				title: "Meet Joe Black",
+				title:"Meet Joe Black",
 				languages: [
 					{ name: "English" },
 					{ name: "French" }
 				]
 			},
 			{
-				title: "Eyes Wide Shut",
+				title:"Eyes Wide Shut",
 				languages: [
-					{ name: "French" },
 					{ name: "German" },
+					{ name: "French" },
 					{ name: "Spanish" }
 				]
 			}
@@ -126,8 +135,8 @@
 
 	$.views.helpers({
 		bgColor: function ( index, selectedItem ) {
-			// index could also be obtained from the view, which is the 'this' context for this function
-			// var index = this.index
+			// index could also be obtained from the view, which is available from the 'this' context for this function
+			// var index = this.view.index()
 			return (selectedItem && selectedItem.index === index) ? "yellow" : ( index%2 ? "#fdfdfe" : "#efeff2" );
 		},
 		app: app
