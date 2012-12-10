@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../../demos/resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../../demos/resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<h2>Test page for refresh behavior of view hierarchies</h2>
+
+<p>
+<button onclick="insertFirst()">insert</button>
+<button onclick="removeFirst()">remove</button>
+<button onclick="replace()">replace</button>
+</p>
+
+<!--====== Container ======-->
+<table>
+	<tbody id="movieList"></tbody>
+</table> 
+
+<script id="movieTemplate" type="text/x-jsrender">
+<tr>
+	<td>
+		<div>
+			<table>
+				<thead>
+					{{for languages}}
+						<tr><td>{{:name}} <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>
+					{{/for}}
+				</thead>
+				{{if true}}
+				<tbody>
+					{{if true}}
+					{{for languages}}
+						{{if true}}
+							<tr><td>{{:name}}! <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>
+						{{/if}}
+					{{/for}}
+					{{/if}}
+				</tbody>
+				{{/if}}
+			</table>
+		</div>
+		<div>
+			<table>
+				<tbody>
+					{{for languages}}
+						{{if true}}<tr><td>{{:name}}- <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>{{/if}}
+					{{/for}}
+				</tbody>
+				{{for languages}}
+					<tbody><tr><td>{{:name}}... <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr></tbody>
+				{{/for}}
+			</table>
+		</div>
+	</td>
+	{{for languages}}
+		<td>{{:name}}... <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td>
+	{{/for}}
+</tr>
+</script>
+
+<script type="text/javascript">
+	var count = 1,
+		movie = {
+			languages: []
+		};
+
+	$("#movieList").on("click", ".refresh1", go1);
+	$("#movieList").on("click", ".refresh2", go2);
+	$("#movieList").on("click", ".refresh3", go3);
+	$("#movieList").on("click", ".remove", remove);
+	$("#movieList").on("click", ".add", add);
+	$.templates("movieTemplate", "#movieTemplate").link("#movieList", movie);
+
+	function go1() {
+		view = $.view(this);
+		view.get("item").data.name ="bar" + count++; 
+		view.refresh();
+	}
+
+	function go2() {
+		view = $.view(this);
+		view.get("item").data.name ="bar" + count++; 
+		view.parent.refresh();
+	}
+
+	function go3() {
+		view = $.view(this);
+		view.get("item").data.name ="bar" + count++; 
+		view.parent.parent.refresh();
+	}
+
+	function remove() {
+		view = $.view(this);
+		$.observable(view.get("array").data).remove(view.get("item").index)
+	}
+
+	function add() {
+		view = $.view(this);
+		$.observable(view.get("array").data).insert(view.get("item").index + 1, {name:"lng" + count++});
+	}
+
+	function insertFirst() {
+		$.observable(movie.languages).insert(0, {name:"lng" + count++});
+	}
+
+	function removeFirst() {
+		$.observable(movie.languages).remove(0);
+	}
+
+	function replace(el) {
+		$( "#movieList").empty();
+		$.templates.movieTemplate.link("#movieList", movie);
+	}
+
+</script>
+</body>
+</html>

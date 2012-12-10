@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 22
+// informal pre beta commit counter: 23
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -25,18 +25,19 @@
 
 	var versionNumber = "v1.0pre",
 
+		$viewsSettings = $.views ? $.views.settings : {},
+		cbBindings,
 		splice = [].splice,
 		concat = [].concat,
 		$isArray = $.isArray,
 		$expando = $.expando,
 		OBJECT = "object",
-		propertyChangeStr = "propertyChange",
+		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// Allows override on settings prior to loading jquery.observable.js
+		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // Allows override on settings prior to loading jquery.observable.js        
 		observeStr = propertyChangeStr + ".observe",
-		arrayChangeStr = "arrayChange",
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
-		observeCbKey = 1,
-		cbBindings;
+		observeCbKey = 1;
 
 	//========================== Top-level functions ==========================
 
@@ -85,7 +86,9 @@
 		for (i = 0; i < l; i++) {
 			path = paths[i];
 			if ($isFunction(path)) {
-				splice.apply(out, [out.length,1].concat(resolvePathObjects(path.call(root, root), root)));
+// TODO add support for _parameterized_ calls to depends() on computed observables. Consider getting args by a
+// compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
+				splice.apply(out, [out.length,1].concat(resolvePathObjects.call(this, path.call(this, root), root)));
 				continue;
 			} else if ("" + path !== path) {
 				root = nextObj = path;
@@ -103,10 +106,10 @@
 		var ctx = ev.data;
 		if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
 			if (typeof eventArgs.oldValue === OBJECT) {
-				$unobserve(eventArgs.oldValue, ctx.path, ctx.cb);
+				$unobserve.call(ctx.linkCtx, eventArgs.oldValue, ctx.path, ctx.cb);
 			}
 			if (typeof eventArgs.value === OBJECT) {
-				$observe(eventArgs.value, ctx.path, ctx.cb, ctx.root);
+				$observe.call(ctx.linkCtx, eventArgs.value, ctx.path, ctx.cb, ctx.root);
 			}
 			ctx.cb.call(ctx.root, ev, eventArgs);
 		}
@@ -151,7 +154,7 @@
 						}
 					}
 				}
-				$(object).on(namespace, null, {root: origRoot, path: pathStr, prop: prop, cb: callback}, onObservableChange);
+				$(object).on(namespace, null, {linkCtx: linkCtx, root: origRoot, path: pathStr, prop: prop, cb: callback}, onObservableChange);
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
 					obIdExpando = object[$expando];
@@ -160,13 +163,14 @@
 			}
 		}
 
-		var i, parts, path, prop, dep, object, unobserve, callback, cbNs, el, data, events, filter, items, bindings, obIdExpando, depth,
+		var i, parts, prop, path, dep, object, unobserve, callback, cbNs, el, data, events, filter, items, bindings, obIdExpando, depth,
 			topLevel = 1,
 			ns = observeStr,
 			paths = concat.apply([], arguments),	// flatten the arguments
 			lastArg = paths.pop(),
 			origRoot = paths[0],
 			root = "" + origRoot !== origRoot ? paths.shift() : undefined,	// First parameter is the root object, unless a string
+			linkCtx = this,
 			l = paths.length;
 
 		origRoot = root;
@@ -180,8 +184,9 @@
 				origRoot = lastArg;
 				topLevel = 0;
 			}
-			if ($isFunction(paths[l-1])) {
-				callback = paths.pop();
+			lastArg = paths[l-1];
+			if (l && lastArg === undefined || $isFunction(lastArg)) {
+				callback = paths.pop(); // If preceding is callback this will be filter param - which may be undefined
 				l--;
 			}
 		}
@@ -209,67 +214,86 @@
 			: undefined;
 
 		depth = 0;
-		for (i=0; i<l; i++) {
+		for (i = 0; i < l; i++) {
 			path = paths[i];
-			if ("" + path !== path) {
-				// This is an object
+			object = root;
+			if ("" + path === path) {
+				//path = path || "*"; // This ensures that foo(person) will depend on any changes in foo
+				// - equivalent to foo(person.*) - were it legal, or to adding foo.depends = []
+				parts = path.split("^");
+				if (parts[1]) {
+					// We bind the leaf, plus additional nodes based on depth.
+					// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
+					depth = parts[0].split(".").length;
+					path = parts.join(".");
+					depth = path.split(".").length - depth;
+						// if more than one ^ in the path, the first one determines depth
+				}
+				if (filter && (items = filter(path, root))) {
+					// If filter returns an array of objects and paths, we will insert them
+					// into the sequence, replacing the current item (path)
+					l += items.length - 1;
+					splice.apply(paths, [i--, 1].concat(items));
+					continue;
+				}
+				parts = path.split(".");
+			} else {
 				root = path;
-				if (topLevel) {
+				if (topLevel && !$isFunction(path)) {
 					origRoot = root; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
 				}
-				continue;
+				parts = [path];
 			}
-			parts = path.split("^");
-			if (parts[1]) {
-				// We bind the leaf, plus additional nodes based on depth.
-				// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
-				depth = parts[0].split(".").length;
-				path = parts.join(".");
-				depth = path.split(".").length - depth;
-					// if more than one ^ in the path, the first one determines depth
-			}
-			if (filter && (items = filter(path, root))) {
-				// If filter returns an array of objects and paths, we will insert them
-				// into the sequence, replacing the current item (path)
-				l += items.length - 1;
-				splice.apply(paths, [i--,1].concat(items));
-				continue;
-			}
-			object = root;
-			parts = path.split(".");
 			while (object && typeof object === "object" && (prop = parts.shift())) {
-				if ((parts.length < depth + 1) && !object.nodeType) {
-					if (!unobserve && (events = object[$expando])) {
-						events = events.events;
-						events = events && events.propertyChange;
-						el = events && events.length;
-						while (el--) { // Skip duplicates
-							data = events[el].data;
-							if (data && data.cb === callback && (data.prop === prop || data.prop === "*")) {
-								break;
+				if ("" + prop === prop) {
+					if ((parts.length < depth + 1) && !object.nodeType) {
+						// Add observer for each token in path starting at depth, and on to the leaf
+						if (!unobserve && (events = object[$expando])) {
+							events = events.events;
+							events = events && events.propertyChange;
+							el = events && events.length;
+							while (el--) { // Skip duplicates
+								data = events[el].data;
+								if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
+									break;
+								}
+							}
+							if (el > -1) {
+								// Duplicate binding found, so move on
+								object = object[prop];
+								continue;
 							}
 						}
-						if (el > -1) {
-							object = object && object[prop];
-							continue;
-						}
-					}
-					dep = object[prop];
-					if (prop === "*") {
-						if ($isFunction(object)) {
-							if (dep = $isFunction(object) && object.depends) {
-								$observe(object.depends, callback, unobserve||origRoot);
+						if (prop === "*" || prop === "") {
+					//		prop = "*";
+							if ($isFunction(object)) {
+								if (dep = object.depends) {
+									$observe.call(this, dep, callback, unobserve||origRoot);
+								}
+							} else {
+								observeOnOff(ns, prop);
 							}
+							break;
 						} else {
-							observeOnOff(ns, prop);
+							dep = object[prop];
+							dep = $isFunction(dep) && dep.depends;
+							if (!dep) {
+								// If leaf is a computed observable (function with declared dependencies) we do not
+								// currently observe 'swapping' of the observable - only changes in its dependencies.
+								observeOnOff(ns + "." + prop, parts.join("."));
+							}
 						}
-					} else if (dep = $isFunction(dep) && dep.depends) {
-						$observe(object, resolvePathObjects(dep, object), callback, unobserve||origRoot);
-					} else {
-						observeOnOff(ns + "." + prop, parts.join("."));
 					}
+					prop = object[prop];
 				}
-				object = object && object[prop];
+				if ($isFunction(prop)) {
+					if (dep = prop.depends) {
+						// This is a computed observable. We will observe any declared dependencies
+						$observe.call(this, object, resolvePathObjects.call(this, dep, object), callback, filter, unobserve||origRoot);
+					}
+					break;
+				}
+				object = prop;
 			}
 		}
 		// Return the bindings to the top-level caller, along with the cbNs
@@ -277,7 +301,7 @@
 	}
 
 	function $unobserve() {
-		[].push.call(arguments, true);
+		[].push.call(arguments, true); // Add true as additional final argument
 		return $observe.apply(this, arguments);
 	}
 

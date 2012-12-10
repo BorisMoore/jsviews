@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="../../resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="../../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../../resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+	<link href="../../resources/demos.css" rel="stylesheet" type="text/css" />
+
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../../jsrender.js" type="text/javascript"></script>
+	<script src="../../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<div class="nav"><a href="../../demos.html">JsViews Demos</a></div>
+
+<h3>Computed observables as helper functions (with declared dependencies, and optional setter)</h3>
+
+<p><button id="changeName">Change name</button></p>
+
+<!--====== Container ======-->
+<div id="details"></div>
+
+<!--====== Template ======-->
+<script id="personTmpl" type="text/x-jsrender">
+<div class="box">
+	<div class="subhead">Data-linking to a computed observable helper:</div>
+
+	<table class="three"><tbody>
+		<tr>
+			<td>first:</td>
+			<td data-link="firstName"></td>
+			<td><input data-link="firstName" /></td>
+		</tr>
+		<tr>
+			<td>last:</td>
+			<td data-link="lastName"></td>
+			<td><input data-link="lastName" /></td>
+		</tr>
+		<tr>
+			<td>full name:</td>
+			<td data-link="~fullName()"></td>
+			<td><input data-link="~fullName()" /></td>
+		</tr>
+		<tr>
+			<td>reversed full name:</td>
+			<td colspan="2" data-link="~fullName(true)"></td>
+		{{!-- Parameterized setter not yet supported
+			<td><input data-link="fullName(true)" /></td>
+		--}}
+		</tr>
+	</tbody></table>
+</div>
+
+<div class="box">
+	<div class="subhead">Data-bound tag &mdash; bound to a computed observable helper:</div>
+
+	{{!-- data-bound tag--}}
+	{^{>~fullName(true)}}
+</div>
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+
+//====================== Data ======================
+var person = {
+	firstName: "Jeff",
+	lastName: "Friedman"
+};
+
+// Parameterized computed observable
+
+function fullName(reverse) {
+	// We will declare dependencies (below) for any values that may change observably, and are not passed in as parameters
+	return reverse
+		? this.data.lastName + " " + this.data.firstName
+		: this.data.firstName + " " + this.data.lastName;
+}
+
+// Dependencies for computed fullName
+// (Declare dependencies, except for any values passed in as parameters)
+fullName.depends = ["#data.firstName", "#data.lastName"];
+
+// Also supports the following alternative forms:
+
+//	fullName.depends = function() {
+//		return ["#data.firstName", "#data.lastName"];
+//	}
+
+//	fullName.depends = function() {
+//		// The this pointer is the view.
+//		// When using data-link, this.linkCtx is the link context
+//		return [this.data, "firstName", "lastName"];
+//	}
+
+// Setter for fullName - for two-way binding
+fullName.set = function(val) {
+	val = val.split(" ");
+	$.observable(this.data).setProperty({
+		lastName: val.pop(),
+		firstName: val.join(" ")
+	});
+};
+
+//=========== Register helpers ===========
+$.views.helpers({
+	fullName: fullName
+});
+
+// Instead of registering a helper, computed fullName helper can be passed
+// in as a computed template parameter, below:
+//$.link.personTmpl( "#details", person, { fullName: fullName});
+
+//================ Compile template and link ================
+$.templates( "personTmpl", "#personTmpl" );
+
+
+// Data-link details container to person, using the personTmpl template
+$.link.personTmpl( "#details", person);
+
+//================ Observable property change ================
+$( "#changeName" ).on( "click", function() {
+	$.observable( person ).setProperty({
+		firstName: person.firstName + "x",
+		lastName: person.lastName + "y"
+	});
+});
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">
+&lt;!-- data-linking-->
+
+&lt;input data-link="~fullName()" />
+...
+&lt;td data-link="~fullName(true)" >&lt;/td>
+
+&lt;!-- data-bound tag-->
+
+{^{:~fullName(true)}}
+</pre>
+
+<h4>Script:</h4>
+<pre class="brush: js;">
+//====================== Data ======================
+var person = {
+    firstName: "Jeff",
+    lastName: "Friedman"
+};
+
+//====================== Helper ======================
+// Parameterized computed observable helper function
+function fullName(reversed) { ... }
+
+// Declare dependencies
+fullName.depends = ["#data.firstName", "#data.lastName"];
+
+// For two-way binding of computed observables, provide a setter
+fullName.set = function(val) {
+    $.observable(this).setProperty({
+        lastName: ...,
+        firstName: ...
+    });
+
+//========== Register helper, or pass in as parameter ==========
+// Register helper ...
+$.views.helpers({
+	fullName: fullName
+});
+
+// ... or alternatively pass helper in as a computed template parameter:
+$.link.personTmpl( "#details", person, { fullName: fullName});
+
+
+</pre>
+</body>
+</html>

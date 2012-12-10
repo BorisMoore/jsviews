@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 22
+// informal pre beta commit counter: 23
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -22,6 +22,11 @@
 	if (!$.views) {
 		// JsRender is not loaded.
 		throw "requires JsRender"; // JsRender must be loaded before JsViews
+	}
+
+	if (!$.observable) {
+		// JsRender is not loaded.
+		throw "requires jquery.observable"; // jquery.observable.js must be loaded before JsViews
 	}
 
 	if ($.link) { return; } // JsViews is already loaded
@@ -43,10 +48,10 @@
 		$templates = $views.templates,
 		$observable = $.observable,
 		$observe = $observable.observe,
-		$viewsLinkAttr = "data-link",
 		jsvAttrStr = "data-jsv",
-		propertyChangeStr = "propertyChange",
-		arrayChangeStr = "arrayChange",
+		$viewsLinkAttr = $viewsSettings.linkAttr || "data-link",        // Allows override on settings prior to loading jquery.views.js
+		propertyChangeStr = $viewsSettings.propChng,
+		arrayChangeStr = $viewsSettings.arrChng,
 		elementChangeStr = "change.jsv",
 		onBeforeChangeStr = "onBeforeChange",
 		onAfterChangeStr = "onAfterChange",
@@ -63,7 +68,7 @@
 		},
 		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
 		oldCleanData = $.cleanData,
-		oldJsvDelimiters = $views.settings.delimiters,
+		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
 		rFirstElem = /<(?!script)(\w+)[>\s]/,
 		safeFragment = document.createDocumentFragment(),
@@ -73,7 +78,7 @@
 		elContent = { ol: 1, ul: 1, table: 1, tbody: 1, thead: 1, tfoot: 1, tr: 1, colgroup: 1, dl: 1, select: 1, optgroup: 1 },
 
 		// wrapMap provide appropriate wrappers for inserting innerHTML, used in insertBefore
-		wrapMap = $views.settings.wrapMap = {
+		wrapMap = $viewsSettings.wrapMap = {
 			option: [ 1, "<select multiple='multiple'>", "</select>" ],
 			legend: [ 1, "<fieldset>", "</fieldset>" ],
 			thead: [ 1, "<table>", "</table>" ],
@@ -140,7 +145,16 @@
 						}
 						if (sourceValue !== undefined && target) {
 							try {
-								$observable(target).setProperty(to, sourceValue);
+// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
+// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
+								if ($isFunction(target)) {
+									target = target.set;
+									if ($isFunction(target)) {
+										target.call(linkCtx, sourceValue);
+									}
+								} else {
+									$observable(target).setProperty(to, sourceValue);
+								}
 							} catch(e) {
 								error(e);
 							}
@@ -171,9 +185,9 @@
 			view = linkCtx.view,
 			onEvent = view._hlp(onBeforeChangeStr);
 
-		if ((!onEvent || !(eventArgs && onEvent.call(linkCtx, ev, eventArgs) === FALSE))
+		if (parentElem && (!onEvent || !(eventArgs && onEvent.call(linkCtx, ev, eventArgs) === FALSE))
 				// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
-				&& !(eventArgs && ev.data.prop !== eventArgs.path)) {
+				&& !(eventArgs && ev.data.prop !== "*" && ev.data.prop !== eventArgs.path)) {
 
 			// Set linkCtx on view, dynamically, just during this handler call
 			oldLinkCtx = view.linkCtx;
@@ -220,25 +234,33 @@
 					}
 				} else {
 					if (attr === "value") {
-						if (target.type === "radio") {
-							if (target.value === ("" + sourceValue)) {
-								sourceValue = attr = "checked";
-							} else {
-								observeAndBind(linkCtx, linkCtx.data, linkCtx.elem);
-								return;
-							}
-						}
 						if (target.type === CHECKBOX) {
 							attr = "checked";
 							// We will set the "checked" attribute
 							sourceValue = (sourceValue && sourceValue !== "false") ? attr : undefined;
 							// We will compare this ("checked"/undefined) with the current value
 						}
+					} else if (attr === "radio") {
+						// This is a special binding attribute for radio buttons, which corresponds to the default 'to' binding.
+						// This allows binding both to value (for each input) and to the default checked radio button (for each input in named group, e.g. binding to parent data).
+						// Place value binding first: <input type="radio" data-link="value{:name} {:#get('data').data.currency:} " .../>
+						// or (allowing any order for the binding expressions): <input type="radio" value="{{:name}}" data-link="{:#get('data').data.currency:} value^{:name}" .../>
+
+						if (target.value === ("" + sourceValue)) {
+							// If the data value corresponds to the value attribute of this radio button input, set the checked attribute to "checked"
+							sourceValue = attr = "checked";
+						} else {
+							// Otherwise, go straight to observeAndBind, without updating.
+							// (The browser will remove the 'checked' attribute, when another radio button in the group is checked).
+							observeAndBind(linkCtx, linkCtx.data, linkCtx.elem); //TODO ? linkFnArgs);
+							return;
+						}
 					}
+
 					setter = fnSetters[attr];
 
 					if (setter) {
-							if (tag || (changed = $target[setter]() !== sourceValue)) {
+						if (tag || (changed = $target[setter]() !== sourceValue)) {
 // TODO support for testing whether {^{: or {^{tag have changed or not
 // Make {^{ default to 'innerText', and let {^html{ target html. This will be consistent with data-link="html{:...}"
 
@@ -294,7 +316,10 @@
 					onEvent.call(linkCtx, ev, eventArgs);
 				}
 			}
+// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
+// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
 			observeAndBind(linkCtx, source, target);
+
 			// Remove dynamically added linkCtx from view
 			if (oldLinkCtx) {
 				view.linkCtx = oldLinkCtx;
@@ -395,10 +420,13 @@
 	function defaultAttr(elem, to) {
 		// to: true - default attribute for setting data value on HTML element; false: default attribute for getting value from HTML element
 		// Merge in the default attribute bindings for this target element
-		var attr = $views.merge[elem.nodeName.toLowerCase()];
+		var nodeName = elem.nodeName.toLowerCase(),
+			attr = $viewsSettings.merge[nodeName];
 		return attr
 			? (to
-				? attr.to.toAttr
+				? ((nodeName === "input" && elem.type === "radio") // For radio buttons, bind from value, but bind to 'radio' - special value.
+					? "radio"
+					: attr.to.toAttr)
 				: attr.from.fromAttr)
 			: to
 				? "html" // Default is to bind to innerText. Use html{:...} to bind to innerHTML
@@ -515,7 +543,7 @@
 	// observeAndBind
 	//---------------
 
-	function observeAndBind(linkCtx, source, target) {
+	function observeAndBind(linkCtx, source, target) { //TODO ? linkFnArgs) {;
 		var tag, binding, cvtBack, toPath,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++;
@@ -534,7 +562,7 @@
 				// Unobserve previous binding
 				$observe(source, linkCtx._depends, linkCtx._handler, TRUE);
 			}
-			binding = $observe(source, linkCtx.paths, depends, linkCtx._handler, linkCtx._filter);
+			binding = $observe.call(linkCtx, source, linkCtx.paths, depends, linkCtx._handler, linkCtx._filter);
 			// The binding returned by $observe has a bnd array with the source objects of the individual bindings.
 			binding.tgt = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
@@ -551,6 +579,7 @@
 			if (cvtBack !== undefined) {
 				toPath = linkCtx.paths[0].split("^").join("."); // For binding back, bind to the first path in the parsed parameters
 				binding.to = [linkCtx._filter(toPath) || [linkCtx.data, toPath], cvtBack];
+// TODO binding.to.linkFnArgs = linkFnArgs; - need to compile this to provide args for setters on computed observables?
 			}
 		}
 	}
@@ -572,7 +601,7 @@
 				$(activeBody).on(elementChangeStr, elemChangeHandler);
 			}
 
-			var html, placeholderParent, targetEl,
+			var i, k, html, vwInfos, view, placeholderParent, targetEl,
 				onRender = addBindingMarkers,
 				replaceMode = context && context.target === "replace",
 				l = to.length;
@@ -620,6 +649,21 @@
 // TODO Consider deferred linking API feature on per-template basis - {@{ instead of {^{  which allows the user to see the rendered content
 // before that content is linked, with better perceived perf. Have view.link return a deferred, and pass that to onAfterLink... or something along those lines.
 // setTimeout(function() {
+
+					if (targetEl._dfr && !nextNode) {
+						// We are inserting new content and the
+						vwInfos = viewInfos(targetEl._dfr);
+
+						for (i = 0, k = vwInfos.length; i < k; i++) {
+							view = vwInfos[i];
+							if ((view.open || view.prnt) && (view = viewStore[view.id]) && view.data !== undefined) {
+								// If this is the _prevNode for a view, or the parentElem of an empty view, remove the view
+								// - unless view.data is undefined, in which case it is already being removed
+								view.parent.removeViews(view._.key, undefined, TRUE);
+							}
+						}
+						targetEl._dfr = "";
+					}
 
 					// Link the content of the element, since this is a call to template.link(), or to $(el).link(true, ...),
 					parentView.link(from, targetEl, prevNode, nextNode, html);
@@ -719,9 +763,9 @@
 					vwInfo = vwInfos[len];
 					if (vwInfo.opBnd || vwInfo.clBnd) {
 						// This is an open or close marker for a data-bound tag {^{...}}. Add it to bindEls.
-						bindEls.push([elem, vwInfo]);
+						bindEls.push([elem||targetParent, vwInfo]);
 					} else {
-						view = viewStore[id = vwInfo.id];
+						view = viewStore[id = vwInfo.id] || er;
 						if (defer = vwInfo.path) {
 							j = defer.length - 1;
 							while (char = defer.charAt(j--)) {
@@ -751,7 +795,7 @@
 								}
 								view._prv = 0;
 								// Set _prv to 0 as an indicator that this is a 'parentElem' view: -i.e. an empty view with no prevNode or nextNode,
-								// 'owned' by the parent element, with an associated "|n" token on the data-jsv attribute, where n is the vwInfo.id
+								// 'owned' by the parent element, with an associated "|n" token on the data-jsv attribute or on the _dfr expando, where n is the vwInfo.id
 							}
 							$extend(view, LinkedView);
 							view._.onRender = addBindingMarkers;
@@ -808,7 +852,7 @@
 		//==== /end of nested functions ====
 
 		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, lastAddedTopView, firstInsertedElem, prevView, nextView, node,
-			depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, jsvAttr, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, //oldElCnt,
+			depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, jsvAttr, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, parentView, //oldElCnt,
 			self = this,
 			defer = "",
 			// The marker ids for which no tag was encountered (empty views or final closing markers) which we carry over to container tag
@@ -851,13 +895,14 @@
 
 				if (node) {
 					// Get the associated view that is child of self, so sibling to newly inserted view(s)
-					l = vwInfos.length;
-					while (l--) {
-						view = vwInfos[l].id;
-						if (viewStore[view].parent === (refresh ? self.parent : self)) {
-							prevView = view;
+					view = viewStore[vwInfos[vwInfos.length-1].id];
+					parentView = refresh ? self.parent : self;
+					while (view.parentElem === parentNode) {
+						if (view.parent === parentView) {
+							prevView = view._.id;
 							break;
 						}
+						view = view.parent;
 					}
 				}
 				// Now look for following view, and find its tokens, or if not found, get the parentNode._dfr tokens
@@ -870,7 +915,7 @@
 					j = tokens.indexOf(token);
 					if (j + 1) {
 						j = j + token.length;
-						// Transfert the initial tokens to inserted nodes, by setting them as the ids variable, picked up in convertMarkers
+						// Transfer the initial tokens to inserted nodes, by setting them as the ids variable, picked up in convertMarkers
 						if (!nextView) {
 							parentNode._dfr = tokens.slice(j);
 						}
@@ -922,9 +967,9 @@
 		}
 		for (i = 0; i < l; i++) {
 			elem = elems[i];
-			if (prevNode) {
+			if (prevNode && !found) {
 				// If prevNode is set, not false, skip linking. If this element is the prevNode, set to false so subsequent elements will link.
-				prevNode = (elem !== prevNode && prevNode);
+				found = (elem === prevNode);
 			} else if (nextNode && elem === nextNode) {
 				// If nextNode is set then break when we get to nextNode
 				break;
@@ -1427,7 +1472,7 @@
 	}
 
 	function inputAttrib(elem) {
-		return elem.type === CHECKBOX ? elem.checked : $(elem).val();
+		return elem.type === CHECKBOX ? elem.checked : elem.value;
 	}
 
 	function getTemplate(tmpl) {
@@ -1464,14 +1509,14 @@
 	};
 
 	// Initialize default delimiters
-	($views.settings.delimiters = function() {
+	($viewsSettings.delimiters = function() {
 		var delimChars = oldJsvDelimiters.apply($views, arguments);
 		delimOpenChar0 = delimChars[0];
 		delimOpenChar1 = delimChars[1];
 		delimCloseChar0 = delimChars[2];
 		delimCloseChar1 = delimChars[3];
 		linkChar = delimChars[4];
-		rTag = new RegExp("(?:^|\\s*)([\\w-]*)(\\" + linkChar + ")?(\\" + delimOpenChar1 + $views.rTag + "\\" + delimCloseChar0 + ")", "g");
+		rTag = new RegExp("(?:^|\\s*)([\\w-]*)(\\" + linkChar + ")?(\\" + delimOpenChar1 + $viewsSub.rTag + "\\" + delimCloseChar0 + ")", "g");
 
 		// Default rTag:      attr  bind tagExpr   tag         converter colon html     comment            code      params
 		//          (?:^|\s*)([\w-]*)(\^)?({(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|!--((?:[^-]|-(?!-))*)--|(\*)))\s*((?:[^}]|}(?!}))*?))})
@@ -1512,11 +1557,7 @@
 				if (renderAndLink(self, index, tmpl, views, dataItems, self.ctx) !== FALSE) {
 					for (i = index + itemsCount; i < viewsCount; i++) {
 						$observable(views[i]).setProperty("index", i);
-						// TODO - this is fixing up index, but not key, and not index on child views. Consider changing index to be a getter index(),
-						// so we only have to change it on the immediate child view of the array view, but also so that it notifies all subscriber to #index().
-						// Also have a #context() which can be parameterized to give #parents[#parents.length-1].data or #roots[0]
-						// to get root data, or other similar context getters. Only create an the index on the child view of Arrays, (whether in JsRender or JsViews)
-						// [Otherwise, here, would need to iterate on views[] to set index on children, right down to ArrayViews, which might be too expensive on perf].
+						//This is fixing up index, but not key, and not index on child views. From child views, use view.get("item").index.
 					}
 				}
 			}
@@ -1691,26 +1732,23 @@
 	};
 
 	//=========================
-	// Extend $.views namespace
+	// Extend $.views.settings
 	//=========================
 
-	$extend($views, {
-		linkAttr: $viewsLinkAttr,
-
-		merge: {
-			input: {
-				from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
-			},
-			textarea: valueBinding,
-			select: valueBinding,
-			optgroup: {
-				from: { fromAttr: "label" }, to: { toAttr: "label" }
-			}
+	$viewsSettings.merge = {
+		input: {
+			from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
+		},
+		textarea: valueBinding,
+		select: valueBinding,
+		optgroup: {
+			from: { fromAttr: "label" }, to: { toAttr: "label" }
 		}
+	};
 
 // TODO complete/test/provide samples for this
 // - verify design as related to $.view(elem, type) and view.get(type) and tag.get(type)? Support tag.parent, tag.find() for descendatns, and tag.get() for ancestors
-//		findTags: function(node) {
+//	$.views.findTags = function(node) {
 //			node = "" + node === node
 //				? $(node)[0]
 //				: node.jquery
@@ -1719,7 +1757,7 @@
 //			while (node && (node = node.parentNode) && !node._tags) {}
 //			return node ? node._tags : {};
 //		}
-	});
+//	});
 
 	if ($viewsSettings.debugMode) {
 		// In debug mode create global for accessing views, etc

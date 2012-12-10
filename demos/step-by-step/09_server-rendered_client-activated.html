@@ -168,14 +168,12 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 			select( $.view( "#movieList tr:last" ));
 		});
 
-		$( app ).on( "propertyChange", function( event, args ) {
-			if ( args.path === "selectedItem" ) {
-				var selectedView = args.value;
-				if ( selectedView ) {
-					$.link.detailTmpl( "#movieDetail", selectedView.data );
-				} else {
-					$( "#movieDetail" ).empty();
-				}
+		$.observable.observe( app, "selectedItem",  function( event, args ) {
+			var selectedView = args.value;
+			if ( selectedView ) {
+				$.link.detailTmpl( "#movieDetail", selectedView.data );
+			} else {
+				$( "#movieDetail" ).empty();
 			}
 		});
 

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href="../../resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="../../resources/syntaxhighlighter.css" rel="stylesheet" type="text/css" />
+	<script src="../../resources/syntaxhighlighter.min.js" type="text/javascript"></script>
+	<link href="../../resources/demos.css" rel="stylesheet" type="text/css" />
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../../jsrender.js" type="text/javascript"></script>
+	<script src="../../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../../jquery.views.js" type="text/javascript"></script>
+</head>
+<body>
+<div class="nav"><a href="../../demos.html">JsViews Demos</a></div>
+
+<h3>Data-linking to deep paths - observing changes higher up the path</h3>
+
+<div class="box label">By default, binding to a path such as <b>app.selected.name.first</b> will 'observe' changes at the leaf level only. <br />
+To observe changes higher up the path, such as swapping the <b>app.selected</b> object (selected person), replace the <b>'.'</b> by <b>'^'</b>
+immediately after the highest-level item to be 'observed'.
+<br /><br />For paths in which objects higher in the path may sometimes be null or undefined, add <b>noerror = true</b> in order to suppress error rendering and default to an empty string.
+
+<br /><br />Example:<b>&lt;div data-link="selected^name.first noerror=true">&lt;div></b></div>
+
+<!--====== Containers ======-->
+<div class="box">
+	<div class="subhead">Observing changes to object properties higher up the path<br /></div>
+	<table><tbody id="peopleList"></tbody></table>
+</div>
+<div class="box">
+	<div class="subhead">Data-bound tag &mdash; {^{>selected^name.first noerror=true}}:<br /></div>
+	<div id="nameSection"></div>
+</div>
+
+<!--====== Templates ======-->
+<script id="peopleTmpl" type="text/x-jsrender">
+	<tr>
+		<td colspan="2"><select data-link="{getIndex: selected array=people :setObject}" size="5">
+			<option value="0">Choose a person to edit</option>
+			{{for people}}
+				<option value="{{:#index + 1}}" data-link="{:name.first + ' ' + name.last}"></option>
+			{{/for}}
+		</select></td>
+	</tr>
+	<tr>
+		<td><input data-link="{:selected^name.first noerror=true:} disabled{:selected?'':'disabled'}" /></td>
+		<td><input data-link="{:selected^name.last noerror=true:} disabled{:selected?'':'disabled'}" /></td>
+	</tr>
+	<tr>
+		<td colspan="2" data-link="selected^name.first + ' ' + selected^name.last noerror=true"></td>
+	</tr>
+</script>
+
+<script id="nameTmpl" type="text/x-jsrender">
+	{^{>selected^name.first noerror=true}} {^{>selected^name.last noerror=true}}
+</script>
+
+<!--====== Script ======-->
+<script type="text/javascript">
+//$.views.settings.tryCatch = false;
+//====================== Data ======================
+var people = [{
+		name: {
+			first: "Jeff",
+			last: "Friedman"
+		}
+	},{
+		name: {
+			first: "Adriana",
+			last: "Jones"
+		}
+	},{
+		name: {
+			first: "Rosa",
+			last: "Lee"
+		}
+	}];
+
+var app = {
+	people: people,
+	selected: null
+};
+
+//=========== Register converters ===========
+$.views.converters({
+	getIndex: function(val) {
+		return ($.inArray(val, this.tagCtx.props.array) + 1)  || "0";
+	},
+	setObject: function(val) {
+		var selectedObject = this.tagCtx.props.array[val-1];
+		$.observable(this.linkCtx.data).setProperty(this.linkCtx.paths[0], selectedObject);
+		return this.tagCtx.props.array[val-1];
+	}
+});
+
+//================ Compile template and link ================
+$.templates({
+	peopleTmpl: "#peopleTmpl",
+	nameTmpl: "#nameTmpl"
+});
+
+
+// Data-link details container to people, using the peopleTmpl template
+$.link.peopleTmpl( "#peopleList", app);
+$.link.nameTmpl( "#nameSection", app, { target: "replace" });
+
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<h4>HTML:</h4>
+<pre class="brush: xml;">
+&lt;!-- data-linking-->
+
+&lt;input data-link="selected^name.first noerror=true" />
+
+&lt;!-- data-bound tag-->
+
+{^{>selected^name.first noerror=true}}
+</pre>
+</body>
+</html>

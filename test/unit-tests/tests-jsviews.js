@@ -1490,6 +1490,7 @@ test("paths", function() {
 	address2.street = "StreetTwo"; // reset Prop
 	delete person1.work; // reset Prop
 	reset();
+	
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
@@ -1580,7 +1581,7 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	$.observable.observe(rootObject = model, "person1^fullName", "person1^firstName", "person1^lastName", myListener);
+	$.observable.observe(rootObject = model, "person1^fullName", "person1^firstName", "person1^lastName", "person1^firstName", myListener);
 
 	// ............................... Assert .................................
 	equal("" + $._data(person1).events.propertyChange.length, "2",
@@ -1615,7 +1616,7 @@ test("paths", function() {
 	equal(listeners + ". After: "
 		+ !$._data(settings).events + " "
 		+ !$._data(model).events + " "
-		+ !$._data(model.person1).events, "Before: 1 1 2. After: true true true",
+		+ !$._data(model.person1).events, "Before: 1 3 2. After: true true true",
 	'unobserve(object, "computed", cb) removes handlers');
 	// -----------------------------------------------------------------------
 

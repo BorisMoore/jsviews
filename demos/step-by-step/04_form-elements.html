@@ -21,7 +21,7 @@
 	<div class="box">
 		<div class="subhead" data-link="~selectedTitle(selectedMovie) || 'Choose a movie'"></div>
 
-		<select id="selTheater" data-link="selectedMovie">
+		<select data-link="selectedMovie">
 			<option value="none">Choose...</option>
 			{{for ~movies}}
 				<option value="{{:#index}}">{{>title}}</option>
@@ -44,11 +44,11 @@
 
 		<h3>Ticket order form</h3>
 
-		<div id="orderForm" class="box" data-link="visible{bool:name}">
+		<div class="box" data-link="visible{bool:name}">
 			<div>Ticket for <em data-link="name" ></em> to movie: <em data-link="~selectedTitle(selectedMovie)" ></em></div>
 			<div data-link="visible{bool:request}"><em>Your special request:</em> <pre data-link="request" ></pre></div>
 			<div>
-				<b>Ticket Price:</b> <span data-link="~convertedPrice(selectedMovie, currency)" ></span>
+				<b>Ticket Price:</b> <span data-link="~convertedPrice(selectedMovie, selectedCurrency)" ></span>
 				<div>Choose currency for payment: <input type="checkbox" data-link="~app.chooseCurrency" /></div>
 			</div>
 			<div>
@@ -58,25 +58,25 @@
 
 		<div class="box" data-link="visible{bool:~app.chooseCurrency}">
 			<div class="subhead">Choose Currency:</div>
-			<input type="radio" name="currencyPicker" value="US" data-link="currency" />US Dollars<br/>
-			<input type="radio" name="currencyPicker" value="EUR" data-link="currency" />Euro<br/>
-			<input type="radio" name="currencyPicker" value="GBP" data-link="currency" />Pound<br/>
+			{{for ~currencies ~details=#data}}
+				<input type="radio" name="currencyPicker" value="{{:#index}}" data-link="~details.selectedCurrency" />{{:label}}<br/>
+			{{/for}}
 		</div>
 
 	</div>
 </script>
 
 <script type="text/javascript">
-	var currencies = {
-			US: { rate: 1.0, symbol: "$" },
-			EUR: { rate: 0.95, symbol: "€" },
-			GBP: { rate: 0.63, symbol: "£" }
-		},
+	var currencies = [
+			{ name:"US", label:"US Dollar", rate: 1.0, symbol: "$" },
+			{ name:"EUR", label:"Euro", rate: 0.95, symbol: "€" },
+			{ name:"GB", label:"Pound", rate: 0.63, symbol: "£" }
+		],
 
 		orderDetails = {
 			name: "",
 			selectedMovie: "none",
-			currency: "US",
+			selectedCurrency: 1,
 			request: ""
 		},
 
@@ -98,10 +98,10 @@
 		contextHelpers = {
 			app: {},
 			movies: movies,
-			convertedPrice: function(index, curCode) {
-				var currency = currencies[curCode];
-				if ( index >= 0) {
-					return currency.symbol + parseFloat(movies[index].ticketPrice * currency.rate).toFixed(2);
+			convertedPrice: function(selected, selectedCurrency) {
+				var currency = currencies[selectedCurrency];
+				if ( selected !== "none") {
+					return currency.symbol + parseFloat(movies[selectedCurrency].ticketPrice * currency.rate).toFixed(2);
 				}
 			},
 			currencies: currencies,
