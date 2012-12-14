@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 23
+// informal pre beta commit counter: 24
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -42,7 +42,7 @@
 		$viewsSettings = $views.settings,
 		$extend = $viewsSub.extend,
 		FALSE = false, TRUE = true, NULL = null, CHECKBOX = "checkbox",
-		topView = $views.View(undefined, "top"), // Provide registered helpers as top-level context on views.
+		topView = $views.View(undefined, "top"), // Top-level view
 		$isArray = $.isArray,
 		$isFunction = $.isFunction,
 		$templates = $views.templates,
@@ -50,14 +50,14 @@
 		$observe = $observable.observe,
 		jsvAttrStr = "data-jsv",
 		$viewsLinkAttr = $viewsSettings.linkAttr || "data-link",        // Allows override on settings prior to loading jquery.views.js
-		propertyChangeStr = $viewsSettings.propChng,
-		arrayChangeStr = $viewsSettings.arrChng,
+		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// These two settings can be overridden on settings after loading
+		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews 
 		elementChangeStr = "change.jsv",
 		onBeforeChangeStr = "onBeforeChange",
 		onAfterChangeStr = "onAfterChange",
 		onAfterCreateStr = "onAfterCreate",
-		closeScript ='"></script>',
-		openScript ='<script type="jsv',
+		closeScript = '"></script>',
+		openScript = '<script type="jsv',
 		bindElsSel = "script,[" + jsvAttrStr + "]",
 		linkViewsSel = bindElsSel + ",[" + $viewsLinkAttr + "]",
 		fnSetters = {
@@ -209,6 +209,15 @@
 				if ($isFunction(sourceValue)) {
 					error(linkCtx.expr + ": missing parens");
 				}
+
+// TODO			var  cancel = attr === "none";
+//				var tagCtx = linkCtx.tagCtx;
+//				if (eventArgs && tagCtx && tagCtx.tag.onUpdate) {
+//					cancel = tagCtx.tag.onUpdate.call(tagCtx, ev, eventArgs, linkCtx) === FALSE || cancel;
+//				}
+//				if (cancel) {
+//					return;
+//				}
 				if (attr === "none") {
 					return;
 				}
@@ -220,15 +229,15 @@
 						: "none";
 				}
 				if (css = attr.lastIndexOf("css-", 0) === 0 && attr.substr(4)) {
-	// Possible optimization for perf on integer values
-	//				prev = $.style(target, css);
-	//				if (+sourceValue === sourceValue) {
-	//					// support using integer data values, e.g. 100 for width:"100px"
-	//					prev = parseInt(prev);
-	//				}
-	//				if (changed = prev !== sourceValue) {
-	//					$.style(target, css, sourceValue);
-	//				}
+// Possible optimization for perf on integer values
+//					prev = $.style(target, css);
+//					if (+sourceValue === sourceValue) {
+//						// support using integer data values, e.g. 100 for width:"100px"
+//						prev = parseInt(prev);
+//					}
+//					if (changed = prev !== sourceValue) {
+//						$.style(target, css, sourceValue);
+//					}
 					if (changed = $.style(target, css) !== sourceValue) {
 						$.style(target, css, sourceValue);
 					}
@@ -451,14 +460,14 @@
 
 		if (refresh) {
 			nodesToRemove = view.nodes();
-			if (elCnt && prevNode !== nextNode) {
+			if (elCnt && prevNode && prevNode !== nextNode) {
 				vwInfos = viewInfos(prevNode);
 				// This node will be removed from the DOM so remove data-jsv attribute to avoid re-triggering removal of the view
 				prevNode.removeAttribute(jsvAttrStr);
 				l = vwInfos.length;
 				while (l--) {
 					vw = vwInfos[l];
-					if (vw.open){
+					if (vw.open) {
 						viewStore[vw.id]._prv = vwInfos.tokens;
 					}
 				}
@@ -468,7 +477,7 @@
 			view.removeViews(undefined, undefined, TRUE);
 
 			linkToNode = nextNode;
-			prevNode = elCnt ? prevNode.previousSibling : prevNode;
+			prevNode = elCnt ? prevNode && prevNode.previousSibling : prevNode;
 
 			// Remove HTML nodes
 			$(nodesToRemove).remove();
@@ -493,7 +502,7 @@
 			}
 		}
 		html = tmpl.render(data, context, view, refresh || index, view._.useKey && refresh, TRUE);
-		// Pass in self._useKey as test for layout template (which corresponds to when self._useKey > 0 and self.data is an array)
+		// Pass in self._.useKey as test for layout template (which corresponds to when self._.useKey > 0 and self.data is an array)
 
 		tag = view.tag || {};
 
@@ -709,7 +718,7 @@
 					if (!elCnt) {
 						endOfElCnt = (closeTag2 || "") + openScript + "@" + defer + closeScript + (spaceAfterClose || "");
 					}
-					defer = elCnt ? defer + "-" : "";
+					defer = elCnt ? defer + "-" : ""; // Will be used for stepping back through deferred tokens
 				}
 			}
 			if (elCnt) {
@@ -740,13 +749,13 @@
 				parentTag = tag.slice(1);
 				prevElCnt = elCnt = elContent[parentTag];
 				if (defer && elCnt) {
-					defer += "+";
+					defer += "+"; // Will be used for stepping back through deferred tokens
 				}
 			}
 			return preceding;
 		}
 
-		function processViewInfos(vwInfos, targetParent) {
+		function processViewInfos(vwInfos, targetElem, targetParent) {
 			// targetParent is only passed in if there is no elem
 			var defer, char, parentElem, id;
 
@@ -754,8 +763,11 @@
 			// at end of parent content, so the view is empty, and its placeholder is the 'lastChild' of the parentNode. If there is a prevNode, then it is either
 			// the first node in the view, or the view is empty and its placeholder is the 'previousSibling' of the prevNode, which is also the nextNode.
 			if (vwInfos) {
+				targetParent = targetParent || targetElem && targetElem.previousSibling;
 				len = vwInfos.length;
 				if (vwInfos.tokens.charAt(3) === "@") {
+					// This is a special script element that was created in convertMarkers() to process deferred bindings, and inserted following the
+					// target parent element - because no element tags were encountered to carry those binding tokens.
 					targetParent = elem.previousSibling;
 					elem.parentNode.removeChild(elem);
 				}
@@ -764,11 +776,13 @@
 					if (vwInfo.opBnd || vwInfo.clBnd) {
 						// This is an open or close marker for a data-bound tag {^{...}}. Add it to bindEls.
 						bindEls.push([elem||targetParent, vwInfo]);
-					} else {
-						view = viewStore[id = vwInfo.id] || er;
+					} else if (view = viewStore[id = vwInfo.id]) {
+						// The view may have been deleted, for example in a different handler to an array collectionChange event
 						if (defer = vwInfo.path) {
+							// We have a 'deferred path'
 							j = defer.length - 1;
 							while (char = defer.charAt(j--)) {
+								// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
 								if (char === "+") {
 									if (defer.charAt(j) === "-") {
 										j--;
@@ -780,13 +794,14 @@
 									targetParent = targetParent.lastChild;
 								}
 								// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
-								// since we have removed white space within elCnt. Hence support IE <9
+								// since we have removed white space within elCnt. Hence support IE < 9
 							}
 						}
 						if (!view.link) {
 							// If view is not already extended for JsViews, extend and initialize the view object created in JsRender, as a JsViews view
 							view.parentElem = targetParent || elem && elem.parentNode || parentNode;
 							if (targetParent) {
+								// These are deferred bindings
 								token = "|" + id;
 								tokens = targetParent.getAttribute(jsvAttrStr) || "";
 								if (tokens.indexOf(token) < 0) {
@@ -794,8 +809,8 @@
 									targetParent.setAttribute(jsvAttrStr, token + tokens);
 								}
 								view._prv = 0;
-								// Set _prv to 0 as an indicator that this is a 'parentElem' view: -i.e. an empty view with no prevNode or nextNode,
-								// 'owned' by the parent element, with an associated "|n" token on the data-jsv attribute or on the _dfr expando, where n is the vwInfo.id
+								// Set _prv to 0 as an indicator that this is a 'parentElem' view: -i.e. an empty view with no prevNode or nextNode (so the binding was deferred, 
+								// and is 'owned' by the parent element, with an associated "|n" token on the data-jsv attribute or on the _dfr expando, where n is the vwInfo.id
 							}
 							$extend(view, LinkedView);
 							view._.onRender = addBindingMarkers;
@@ -812,9 +827,9 @@
 								targetParent._dfr = "#" + id + (targetParent._dfr || "");
 							} else {
 								if (!view._prv) {
-									// This was a 'parentElem' view, so remove the "|n" token
 									parentElem = view.parentElem;
 									if (view._prv === 0) {
+										// This was a 'parentElem' view, so remove the "|n" token
 										token = parentElem.getAttribute(jsvAttrStr);
 										if (token = removeSubStr(token, "|" + id)) {
 											parentElem.setAttribute(jsvAttrStr, token);
@@ -874,7 +889,7 @@
 		prevNode = prevNode && markPrevOrNextNode(prevNode, elCnt);
 		nextNode = nextNode && markPrevOrNextNode(nextNode, elCnt) || NULL;
 
-		if (html) {
+		if (html !== undefined) {
 			//================ Insert html into DOM using documentFragments (and wrapping HTML appropriately). ================
 			// Also convert markers to DOM annotations, based on content model.
 			// Corresponds to nextNode ? $(nextNode).before(html) : $(parentNode).html(html);
@@ -893,10 +908,10 @@
 					node = node.previousSibling;
 				}
 
-				if (node) {
+				if (node && (view = viewStore[vwInfos[vwInfos.length - 1].id])) {
 					// Get the associated view that is child of self, so sibling to newly inserted view(s)
-					view = viewStore[vwInfos[vwInfos.length-1].id];
-					parentView = refresh ? self.parent : self;
+					// Look for preceding sibling view under parent view - which is self, or self.parent if this an item being refreshed.
+					parentView = refresh && self.type === "item" ? self.parent : self;
 					while (view.parentElem === parentNode) {
 						if (view.parent === parentView) {
 							prevView = view._.id;
@@ -993,7 +1008,7 @@
 		if (elCnt && defer + ids) {
 			// There are some views with elCnt, for which the open or close did not precede any HTML tag - so they have not been processed yet
 			elem = nextNode;
-			processViewInfos(viewInfos(defer + ids), !elem && parentNode);
+			processViewInfos(viewInfos(defer + ids), elem, parentNode);
 
 			if (nextNode) {
 				// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
@@ -1041,7 +1056,7 @@
 		for (i = 0; i < l; i++) {
 			elem = bindEls[i];
 			linkInfo = elem[1];
-			elem  = elem[0];
+			elem = elem[0];
 			if (linkInfo) {
 				if (linkInfo.opBnd) {
 					// This is an 'open bound tag' script marker node for a data-bound tag {^{...}}
@@ -1609,8 +1624,7 @@
 									// This is viewToRemove, so we are done...
 									break;
 								}
-								if (!emptyView) {
-									view = viewStore[vwInfo.id];
+								if (!emptyView && (view = viewStore[vwInfo.id])) {
 									if (vwInfo.open) {
 										// A "#m" token
 										if (!i && !nextNode) {
@@ -1640,8 +1654,9 @@
 							if (nextNode) {
 								// If viewToRemove was an empty view, we will remove both #n and /n (and any intervening tokens) from the nextNode (=== prevNode)
 								// If viewToRemove was not empty, we will take tokens preceding #n from prevNode, and concatenate with tokens following /n on nextNode
-								tokens = nextNode && nextNode.getAttribute(jsvAttrStr);
-								nextNode.setAttribute(jsvAttrStr, vwInfos.tokens.slice(0, precedingLength) + tokens.slice(tokens.indexOf("/" + id) + id.length + 1));
+								if (tokens = nextNode && nextNode.getAttribute(jsvAttrStr)) {
+									nextNode.setAttribute(jsvAttrStr, vwInfos.tokens.slice(0, precedingLength) + tokens.slice(tokens.indexOf("/" + id) + id.length + 1));
+								}
 							} else if (viewToRemove._prev === 0) {
 								// viewToRemove was a 'parentElem' view, so remove |n from the parentElem tokens
 								tokens = parentElem.getAttribute(jsvAttrStr);

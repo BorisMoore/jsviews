@@ -23,7 +23,7 @@
 <!--====== Template ======-->
 <script id="personTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-link="{>firstName}" />
+		<td data-link="firstName"></td>
 		<td>
 			<input data-link="firstName" />
 		</td>
@@ -55,7 +55,7 @@ $( "#changeName" ).on( "click", function() {
 <h4>HTML:</h4>
 <pre class="brush: xml;">
 ...
-    &lt;td data-link="firstName" />
+    &lt;td data-link="firstName">&lt;/td>
     &lt;td>
         &lt;input data-link="firstName" />
     &lt;/td>

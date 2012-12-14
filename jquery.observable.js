@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 23
+// informal pre beta commit counter: 24
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -32,8 +32,8 @@
 		$isArray = $.isArray,
 		$expando = $.expando,
 		OBJECT = "object",
-		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// Allows override on settings prior to loading jquery.observable.js
-		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // Allows override on settings prior to loading jquery.observable.js        
+		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// These two settings can be overridden on settings after loading
+		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews 
 		observeStr = propertyChangeStr + ".observe",
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
@@ -363,7 +363,7 @@
 				if (property.set) {
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
 					getter = property;
-					setter = getter.set;
+					setter = property.set === true ? property : property.set;
 					property = property.call(leaf); //get
 				}
 			}
@@ -445,9 +445,9 @@
 		},
 
 		_move: function(oldIndex, newIndex, numToMove, items) {
-			data.splice(oldIndex, numToMove);
-			splice.apply(this._data, [newIndex, 0].concat(items));
-			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items});
+			this._data.splice( oldIndex, numToMove );
+			this._data.splice.apply( this._data, [ newIndex, 0 ].concat( items ) );
+			this._trigger( { change: "move", oldIndex: oldIndex, index: newIndex, items: items } );
 		},
 
 		refresh: function(newItems) {

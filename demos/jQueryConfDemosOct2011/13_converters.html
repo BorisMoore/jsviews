@@ -39,8 +39,8 @@
 
 <script id="linkedTmpl" type="text/x-jsrender">
 	<tr>
-		<td data-link="dayOff" />
-		<td data-link="{intToDay:dayOff}" />
+		<td data-link="dayOff"></td>
+		<td data-link="{intToDay:dayOff}"></td>
 		<td><input data-link="{intToDay:dayOff:dayToInt} title{:dayOff}" /></td>
 	</tr>
 </script>
@@ -98,10 +98,10 @@ $.link.linkedTmpl( "#linked", myWeek );
 
     &lt;!-- DATA LINKING with data-link expressions -->
     &lt;!-- link from data value, no converter -->
-    &lt;td data-link="dayOff" />
+    &lt;td data-link="dayOff">&lt;/td>
 
     &lt;!-- link from data, converted to display name -->
-    &lt;td data-link="{intToDay:dayOff}" />
+    &lt;td data-link="{intToDay:dayOff}">&lt;/td>
 
     &lt;!-- two-way data linking with convert and convertBack between data format (integer) and display name (text) -->
     &lt;!-- Also show data value as tooltip -->

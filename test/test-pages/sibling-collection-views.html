@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../../demos/resources/movielist.css" rel="stylesheet" type="text/css" />
+	<style>.container div {border: 1px grey solid; width: 480px; padding: 3px;}</style>
+</head>
+<body>
+<button onclick="insertFirstAction()">insert action</button>
+<button onclick="insertFirstThing()">insert thing</button>
+<button onclick="replaceAction()">replace actions</button>
+<button onclick="replaceThings()">replace things</button>
+<button onclick="removeFirstAction()">remove</button>
+<button onclick="replace()">replace</button>
+
+<h2>Test page for data-linking annotations and correct management of views and positional insertion</h2>
+View annotations are logged in the console.
+<p>
+Sibling lists within element-only content
+<table>
+	<tbody class="container" id="container"></tbody>
+</table>
+</p>
+<p>
+Sibling lists within regular content
+<div class="container" id="container2"></div>
+</p>
+<script id="listsTemplate" type="text/x-jsrender">
+	{{if false}}
+		<tr><td>between</td></tr>
+	{{/if}}
+	{{if true}}
+		{{for actions}}
+			{{if true}}
+				{{if true}}
+					<tr><td>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addact">+</button></td></tr>
+				{{/if}}
+			{{/if}}
+		{{/for}}
+	{{/if}}
+	{{if false}}
+		<tr><td>between</td></tr>
+	{{/if}}
+	{{for things}}
+		<tr><td>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addthg">+</button></td></tr>
+	{{/for}}
+	{{if false}}
+		<tr><td>after</td></tr>
+	{{/if}}
+</script>
+
+<script id="listsTemplate2" type="text/x-jsrender">
+	{{if false}}
+		<tr><td>between</div>
+	{{/if}}
+	{{if true}}
+		{{for actions}}
+			{{if true}}
+				{{if true}}
+					<div>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addact">+</button></div>
+				{{/if}}
+			{{/if}}
+		{{/for}}
+	{{/if}}
+	{{if false}}
+		<div>between</div>
+	{{/if}}
+	{{for things}}
+		{{if true}}
+			<div>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addthg">+</button></div>
+		{{/if}}
+	{{/for}}
+	{{if false}}
+		<div>between</div>
+	{{/if}}
+</script>
+
+<script type="text/javascript">
+	var count = 1,
+		app = {
+			actions: [
+			],
+			things: [
+			]
+		};
+
+	$(".container").on("click", ".refresh", go);
+	$(".container").on("click", ".remove", remove);
+	$(".container").on("click", ".addact", addAction);
+	$(".container").on("click", ".addthg", addThing);
+
+	$.templates("listsTmpl", "#listsTemplate").link("#container", app);
+	$.templates("listsTmpl2", "#listsTemplate2").link("#container2", app);
+
+	function go() {
+		view = $.view(this);
+		var data = view.get("item").data;
+		data.name = data.name + "_";
+		view.refresh();
+logViewBindings();
+	//	view.parent.refresh();
+	//	view.parent.parent.refresh();
+	}
+
+	function remove() {
+		view = $.view(this);
+		$.observable(view.get("array").data).remove(view.get("item").index)
+logViewBindings();
+	}
+
+	function addAction() {
+		view = $.view(this);
+		$.observable(view.get("array").data).insert(view.get("item").index + 1, {name:"Act" + count++});
+logViewBindings();
+	}
+
+	function addThing() {
+		view = $.view(this);
+		$.observable(view.get("array").data).insert(view.get("item").index + 1, {name:"Thg" + count++});
+logViewBindings();
+	}
+
+	function insertFirstAction() {
+		$.observable(app.actions).insert(0, {name:"Act" + count++});
+logViewBindings();
+	}
+
+	function insertFirstThing() {
+		$.observable(app.things).insert(0, {name:"Thg" + count++});
+logViewBindings();
+	}
+
+	function removeFirstAction() {
+		$.observable(app.actions).remove(0);
+logViewBindings();
+	}
+
+	function replaceAction() {
+		$.observable(app.actions).refresh([{name:"ActionPLUS"}]);
+logViewBindings();
+	}
+
+	function replaceThings() {
+		$.observable(app.things).refresh([{name:"ThingPLUS"}]);
+logViewBindings();
+	}
+
+	function replace(el) {
+		$( ".container").empty();
+		$.templates.listsTmpl.link("#container", app);
+		$.templates.listsTmpl2.link("#container2", app);
+logViewBindings();
+	}
+
+	function pad(all) {
+		return all + "     ".slice(0,4-all.length);
+	}
+
+	function logViewBindings() {
+		console.log($("#container tr").map(function() {
+			return "{" + this.getAttribute("data-jsv").replace(/[#\/]\d+/g, pad) + "} {" + this.innerText.slice(0, -4) + "}"
+		})
+		.get().join(" ") + " %%"
+
+		+ $("#container")[0]._dfr.replace(/[#\/]\d+/g, pad) + "%%}");
+	}
+</script>
+</body>
+</html>
