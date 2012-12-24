@@ -1584,7 +1584,7 @@
 			// view.removeViews( index ) removes the child view with specified index or key
 			// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 			function removeView(index) {
-				var id, bindId, parentElem, prevNode, nextNode, emptyView, tokens, vwInfos, found, nodesToRemove, vwInfo, i, l, k,
+				var id, bindId, parentElem, prevNode, nextNode, emptyView, token, tokens, vwInfos, found, nodesToRemove, vwInfo, i, l, k,
 					precedingLength = 0,
 					viewToRemove = views[index];
 
