@@ -757,7 +757,7 @@
 
 		function processViewInfos(vwInfos, targetElem, targetParent) {
 			// targetParent is only passed in if there is no elem
-			var defer, char, parentElem, id;
+			var defer, ch, parentElem, id;
 
 			// In elCnt, prevNode is the first node after the open, nextNode is the first node after the close. If both are null/undefined, then open and close are
 			// at end of parent content, so the view is empty, and its placeholder is the 'lastChild' of the parentNode. If there is a prevNode, then it is either
@@ -781,9 +781,9 @@
 						if (defer = vwInfo.path) {
 							// We have a 'deferred path'
 							j = defer.length - 1;
-							while (char = defer.charAt(j--)) {
+							while (ch = defer.charAt(j--)) {
 								// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
-								if (char === "+") {
+								if (ch === "+") {
 									if (defer.charAt(j) === "-") {
 										j--;
 										targetParent = targetParent.previousSibling;
