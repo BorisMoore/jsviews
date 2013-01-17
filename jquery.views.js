@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 24
+// informal pre beta commit counter: 25
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -35,7 +35,7 @@
 
 	var versionNumber = "v1.0pre",
 
-		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar,
+		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, validate,
 		document = global.document,
 		$views = $.views,
 		$viewsSub = $views.sub,
@@ -43,7 +43,6 @@
 		$extend = $viewsSub.extend,
 		FALSE = false, TRUE = true, NULL = null, CHECKBOX = "checkbox",
 		topView = $views.View(undefined, "top"), // Top-level view
-		$isArray = $.isArray,
 		$isFunction = $.isFunction,
 		$templates = $views.templates,
 		$observable = $.observable,
@@ -51,7 +50,7 @@
 		jsvAttrStr = "data-jsv",
 		$viewsLinkAttr = $viewsSettings.linkAttr || "data-link",        // Allows override on settings prior to loading jquery.views.js
 		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// These two settings can be overridden on settings after loading
-		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews 
+		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
 		elementChangeStr = "change.jsv",
 		onBeforeChangeStr = "onBeforeChange",
 		onAfterChangeStr = "onAfterChange",
@@ -70,6 +69,7 @@
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
+		syntaxError = $viewsSub.syntaxError,
 		rFirstElem = /<(?!script)(\w+)[>\s]/,
 		safeFragment = document.createDocumentFragment(),
 		qsa = document.querySelector,
@@ -89,13 +89,18 @@
 			svg: [1, "<svg>", "</svg>"],
 			div: [1, "x<div>", "</div>"] // Needed in IE7 to serialize link tags correctly, insert comments correctly, etc.
 		},
+		voidElems = {br: 1, img: 1, input: 1, hr: 1, area: 1, base: 1, col: 1, link: 1, meta: 1, command: 1, embed: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1},
 		displayStyles = {},
-		bindingKey = 1,
 		viewStore = { 0: topView },
 		bindingStore = {},
+		bindingKey = 1,
 		rViewPath = /^#(view\.?)?/,
-		rConvertMarkers = /(^|(\/>)|(<\/\w+>)|>|)(\s*)_([#\/]\^?\d+)_`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|(<\/\w+>)(\s*)|(\/>)\s*)/g,
-		rJsvNodeMarker = /(jsv)?(?:(#)|(\/)|(#\^)|(\/\^)|(\|))(\d+)([-+@\d]+)?/g;
+		rConvertMarkers = /(^|(\/>)|(<\/\w+>)|>|)(\s*)([#\/]\d+[_^])`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|(<\/\w+>)(\s*)|(\/>)\s*)/g,
+		rOpenViewMarkers = /(#)()(\d+)(_)/g,
+		rOpenMarkers = /(#)()(\d+)([_^])/g,
+		rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
+		rOpenTagMarkers = /(#)()(\d+)(\^)/g,
+		rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
 
 	wrapMap.optgroup = wrapMap.option;
 	wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -117,55 +122,57 @@
 			bindings = to.slice(1).split("&");
 			l = bindings.length;
 			while (l--) {
-				binding = bindingStore[bindings[l]];
-				linkCtx = binding.linkCtx;
-				view = linkCtx.view;
-				if (to = binding.to) {
-					// The binding has a 'to' field, which is of the form [[targetObject, toPath], cvtBack]
-					$source = $(source);
-					onBeforeChange = view._hlp(onBeforeChangeStr);
-					onAfterChange = view._hlp(onAfterChangeStr);
-					fromAttr = defaultAttr(source);
-					setter = fnSetters[fromAttr];
-					sourceValue = $isFunction(fromAttr) ? fromAttr(source) : setter ? $source[setter]() : $source.attr(fromAttr);
+				if (binding = bindingStore[bindings[l]]) {
+// TODO is it an error when bindingStore[bindings[l]] is undefined. Should we ever get to that state?
+					linkCtx = binding.linkCtx;
+					view = linkCtx.view;
+					if (to = binding.to) {
+						// The binding has a 'to' field, which is of the form [[targetObject, toPath], cvtBack]
+						$source = $(source);
+						onBeforeChange = view.hlp(onBeforeChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
+						onAfterChange = view.hlp(onAfterChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
+						fromAttr = defaultAttr(source);
+						setter = fnSetters[fromAttr];
+						sourceValue = $isFunction(fromAttr) ? fromAttr(source) : setter ? $source[setter]() : $source.attr(fromAttr);
 
-					if ((!onBeforeChange || !(cancel = onBeforeChange.call(view, ev) === FALSE)) && sourceValue !== undefined) {
-						cnvtName = to[1];
-						to = to[0]; // [object, path] or [object, true, path]
-						target = to[0];
-						to = to[2] || to[1];
-						if ($isFunction(cnvtName)) {
-							cvtBack = cnvtName;
-						} else {
-							cvtBack = view.tmpl.converters;
-							cvtBack = cvtBack && cvtBack[cnvtName] || $views.converters[cnvtName];
-						}
-						if (cvtBack) {
-							sourceValue = cvtBack.call(linkCtx.tag, sourceValue);
-						}
-						if (sourceValue !== undefined && target) {
-							try {
-// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
-// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
-								if ($isFunction(target)) {
-									target = target.set;
+						if ((!onBeforeChange || !(cancel = onBeforeChange.call(view, ev) === FALSE)) && sourceValue !== undefined) {
+							cnvtName = to[1];
+							to = to[0]; // [object, path] or [object, true, path]
+							target = to[0];
+							to = to[2] || to[1];
+							if ($isFunction(cnvtName)) {
+								cvtBack = cnvtName;
+							} else {
+								cvtBack = view.tmpl.converters;
+								cvtBack = cvtBack && cvtBack[cnvtName] || $views.converters[cnvtName];
+							}
+							if (cvtBack) {
+								sourceValue = cvtBack.call(linkCtx.tag, sourceValue);
+							}
+							if (sourceValue !== undefined && target) {
+								try {
+	// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
+	// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
 									if ($isFunction(target)) {
-										target.call(linkCtx, sourceValue);
+										target = target.set;
+										if ($isFunction(target)) {
+											target.call(linkCtx, sourceValue);
+										}
+									} else {
+										$observable(target).setProperty(to, sourceValue);
 									}
-								} else {
-									$observable(target).setProperty(to, sourceValue);
+								} catch(e) {
+									error(e);
 								}
-							} catch(e) {
-								error(e);
+								if (onAfterChange) {  // TODO only call this if the target property changed
+									onAfterChange.call(linkCtx, ev);
+								}
 							}
-							if (onAfterChange) {  // TODO only call this if the target property changed
-								onAfterChange.call(linkCtx, ev);
-							}
+							//ev.stopPropagation(); // Stop bubbling
 						}
-						//ev.stopPropagation(); // Stop bubbling
-					}
-					if (cancel) {
-						ev.stopImmediatePropagation();
+						if (cancel) {
+							ev.stopImmediatePropagation();
+						}
 					}
 				}
 			}
@@ -173,17 +180,16 @@
 	}
 
 	function propertyChangeHandler(ev, eventArgs, linkFn) {
-		var attr, setter, changed, sourceValue, css, tag, ctx, prevNode, nextNode, oldLinkCtx,
-
+		var attr, setter, changed, sourceValue, css, tag, ctx, prevNode, nextNode, oldLinkCtx, cancel, skipBinding, tagId, elCnt,
 			linkCtx = this,
-			oldTag = linkCtx.tag || {},
 			source = linkCtx.data,
 			target = linkCtx.elem,
+			attrOrProp = "attr",
 			parentElem = target.parentNode,
-			containerElem = parentElem,
+			targetElem = parentElem,
 			$target = $(target),
 			view = linkCtx.view,
-			onEvent = view._hlp(onBeforeChangeStr);
+			onEvent = view.hlp(onBeforeChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
 
 		if (parentElem && (!onEvent || !(eventArgs && onEvent.call(linkCtx, ev, eventArgs) === FALSE))
 				// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
@@ -202,23 +208,21 @@
 
 				attr = linkCtx.attr || defaultAttr(target, TRUE); // May have been modified by render
 				if (tag = linkCtx.tag) {
-					tag.parentElem = parentElem;
+					tag.parentElem = tag._elCnt ? target : target.parentNode;
+					prevNode = tag._prv;
+					nextNode = tag._nxt;
+					ctx = tag.ctx;
 				}
-				tag = tag || {};
-				ctx = tag.ctx;
 				if ($isFunction(sourceValue)) {
 					error(linkCtx.expr + ": missing parens");
 				}
 
-// TODO			var  cancel = attr === "none";
-//				var tagCtx = linkCtx.tagCtx;
-//				if (eventArgs && tagCtx && tagCtx.tag.onUpdate) {
-//					cancel = tagCtx.tag.onUpdate.call(tagCtx, ev, eventArgs, linkCtx) === FALSE || cancel;
-//				}
-//				if (cancel) {
-//					return;
-//				}
-				if (attr === "none") {
+				cancel = attr === "none";
+				if (eventArgs && tag && tag.onUpdate) {
+					cancel = tag.onUpdate(ev, eventArgs) === FALSE || cancel;
+				}
+				if (cancel) {
+					view.linkCtx = oldLinkCtx;
 					return;
 				}
 				if (attr === "visible") {
@@ -244,10 +248,11 @@
 				} else {
 					if (attr === "value") {
 						if (target.type === CHECKBOX) {
+							sourceValue = sourceValue && sourceValue !== "false";
+							attrOrProp = "prop";
 							attr = "checked";
-							// We will set the "checked" attribute
-							sourceValue = (sourceValue && sourceValue !== "false") ? attr : undefined;
-							// We will compare this ("checked"/undefined) with the current value
+							// We will set the "checked" property
+							// We will compare this with the current value
 						}
 					} else if (attr === "radio") {
 						// This is a special binding attribute for radio buttons, which corresponds to the default 'to' binding.
@@ -256,12 +261,15 @@
 						// or (allowing any order for the binding expressions): <input type="radio" value="{{:name}}" data-link="{:#get('data').data.currency:} value^{:name}" .../>
 
 						if (target.value === ("" + sourceValue)) {
-							// If the data value corresponds to the value attribute of this radio button input, set the checked attribute to "checked"
-							sourceValue = attr = "checked";
+							// If the data value corresponds to the value attribute of this radio button input, set the checked property to true
+							sourceValue = TRUE;
+							attrOrProp = "prop";
+							attr = "checked";
 						} else {
 							// Otherwise, go straight to observeAndBind, without updating.
 							// (The browser will remove the 'checked' attribute, when another radio button in the group is checked).
 							observeAndBind(linkCtx, linkCtx.data, linkCtx.elem); //TODO ? linkFnArgs);
+							view.linkCtx = oldLinkCtx;
 							return;
 						}
 					}
@@ -269,38 +277,56 @@
 					setter = fnSetters[attr];
 
 					if (setter) {
-						if (tag || (changed = $target[setter]() !== sourceValue)) {
+						if (changed = $target[setter]() !== sourceValue) {
 // TODO support for testing whether {^{: or {^{tag have changed or not
-// Make {^{ default to 'innerText', and let {^html{ target html. This will be consistent with data-link="html{:...}"
-
 							if (attr === "html") {
-								if (viewInfos(target, TRUE)) {
-									// data-bound tag: {^{tagname ...}}
-									// If tag.nodes is defined, remove previously rendered content;
-									oldTag.nodes && $(oldTag.nodes(TRUE)).remove();
-									prevNode = target;
-									nextNode = target.nextSibling;
-								} else {
-									// data-linked tag: data-link="{tagname ...}"
-									$target.empty();
-									containerElem = target;
-								}
-								// This is a data-link="html{tagname ...}" or {^{tagname ...}} update, so need to link new content
-//TODO							// Provide expando on target element, to get to tag instances,
-//								// which can be accessed using $.views.findTags(nodeOrSelector)
-//								if (ctx) {
-//									target._tags = target._tags ? $extend(target._tags, ctx.tags) : ctx.tags; // Merge, and replace old versions with updated versions.
-//								}
+								if (tag) {
+									elCnt = tag._elCnt;
+									if (tag._.inline) {
+										var nodesToRemove = tag.nodes(TRUE);
 
+										if (elCnt && prevNode && prevNode !== nextNode) {
+											// This prevNode will be removed from the DOM, so transfer the view tokens on prevNode to nextNode of this 'viewToRefresh'
+											tagId = tag._tgId;
+											transferViewTokens(prevNode, nextNode, target, tagId, "^", TRUE);
+											targetElem = target;
+										}
+										prevNode = elCnt ? prevNode && prevNode.previousSibling : prevNode;
+										// Remove HTML nodes
+										$(nodesToRemove).remove();
+									} else {
+										// data-linked value using converter(s): data-link="{cvt: ... :cvtBack}" or tag: data-link="{tagname ...}"
+										// We will insert the tag binding tokens (which will become script node markers, or added tokens on elCnt elements, during view.link() below)
+										// We will then skip the observeAndBind call below, since the inserted tag binding replaces that binding
+										if (!tag.flow && tag.tagCtx.props.inline) {
+											// data-link="{tagname ...}"
+											view._.tag = tag;
+											sourceValue = addBindingMarkers(sourceValue, view, TRUE);
+											skipBinding = tag._.inline = TRUE;
+										}
+
+										$target.empty();
+										targetElem = target;
+									}
+								} else {
+									// data-linked value: data-link="expr" or data-link="{:expr}" or data-link="{:expr:}" (with no convert or convertBack)
+									$target.empty();
+									targetElem = target;
+								}
 								// Data link the new contents of the target node
-								if (tag.onBeforeLink) {
+								if (!skipBinding && tag && tag.onBeforeLink) {
 									tag.onBeforeLink();
 								}
 
-								view.link(source, containerElem, prevNode, nextNode, sourceValue);
+								view.link(source, targetElem, prevNode, nextNode, sourceValue, tag && {tag: tagId});
 
+								if (skipBinding) {
+									// data-linked tag: data-link="{tagname ...}"
+									// We will skip the observeAndBind call below, since the inserted tag binding above replaces that binding
+									view.linkCtx = oldLinkCtx;
+									return;
+								}
 								tagOnAfterLink(tag);
-
 							} else if (attr === "text" && !target.children[0]) {
 								// This code is faster then $target,text()
 								if (target.textContent !== undefined) {
@@ -311,17 +337,18 @@
 							} else {
 								$target[setter](sourceValue);
 							}
-							if (target.nodeName.toLowerCase() === "input") {
-								$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
-							}
+// Removing this for now, to avoid side-effects when you programmatically set the value, and want the focus to stay on the text box
+//							if (target.nodeName.toLowerCase() === "input") {
+//								$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
+//							}
 						}
-					} else if (changed = $target.attr(attr) != sourceValue) {
+					} else if (changed = $target[attrOrProp](attr) != sourceValue) {
 						// Setting an attribute to the empty string or undefined should remove the attribute
-						$target.attr(attr, (sourceValue === undefined || sourceValue === "") ? NULL : sourceValue);
+						$target[attrOrProp](attr, (sourceValue === undefined || sourceValue === "") && attrOrProp === "attr" ? NULL : sourceValue);
 					}
 				}
 
-				if (eventArgs && changed && (onEvent = view._hlp(onAfterChangeStr))) {
+				if (eventArgs && changed && (onEvent = view.hlp(onAfterChangeStr))) {  //TODO improve this for perf optimization. We are calling this view.hlp() every time.
 					onEvent.call(linkCtx, ev, eventArgs);
 				}
 			}
@@ -330,20 +357,16 @@
 			observeAndBind(linkCtx, source, target);
 
 			// Remove dynamically added linkCtx from view
-			if (oldLinkCtx) {
-				view.linkCtx = oldLinkCtx;
-			} else {
-				delete view.linkCtx;
-			}
+			view.linkCtx = oldLinkCtx;
 		}
 	}
 
 	function arrayChangeHandler(ev, eventArgs) {
 		var self = this,
-			onBeforeChange = self._hlp(onBeforeChangeStr),
-			onAfterChange = self._hlp(onAfterChangeStr);
+			onBeforeChange = self.hlp(onBeforeChangeStr),  //TODO improve this for perf optimization. We are calling this every time.
+			onAfterChange = self.hlp(onAfterChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
 
-		if (!onBeforeChange || onBeforeChange.call(this, ev, eventArgs) !== FALSE) {
+		if (!onBeforeChange || onBeforeChange.call(ev, eventArgs) !== FALSE) {
 			if (eventArgs) {
 				// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
 				var action = eventArgs.change,
@@ -438,7 +461,7 @@
 					: attr.to.toAttr)
 				: attr.from.fromAttr)
 			: to
-				? "html" // Default is to bind to innerText. Use html{:...} to bind to innerHTML
+				? "html" // Default is to bind to innerText. Use text{:...} to bind to innerText
 				: ""; // Default is not to bind from
 	}
 
@@ -447,30 +470,22 @@
 	//==============================
 
 	function renderAndLink(view, index, tmpl, views, data, context, refresh) {
-		var l, html, linkToNode, prevView, tag, vw, vwInfos, nodesToRemove,
+		var html, linkToNode, prevView, tag, nodesToRemove,
 			parentNode = view.parentElem,
 			prevNode = view._prv,
 			nextNode = view._nxt,
 			elCnt = view._elCnt;
 
 		if (prevNode && prevNode.parentNode !== parentNode) {
-			return FALSE;
-			// Abandon, since node or view has already been removed, or wrapper element has been inserted between prevNode and parentNode
+			error("Missing parentNode");
+			// Abandon, since node has already been removed, or wrapper element has been inserted between prevNode and parentNode
 		}
 
 		if (refresh) {
 			nodesToRemove = view.nodes();
 			if (elCnt && prevNode && prevNode !== nextNode) {
-				vwInfos = viewInfos(prevNode);
-				// This node will be removed from the DOM so remove data-jsv attribute to avoid re-triggering removal of the view
-				prevNode.removeAttribute(jsvAttrStr);
-				l = vwInfos.length;
-				while (l--) {
-					vw = vwInfos[l];
-					if (vw.open) {
-						viewStore[vw.id]._prv = vwInfos.tokens;
-					}
-				}
+				// This prevNode will be removed from the DOM, so transfer the view tokens on prevNode to nextNode of this 'viewToRefresh'
+				transferViewTokens(prevNode, nextNode, parentNode, view._.id, "_", TRUE);
 			}
 
 			// Remove child views
@@ -511,7 +526,7 @@
 			tag.onBeforeLink();
 		}
 
-		view.link(data, parentNode, prevNode, linkToNode, html, refresh);
+		view.link(data, parentNode, prevNode, linkToNode, html, prevView);
 
 		tagOnAfterLink(tag);
 //}, 0);
@@ -525,23 +540,21 @@
 		// Insert binding markers into the rendered template output, which will get converted to appropriate
 		// data-jsv attributes (element-only content) or script marker nodes (phrasing or flow content), in convertMarkers,
 		// within view.link, prior to inserting into the DOM. Linking will then bind based on these markers in the DOM.
-		var id,
-			open = "_#",
-			close = "_/",
-			end = "_`";
+		var id, tag,
+			end = (linked ? "^" : "_") + "`";
 		if (linked) {
 			// This is a binding marker for a data-bound tag {^{...}}
-			bindingStore[id = bindingKey++] = view._.tag; // Store the tag temporarily ready for databinding.
+			tag = bindingStore[id = bindingKey++] = view._.tag; // Store the tag temporarily, ready for databinding.
 			// During linking, in addDataBinding, the tag will be attached to the linkCtx,
 			// and then in observeAndBind, bindingStore[bindId] will be replaced by binding info.
-			id = '^' + id;
+			tag._tgId = "" + id;
 		} else {
 			// This is a binding marker for a view
 			// Add the view to the store of current linked views
 			viewStore[id = view._.id] = view;
 		}
-		// Example: "_#^23_`TheValue_/^23_`"
-		return open + id + end + value + close + id + end;
+		// Example: "_#23`TheValue_/23`"
+		return "#" + id + end + value + "/" + id + end;
 	}
 
 	//==============================
@@ -556,34 +569,36 @@
 		var tag, binding, cvtBack, toPath,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++;
-			delete linkCtx._bndId;
+
+		delete linkCtx._bndId;
 
 		if (tag = linkCtx.tag) {
-			// Use the 'depends' paths set on linkCtx.tag, either on declaration or events: init, render, onBeforeLink, onAfterLink etc.
-			depends = tag.depends;
+			// Use the 'depends' paths set on linkCtx.tag - which may have been set on declaration or in events: init, render, onBeforeLink, onAfterLink etc.
+			depends = tag.depends || depends;
 			depends = $isFunction(depends) ? tag.depends() : depends;
 			cvtBack = tag.onChange;
 		}
 		cvtBack = cvtBack || linkCtx._cvtBk;
-		if (!linkCtx._depends || "" + linkCtx._depends !== "" + depends) {
-			// Only bind the first time, or if the new depends has changed from when last bound
+		if (!linkCtx._depends || ("" + linkCtx._depends !== "" + depends)) {
+			// Only bind the first time, or if the new depends (toString) has changed from when last bound
 			if (linkCtx._depends) {
 				// Unobserve previous binding
 				$observe(source, linkCtx._depends, linkCtx._handler, TRUE);
 			}
-			binding = $observe.call(linkCtx, source, linkCtx.paths, depends, linkCtx._handler, linkCtx._filter);
+			binding = $observe(source, linkCtx.paths, depends, linkCtx._handler, linkCtx._filter);
 			// The binding returned by $observe has a bnd array with the source objects of the individual bindings.
-			binding.tgt = target; // The target of all the individual bindings
+			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
-			// Add to the _jsvBnd on the target the view id and bindingKey - for unbinding when the target element is removed
+			binding._tgId = bindId;
+			// Add to the _jsvBnd on the target the view id and binding id - for unbinding when the target element is removed
 			target._jsvBnd = target._jsvBnd || "";
 			target._jsvBnd += "&" + bindId;
 			linkCtx._depends = depends;
 			// Store the binding key on the view, for disposal when the view is removed
 			linkCtx.view._.bnd[bindId] = bindId;
 			// Store the binding.
-			bindingStore[bindId] = binding; // Note: If this corresponds to a bound tag, replace the
-			// stored tag by the stored binding. The tag is then at binding.linkCtx.tag
+			bindingStore[bindId] = binding; // Note: If this corresponds to a bound tag, we are replacing the
+			// temporarily stored tag by the stored binding. The tag will now be at binding.linkCtx.tag
 
 			if (cvtBack !== undefined) {
 				toPath = linkCtx.paths[0].split("^").join("."); // For binding back, bind to the first path in the parsed parameters
@@ -597,11 +612,11 @@
 	// $.link
 	//-------
 
-	function tmplLink(to, from, context, parentView, prevNode, nextNode, index) {
-		return $link(this, to, from, context, parentView, prevNode, nextNode, index);
+	function tmplLink(to, from, context, parentView, prevNode, nextNode) {
+		return $link(this, to, from, context, parentView, prevNode, nextNode);
 	}
 
-	function $link(tmplOrLinkTag, to, from, context, parentView, prevNode, nextNode, index) {
+	function $link(tmplOrLinkTag, to, from, context, parentView, prevNode, nextNode) {
 		if (tmplOrLinkTag && to) {
 			to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
 
@@ -660,13 +675,14 @@
 // setTimeout(function() {
 
 					if (targetEl._dfr && !nextNode) {
-						// We are inserting new content and the
-						vwInfos = viewInfos(targetEl._dfr);
+						// We are inserting new content and the target element has some deferred binding annotations,and there is no nextNode.
+						// Those views may be stale views (that will be recreated in this new linking action) so we will first remove them (if not already removed).
+						vwInfos = viewInfos(targetEl._dfr, TRUE, rOpenViewMarkers);
 
 						for (i = 0, k = vwInfos.length; i < k; i++) {
 							view = vwInfos[i];
-							if ((view.open || view.prnt) && (view = viewStore[view.id]) && view.data !== undefined) {
-								// If this is the _prevNode for a view, or the parentElem of an empty view, remove the view
+							if ((view = viewStore[view.id]) && view.data !== undefined) {
+								// If this is the _prevNode for a view, remove the view
 								// - unless view.data is undefined, in which case it is already being removed
 								view.parent.removeViews(view._.key, undefined, TRUE);
 							}
@@ -700,7 +716,7 @@
 
 		//==== nested functions ====
 		function convertMarkers(all, preceding, selfClose, closeTag, spaceBefore, id, spaceAfter, tag, tag2, closeTag2, spaceAfterClose, selfClose2) {
-			//rConvertMarkers = /(^|(\/>)|(<\/\w+>)|>|)(\s*)_([#\/]\^?\d+)_`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|(<\/\w+>)(\s*)|(\/>)\s*)/g,
+			//rConvertMarkers = /(^|(\/>)|(<\/\w+>)|>|)(\s*)_([#\/]\d+_)`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|(<\/\w+>)(\s*)|(\/>)\s*)/g,
 			//                 prec, slfCl, clTag,  spaceBefore, id,    spaceAfter, tag,                   tag2,             clTag2,  sac   slfCl2,
 			// Convert the markers that were included by addBindingMarkers in template output, to appropriate DOM annotations:
 			// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
@@ -708,6 +724,9 @@
 			tag = tag || tag2 || "";
 			closeTag = closeTag || selfClose || closeTag2 || selfClose2;
 			if (closeTag) {
+				if (validate && (selfClose || selfClose2) && !voidElems[parentTag]) {
+					syntaxError("'<" + parentTag + "... />' in:\n" + html);
+				}
 				prevElCnt = elCnt;
 				parentTag = tagStack.shift();
 				elCnt = elContent[parentTag];
@@ -718,27 +737,30 @@
 					if (!elCnt) {
 						endOfElCnt = (closeTag2 || "") + openScript + "@" + defer + closeScript + (spaceAfterClose || "");
 					}
-					defer = elCnt ? defer + "-" : ""; // Will be used for stepping back through deferred tokens
+					defer = elCnt ? (defer + "-") : ""; // Will be used for stepping back through deferred tokens
 				}
 			}
 			if (elCnt) {
 				// elContent maps tagNames which have only element content, so may not support script nodes.
 				// We are in element-only content, can remove white space, and use data-jsv attributes on elements as markers
-				// Example: <tr data-jsv="/2#6"> - close marker for view 2 and open marker for view 6
+				// Example: <tr data-jsv="/2_#6_"> - close marker for view 2 and open marker for view 6
+
 				if (id) {
 					// append marker for this id, to ids string
 					ids += id;
-					if (tag) {
-						// We have reached an HTML tag, so add data-jsv attribute for the markers encountered since the previous HTML tag
-						preceding += tag + ' ' + jsvAttrStr + '="' + ids + '"';
+				} else {
+					preceding = (closeTag2 || selfClose2 || "");
+				}
+				if (tag) {
+					preceding += tag;
+					if (ids) {
+						preceding += ' ' + jsvAttrStr + '="' + ids + '"';
 						ids = "";
 					}
-				} else {
-					preceding = (closeTag2 || selfClose2 || "") + tag;
 				}
 			} else {
 				// We are in phrasing or flow content, so use script marker nodes
-				// Example: <script type="jsv3^/"></script> - data-bound tag, close marker
+				// Example: <script type="jsv3/"></script> - data-bound tag, close marker
 				preceding = id
 					? (preceding + endOfElCnt + spaceBefore + openScript + id + closeScript + spaceAfter + tag)
 					: endOfElCnt || all;
@@ -748,6 +770,10 @@
 				tagStack.unshift(parentTag);
 				parentTag = tag.slice(1);
 				prevElCnt = elCnt = elContent[parentTag];
+// TODO Consider providing validation which throws if you place <span> as child of <tr>, etc. - since if not caught, this can cause errors subsequently which are difficult to bug.
+//				if (elContent[tagStack[0]]>2 && !elCnt) {
+//					error(parentTag + " in " + tagStack[0]);
+//				}
 				if (defer && elCnt) {
 					defer += "+"; // Will be used for stepping back through deferred tokens
 				}
@@ -755,63 +781,75 @@
 			return preceding;
 		}
 
-		function processViewInfos(vwInfos, targetElem, targetParent) {
-			// targetParent is only passed in if there is no elem
-			var defer, char, parentElem, id;
+		function processViewInfos(vwInfos, targetParent) {
+			// If targetParent, we are processing viewInfos (which may include navigation through '+-' paths) and hooking up to the right parentElem etc.
+			// (and elem may also be defined - the next node)
+			// If no targetParent, then we are processing viewInfos on newly inserted content
+			var defer, deferChar, bindChar, parentElem, id, onAftCr,
+				addedBindEls = [];
 
-			// In elCnt, prevNode is the first node after the open, nextNode is the first node after the close. If both are null/undefined, then open and close are
-			// at end of parent content, so the view is empty, and its placeholder is the 'lastChild' of the parentNode. If there is a prevNode, then it is either
-			// the first node in the view, or the view is empty and its placeholder is the 'previousSibling' of the prevNode, which is also the nextNode.
+			// In elCnt context (element-only content model), prevNode is the first node after the open, nextNode is the first node after the close.
+			// If both are null/undefined, then open and close are at end of parent content, so the view is empty, and its placeholder is the
+			// 'lastChild' of the parentNode. If there is a prevNode, then it is either the first node in the view, or the view is empty and
+			// its placeholder is the 'previousSibling' of the prevNode, which is also the nextNode.
 			if (vwInfos) {
-				targetParent = targetParent || targetElem && targetElem.previousSibling;
+				//targetParent = targetParent || targetElem && targetElem.previousSibling;
+				//targetParent = targetElem ? targetElem.previousSibling : targetParent;
 				len = vwInfos.length;
-				if (vwInfos.tokens.charAt(3) === "@") {
+				if (vwInfos.tokens.charAt(0) === "@") {
 					// This is a special script element that was created in convertMarkers() to process deferred bindings, and inserted following the
 					// target parent element - because no element tags were encountered to carry those binding tokens.
 					targetParent = elem.previousSibling;
 					elem.parentNode.removeChild(elem);
+					elem = NULL;
 				}
+				len = vwInfos.length;
 				while (len--) {
 					vwInfo = vwInfos[len];
-					if (vwInfo.opBnd || vwInfo.clBnd) {
-						// This is an open or close marker for a data-bound tag {^{...}}. Add it to bindEls.
-						bindEls.push([elem||targetParent, vwInfo]);
+					bindChar = vwInfo.ch;
+					if (defer = vwInfo.path) {
+						// We have a 'deferred path'
+						j = defer.length - 1;
+						while (deferChar = defer.charAt(j--)) {
+							// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
+							if (deferChar === "+") {
+								if (defer.charAt(j) === "-") {
+									j--;
+									targetParent = targetParent.previousSibling;
+								} else {
+									targetParent = targetParent.parentNode;
+								}
+							} else {
+								targetParent = targetParent.lastChild;
+							}
+							// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
+							// since we have removed white space within elCnt. Hence support IE < 9
+						}
+					}
+					if (bindChar === "^") {
+						if (bindingStore[id = vwInfo.id]) {
+							// The binding may have been deleted, for example in a different handler to an array collectionChange event
+							// This is a tag binding
+							if (vwInfo.elCnt) {
+								if (vwInfo.open) {
+									if (targetParent) {
+										// This is an 'open view' node (preceding script marker node, or if elCnt, the first element in the view, with a data-jsv annotation) for binding
+										targetParent._dfr = "#" + id + bindChar + (targetParent._dfr || "");
+									}
+								} else if (targetParent && (!elem || elem.parentNode !== targetParent)) {
+									// There is no ._nxt so add token to _dfr. It is deferred.
+									targetParent._dfr = "/" + id + bindChar + (targetParent._dfr || "");
+								}
+							}
+
+							// This is an open or close marker for a data-bound tag {^{...}}. Add it to bindEls.
+							addedBindEls.push([elem, vwInfo]);
+						}
 					} else if (view = viewStore[id = vwInfo.id]) {
 						// The view may have been deleted, for example in a different handler to an array collectionChange event
-						if (defer = vwInfo.path) {
-							// We have a 'deferred path'
-							j = defer.length - 1;
-							while (char = defer.charAt(j--)) {
-								// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
-								if (char === "+") {
-									if (defer.charAt(j) === "-") {
-										j--;
-										targetParent = targetParent.previousSibling;
-									} else {
-										targetParent = targetParent.parentNode;
-									}
-								} else {
-									targetParent = targetParent.lastChild;
-								}
-								// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
-								// since we have removed white space within elCnt. Hence support IE < 9
-							}
-						}
 						if (!view.link) {
 							// If view is not already extended for JsViews, extend and initialize the view object created in JsRender, as a JsViews view
 							view.parentElem = targetParent || elem && elem.parentNode || parentNode;
-							if (targetParent) {
-								// These are deferred bindings
-								token = "|" + id;
-								tokens = targetParent.getAttribute(jsvAttrStr) || "";
-								if (tokens.indexOf(token) < 0) {
-									// Add to parentElem tokens, if not already there
-									targetParent.setAttribute(jsvAttrStr, token + tokens);
-								}
-								view._prv = 0;
-								// Set _prv to 0 as an indicator that this is a 'parentElem' view: -i.e. an empty view with no prevNode or nextNode (so the binding was deferred, 
-								// and is 'owned' by the parent element, with an associated "|n" token on the data-jsv attribute or on the _dfr expando, where n is the vwInfo.id
-							}
 							$extend(view, LinkedView);
 							view._.onRender = addBindingMarkers;
 							setArrayChangeLink(view);
@@ -819,46 +857,68 @@
 						parentElem = view.parentElem;
 						if (vwInfo.open) {
 							// This is an 'open view' node (preceding script marker node, or if elCnt, the first element in the view, with a data-jsv annotation) for binding
-							if (view.parent === self) {
-								lastAddedTopView = view;
-							}
 							view._elCnt = vwInfo.elCnt;
 							if (targetParent) {
-								targetParent._dfr = "#" + id + (targetParent._dfr || "");
+								targetParent._dfr = "#" + id + bindChar + (targetParent._dfr || "");
 							} else {
+								// No targetParent, so there is a ._nxt elem (and this is processing tokens on the elem)
 								if (!view._prv) {
-									parentElem = view.parentElem;
-									if (view._prv === 0) {
-										// This was a 'parentElem' view, so remove the "|n" token
-										token = parentElem.getAttribute(jsvAttrStr);
-										if (token = removeSubStr(token, "|" + id)) {
-											parentElem.setAttribute(jsvAttrStr, token);
-										} else {
-											parentElem.removeAttribute(jsvAttrStr);
-										}
-									}
-									parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id);
+									parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id + bindChar);
 								}
 								view._prv = elem;
-
 							}
 						} else {
 							// This is a 'close view' marker node for binding
-							if (targetParent) {
-								targetParent._dfr = "/" + id + (targetParent._dfr || "");
-							} else {
+							if (targetParent && (!elem || elem.parentNode !== targetParent)) {
+								// There is no ._nxt so add token to _dfr. It is deferred.
+								targetParent._dfr = "/" + id + bindChar + (targetParent._dfr || "");
+								view._nxt = undefined;
+							} else if (elem) {
+								// This view did not have a ._nxt, but has one now, so token may be in _dfr, and must be removed. (No longer deferred)
 								if (!view._nxt) {
-									parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id);
+									parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id + bindChar);
 								}
 								view._nxt = elem;
 							}
 							linkCtx = view.linkCtx;
-					//		tag = linkCtx && linkCtx.tag;
-							// TODO verify linkCtx
-							//if (view.link)
-							if (onAfterCreate) {
-								onAfterCreate.call(linkCtx, view);
+							if (onAftCr = onAfterCreate || (view.ctx && view.ctx.onAfterCreate)) {
+								onAftCr.call(linkCtx, view);
 							}
+						}
+					}
+				}
+				len = addedBindEls.length;
+				while (len--) {
+					// These were added in reverse order to addedBindEls. We push them in BindEls in the correct order.
+					bindEls.push(addedBindEls[len]);
+				}
+			}
+			return !vwInfos || vwInfos.elCnt;
+		}
+
+		function getViewInfos(vwInfos) {
+			// Used by view.childTags() and tag.childTags()
+			// Similar to processViewInfos in how it steps through bindings to find tags. Only finds data-bound tags.
+			var level, parentTag;
+
+			if (len = vwInfos && vwInfos.length) {
+				for (j = 0; j < len; j++) {
+					vwInfo = vwInfos[j];
+					if (get.id) {
+						get.id = get.id !== vwInfo.id && get.id;
+					} else {
+						// This is an open marker for a data-bound tag {^{...}}, within the content of the tag whose id is get.id. Add it to bindEls.
+						parentTag = tag = bindingStore[vwInfo.id].linkCtx.tag;
+						if (!deep) {
+							level = 1;
+							while (parentTag = parentTag._.parentTag) {
+								level++;
+							}
+							tagDepth = tagDepth || level; // The level of the first tag encountered.
+						}
+						if ((deep || level === tagDepth)  && (!tagName || tag.tagName === tagName)) {
+							// Filter on top-level or tagName as appropriate
+							tags.push(tag);
 						}
 					}
 				}
@@ -866,22 +926,46 @@
 		}
 		//==== /end of nested functions ====
 
-		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, lastAddedTopView, firstInsertedElem, prevView, nextView, node,
-			depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, jsvAttr, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, parentView, //oldElCnt,
+		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagDepth,
+			get, depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found,
 			self = this,
+			thisId = self._.id + "_",
 			defer = "",
 			// The marker ids for which no tag was encountered (empty views or final closing markers) which we carry over to container tag
 			bindEls = [],
 			tagStack = [],
-			onAfterCreate = self._hlp(onAfterCreateStr);
+			onAfterCreate = self.hlp(onAfterCreateStr), //TODO improve this for perf optimization. We are calling this every time.
+			processInfos = processViewInfos;
 
-		parentNode = "" + parentNode === parentNode
-			? $(parentNode)[0]  // It is a string, so treat as selector
-			: parentNode.jquery
-				? parentNode[0]   // A jQuery object - take first element.
-				: (parentNode
-					|| self.parentElem // view.link()
-					|| document.body); // link(null, data) to link the whole document
+		if (refresh) {
+			if (refresh.tmpl) {
+				// refresh is the prevView, passed in from addViews()
+				prevView = "/" + refresh._.id + "_";
+			} else {
+				get = refresh.get;
+				if (refresh.tag) {
+					thisId = refresh.tag + "^";
+					refresh = TRUE;
+				}
+			}
+			refresh = refresh === TRUE;
+		}
+
+		if (get) {
+			processInfos = getViewInfos;
+			tags = get.tags;
+			deep = get.deep;
+			tagName = get.name;
+		}
+
+		parentNode = parentNode
+			? ("" + parentNode === parentNode
+				? $(parentNode)[0]  // It is a string, so treat as selector
+				: parentNode.jquery
+					? parentNode[0]   // A jQuery object - take first element.
+					: parentNode)
+			: (self.parentElem // view.link()
+				|| document.body); // link(null, data) to link the whole document
 
 		parentTag = parentNode.tagName.toLowerCase();
 		elCnt = !!elContent[parentTag];
@@ -901,40 +985,27 @@
 			htmlTag = parentNode.namespaceURI === "http://www.w3.org/2000/svg" ? "svg" : (firstTag = rFirstElem.exec(html)) && firstTag[1] || "";
 
 			if (elCnt) {
-				// Need to find the nextNode or parentNode._dfr tokens, and transfer the initial tokens to the inserted nodes
-				// Find the previous view, by looking for preceding elems with tokens
-				node = nextNode ? nextNode.previousSibling : parentNode.lastChild;
-				while (node && !(vwInfos = viewInfos(node))) {
-					node = node.previousSibling;
-				}
-
-				if (node && (view = viewStore[vwInfos[vwInfos.length - 1].id])) {
-					// Get the associated view that is child of self, so sibling to newly inserted view(s)
-					// Look for preceding sibling view under parent view - which is self, or self.parent if this an item being refreshed.
-					parentView = refresh && self.type === "item" ? self.parent : self;
-					while (view.parentElem === parentNode) {
-						if (view.parent === parentView) {
-							prevView = view._.id;
-							break;
-						}
-						view = view.parent;
-					}
-				}
 				// Now look for following view, and find its tokens, or if not found, get the parentNode._dfr tokens
 				node = nextNode;
 				while (node && !(nextView = viewInfos(node))) {
 					node = node.nextSibling;
 				}
 				if (tokens = nextView ? nextView.tokens : parentNode._dfr) {
-					token = prevView ? "/" + prevView : "#" + self._.id;
+					token = prevView || "";
+					if (refresh || !prevView) {
+						token += "#" + thisId;
+					}
 					j = tokens.indexOf(token);
 					if (j + 1) {
-						j = j + token.length;
+						j += token.length;
 						// Transfer the initial tokens to inserted nodes, by setting them as the ids variable, picked up in convertMarkers
-						if (!nextView) {
-							parentNode._dfr = tokens.slice(j);
-						}
 						prevIds = ids = tokens.slice(0, j);
+						tokens = tokens.slice(j);
+						if (nextView) {
+							node.setAttribute(jsvAttrStr, tokens);
+						} else {
+							parentNode._dfr = tokens;
+						}
 					}
 				}
 			}
@@ -960,9 +1031,6 @@
 			safeFragment.removeChild(div);
 			fragment = document.createDocumentFragment();
 			while (copiedNode = wrapper.firstChild) {
-				if (!firstInsertedElem && copiedNode.nodeType === 1) {
-					firstInsertedElem = copiedNode;
-				}
 				fragment.appendChild(copiedNode);
 			}
 			// Insert into the DOM
@@ -980,6 +1048,7 @@
 			prevNodes = qsa ? prevNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, prevNode).get();
 			prevNode = prevNodes.length ? prevNodes[prevNodes.length - 1] : prevNode;
 		}
+		tagDepth = 0;
 		for (i = 0; i < l; i++) {
 			elem = elems[i];
 			if (prevNode && !found) {
@@ -988,66 +1057,43 @@
 			} else if (nextNode && elem === nextNode) {
 				// If nextNode is set then break when we get to nextNode
 				break;
-			} else if (elem.parentNode) {
-				// Not already removed from DOM
-				processViewInfos(viewInfos(elem));
-				if (elem.getAttribute($viewsLinkAttr)) {
-					bindEls.push([elem]);
-				}
-			}
+			} else if (elem.parentNode
+				// elem has not been removed from DOM
+					&& processInfos(viewInfos(elem, undefined, tags && rOpenTagMarkers))
+					// If a link() call, processViewInfos() adds bindings to bindEls, and returns true for non-script nodes, for adding data-link bindings
+					// If a childTags() call getViewInfos adds tag bindings to tags array.
+						&& elem.getAttribute($viewsLinkAttr)) {
+							// processViewInfos(viewInfos(elem)) returns true if elem is not a script node, and we add data-link bindings to bindEls.
+							bindEls.push([elem]);
+						}
 		}
 
 		// Remove temporary marker script nodes they were added by markPrevOrNextNode
-		if (nextNode && nextNode.type === "jsv") {
-			nextNode.parentNode.removeChild(nextNode);
-		}
-		if (prevNode && prevNode.type === "jsv") {
-			prevNode.parentNode.removeChild(prevNode);
+		unmarkPrevOrNextNode(prevNode, elCnt);
+		unmarkPrevOrNextNode(nextNode, elCnt);
+
+		if (get) {
+			return;
 		}
 
 		if (elCnt && defer + ids) {
 			// There are some views with elCnt, for which the open or close did not precede any HTML tag - so they have not been processed yet
 			elem = nextNode;
-			processViewInfos(viewInfos(defer + ids), elem, parentNode);
-
+			if (defer) {
+				if (nextNode) {
+					processViewInfos(viewInfos(defer + "+", TRUE), nextNode);
+				} else {
+					processViewInfos(viewInfos(defer, TRUE), parentNode);
+				}
+			}
+			processViewInfos(viewInfos(ids, TRUE), parentNode);
+			// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
 			if (nextNode) {
-				// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
 				tokens = nextNode.getAttribute(jsvAttrStr);
-				nextNode.setAttribute(jsvAttrStr, ids + tokens.slice(tokens.indexOf(prevIds) + prevIds.length));
-
-				if (lastAddedTopView) {
-					// lastAddedTopView is the last view (child of self) that was linked in the added content. Point it to the nextNode
-					lastAddedTopView._nxt = nextNode;
+				if (l = tokens.indexOf(prevIds) + 1) {
+					tokens = tokens.slice(l + prevIds.length - 1);
 				}
-			}
-		}
-
-		if (lastAddedTopView && lastAddedTopView._elCnt && lastAddedTopView.parentElem === parentNode) {
-			lastAddedTopView._nxt = nextNode; // lastAddedTopView is the last item view that was linked in the added content
-		}
-
-		if (elCnt && self._prv && !self._prv.parentNode) {
-			// _prevNode of this view (in elCnt) is no longer in the DOM, so was part of removed content
-			// (replaced by the above html insertion). Need to find the new prevNode, and transfer the data-jsv attribute
-			vwInfos = viewInfos(self._prv);
-			l = vwInfos.length;
-			if (firstInsertedElem) {
-				// Transfer data-jsv attribute (TODO ensure this is always valid. Could the original annotations need to be merged with annotations
-				firstInsertedElem.setAttribute(jsvAttrStr, vwInfos.tokens);
-			} else {
-				// If no prevNode, prepend data-jsv attribute to nextNode attribute
-				nextNode.setAttribute(jsvAttrStr, jsvAttr + nextNode.getAttribute(jsvAttrStr));
-			}
-			// Go through the views that were referencing the removed prevNode, and point them to the newly inserted element, as appropriate
-			while (l--) {
-				vwInfo = vwInfos[l];
-				if (view = viewStore[vwInfo.id]) {
-					if (vwInfo.open) {
-						view._prv = firstInsertedElem;
-					} else if (vwInfo.close) {
-						view._nxt = firstInsertedElem || self._nxt;
-					}
-				}
+				nextNode.setAttribute(jsvAttrStr, ids + tokens);
 			}
 		}
 
@@ -1058,10 +1104,10 @@
 			linkInfo = elem[1];
 			elem = elem[0];
 			if (linkInfo) {
-				if (linkInfo.opBnd) {
+				tag = bindingStore[linkInfo.id]; // The tag was stored temporarily on the bindingStore
+				tag = tag.linkCtx ? tag.linkCtx.tag : tag;
+				if (linkInfo.open) {
 					// This is an 'open bound tag' script marker node for a data-bound tag {^{...}}
-					tag = bindingStore[linkInfo.id]; // The tag was stored temporarily on the bindingStore
-					// Add data binding
 					tag.parentElem = elem.parentNode;
 					tag._prv = elem;
 					tag._elCnt = linkInfo.elCnt;
@@ -1069,8 +1115,8 @@
 						tag.onBeforeLink();
 					}
 				} else {
-					// This is an 'close bound tag' script marker node
-					tag = bindingStore[linkInfo.id];
+					// This is a 'close bound tag' script marker node
+					// Add data binding
 					view = tag.tagCtx.view;
 					tag._nxt = elem;
 					tagOnAfterLink(tag);
@@ -1090,7 +1136,8 @@
 
 		if (boundTagId) {
 			// {^{...}} bound tag. So only one linkTag in linkMarkup
-			tag = bindingStore[boundTagId]; // The tag was stored temporarily on the bindingStore
+			tag = bindingStore[boundTagId]; // The tag was stored temporarily on the viewStore
+			tag = tag.linkCtx ? tag.linkCtx.tag : tag;
 			linkMarkup = delimOpenChar1 + tag.tagName + " " + tag.tagCtx.params + delimCloseChar0;
 		}
 		if (linkMarkup && node) {
@@ -1120,7 +1167,7 @@
 
 					linkCtx = {
 						data: data,             // source
-						elem: node,             // target
+						elem: tag && tag._elCnt ? tag.parentElem : node,             // target
 						view: currentView,
 						attr: attr,
 						_initVal: !boundTagId && !tokens[2]
@@ -1150,15 +1197,18 @@
 
 					if (boundTagId) {
 						linkCtx.tag = tag; // Add tag to linkCtx.
-						// Pass the boundTagId in the linkCtx, so that
+						// Pass the boundTagId in the linkCtx, so that it can be picked up in observeAndBind
 						linkCtx._bndId = boundTagId;
-						// In observeAndBind the bound tag temporarily stored in the bindingStore will be replaced with
+						// In observeAndBind the bound tag temporarily stored in the viewStore will be replaced with
 						// the full binding information, and the bindingId will be added to view._.bnd
 					}
 					linkCtx.expr = attr + tagExpr;
 					linkFn = tmplLinks[tagExpr]
-						= tmplLinks[tagExpr] || $views.sub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, undefined, TRUE);
-
+						= tmplLinks[tagExpr] || $viewsSub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, undefined, TRUE, convertBack);
+//TODO consider a specialized mode of tmpFn which compiles these data-link target expressions (which are always a single term in the compiled template, since they
+// correspond to a single tag expression "attr{...}") so that the return type is not converted to string: using return t(...), rather than ret+=t(...);return ret;
+// This will allow targets like visible to support visible{:name} or visible{:people.length}, rather than having to force a pure boolean, as in visible(:!!name}.
+// This could help with future attr targets such as click{} which would return an onClick function, not a string, to the target click handler.
 					$viewsSub.parse(params, linkFn.paths = linkCtx.paths = []);
 
 					if (!attr && convertBack !== undefined) {
@@ -1192,38 +1242,56 @@
 	//=====================
 
 	function removeSubStr(str, substr) {
-		str = str || "";
-		var k = str.indexOf(substr);
-		return k + 1 ? str.slice(0, k) + str.slice(k + substr.length) : str;
+		var k;
+		return str
+			? (k = str.indexOf(substr),
+				(k + 1
+					? str.slice(0, k) + str.slice(k + substr.length)
+					: str))
+			: "";
 	}
 
-	function viewInfos(node, tagBinding) {
+	function markerNodeInfo(node) {
+		return node &&
+			("" + node === node
+				? node
+				: node.tagName === "SCRIPT"
+					? node.type.slice(3)
+					: node.nodeType === 1 && node.getAttribute(jsvAttrStr) || "");
+	}
+
+	function viewInfos(node, isVal, rBinding) {
 		// Test whether node is a script marker nodes, and if so, return metadata
 		// If tagBinding, return true if last info is an open tag binding: "#^nnn"
-		function getViewInfos(all, scriptNode, open, close, openBind, closeBind, parent, id, elPath) {
-			ids.push({
-				elCnt: !scriptNode,
+		function getInfos(all, open, close, id, ch, elPath) {
+			infos.push({
+				elCnt: elCnt,
 				id: id,
+				ch: ch,
 				open: open,
 				close: close,
-				opBnd: openBind,
-				clBnd: closeBind,
-				prnt: parent,
 				path: elPath
 			});
 		}
+		var elCnt, tokens,
+			infos = [];
+		if (tokens = isVal ? node : markerNodeInfo(node)) {
+			infos.elCnt = !node.type;
+			elCnt = tokens.charAt(0) === "@" || !node.type;
+			infos.tokens = tokens;
+			// rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
+			tokens.replace(rBinding || rMarkerTokens, getInfos);
+			return infos;
+		}
+	}
 
-		var ids = [],
-			tokens = "" + node === node ? node : node.tagName === "SCRIPT"
-				? node.type
-				: node.nodeType === 1 && node.getAttribute(jsvAttrStr);
-
-		if (tokens) {
-			ids.tokens = tokens;
-
-			// rJsvNodeMarker = /(jsv)?(?:(#)|(\/)|(#\^)|(\/\^)|(\|))(\d+)([-+]*)?/g;
-			tokens.replace(rJsvNodeMarker, getViewInfos);
-			return tagBinding ? ids.pop().opBnd : ids;
+	function unmarkPrevOrNextNode(node, elCnt) {
+		if (node) {
+			if (node.type === "jsv") {
+				node.parentNode.removeChild(node);
+			} else if (elCnt && node.getAttribute($viewsLinkAttr) === "") {
+				node.removeAttribute($viewsLinkAttr);
+			}
 		}
 	}
 
@@ -1238,7 +1306,7 @@
 				marker = document.createElement("SCRIPT");
 				marker.type = "jsv";
 				node.parentNode.insertBefore(marker, node);
-			} else if (!viewInfos(marker) && !marker.getAttribute($viewsLinkAttr)) {
+			} else if (!markerNodeInfo(marker) && !marker.getAttribute($viewsLinkAttr)) {
 				// For element nodes, we will add a data-link attribute (unless there is already one) so that this node gets included in the node linking process.
 				marker.setAttribute($viewsLinkAttr, "");
 			}
@@ -1260,6 +1328,7 @@
 		if (tag) {
 			tag.contents = getContents;
 			tag.nodes = getNodes;
+			tag.childTags = getChildTags;
 			if (tag.onAfterLink) {
 				tag.onAfterLink();
 			}
@@ -1287,21 +1356,24 @@
 		// Optionally limit range, by passing in prevNode or nextNode parameters
 
 		var node,
-			elCnt = this._elCnt,
+			self = this,
+			elCnt = self._elCnt,
 			prevIsFirstNode = !prevNode && elCnt,
 			nodes = [];
 
-		prevNode = prevNode || this._prv;
-		nextNode = nextNode || this._nxt;
+		prevNode = prevNode || self._prv;
+		nextNode = nextNode || self._nxt;
 
 		node = prevIsFirstNode
-			? (prevNode === this._nxt
-				? this.parentElem.lastSibling
+			? (prevNode === self._nxt
+				? self.parentElem.lastSibling
 				: prevNode)
-			: prevNode.nextSibling;
+			: (self._inline === FALSE
+				? prevNode || self.linkCtx.elem.firstChild
+				: prevNode && prevNode.nextSibling);
 
 		while (node && (!nextNode || node !== nextNode)) {
-			if (withMarkers || elCnt || !viewInfos(node)) {
+			if (withMarkers || elCnt || !markerNodeInfo(node)) {
 				// All the top-level nodes in the view
 				// (except script marker nodes, unless withMarkers = true)
 				// (Note: If a script marker node, viewInfo.elCnt undefined)
@@ -1312,13 +1384,40 @@
 		return nodes;
 	}
 
+	function getChildTags(deep, tagName) {
+		// For a view or a tag, return child tags - at any depth, or as immediate children only.
+		if (deep !== !!deep) {
+			// inner not boolean, so this is childTags(tagName) - which looks for top-level tags of given tagName
+			tagName = deep;
+			deep = undefined;
+		}
+
+		var self = this,
+			view = self.link ? self : self.tagCtx.view, // this may be a view or a tag. If a tag, get the view from tag.view.tagCtx
+			prevNode = self._prv,
+			elCnt = self._elCnt,
+			tags = [];
+
+		if (prevNode) {
+			view.link(
+				undefined,
+				self.parentElem,
+				elCnt ? prevNode.previousSibling : prevNode,
+				self._nxt,
+				undefined,
+				{get:{tags:tags, deep: deep, name: tagName, id: elCnt && self._tgId}}
+			);
+		}
+		return tags;
+	}
+
 	//=========
 	// Disposal
 	//=========
 
 	function clean(elems) {
 		// Remove data-link bindings, or contained views
-		var i, elem, view, target, bindings, l, views,
+		var i, j, l, l2, elem, vwInfos, vwItem, bindings,
 			elemArray = [];
 		for (i = 0; elem = elems[i]; i++) {
 			// Copy into an array, so that deletion of nodes from DOM will not cause our 'i' counter to get shifted
@@ -1337,27 +1436,20 @@
 					l = bindings.length;
 					while (l--) {
 						// Remove associated bindings
-						removeViewBinding(bindings[l]); // unbind bindings with this bindingId on this view
+						removeViewBinding(bindings[l], TRUE); // unbind bindings with this bindingId on this view
 					}
 				}
-				if ((view = viewInfos(elem)) && view.length) {
-					view = view[view.length-1];
-					if (view.opBnd || view.clBnd) {
-						// This is a script marker node for a binding. Remove from the DOM
-						elem.parentNode.removeChild(elem);
-					} else if ((view.open || view.prnt) && (view = viewStore[view.id]) && view.data !== undefined) {
-						// If this is the _prevNode for a view, or the parentElem of an empty view, remove the view
-						// - unless view.data is undefined, in which case it is already being removed
-						view.parent.removeViews(view._.key, undefined, TRUE);
-					}
-				} else if (views = elem._jsvVws) {
-					// Get propertyChange bindings for which this element is the parentElement, and remove associated views
-					// bindings is a string with the syntax: "(.viewId|bindingId)*"
-					views = views.slice(1).split("&");
-					l = views.length;
-					while (l--) {
-						if (target = viewStore[views[l]]) {
-							target.parent.removeViews(target._.key, undefined, TRUE);
+				if (vwInfos = viewInfos(markerNodeInfo(elem) + (elem._dfr || ""), TRUE, rOpenMarkers)) {
+					for (j = 0, l2 = vwInfos.length; j < l2; j++) {
+						vwItem = vwInfos[j];
+						if (vwItem.ch === "_") {
+							if ((vwItem = viewStore[vwItem.id]) && vwItem.data !== undefined) {
+								// If this is the _prevNode for a view, remove the view
+								// - unless view.data is undefined, in which case it is already being removed
+								vwItem.parent.removeViews(vwItem._.key, undefined, TRUE);
+							}
+						} else {
+							removeViewBinding(vwItem.id, TRUE); // unbind bindings with this bindingId on this view
 						}
 					}
 				}
@@ -1365,39 +1457,25 @@
 		}
 	}
 
-	function removeLinkTarget(bindings, from, path) {
-		var binding,
-		removed = 0,
-		l = bindings.length;
-		while (l-- > 0) {
-			binding = bindings[l]; // [sourceObject, path, handler]
-			if (!(from && from !== binding[0] || path && path !== binding[1])) {
-				if ($isArray(binding[0])) {
-					$([binding[0]]).off(arrayChangeStr, binding[2]);
-				} else {
-					$unobserve(binding[0], binding[2]);
-				}
-				bindings.splice(l, 1);
-				removed++;
-			}
-		}
-		return removed;
-	}
-
-	function removeViewBinding(bindId) {
+	function removeViewBinding(bindId, keepNodes) {
 		// Unbind
-		var objId, linkCtx, tag,
+		var objId, linkCtx, tag, object,
 			binding = bindingStore[bindId];
 		if (binding) {
 			for (objId in binding.bnd) {
-				$(binding.bnd[objId]).off(propertyChangeStr + "." + binding.cbNs);
+				$($.isArray(object = binding.bnd[objId]) ? [object] : object).off(propertyChangeStr + "." + binding.cbNs);
 				delete binding.bnd[objId];
 			}
 
 			linkCtx = binding.linkCtx;
-			tag = linkCtx.tag || {};
-			if (tag.onDispose) {
-				tag.onDispose();
+			if (tag = linkCtx.tag) {
+				if (tag.onDispose) {
+					tag.onDispose();
+				}
+				if (!keepNodes && !tag._elCnt) {
+					tag._prv.parentNode.removeChild(tag._prv);
+					tag._nxt.parentNode.removeChild(tag._nxt);
+				}
 			}
 			delete linkCtx.view._.bnd[bindId];
 			delete bindingStore[bindId];
@@ -1452,7 +1530,7 @@
 
 	function filterHelperStrings(linkCtx) {
 		// TODO Consider exposing or allowing override, as public API
-		return function (path, object) {
+		return function(path, object) {
 			// TODO consider only calling the filter on the initial token in path '~a.b.c' and not calling again on
 			// the individual tokens, 'a', 'b', 'c'...  Currently it is called multiple times
 			var tokens,
@@ -1475,7 +1553,7 @@
 						}
 					}
 					path = path.slice(1).split(".");
-					return [linkCtx.view._hlp(path.shift()), path.join("."), object];
+					return [linkCtx.view.hlp(path.shift()), path.join("."), object];
 				}
 				if (path.charAt(0) === "#") {
 					// We return new items to insert into the sequence, replacing the "#a.b.c" string: [view, "a.b.c" currentDataItem]
@@ -1538,25 +1616,84 @@
 		return this;
 	})();
 
+	//===============
+	// Public helpers
+	//===============
+
+	$viewsSub.viewInfos = viewInfos;
+	 // Expose as public helper
+
 	//====================================
 	// Additional members for linked views
 	//====================================
 
+	function transferViewTokens(prevNode, nextNode, parentElem, id, viewOrTagChar, refresh) {
+		// Transfer tokens on prevNode of viewToRemove/viewToRefresh to nextNode or parentElem._dfr
+		var i, l, vwInfos, vwInfo, viewOrTag, viewId, tokens,
+			precedingLength = 0,
+			emptyView = prevNode === nextNode;
+
+		if (prevNode) {
+			// prevNode is either the first node in the viewOrTag, or has been replaced by the vwInfos tokens string
+			vwInfos = viewInfos(prevNode) || [];
+			for (i = 0, l = vwInfos.length; i < l; i++) {
+				// Step through views or tags on the prevNode
+				vwInfo = vwInfos[i];
+				viewId = vwInfo.id;
+				if (viewId === id) {
+					if (refresh) {
+						// This is viewOrTagToRefresh, this is the last viewOrTag to process...
+						l = 0;
+					} else {
+						// This is viewOrTagToRemove, so we are done...
+						break;
+					}
+				}
+				if (!emptyView) {
+					if (vwInfo.ch === "_") {
+						viewOrTag = viewStore[viewId];
+					} else {
+						viewOrTag = bindingStore[viewId].linkCtx.tag;
+					}
+					if (vwInfo.open) {
+						// A "#m" token
+						viewOrTag._prv = nextNode;
+					} else if (vwInfo.close) {
+						// A "/m" token
+						viewOrTag._nxt = nextNode;
+					}
+				}
+				precedingLength += viewId.length + 2;
+			}
+
+			if (precedingLength) {
+				prevNode.setAttribute(jsvAttrStr, prevNode.getAttribute(jsvAttrStr).slice(precedingLength));
+			}
+			tokens = nextNode ? nextNode.getAttribute(jsvAttrStr) : parentElem._dfr;
+			if (l = tokens.indexOf("/" + id + viewOrTagChar) + 1) {
+				tokens = vwInfos.tokens.slice(0, precedingLength) + tokens.slice(l + (refresh ? -1 : id.length + 1));
+			}
+			if (tokens) {
+				if (nextNode) {
+					// If viewOrTagToRemove was an empty viewOrTag, we will remove both #n and /n (and any intervening tokens) from the nextNode (=== prevNode)
+					// If viewOrTagToRemove was not empty, we will take tokens preceding #n from prevNode, and concatenate with tokens following /n on nextNode
+					nextNode.setAttribute(jsvAttrStr, tokens);
+				} else {
+					parentElem._dfr = tokens;
+				}
+			}
+		} else {
+			// !prevNode, so there may be a deferred nodes token on the parentElem. Remove it.
+			parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id + viewOrTagChar);
+			if (!refresh && !nextNode) {
+				// If this viewOrTag is being removed, and there was no .nxt, remove closing token from deferred tokens
+				parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id + viewOrTagChar);
+			}
+		}
+	}
+
 	LinkedView = {
 		// Note: a linked view will also, after linking have nodes[], _prevNode, _nextNode ...
-		refresh: function(context) {
-			var self = this,
-				parent = self.parent;
-
-			self.tmpl = getTemplate(self.tmpl);
-
-			if (parent) {
-				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, context, TRUE);
-				setArrayChangeLink(self);
-			}
-			return self;
-		},
-
 		addViews: function(index, dataItems, tmpl) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
@@ -1584,11 +1721,11 @@
 			// view.removeViews( index ) removes the child view with specified index or key
 			// view.removeViews( index, count ) removes the specified nummber of child views, starting with the specified index
 			function removeView(index) {
-				var id, bindId, parentElem, prevNode, nextNode, emptyView, tokens, vwInfos, found, nodesToRemove, vwInfo, i, l, k,
-					precedingLength = 0,
+				var id, bindId, parentElem, prevNode, nextNode, nodesToRemove,
 					viewToRemove = views[index];
 
 				if (viewToRemove) {
+					id = viewToRemove._.id;
 					if (!keepNodes) {
 						// Remove the HTML nodes from the DOM, unless they have already been removed, including nodes of child views
 						nodesToRemove = viewToRemove.nodes();
@@ -1597,84 +1734,21 @@
 					// Remove child views, without removing nodes
 					viewToRemove.removeViews(undefined, undefined, TRUE);
 
-					viewToRemove.data = undefined;
-					id = viewToRemove._.id;
+					viewToRemove.data = undefined; // Set data to undefined: used as a flag that this view is being removed
 					prevNode = viewToRemove._prv;
 					nextNode = viewToRemove._nxt;
 					parentElem = viewToRemove.parentElem;
 					// If prevNode and nextNode are the same, the view is empty
-					emptyView = prevNode === nextNode;
 					if (!keepNodes) {
 						// Remove the HTML nodes from the DOM, unless they have already been removed, including nodes of child views
+						if (viewToRemove._elCnt) {
+							// if keepNodes is false (and transferring of tokens has not already been done at a higher level)
+							// then transfer tokens from prevNode which is being removed, to nextNode.
+							transferViewTokens(prevNode, nextNode, parentElem, id, "_");
+						}
 						$(nodesToRemove).remove();
 					}
-					if (viewToRemove._elCnt) {
-						if (prevNode) {
-							vwInfos = viewInfos(prevNode);
-							// vwInfos tokens are of the form "/a/b#c#d/d...". Look for the one that corresponds to #n for the viewToRemove
-							// and take the preceding tokens, and concatenate them with the tokens following /n on the nextNode data-jsv attribute.
-							// Step through the views corresponding to those preceding tokens, and point their _prv (for #m tokens, which correspond
-							// to parent views) or _nxt (for /n tokens, which correspond to previous views) to the nexNode.
-
-							tokens = "";
-							for (i = 0, l = vwInfos.length; i < l; i++) {
-								// Step through views on the prevNode
-								vwInfo = vwInfos[i];
-								if (vwInfo.id === id) {
-									// This is viewToRemove, so we are done...
-									break;
-								}
-								if (!emptyView && (view = viewStore[vwInfo.id])) {
-									if (vwInfo.open) {
-										// A "#m" token
-										if (!i && !nextNode) {
-											// The first token, and it is an open view token: "#m", so this is a top level view. It is becoming empty, with
-											// no nextNode, so it is becoming a 'parentElem' view, and we must set a "|n" token on the parentElem
-											parentElem.setAttribute(jsvAttrStr, "|" + vwInfo.id + (parentElem.getAttribute(jsvAttrStr) || ""));
-											nextNode = 0; // so _prv will be set to 0
-										}
-										if (view._prv && !nextNode) {
-											// This view no longer has a nextNode, so add to parentElem tokens
-											tokens += "#" + view._.id;
-										}
-										view._prv = nextNode;
-									} else if (vwInfo.close) {
-										// A "/m" token
-										if (view._nxt && !nextNode) {
-											// This view no longer has a nextNode, so add to parentElem tokens
-											tokens += "/" + view._.id;
-										}
-										view._nxt = nextNode;
-									}
-								}
-								precedingLength += vwInfo.id.length + 1;
-							}
-							parentElem._dfr = tokens + (parentElem._dfr || "");
-
-							if (nextNode) {
-								// If viewToRemove was an empty view, we will remove both #n and /n (and any intervening tokens) from the nextNode (=== prevNode)
-								// If viewToRemove was not empty, we will take tokens preceding #n from prevNode, and concatenate with tokens following /n on nextNode
-								if (tokens = nextNode && nextNode.getAttribute(jsvAttrStr)) {
-									nextNode.setAttribute(jsvAttrStr, vwInfos.tokens.slice(0, precedingLength) + tokens.slice(tokens.indexOf("/" + id) + id.length + 1));
-								}
-							} else if (viewToRemove._prev === 0) {
-								// viewToRemove was a 'parentElem' view, so remove |n from the parentElem tokens
-								tokens = parentElem.getAttribute(jsvAttrStr);
-								if (token = removeSubStr(tokens, "|" + id)) {
-									parentElem.setAttribute(jsvAttrStr, token);
-								} else {
-									parentElem.removeAttribute(jsvAttrStr);
-								}
-							}
-						} else {
-							// !prevNode, so there may be a deferred nodes token on the parentElem. Remove it.
-							parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id);
-						}
-						if (!nextNode) {
-							// Remove deferred nodes token
-							parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id);
-						}
-					} else {
+					if (!viewToRemove._elCnt) {
 						parentElem.removeChild(prevNode);
 						parentElem.removeChild(nextNode);
 					}
@@ -1741,8 +1815,22 @@
 			return this;
 		},
 
+		refresh: function(context) {
+			var self = this,
+				parent = self.parent;
+
+			self.tmpl = getTemplate(self.tmpl);
+
+			if (parent) {
+				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, context, TRUE);
+				setArrayChangeLink(self);
+			}
+			return self;
+		},
+
 		nodes: getNodes,
 		contents: getContents,
+		childTags: getChildTags,
 		link: viewLink
 	};
 
@@ -1761,22 +1849,10 @@
 		}
 	};
 
-// TODO complete/test/provide samples for this
-// - verify design as related to $.view(elem, type) and view.get(type) and tag.get(type)? Support tag.parent, tag.find() for descendatns, and tag.get() for ancestors
-//	$.views.findTags = function(node) {
-//			node = "" + node === node
-//				? $(node)[0]
-//				: node.jquery
-//					? node[0]
-//					: node;
-//			while (node && (node = node.parentNode) && !node._tags) {}
-//			return node ? node._tags : {};
-//		}
-//	});
-
 	if ($viewsSettings.debugMode) {
 		// In debug mode create global for accessing views, etc
-		window._jsv = {
+		validate = !$viewsSettings.noValidate;
+		global._jsv = {
 			views: viewStore,
 			bindings: bindingStore
 		};
@@ -1792,14 +1868,22 @@
 		// jQuery $.view() plugin
 		//=======================
 
-		view: $view = function(node, type) {
-			// $.view() returns top node
+		view: $view = function(node, inner, type) {
+			// $.view() returns top view
 			// $.view(node) returns view that contains node
 			// $.view(selector) returns view that contains first selected element
-			var view, vwInfos, l,
+			// $.view(nodeOrSelector, type) returns nearest containing view of given type
+			// $.view(nodeOrSelector, "root") returns root containing view (child of top view)
+			// $.view(nodeOrSelector, true, type) returns nearest inner (contained) view of given type
+
+			if (inner !== !!inner) {
+				// inner not boolean, so this is view(nodeOrSelector, type)
+				type = inner;
+				inner = undefined;
+			}
+			var view, vwInfos, i, j, k, l, elem, elems,
 				level = 0,
-				body = document.body,
-				inner = type === TRUE;
+				body = document.body;
 
 			if (node && node !== body && topView._.useKey > 1) {
 				// Perf optimization for common cases
@@ -1813,36 +1897,45 @@
 				if (node) {
 					if (inner) {
 						// Treat supplied node as a container element and return the first view encountered.
-						return (view =
-							// Use native querySelector if available
-							(qsa ? node.querySelector(bindElsSel) : $(bindElsSel, node)[0]))
-							&& (view = viewInfos(view))
-							&& viewStore[view[0].id]
-							|| undefined;
-					}
-					while (node) {
-						// Move back through siblings and up through parents to find preceding node  which is a _prevNode
-						// script marker node for a non-element-content view, or a _prevNode (first node) for an elCnt view
-						if (vwInfos = viewInfos(node)) {
-							l = vwInfos.length;
-							while (l--) {
-								view = vwInfos[l];
+						elems = qsa ? node.querySelectorAll(bindElsSel) : $(bindElsSel, node).get();
+						l = elems.length;
+						for (i = 0; i < l; i++) {
+							elem = elems[i];
+							vwInfos = viewInfos(elem, undefined, rOpenViewMarkers);
 
-								if (level <= 0 && view.open) {
-									view = viewStore[view.id];
-									return (view && type) ? view.get(type) : view;
+							for (j = 0, k = vwInfos.length; j < k; j++) {
+								view = vwInfos[j];
+								if (view = viewStore[view.id]) {
+									view = view && type ? view.get(TRUE, type) : view;
+									if (view) {
+										return view;
+									}
 								}
-
-								// level starts at zero. If we hit a view.close, then we move level to 1, and we don't return a view until
-								// we are back at level zero (or a parent view with level < 0)
-								level += view.close
-									? 1
-									: view.open
-										? -1
-										: 0;
 							}
 						}
-						node = node.previousSibling || node.parentNode;
+					} else {
+						while (node) {
+							// Move back through siblings and up through parents to find preceding node  which is a _prevNode
+							// script marker node for a non-element-content view, or a _prevNode (first node) for an elCnt view
+							if (vwInfos = viewInfos(node, undefined, rViewMarkers)) {
+								l = vwInfos.length;
+								while (l--) {
+									view = vwInfos[l];
+									if (view.open) {
+										if (level < 1) {
+											view = viewStore[view.id];
+											return view && type ? view.get(type) : view || topView;
+										}
+										level--;
+									} else {
+										// level starts at zero. If we hit a view.close, then we move level to 1, and we don't return a view until
+										// we are back at level zero (or a parent view with level < 0)
+										level++;
+									}
+								}
+							}
+							node = node.previousSibling || node.parentNode;
+						}
 					}
 				}
 			}
@@ -1870,8 +1963,8 @@
 	//===============================
 
 	$extend($.fn, {
-		link: function(expr, from, context, parentView, prevNode, nextNode, index) {
-			return $link(expr, this, from, context, parentView, prevNode, nextNode, index);
+		link: function(expr, from, context, parentView, prevNode, nextNode) {
+			return $link(expr, this, from, context, parentView, prevNode, nextNode);
 		},
 		unlink: function(expr, from) {
 			return $unlink(expr, this, from);

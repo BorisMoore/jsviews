@@ -76,9 +76,9 @@
 			},
 			render: function() {
 				if (!this.contentTmpl) {
-					this.contentTmpl = this.tmpl;
-					this.tmpl = this.template;
-					this.labels = $(this.contentTmpl.markup).filter("h1").map(function() {
+					this.contentTmpl = this._.tmpl;
+					this._.tmpl = this.template;
+					this.labels = $($.trim(this.contentTmpl.markup)).filter("h1").map(function() {
 						return this.innerText || this.textContent;
 					}).get();
 				}

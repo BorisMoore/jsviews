@@ -1,13 +1,26 @@
-function showViews() {
-	var html = "";
+function viewsAndBindings() {
+	var res = "",
+		bindings = "";
 
-	for (var key in $.views.viewStore) {
-		if ($.views.viewStore[key]) {
-			html += " " + key; // + ": " + getViews($.views.viewStore[key]);
+	for (var key in _jsv.views) {
+		if (_jsv.views[key]) {
+			res += key + " ";
 		}
 	}
 
-	$("#views").html(html);
-	return html.slice(2);
+	res = res.slice(2); // Remove view 0
+
+	res = res ? "Views: " + res + "\n" : "";
+
+	for (var key in _jsv.bindings) {
+		if (_jsv.bindings[key]) {
+			bindings += key + " ";
+		}
+	}
+
+	res = res + (bindings ? "Bindings: " + bindings : "");
+
+	$("#views").html(res);
+	return res;
 }
 

@@ -28,25 +28,25 @@
 			{{/for}}
 		</select>
 
-		<div data-link="visible{bool:selectedMovie!=='none' }">
+		<div data-link="visible{:selectedMovie!=='none' }">
 
 			<div class="subhead" data-link="{:name ? 'Name:' : 'Type your name here:'}"></div>
 			<div><input data-link="name" placeholder="Enter your name..."/></div>
 
-			<div data-link="visible{bool:name}">
-				<div class="subhead" data-link="{:request ? 'Special requests:' : 'Type special requests here:'} visible{bool:name}"></div>
+			<div data-link="visible{:!!name}">
+				<div class="subhead" data-link="{:request ? 'Special requests:' : 'Type special requests here:'} visible{:!!name}"></div>
 				<div><textarea data-link="request" rows="4" cols="25"  placeholder="Enter any special requests..."></textarea></div>
 			</div>
 		</div>
 	</div>
 
-	<div data-link="visible{bool:name && selectedMovie!=='none'}">
+	<div data-link="visible{:name && selectedMovie!=='none'}">
 
 		<h3>Ticket order form</h3>
 
-		<div class="box" data-link="visible{bool:name}">
+		<div class="box" data-link="visible{:!!name}">
 			<div>Ticket for <em data-link="name" ></em> to movie: <em data-link="~selectedTitle(selectedMovie)" ></em></div>
-			<div data-link="visible{bool:request}"><em>Your special request:</em> <pre data-link="request" ></pre></div>
+			<div data-link="visible{:!!request}"><em>Your special request:</em> <pre data-link="request" ></pre></div>
 			<div>
 				<b>Ticket Price:</b> <span data-link="~convertedPrice(selectedMovie, selectedCurrency)" ></span>
 				<div>Choose currency for payment: <input type="checkbox" data-link="~app.chooseCurrency" /></div>
@@ -56,7 +56,7 @@
 			</div>
 		</div>
 
-		<div class="box" data-link="visible{bool:~app.chooseCurrency}">
+		<div class="box" data-link="visible{:~app.chooseCurrency}">
 			<div class="subhead">Choose Currency:</div>
 			{{for ~currencies ~details=#data}}
 				<input type="radio" name="currencyPicker" value="{{:#index}}" data-link="~details.selectedCurrency" />{{:label}}<br/>
@@ -98,10 +98,10 @@
 		contextHelpers = {
 			app: {},
 			movies: movies,
-			convertedPrice: function(selected, selectedCurrency) {
+			convertedPrice: function(selectedMovie, selectedCurrency) {
 				var currency = currencies[selectedCurrency];
-				if ( selected !== "none") {
-					return currency.symbol + parseFloat(movies[selectedCurrency].ticketPrice * currency.rate).toFixed(2);
+				if ( selectedMovie !== "none") {
+					return currency.symbol + parseFloat(movies[selectedMovie].ticketPrice * currency.rate).toFixed(2);
 				}
 			},
 			currencies: currencies,
@@ -109,14 +109,6 @@
 				return (selectedMovie!=="none") ? movies[selectedMovie].title : "";
 			}
 		};
-
-		$.views.converters({
-			// Converts values to "true" or "false" in rendered content.
-			// So the string "false" evaluates to true, and "" evaluates to false. - Used in data-link="visible{bool:name}", for example.
-			bool: function (value) {
-				return !!value;
-			}
-		});
 
 	$.templates( "moviePurchaseTemplate", "#moviePurchaseTemplate" );
 

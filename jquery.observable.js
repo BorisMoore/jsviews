@@ -6,7 +6,7 @@
  * Copyright 2012, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 24b
+// informal pre beta commit counter: 25
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -25,8 +25,9 @@
 
 	var versionNumber = "v1.0pre",
 
-		$viewsSettings = $.views ? $.views.settings : {},
-		cbBindings,
+		$viewsSettings = $.views ? $.views.settings : {}, cbBindings, oldLength, _data,
+		cbBindingsStore = {},
+		cbBindingKey = 1,
 		splice = [].splice,
 		concat = [].concat,
 		$isArray = $.isArray,
@@ -88,7 +89,7 @@
 			if ($isFunction(path)) {
 // TODO add support for _parameterized_ calls to depends() on computed observables. Consider getting args by a
 // compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
-				splice.apply(out, [out.length,1].concat(resolvePathObjects.call(this, path.call(this, root), root)));
+				splice.apply(out, [out.length,1].concat(resolvePathObjects(path(root), root)));
 				continue;
 			} else if ("" + path !== path) {
 				root = nextObj = path;
@@ -106,10 +107,10 @@
 		var ctx = ev.data;
 		if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
 			if (typeof eventArgs.oldValue === OBJECT) {
-				$unobserve.call(ctx.linkCtx, eventArgs.oldValue, ctx.path, ctx.cb);
+				$unobserve(eventArgs.oldValue, ctx.path, ctx.cb);
 			}
 			if (typeof eventArgs.value === OBJECT) {
-				$observe.call(ctx.linkCtx, eventArgs.value, ctx.path, ctx.cb, ctx.root);
+				$observe(eventArgs.value, ctx.path, ctx.cb, ctx.root);
 			}
 			ctx.cb.call(ctx.root, ev, eventArgs);
 		}
@@ -119,9 +120,10 @@
 		// The jQuery 'off' method does not provide the event data from the event(s) that are being unbound, so we register
 		// a jQuery special 'remove' event, and get the data.cb._bnd from the event here and provide it in the
 		// cbBindings var to the unobserve handler, so we can immediately remove this object from that cb._bnd collection, after 'unobserving'.
-		remove: function(handleObj) {
-			if ((handleObj = handleObj.data) && (handleObj = handleObj.cb)) {
-				cbBindings = handleObj._bnd;
+		remove: function(evData) {
+			if ((evData = evData.data) && (evData = evData.cb)) {
+				// Get the cb._bnd from the ev.data object
+				cbBindings = cbBindingsStore[evData._bnd];
 			}
 		}
 	};
@@ -154,7 +156,7 @@
 						}
 					}
 				}
-				$($isArray(object) ? [object] : object).on(namespace, null, {linkCtx: linkCtx, root: origRoot, path: pathStr, prop: prop, cb: callback}, onObservableChange);
+				$($isArray(object) ? [object] : object).on(namespace, null, {path: pathStr, prop: prop, cb: callback}, onObservableChange);
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
 					obIdExpando = object[$expando];
@@ -170,7 +172,6 @@
 			lastArg = paths.pop(),
 			origRoot = paths[0],
 			root = "" + origRoot !== origRoot ? paths.shift() : undefined,	// First parameter is the root object, unless a string
-			linkCtx = this,
 			l = paths.length;
 
 		origRoot = root;
@@ -204,14 +205,16 @@
 		cbNs = callback && callback.cbNs;
 
 		if (unobserve && l === 0 && root) {
-			// unobserve(object) TODO what if there is a callback specified
+			// unobserve(object) TODO: What if there is a callback specified?
 			$(root).off(observeStr, onObservableChange);
 		}
-		bindings = callback
-			? topLevel
-				? (callback._bnd = callback._bnd || {})
-				: callback._bnd
-			: undefined;
+		if (callback) {
+			bindings = callback._bnd = callback._bnd ||
+				// This will be a top-level call for a new callback
+				cbBindingKey++;
+
+			bindings = cbBindingsStore[bindings] = cbBindingsStore[bindings] || {};
+		}
 
 		depth = 0;
 		for (i = 0; i < l; i++) {
@@ -268,7 +271,7 @@
 					//		prop = "*";
 							if ($isFunction(object)) {
 								if (dep = object.depends) {
-									$observe.call(this, dep, callback, unobserve||origRoot);
+									$observe(dep, callback, unobserve||origRoot);
 								}
 							} else {
 								observeOnOff(ns, prop);
@@ -289,7 +292,7 @@
 				if ($isFunction(prop)) {
 					if (dep = prop.depends) {
 						// This is a computed observable. We will observe any declared dependencies
-						$observe.call(this, object, resolvePathObjects.call(this, dep, object), callback, filter, unobserve||origRoot);
+						$observe(object, resolvePathObjects(dep, object), callback, filter, unobserve||origRoot);
 					}
 					break;
 				}
@@ -409,7 +412,9 @@
 		},
 
 		_insert: function(index, data) {
-			splice.apply(this._data, [index, 0].concat(data));
+			_data = this._data;
+			oldLength = _data.length;
+			splice.apply(_data, [index, 0].concat(data));
 			this._trigger({change: "insert", index: index, items: data});
 		},
 
@@ -428,7 +433,9 @@
 		},
 
 		_remove: function(index, numToRemove, items) {
-			this._data.splice(index, numToRemove);
+			_data = this._data;
+			oldLength = _data.length;
+			_data.splice(index, numToRemove);
 			this._trigger({change: "remove", index: index, items: items});
 		},
 
@@ -445,8 +452,10 @@
 		},
 
 		_move: function(oldIndex, newIndex, numToMove, items) {
-			this._data.splice( oldIndex, numToMove );
-			this._data.splice.apply( this._data, [ newIndex, 0 ].concat( items ) );
+			_data = this._data;
+			oldLength = _data.length;
+			_data.splice( oldIndex, numToMove );
+			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
 			this._trigger( { change: "move", oldIndex: oldIndex, index: newIndex, items: items } );
 		},
 
@@ -457,12 +466,16 @@
 		},
 
 		_refresh: function(oldItems, newItems) {
-			splice.apply(this._data, [0, this._data.length].concat(newItems));
+			_data = this._data;
+			oldLength = _data.length;
+			splice.apply(_data, [0, _data.length].concat(newItems));
 			this._trigger({change: "refresh", oldItems: oldItems});
 		},
 
 		_trigger: function(eventArgs) {
-			$([this._data]).triggerHandler(arrayChangeStr, eventArgs);
+			var $data = $([_data]);
+			$data.triggerHandler(arrayChangeStr, eventArgs);
+			$data.triggerHandler(propertyChangeStr, {path: "length", value: _data.length, oldValue: oldLength});
 		}
 	};
 })(this, this.jQuery || this.jsviews);
