@@ -7,7 +7,7 @@
 * Copyright 2012, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 25
+// informal pre beta commit counter: 26
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -50,7 +50,8 @@
 		jsvAttrStr = "data-jsv",
 		$viewsLinkAttr = $viewsSettings.linkAttr || "data-link",        // Allows override on settings prior to loading jquery.views.js
 		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// These two settings can be overridden on settings after loading
-		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
+		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
+		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
 		elementChangeStr = "change.jsv",
 		onBeforeChangeStr = "onBeforeChange",
 		onAfterChangeStr = "onAfterChange",
@@ -277,12 +278,14 @@
 					setter = fnSetters[attr];
 
 					if (setter) {
-						if (changed = $target[setter]() !== sourceValue) {
-// TODO support for testing whether {^{: or {^{tag have changed or not
+						if (changed = tag || $target[setter]() !== sourceValue) {
+// TODO support for testing whether {^{: or {^{tag have changed or not. Currently always true, since sourceValue has not been converted yet by convertMarkers
 							if (attr === "html") {
 								if (tag) {
 									elCnt = tag._elCnt;
-									if (tag._.inline) {
+									if (!tag.flow && !tag.render && !tag.template) {
+										targetElem = target;
+									} else if (tag._.inline) {
 										var nodesToRemove = tag.nodes(TRUE);
 
 										if (elCnt && prevNode && prevNode !== nextNode) {
@@ -1104,8 +1107,9 @@
 			linkInfo = elem[1];
 			elem = elem[0];
 			if (linkInfo) {
-				tag = bindingStore[linkInfo.id]; // The tag was stored temporarily on the bindingStore
+				tag = bindingStore[linkInfo.id];
 				tag = tag.linkCtx ? tag.linkCtx.tag : tag;
+				// The tag may have been stored temporarily on the bindingStore - or may have already been replaced by the actual binding
 				if (linkInfo.open) {
 					// This is an 'open bound tag' script marker node for a data-bound tag {^{...}}
 					tag.parentElem = elem.parentNode;
@@ -1136,8 +1140,9 @@
 
 		if (boundTagId) {
 			// {^{...}} bound tag. So only one linkTag in linkMarkup
-			tag = bindingStore[boundTagId]; // The tag was stored temporarily on the viewStore
+			tag = bindingStore[boundTagId];
 			tag = tag.linkCtx ? tag.linkCtx.tag : tag;
+			// The tag may have been stored temporarily on the bindingStore - or may have already been replaced by the actual binding
 			linkMarkup = delimOpenChar1 + tag.tagName + " " + tag.tagCtx.params + delimCloseChar0;
 		}
 		if (linkMarkup && node) {
@@ -1368,7 +1373,7 @@
 			? (prevNode === self._nxt
 				? self.parentElem.lastSibling
 				: prevNode)
-			: (self._inline === FALSE
+			: (self._.inline === FALSE
 				? prevNode || self.linkCtx.elem.firstChild
 				: prevNode && prevNode.nextSibling);
 
@@ -1463,7 +1468,7 @@
 			binding = bindingStore[bindId];
 		if (binding) {
 			for (objId in binding.bnd) {
-				$($.isArray(object = binding.bnd[objId]) ? [object] : object).off(propertyChangeStr + "." + binding.cbNs);
+				$($.isArray(object = binding.bnd[objId]) ? [object] : object).off(propertyChangeStr + ".obs" + binding.cbId);
 				delete binding.bnd[objId];
 			}
 
@@ -1478,7 +1483,8 @@
 				}
 			}
 			delete linkCtx.view._.bnd[bindId];
-			delete bindingStore[bindId];
+			delete bindingStore[bindId]
+			delete $viewsSub._cbBnds[binding.cbId];
 		}
 	}
 
@@ -1621,7 +1627,7 @@
 	//===============
 
 	$viewsSub.viewInfos = viewInfos;
-	 // Expose as public helper
+	// Expose viewInfos() as public helper method
 
 	//====================================
 	// Additional members for linked views
@@ -1650,11 +1656,9 @@
 					}
 				}
 				if (!emptyView) {
-					if (vwInfo.ch === "_") {
-						viewOrTag = viewStore[viewId];
-					} else {
-						viewOrTag = bindingStore[viewId].linkCtx.tag;
-					}
+					viewOrTag = vwInfo.ch === "_"
+						? viewStore[viewId]
+						: bindingStore[viewId].linkCtx.tag;
 					if (vwInfo.open) {
 						// A "#m" token
 						viewOrTag._prv = nextNode;

@@ -1578,7 +1578,7 @@ test("ArrayChange: insert()", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
+	//$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
 
@@ -2033,7 +2033,6 @@ test("paths", function() {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observable.unobserve(person1.home.address, "*", "address", function(){});
 	$.observable.unobserve(person1.home.address, "*");
 
 	// ............................... Assert .................................
@@ -2808,6 +2807,85 @@ test("view.childTags() in element-only content, using data-link", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 0, 'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+});
+
+
+test("Modifying content, initializing widgets/tag controls, using data-link", function() {
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<div data-link="{myWidget}"></div>',
+		tags: {
+			myWidget: {
+				init: function(tagCtx, linkCtx) {
+				},
+				render: function() {
+					return " render";
+				},
+				onBeforeLink: function() {
+					$(this.linkCtx.elem).append(" before");
+				},
+				onAfterLink: function() {
+					$(this.linkCtx.elem).append(" after");
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	// ............................... Assert .................................
+	equals($("#result div").html(), " before render after", 'A data-linked tag control allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<div data-link="{myInlineWidget inline=true}"></div>',
+		tags: {
+			myInlineWidget: {
+				init: function(tagCtx, linkCtx) {
+				},
+				render: function() {
+					return "<span></span>";
+				},
+				onBeforeLink: function() {
+					$(this.linkCtx.elem).find("span").append(" before");
+				},
+				onAfterLink: function() {
+					this.contents("span").append(" after");
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	// ............................... Assert .................................
+	equals($("#result div span").html(), " before after", 'A data-linked tag control, with inline=true, allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<div data-link="{myRenderInLinkEventsWidget}"></div>',
+		tags: {
+			myRenderInLinkEventsWidget: {
+				init: function(tagCtx, linkCtx) {
+					$(linkCtx.elem).append(" init");
+				},
+				onBeforeLink: function() {
+					$(this.linkCtx.elem).append(" before");
+				},
+				onAfterLink: function() {
+					$(this.linkCtx.elem).append(" after");
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	// ............................... Assert .................................
+	equals($("#result div").html(), " init before after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init, onBeforeLink and onAfterLink');
+
+//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link (with or without inline=true) and {^{myTag}} inline data binding.
 });
 
 })();
