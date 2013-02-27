@@ -30,7 +30,7 @@
 </ul>
 
 <!-- Templates -->
-<script type="text/x-jsrender" id="item-template">
+<script id="item-template" type="text/x-jsrender">
 	<li>
 		<input name="{{:#index}}" data-link="done" class="check" type="checkbox" />
 		<div data-link="{:content || 'empty todo...'} css-text-decoration{:done ? 'line-through' : ''}"
@@ -39,7 +39,7 @@
 	</li>
 </script>
 
-<script type="text/x-jsrender" id="edit-template">
+<script id="edit-template" type="text/x-jsrender">
 	<li class="editing">
 		<input data-link="content" class="todo-input" />
 	</li>
@@ -54,7 +54,7 @@
 			items: useStorage && $.parseJSON( localStorage.getItem( "JsViewsTodos" )) || [], //	Intialize from local storage
 			edit: function( view ) {
 				editing = view;
-				view.tmpl = "editTemplate";
+				view.tmpl = $.templates.editTemplate;
 				view.refresh();
 				$( view.contents('input', true)).focus();
 			},
@@ -78,7 +78,7 @@
 				});
 			},
 			contentChanged: function( view ) {
-				view.tmpl = "itemTemplate";
+				view.tmpl = $.templates.itemTemplate;
 				view.refresh();
 			}
 		}

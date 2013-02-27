@@ -18,19 +18,12 @@
 <p><button id="insertPerson">Add people</button></p>
 
 <!--====== Container ======-->
-<table><tbody id="details"></tbody></table>
+<table><tbody id="details1"></tbody></table>
 
 <table><tbody id="details2"></tbody></table>
 
-<!--====== Template ======-->
-<script id="personTmpl" type="text/x-jsrender">
-	<tr>
-		<td data-link="firstName" ></td>
-	</tr>
-</script>
-
-<!--====== Template2 ======-->
-<script id="personTmpl2" type="text/x-jsrender">
+<!--====== Template1 ======-->
+<script id="personTmpl1" type="text/x-jsrender">
 	<tr>
 		<td data-link="firstName" ></td>
 		<td>
@@ -39,6 +32,13 @@
 		<td>
 			<img class="close" src="../resources/close.png" />
 		</td>
+	</tr>
+</script>
+
+<!--====== Template2 ======-->
+<script id="personTmpl2" type="text/x-jsrender">
+	<tr>
+		<td data-link="firstName" ></td>
 	</tr>
 </script>
 
@@ -57,12 +57,12 @@ var counter = 0,
 
 // Compile templates
 $.templates({
-	personTmpl: "#personTmpl",
+	personTmpl1: "#personTmpl1",
 	personTmpl2: "#personTmpl2"
 });
 
 // Data-link people to the details container, using the personTmpl template
-$.link.personTmpl( "#details", people );
+$.link.personTmpl1( "#details1", people );
 $.link.personTmpl2( "#details2", people );
 
 // Observable array change: insert two new people
@@ -77,7 +77,7 @@ $( "#insertPerson" ).on( "click", function() {
 });
 
 // Observable array change: remove
-$( "#details2" )
+$( "#details1" )
 	.on( "click", ".close", function() {
 		$.observable( people ).remove( $.view( this ).index, 1 );
 	});
@@ -89,7 +89,7 @@ $( "#details2" )
 <h4>Script:</h4>
 <pre class="brush: js;">
 // Data-link people to the details container, using the personTmpl template
-$.link.personTmpl( "#details", people );
+$.link.personTmpl1( "#details1", people );
 $.link.personTmpl2( "#details2", people );
 
 // Observable array change: insert two new people at index 1

@@ -12,8 +12,8 @@
 <body>
 <div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
-<h3>JsViews 'Tree' Tag Control: The {{tree}} tag</h3>
-<div class="subhead">Dynamic content blocks use <em>visible{:...}</em> binding</div>
+<h3>JsViews 'Tree' Tag Control: The {{tree}} tag - </h3>
+<div class="subhead">Dynamic content blocks use <em>{^{if}}</em> binding</div>
 
 <div id="pageContent" class="folderView"></div>
 
@@ -28,10 +28,10 @@
 		{{else}}
 			<span class="spacer">></span>
 		{{/if}}
-		<span class="selectable" data-link="css-background-color{:~tag.selected ? 'yellow' : 'white'}">{{>name}}</span>
+		{{:name}}
 	</li>
-	{{if folders}}
-		<li data-link="visible{:~tag.expanded}">
+	{^{if expanded}}
+		<li>
 			<ul>
 				{{for folders}}
 					{^{tree/}}
@@ -46,22 +46,18 @@
 $.views.tags({
 	tree: {
 		toggle: function() {
-			$.observable(this).setProperty("expanded", !this.expanded);
+			$.observable(this.data).setProperty("expanded", !this.data.expanded);
 		},
-		select: function() {
-			$.observable(this).setProperty("selected", !this.selected);
+		init: function(tagCtx, linkCtx, ctx) {
+			this.data = tagCtx.view.data;
 		},
 		onAfterLink: function() {
 			var self = this;
 			self.contents("li").first()
 				.on( "click", ".toggle", function() {
 					self.toggle();
-				})
-				.on( "click", ".selectable", function() {
-					self.select();
 				});
 		},
-		expanded: false, // default to unexpanded
 		template: "#treeTemplate"
 	}
 });
@@ -75,8 +71,8 @@ var rootFolder = {
 		]},
 		{ name: "Classic", folders: [
 			{ name: "Musicals", folders: [
-				{ name: "Jazz"},
-				{ name: "R&B/Soul"}
+				{ name: "Jazz" },
+				{ name: "R&B/Soul" }
 			]}
 		]}
 	]};

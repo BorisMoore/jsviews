@@ -43,8 +43,8 @@ immediately after the highest-level item to be 'observed'.
 		</select></td>
 	</tr>
 	<tr>
-		<td><input data-link="{:selected^name.first noerror=true:} disabled{:selected?'':'disabled'}" /></td>
-		<td><input data-link="{:selected^name.last noerror=true:} disabled{:selected?'':'disabled'}" /></td>
+		<td><input data-link="{:selected^name.first noerror=true:} disabled{:!selected}" /></td>
+		<td><input data-link="{:selected^name.last noerror=true:} disabled{:!selected}" /></td>
 	</tr>
 	<tr>
 		<td colspan="2" data-link="selected^name.first + ' ' + selected^name.last noerror=true"></td>
@@ -88,7 +88,7 @@ $.views.converters({
 	},
 	setObject: function(val) {
 		var selectedObject = this.tagCtx.props.array[val-1];
-		$.observable(this.linkCtx.data).setProperty(this.linkCtx.paths[0], selectedObject);
+		$.observable(this.linkCtx.data).setProperty(this.linkCtx.fn.paths[0], selectedObject);
 		return this.tagCtx.props.array[val-1];
 	}
 });

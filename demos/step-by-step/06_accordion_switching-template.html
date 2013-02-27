@@ -80,7 +80,7 @@ Click for details:
 	function unselect() {
 		/* Switch template of the selected view back to the summary template */
 		if ( selectedSubView ) {
-			selectedSubView.tmpl = "summaryTemplate";
+			selectedSubView.tmpl = $.templates.summaryTemplate;
 			selectedSubView.refresh();
 			selectedSubView = null;
 		}
@@ -99,7 +99,7 @@ Click for details:
 			selectedSubView = $.view(this);
 
 			/* Switch the template on this view to the detail template */
-			selectedSubView.tmpl = "detailTemplate";
+			selectedSubView.tmpl = $.templates.detailTemplate;
 			selectedSubView.refresh();
 		})
 

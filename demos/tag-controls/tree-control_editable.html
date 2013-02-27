@@ -12,8 +12,8 @@
 <body>
 <div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
-<h3>JsViews 'Tree' Tag Control: The {{tree}} tag</h3>
-<div class="subhead">Dynamic content blocks use <em>visible{:...}</em> binding</div>
+<h3>JsViews 'Editable Tree' Tag Control: The {{tree}} tag</h3>
+<div class="subhead">Dynamic content blocks use <em>{^{if}}</em> binding</div>
 
 <div id="pageContent" class="folderView"></div>
 
@@ -23,17 +23,22 @@
 
 <script id="treeTemplate" type="text/x-jsrender">
 	<li>
-		{{if folders && folders.length}}
+		{^{if folders.length}}
 			<span class="toggle">{^{:expanded ? '-' : '+'}}</span>
 		{{else}}
 			<span class="spacer">></span>
 		{{/if}}
-		<span class="selectable" data-link="css-background-color{:~tag.selected ? 'yellow' : 'white'}">{{>name}}</span>
+		<input data-link="name" />
+		<span class="add">add</span>
+		{^{if ~parentTags.tree}}
+			{{!-- Don't allow removing the top-level tree control --}}
+			<img class="remove" src="../resources/close.png" />
+		{{/if}}
 	</li>
-	{{if folders}}
-		<li data-link="visible{:~tag.expanded}">
+	{^{if expanded}}
+		<li>
 			<ul>
-				{{for folders}}
+				{^{for folders}}
 					{^{tree/}}
 				{{/for}}
 			</ul>
@@ -45,23 +50,24 @@
 
 $.views.tags({
 	tree: {
+		init: function(tagCtx, linkCtx, ctx) {
+			this.data = tagCtx.view.data;
+		},
 		toggle: function() {
-			$.observable(this).setProperty("expanded", !this.expanded);
+			$.observable(this.data).setProperty("expanded", !this.data.expanded);
 		},
-		select: function() {
-			$.observable(this).setProperty("selected", !this.selected);
+		remove: function() {
+			var parentFolders = this.parent.data.folders,
+				index = this.tagCtx.view.index;
+			$.observable(parentFolders).remove(index);
 		},
-		onAfterLink: function() {
-			var self = this;
-			self.contents("li").first()
-				.on( "click", ".toggle", function() {
-					self.toggle();
-				})
-				.on( "click", ".selectable", function() {
-					self.select();
-				});
+		addFolder: function() {
+			$.observable(this.data.folders).insert(this.data.folders.length, {
+				name: "new folder",
+				folders: []
+			});
+			$.observable(this.data).setProperty("expanded", true);
 		},
-		expanded: false, // default to unexpanded
 		template: "#treeTemplate"
 	}
 });
@@ -70,18 +76,29 @@ $.views.tags({
 var rootFolder = {
 	name: "Categories", folders: [
 		{ name: "Drama", folders: [
-			{ name: "Courtroom" },
-			{ name: "Political" }
+			{ name: "Courtroom", folders: [] },
+			{ name: "Political", folders: [] }
 		]},
 		{ name: "Classic", folders: [
 			{ name: "Musicals", folders: [
-				{ name: "Jazz"},
-				{ name: "R&B/Soul"}
+				{ name: "Jazz", folders: [] },
+				{ name: "R&B/Soul", folders: [] }
 			]}
 		]}
 	]};
 
 var pageTmpl = $.templates("#pageTemplate");
+
+$( "#pageContent")
+	.on( "click", ".toggle", function() {
+		$.view(this).ctx.tag.toggle();
+	})
+	.on( "click", ".remove", function() {
+		$.view(this).ctx.tag.remove();
+	})
+	.on( "click", ".add", function() {
+		$.view(this).ctx.tag.addFolder();
+	});
 
 $( "#pageContent").link(pageTmpl, rootFolder);
 

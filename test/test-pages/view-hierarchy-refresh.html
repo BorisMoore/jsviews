@@ -29,14 +29,14 @@
 		<div>
 			<table>
 				<thead>
-					{{for languages}}
+					{^{for languages}}
 						<tr><td>{{:name}} <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>
 					{{/for}}
 				</thead>
 				{{if true}}
 				<tbody>
 					{{if true}}
-					{{for languages}}
+					{^{for languages}}
 						{{if true}}
 							<tr><td>{{:name}}! <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>
 						{{/if}}
@@ -49,17 +49,17 @@
 		<div>
 			<table>
 				<tbody>
-					{{for languages}}
+					{^{for languages}}
 						{{if true}}<tr><td>{{:name}}- <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr>{{/if}}
 					{{/for}}
 				</tbody>
-				{{for languages}}
+				{^{for languages}}
 					<tbody><tr><td>{{:name}}... <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td></tr></tbody>
 				{{/for}}
 			</table>
 		</div>
 	</td>
-	{{for languages}}
+	{^{for languages}}
 		<td>{{:name}}... <button class="refresh1">*1</button><button class="refresh2">*2</button><button class="refresh3">*3</button><button class="remove">-</button><button class="add">+</button></td>
 	{{/for}}
 </tr>

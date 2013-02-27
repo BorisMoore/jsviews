@@ -38,6 +38,10 @@
 
 <div id="movieDetail"></div>
 
+<script id="inner" type="text/x-jsrender">
+	<div data-link="name"></div>
+</script>
+
 <script id="movieTemplate" type="text/x-jsrender">
 	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
 		<td>
@@ -45,7 +49,7 @@
 			<span data-link="title"></span>
 		</td>
 		<td>
-			{{for languages}}
+			{^{for languages}}
 				<div data-link="name"></div>
 			{{/for}}
 		</td>
@@ -61,7 +65,7 @@
 		<div><input data-link="title" /></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>
-			{{for languages}}
+			{^{for languages}}
 				<input data-link="name" /><img class="close" src="../resources/close.png" />
 			{{/for}}
 		</div>
@@ -114,7 +118,7 @@
 
 	$( "#addMovieBtn" ).on( "click", function() {
 		$.observable( movies ).insert( movies.length, {
-			title: "NewTitle" + counter ,
+			title: "NewTitle" + counter,
 			languages: [
 				{ name: "NewLanguage" + counter++ }
 			]}

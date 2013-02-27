@@ -1,19 +1,114 @@
-﻿body { padding: 10px; font-family: Verdana; font-size: small }
-h4 { font-size: inherit`; font-variant: small-caps; }
-.height { width: 100%; margin-bottom:10px; float: left; clear: both; }
-.bottom { height:400px; width: 100%; margin-bottom:10px; float: left; clear: both; }
-body > button { float: left; clear: right; margin: 3px }
-.subhead { margin: 15px 0 10px 0; font-weight:bolder; color:#116; font-family:Arial; font-size:10pt;  font-style:italic }
-a { color: #55b}
-pre { font-size:10pt; font-weight:bold; }
-table { border-collapse: collapse; }
-table tr { color: blue; height: 25px; }
-thead tr { color: #009; border-bottom: solid #77c 2px; background-color: #E8E8F7; }
-thead th { padding:5px; border: 1px solid #77c; }
-#movieList tr td:first-child { width: 130px; }
-table { border: 2px solid blue; width: 480px; margin: 6px 0 24px; padding: 2px; background-color: #f8f8f8; }
-table td { width: 50%; padding: 3px; margin: 3px; border: solid #77c 1px; border: solid #77C 1px; }
-table.three td { width: 33%; padding: 3px; margin: 3px; border: solid #77c 1px; }
-table input { width: 96%; border: 1px solid #000; padding:4px; }
-table.three input { width: auto; border: 1px solid #000; padding:4px; }
-.close { float: right; cursor: pointer; padding: 8px; }
+﻿body {
+	padding: 10px;
+	font-family: Verdana;
+	font-size: small;
+}
+
+h4 {
+	font-size: inherit;
+	font-variant: small-caps;
+}
+
+.height {
+	width: 100%;
+	margin-bottom: 10px;
+	float: left;
+	clear: both;
+}
+
+.bottom {
+	height: 400px;
+	width: 100%;
+	margin-bottom: 10px;
+	float: left;
+	clear: both;
+}
+
+body > button {
+	float: left;
+	clear: right;
+	margin: 3px;
+}
+
+.subhead {
+	margin: 15px 0 10px 0;
+	font-weight: bolder;
+	color: #116;
+	font-family: Arial;
+	font-size: 10pt;
+	font-style: italic;
+}
+
+a {
+	color: #55b;
+}
+
+pre {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table tr {
+	color: blue;
+	height: 25px;
+}
+
+thead tr {
+	color: #009;
+	border-bottom: solid #77c 2px;
+	background-color: #E8E8F7;
+}
+
+thead th {
+	padding: 5px;
+	border: 1px solid #77c;
+}
+
+#movieList tr td:first-child {
+	width: 130px;
+}
+
+table {
+	border: 2px solid blue;
+	width: 480px;
+	margin: 6px 0 24px;
+	padding: 2px;
+	background-color: #f8f8f8;
+}
+
+table td {
+	width: 50%;
+	padding: 3px;
+	margin: 3px;
+	border: solid #77c 1px;
+	border: solid #77C 1px;
+}
+
+table.three td {
+	width: 33%;
+	padding: 3px;
+	margin: 3px;
+	border: solid #77c 1px;
+}
+
+table input {
+	width: 96%;
+	border: 1px solid #000;
+	padding: 4px;
+}
+
+table.three input {
+	width: auto;
+	border: 1px solid #000;
+	padding: 4px;
+}
+
+.close {
+	float: right;
+	cursor: pointer;
+	padding: 3px;
+}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../../demos/resources/presentation.css" rel="stylesheet" type="text/css" />
+	<link href="../../demos/resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../../demos/resources/movielist.css" rel="stylesheet" type="text/css" />
+	<style>.container > div {border: 1px grey solid; width: 480px; padding: 3px;}</style>
+</head>
+<body>
+
+<h2>Test Page for array data-binding</h2>
+<h3>{^{for}}...{{each}}...{{/for}} and data-link="{for ...}"</h3>
+
+<p>
+<button id="insertPerson">Insert person</button>
+<button id="removePerson">remove person</button>
+<button id="removePeople">remove people</button>
+<button id="swapPeople">Swap people</button>
+<br/>
+<button id="settings">Add/Remove settings</button>
+<button id="swapTeam">Swap team</button>
+<button id="swapWithEmpty">Swap with empty team</button>
+<br/>
+<button id="replace">replace all</button>
+</p>
+
+<!--====== Container ======-->
+<div class="container" id="container"></div>
+
+<!--====== Template ======-->
+<script id="personTmpl" type="text/x-jquery-tmpl">
+
+	<h3>Simple 'for else /for'</h3>
+
+	<table><tbody>
+		{^{for team^people}}
+			<tr>
+				<td>
+					{{:~root.team && ~root.team.title}} {{:name}}
+					<img class="close" src="../resources/close.png" />
+				</td>
+			</tr>
+		{{else}}
+			<tr>
+				<td>{{:team.title}} is empty</td>
+			</tr>
+		{{/for}}
+	</tbody></table>
+
+	<h3>Complex 'for else else /for'</h3>
+
+	<table><tbody>
+		{^{for team1^people}}
+			<tr>
+				<td>{{:~root.team1.title}} {{:name}}</td>
+			</tr>
+		{{else team2^people}}
+			<tr>
+				<td>{{:~root.team2.title}} {{:name}}</td>
+			</tr>
+		{{else team.settings}}
+			<tr>
+				<td>amount: {{:amount}}</td>
+			</tr>
+		{{else }}
+			<tr>
+				<td>None</td>
+			</tr>
+		{{/for}}
+	</tbody></table>
+
+	<h3>Team1:</h3>
+
+	{^{for team1^people}}
+		<div>{{:name}}</div>
+	{{else}}
+		<div>Team1 is empty</div>
+	{{/for}}
+
+	<h3>Team2:</h3>
+
+	{^{for team2^people tmpl='#nameTmpl'}}
+	{{else}}
+		<div>Team2 is empty</div>
+	{{/for}}
+
+	<h3>data-link="{for...}"</h3>
+
+	Current Team: <b>{^{:team^title}}</b>
+	<div data-link="{for team^people tmpl='#nameTmpl'}"></div>
+
+	<h3>if</h3>
+
+	{^{if team^people tmpl='#peopleTmpl'/}}
+
+	<h3>data-link="{if...}"</h3>
+
+	<div data-link="{if team^people tmpl='#peopleTmpl'}"></div>
+
+</script>
+
+<script id="nameTmpl" type="text/x-jsrender">
+	<div>{{:name}}</div>
+</script>
+
+<script id="peopleTmpl" type="text/x-jsrender">
+	{^{for team^people tmpl="#nameTmpl"/}}
+</script>
+
+<script type="text/javascript">
+
+var counter = 0,
+	settings = {amount: 100},
+	people1 = [
+		{name: "Bob"}
+	],
+	people2 = [
+		{name: "Jeff"},
+		{name: "Rebecca"}
+	],
+	team1 = {
+		title: "team1",
+		people: people1
+	},
+	team2 = {
+		title: "team2",
+		people: people2
+	},
+	emptyTeam = {
+		title: "spare"
+	},
+	app = {
+		team: team1,
+		team1: team1,
+		team2: team2,
+	};
+
+// Compile template
+$.templates( "personTmpl", "#personTmpl" );
+
+// Data-link details container to people, using the personTmpl template
+$.link.personTmpl( "#container", app);
+
+// Observable array change: insert
+$( "#removePeople" ).click( function() {
+	$.observable( app ).setProperty("team.people", undefined);
+});
+
+$( "#insertPerson" ).click( function() {
+	if (!app.team.people) {
+		$.observable( app ).setProperty("team.people", []);
+	}
+	$.observable( app.team.people ).insert( 0, { name: "NewPerson" + counter++ });
+});
+
+$( "#removePerson" ).click( function() {
+	$.observable( app.team.people ).remove( 0, 1);
+});
+
+$( "#swapPeople" ).click( function() {
+	$.observable( app ).setProperty("team.people", app.team.people === people1 ?  people2 : people1);
+});
+
+$( "#swapTeam" ).click( function() {
+	$.observable( app ).setProperty("team", app.team === team1 ?  team2 : team1);
+});
+
+$( "#swapWithEmpty" ).click( function() {
+	$.observable( app ).setProperty("team", app.team === team1 ?  emptyTeam : team1);
+});
+
+$( "#settings" ).click( function() {
+	$.observable( app.team ).setProperty("settings", app.team.settings ? undefined : settings);
+});
+
+$( "#replace" ).click( function() {
+	$( ".container").empty();
+	$.link.personTmpl( "#container", app);
+});
+
+$( "#container" )
+	.on( "click", ".close", function() {
+		$.observable( app.team.people ).remove( $.view( this ).index, 1 );
+		return false;
+	});
+
+</script>
+
+<!--================ End of Demo Section ================-->
+</body>
+</html>

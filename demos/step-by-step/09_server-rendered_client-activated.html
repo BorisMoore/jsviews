@@ -76,7 +76,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 			<span data-link="title"></span>
 		</td>
 		<td>
-			{{for languages}}
+			{^{for languages}}
 				<div data-link="name"></div>
 			{{/for}}
 		</td>
@@ -92,7 +92,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 		<div><input data-link="title" /></div>
 		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
 		<div>
-			{{for languages}}
+			{^{for languages}}
 				<input data-link="name" /><img class="close" src="../resources/close.png"></img>
 			{{/for}}
 		</div>

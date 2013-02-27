@@ -27,18 +27,15 @@
 <table>
 	<tbody class="container" id="container"></tbody>
 </table>
-</div>
-<p>
 <h4>Sibling lists within regular content:</h4>
 
 <div class="container" id="container2"></div>
-</p>
 <script id="listsTemplate" type="text/x-jsrender">
 	{{if false}}
 		<tr><td>between</td></tr>
 	{{/if}}
 	{{if true}}
-		{{for actions}}
+		{^{for actions}}
 			{{if true}}
 				{{if true}}
 					<tr><td>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addact">+</button></td></tr>
@@ -49,7 +46,7 @@
 	{{if false}}
 		<tr><td>between</td></tr>
 	{{/if}}
-	{{for things}}
+	{^{for things}}
 		<tr><td>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addthg">+</button></td></tr>
 	{{/for}}
 	{{if false}}
@@ -62,7 +59,7 @@
 		<tr><td>between</div>
 	{{/if}}
 	{{if true}}
-		{{for actions}}
+		{^{for actions}}
 			{{if true}}
 				{{if true}}
 					<div>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addact">+</button></div>
@@ -73,7 +70,7 @@
 	{{if false}}
 		<div>between</div>
 	{{/if}}
-	{{for things}}
+	{^{for things}}
 		{{if true}}
 			<div>{{:name}} <button class="refresh">*</button><button class="remove">-</button><button class="addthg">+</button></div>
 		{{/if}}
@@ -161,16 +158,16 @@ logViewBindings();
 	}
 
 	function pad(all) {
-		return all + "     ".slice(0,4-all.length);
+		return all + "      ".slice(0,5-all.length);
 	}
 
 	function logViewBindings() {
 		console.log($("#container tr").map(function() {
-			return "{" + this.getAttribute("data-jsv").replace(/[#\/]\d+/g, pad) + "} {" + this.innerText.slice(0, -4) + "}"
+			return "{" + this.getAttribute("data-jsv").replace(/[#\/]\d+[_^]/g, pad) + "} {" + this.innerText.slice(0, -4) + "}"
 		})
 		.get().join(" ") + " %%"
 
-		+ $("#container")[0]._dfr.replace(/[#\/]\d+/g, pad) + "%%}");
+		+ $("#container")[0]._dfr.replace(/[#\/]\d+[_^]/g, pad) + "%%}");
 	}
 </script>
 </body>

@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../../demos/resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../../demos/resources/movielist.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<h2>Test page for linking across a complex element hierarchy</h2>
+<h3>(Alternating element-only and reqular content models)</h3>
+
+<script id="NestedElCnts" type="text/x-jsrender">
+	<table><tbody>
+		{{for Rows}}
+			<tr>
+				{{for Cells}}{{if FieldID}}
+					<td>
+						<ul><li>table:
+							<table><tbody>
+								{{for Rows}}<tr>{{for Cells}}{{if FieldID}}
+									<td>
+										<ul><li>
+											inner
+										</li></ul>
+									</td>
+								{{/if}}{{/for}}</tr>{{/for}}
+							</tbody></table>
+						</li></ul>
+					</td>
+				{{/if}}{{/for}}
+			</tr>
+		{{/for}}
+	</tbody></table>
+</script>
+
+<div id="testContainer"></div>
+
+<script type='text/javascript'>
+
+	var data = {
+			Rows:[
+				{Cells:[]},
+				{Cells:[
+						{
+							FieldID:true,
+							Rows:[
+								{Cells:[]},
+								{Cells:[]},
+								{Cells:[{FieldID:true}]}
+							]
+						},
+						{
+							FieldID:true,
+							Rows:[
+								{Cells:[]},
+								{Cells:[]},
+								{Cells:[{FieldID:true}]}
+							]
+						}
+					]
+				},
+				{Cells:[]},
+				{Cells:[
+						{
+							FieldID:true,
+							Rows:[
+								{Cells:[]},
+								{Cells:[{FieldID:true}]},
+								{Cells:[]}
+							]
+						}
+					]
+				}
+			]
+		};
+
+$.templates("#NestedElCnts").link("#testContainer", data);
+</script>
+
+</body>
+</html>

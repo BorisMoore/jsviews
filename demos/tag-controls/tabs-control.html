@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8"/>
-	<title>A tabs control against HTML markup, using {{tabs}}</title>
+	<title>A JsViews {{tabs}} control</title>
 	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
 	<script src="../../jsrender.js" type="text/javascript"></script>
 	<script src="../../jquery.observable.js" type="text/javascript"></script>
@@ -18,29 +18,17 @@
 
 <script id="myTmpl" type="text/x-jsrender">
 
-	{^{tabs state=#data width="290px" height="135px"}}
-		<h1>first</h1>
-		<div>
-			<div class="special">Some tabbed content:</div>
-			{^{tabs inner=true state=#data width="250px" height="35px"}}
-				<h1>Inner One</h1>
-				<div>
-					ONE {{:label}}
-				</div>
-				<h1>Inner Two</h1>
-				<div>
-					TWO inner
-				</div>
-				<h1>Inner Three</h1>
-				<div>
-					THREE inner
-				</div>
-			{{/tabs}}
-		</div>
-		<h1>second</h1>
-		<div>
-			<ul><li>Some</li><li>other</li><li>content</li></ul>
-		</div>
+	{^{tabs width="290px" height="135px" tabCaption="first"}}
+		<div class="special">Some tabbed content:</div>
+		{^{tabs selectedTab=1 height="35px" width="250px" tabCaption="Inner One"}}
+			ONE inner
+		{{else tabCaption="Inner Two"}}
+			TWO  {{:label2}}
+		{{else tabCaption="Inner Three"}}
+			THREE inner
+		{{/tabs}}
+	{{else tabCaption="second"}}
+		<ul><li>Some</li><li>other</li><li>content</li></ul>
 	{{/tabs}}
 
 </script>
@@ -48,20 +36,23 @@
 <script id="tabsTemplate" type="text/x-jsrender">
 	<table class="tabsview"><tbody>
 		<tr class="tabstrip">
-			{{for ~tag.labels}}<th data-index="{{:#index}}" data-link="class{:'header_' + (#index === ~tag.selectedIndex)}">{{:#data}}</th>{{/for}}
+			{{for ~tag.tagCtxs}}
+				<th data-link="class{:'header_' + (#index === ~tag.selectedIndex)}">
+					{{:props.tabCaption}}
+				</th>
+			{{/for}}
 		</tr>
-		<tr class="tabscontent"><td colspan="{{:~tag.labels.length}}">
-			<div style="width:{{>~tag.width}}; height:{{>~tag.tagCtx.props.height}};">
-				{{for #data tmpl=~tag.contentTmpl/}}
-			</div>
-		</td></tr>
+		<tr class="tabscontent">
+			<td colspan="{{:~tag.tagCtxs.length}}">
+				<div style="width:{{>~tag.width}}; height:{{>~tag.height}}">
+					{^{for tmpl=~tag.tagCtxs[~tag.selectedIndex].tmpl/}}
+				</div>
+			</td>
+		</tr>
 	</tbody></table>
 </script>
 
 <script type="text/javascript">
-
-	var state = { activeIndex: 0, label: "innerLabel" };
-
 	$.views.tags({
 		tabs: {
 			setTab: function(index) {
@@ -69,44 +60,30 @@
 			},
 			init: function(tagCtx) {
 				this.width = tagCtx.props.width;
-				this.selectedIndex = tagCtx.props.activeIndex || 0;
-			},
-			isSelectedContent: function(index, contentElement, v) {
-				return index === parseInt(contentElement.getAttribute("data-index"));
+				this.height = tagCtx.props.height;
+				this.selectedIndex = tagCtx.props.selectedTab || 0;
 			},
 			render: function() {
-				if (!this.contentTmpl) {
-					this.contentTmpl = this._.tmpl;
-					this._.tmpl = this.template;
-					this.labels = $($.trim(this.contentTmpl.markup)).filter("h1").map(function() {
-						return this.innerText || this.textContent;
-					}).get();
-				}
+				var tagCtx = this.tagCtx, view = tagCtx.view;
+
+				return this.selectedIndex === tagCtx.index ? this.template.render(view, tagCtx.ctx) : "";
+			},
+			onUpdate: function() {
 			},
 			onAfterLink: function() {
 				var self = this;
-
 				self.contents(".tabstrip", true).first()
 					.on("click", ".header_false", function() {
-						self.setTab(parseInt(this.getAttribute("data-index")));
+						self.setTab($.view(this).index);
 					});
-
-				self.contents(".tabscontent > td > div", true).first()
-					.children("div").each(function(i, el) {
-						// Set index attributes on content divs, for convenience
-						el.setAttribute("data-index", i);
-					})
-					// Link visiblity of content divs to whether the index corresponds to the selected index of the tabs tag.
-					.link("visible{:~tag.isSelectedContent(~tag.selectedIndex, #linkCtx.elem)}");
 			},
-			template: "#tabsTemplate",
-			attr: "html"
+			template: "#tabsTemplate"
 		}
 	});
 
 	var myTmpl = $.templates("#myTmpl");
 
-	$("#tabsView").link(myTmpl, state);
+	$("#tabsView").link(myTmpl, {label2: "Inner Tab Label2"});
 </script>
 </body>
 </html>

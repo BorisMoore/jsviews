@@ -2,7 +2,6 @@
 (function($, global, QUnit, undefined) {
 "use strict";
 (function() {
-
 /* Setup */
 
 // =============== Model ===============
@@ -63,11 +62,11 @@
 					ret += sort.call( this, arguments[ i - 1 ]);
 				}
 			} else for ( var i = array.length; i; i-- ) {
-				ret += this._.tmpl.render( array[ i - 1 ] );
+				ret += this.tagCtx.render( array[ i - 1 ] );
 			}
 		} else {
 			// Render in original order
-			ret += this._.tmpl.render( array );
+			ret += this.tagCtx.render( array );
 		}
 		return ret;
 	}
@@ -104,7 +103,7 @@
 	personProto.firstName.depends = ["_firstName", settings, "title"];
 
 	updown.depends = function(tagCtx) {
-		return [person, "firstName", "~settings.width"];
+		return [person1, "firstName", "~settings.width"];
 	}
 
 // =============== RESOURCES ===============
@@ -178,7 +177,10 @@
 
 	var topData = {people: people};
 	$.views.tags({
-		myWrap: {},
+		myWrap: {init: function(tc) {
+			var test = tc.props.val;
+		}
+		},
 		myWrap2: {},
 		myFlow: {
 			flow: true
@@ -186,7 +188,7 @@
 		myWrapElCnt: {
 			attr: "html",
 			render: function() {
-				return "<tbody>" + this.renderContent() + "</tbody>";
+				return "<tbody>" + this.tagCtx.render() + "</tbody>";
 			},
 			onAfterLink: function() {
 				//debugger;
@@ -195,7 +197,7 @@
 		myWrap2ElCnt: {
 			attr: "html",
 			render: function() {
-				return "<td>" + this.renderContent() + "</td>";
+				return "<td>" + this.tagCtx.render() + "</td>";
 			},
 			onAfterLink: function() {
 				//debugger;
@@ -205,7 +207,7 @@
 			attr: "html",
 			flow: true,
 			render: function() {
-				return "<td>" + this.renderContent() + "</td>";
+				return "<td>" + this.tagCtx.render() + "</td>";
 			}
 		}
 	});
@@ -222,6 +224,11 @@
 							+ '{{myWrap2}}'
 								+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
 							+ '{{/myWrap2}}'
+							+ '{{if true}}'
+								+ '{{myWrap2}}'
+									+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
+								+ '{{/myWrap2}}'
+							+ '{{/if}}'
 							+ '{{if true}}'
 								+ '<span>yy</span>'
 							+ '{{/if}}'
@@ -245,6 +252,11 @@
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 							+ '{{/myWrap2ElCnt}}'
 							+ '{{if true}}'
+								+ '{{myWrap2ElCnt}}'
+									+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
+								+ '{{/myWrap2ElCnt}}'
+							+ '{{/if}}'
+							+ '{{if true}}'
 								+ '<td id="td{{:~index+1}}">yy</td>'
 							+ '{{/if}}'
 							+ '{{myFlowElCnt}}'
@@ -261,13 +273,19 @@
 
 			'{{for people ~val=1}}'
 				+ '{{if true ~index=#index}}'
-					+ '{^{myWrap val=1}}'
+					+ 'aa{^{myWrap val=1}}inside'
 						+ '<span id="{{:~index+1}}">'
 							+ '<em>a</em>'
 							+ '{^{myWrap2}}'
 								+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
 								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 							+ '{{/myWrap2}}'
+							+ '{^{if true}}'
+								+ '{^{myWrap2}}'
+									+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
+									+ '{^{myFlow val=3}}xyz{{/myFlow}}'
+								+ '{{/myWrap2}}'
+							+ '{{/if}}'
 							+ '{{if true}}'
 								+ '<td>yy</td>'
 							+ '{{/if}}'
@@ -276,8 +294,8 @@
 							+ '{{/myFlow}}'
 						+ '</span>'
 					+ '{{/myWrap}}'
-					+ '{^{myWrap val=2/}}'
-					+ '{{myWrap "this is unbound"/}}'
+					+ 'bb{^{myWrap val=2/}}'
+					+ 'cc{{myWrap val=3 "this is unbound"/}}'
 				+ '{{/if}}'
 				+ 'www<span id="b{{:#index+1}}"></span>'
 			+ '{{/for}}',
@@ -292,6 +310,12 @@
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 							+ '{{/myWrap2ElCnt}}'
+							+ '{^{if true}}'
+								+ '{^{myWrap2ElCnt}}'
+									+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
+									+ '{^{myFlow val=3}}xyz{{/myFlow}}'
+								+ '{{/myWrap2ElCnt}}'
+							+ '{{/if}}'
 							+ '{{if true}}'
 								+ '<td id="td{{:~index+1}}">yy</td>'
 							+ '{{/if}}'
@@ -350,9 +374,9 @@ module("API - data-link");
 
 test("link(expression, container, data)", function() {
 
-	// =============================== Arrange ===============================
+	//  =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>')
-	$.link("lastName", "#inner", person1);
+	$.link("lastName 44 a=3", "#inner", person1);
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
@@ -413,7 +437,7 @@ test("link(expression, container, data)", function() {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{{for #data}}{^{:lastName}}{{/for}}");
+	var tmpl = $.templates("{^{:lastName}}");
 	$.link(tmpl, "#result", person1);
 
 	// ................................ Act ..................................
@@ -425,6 +449,26 @@ test("link(expression, container, data)", function() {
 	equal(before + "|" + after,
 	'One|newLast',
 	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data)');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	var tmpl = $.templates("{^{for #data}}{^{:lastName}}{{/for}}");
+	$.link(tmpl, "#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(person1).setProperty("lastName", "newLast");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	'One|newLast',
+	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data). Example 2.');
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
@@ -440,7 +484,6 @@ test("link(expression, container, data)", function() {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-
 });
 
 test('data-link="expression"', function() {
@@ -617,6 +660,202 @@ test('data-link="expression"', function() {
 
 });
 
+test('data-link="attr{:expression}"', function() {
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="class{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].className;
+	$.observable(person1).setProperty("lastName", "xxx");
+	after = $("#result span")[0].className;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	'One|xxx',
+	'Data link using: <span data-link="class{:lastName}"></span>, and string lastName to "xxx" - sets className to "xxx"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span").attr("title");
+	$.observable(person1).setProperty("lastName", "xxx");
+	after = $("#result span").attr("title");
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	'One|xxx',
+	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to "xxx" - sets title to "xxx"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", "");
+	after = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to "" - sets title to ""');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", null);
+	after = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to null - sets title to ""');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", undefined);
+	after = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to undefined - sets title to ""');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", false);
+	after = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "false",
+	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to false - sets title to "false"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", "");
+	after = $("#result span")[0].style.display;
+
+	// ............................... Assert .................................
+	ok(before === "inline" && after === "none",
+	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to "" - sets display to "none"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", null);
+	after = $("#result span")[0].style.display;
+
+	// ............................... Assert .................................
+	ok(before === "inline" && after === "none",
+	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to null - sets display to "none"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", undefined);
+	after = $("#result span")[0].style.display;
+
+	// ............................... Assert .................................
+	ok(before === "inline" && after === "none",
+	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to undefined - sets display to "none"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", false);
+	after = $("#result span")[0].style.display;
+
+	// ............................... Assert .................................
+	ok(before === "inline" && after === "none",
+	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to undefined - sets display to "none"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+});
+
 test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// =============================== Arrange ===============================
@@ -633,7 +872,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"mr jotwo30Mr Xavier|sir newonefirstnewtwolast30Sir newTwoFirst",
+	"mr jotwo30Mr Xavier|sir newonefirstnewtwolast40Sir newTwoFirst",
 	'Data link using: <span data-link="{cvt:expr ...}"></span> - with declared dependencies for converter');
 	// -----------------------------------------------------------------------
 
@@ -649,17 +888,17 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 	// =============================== Arrange ===============================
 	$.views
 		.converters({
-			from: function(val, amount) {
-				return val + "from" + amount + this.tagCtx.props.frst;
+			from: function(val) {
+				return val + "from" + this.tagCtx.props.frst;
 			},
 			to: function(val){
-				return val + "to" + this.tagCtx.args[1] + this.tagCtx.props.frst;
+				return val + "to" + this.tagCtx.props.frst;
 			}
 		});
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="twoWay" data-link="{:lastName 88 frst=firstName():to}"/>')
+	$.templates('prop: <input id="twoWay" data-link="{:lastName frst=firstName():to}"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -668,7 +907,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// ............................... Assert .................................
 	equal(person1.lastName,
-	"One+to88Mr Jo",
+	"One+toMr Jo",
 	'Data link using: <input data-link="{:expr:to}"/>  with no convert. - convertBack called with tag as this pointer.');
 	// -----------------------------------------------------------------------
 
@@ -678,7 +917,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="twoWay" data-link="{from:lastName 99 frst=firstName():to}"/>')
+	$.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -687,13 +926,55 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// ............................... Assert .................................
 	equal(person1.lastName,
-	"Onefrom99Mr Jo+to99Mr Jo",
+	"OnefromMr Jo+toMr Jo",
 	'Data link using: <input data-link="{from:expr:to}"/> - convert and convertBack called with tag as this pointer.');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	person1.lastName = "One"; // reset Prop
+});
+
+test('data-link="{for...}"', function() {
+	// =============================== Arrange ===============================
+
+	model.things = [{thing: "box"}]; // reset Prop
+
+	// ................................ Arrange ..................................
+	var tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}"></span>');
+	$.templates("inner", "{{:thing}}", tmpl);
+
+	tmpl.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'box|treebox',
+	'data-link="{for things}" binds to array changes on leaf array');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'trianglecircle',
+	'data-link="{for things} binds to property change on path');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:{thing: "square"}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'square',
+	'data-link="{for things} binds to property change on path - swapping from array to singleton object');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
 });
 
 test('data-link="{tag...}"', function() {
@@ -729,7 +1010,7 @@ test('data-link="{tag...}"', function() {
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
-	before = $("#result span").text(); 
+	before = $("#result span").text();
 	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 	$.observable(settings).setProperty({ title: "Sir", width: 40});
 	$.observable(person1).setProperty({fullName: "compFirst compLast"});
@@ -879,6 +1160,8 @@ test('data-link="{tag...}"', function() {
 
 });
 
+module("API - data-bound tags");
+
 test("{^{:expression}}", function() {
 
 	// =============================== Arrange ===============================
@@ -914,7 +1197,83 @@ test("{^{:expression}}", function() {
 
 	// =============================== Arrange ===============================
 
+	$.templates('prop:{^{:wasUndefined}}')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(person1).setProperty("wasUndefined", "newLast");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	'prop:|prop:newLast',
+	'Data link using: {^{:wasUndefined}} - renders to empty string when undefined, and still binds correctly for subsequent modifications');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	var tmpl = $.templates("{^{:#data.person1.home.address.street}}{^{:person1.home^address.street}}")
+	$.link(tmpl, "#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(address1).setProperty("street", "newStreetOne");
+	$.observable(person1).setProperty("home", home2); // Deep change
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"StreetOneStreetOne|newStreetOneStreetTwo",
+	'#data.person1.home.address.street binds only to the leaf, but person1.home^address.street does deep binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	address1.street = "StreetOne";
+	person1.home = home1;
+
+});
+
+test("{^{>expression}}", function() {
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop:{^{>lastName + "<br/>"}}')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(person1).setProperty("lastName", "newLast");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	'prop:One<br/>|prop:newLast<br/>',
+	'Data link using: {^{:lastName}}');
+	// -----------------------------------------------------------------------
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+
+	$("#result").empty();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events,
+	"$(container).empty removes both views and current listeners from that content");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	var tmpl = $.templates("{^{>#data.person1.home.address.street}}{^{>person1.home^address.street}}")
 	$.link(tmpl, "#result", model);
 
 	// ................................ Act ..................................
@@ -1241,9 +1600,104 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
+	model.things = [{thing: "box"}]; // reset Prop
+	$.templates('{^{for things}}{{:thing}}{{/for}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'box|treebox',
+	'{^{for things}} binds to array changes on leaf array');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'trianglecircle',
+	'{^{for things}} binds to property change on path');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:{thing: "square"}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'square',
+	'{^{for things}} binds to property change on path - swapping from array to singleton object');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+		// =============================== Arrange ===============================
+
+	model.things = [{thing: "box"}]; // reset Prop
+
+	$.templates('{^{for #data}}{{:thing}}{{/for}}')
+		.link("#result", [model.things]);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'box|treebox',
+	'{{for #data}} when #data is an array binds to array changes on #data');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	// ................................ Act ..................................
 	$.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}')
-	$.templates('<table><thead><tr><td>top</td></tr></thead>{{for things ~things=things tmpl="testTmpl"/}}</table>')
+	$.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
+		.link("#result", model);
+
+	before = $("#result td").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'top|toptree',
+	'Complex template, with empty placeholder for tbody after thead, and subsequent data-linked insertion of tbody');
+	// -----------------------------------------------------------------------
+
+	// ................................ Act ..................................
+	$.view("#result", true).refresh();
+	result = "" + (after === $("#result").text());
+	$.view("#result", true).views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].views[0].refresh();
+	result += " " + (after === $("#result").text());
+
+
+	// ............................... Assert .................................
+	equal(result, 'true true true true true true',
+	'view refresh at all levels correctly maintains content');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}')
+	$.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
 		.link("#result", model);
 
 	before = $("#result td").text();
@@ -1309,7 +1763,7 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{{for things}}<div>#index:<b data-link="#index"></b> #view.index:<b data-link="#view.index"></b> {{:thing}} Nested:{{for true}}{{for true}} #get(\'item\').index:<em data-link="#get(\'item\').index"></em> #parent.parent.index:<em data-link="#parent.parent.index"></em>|{{/for}}{{/for}}</div>{{/for}}')
+	$.templates('{^{for things}}<div>#index:<b data-link="#index"></b> #view.index:<b data-link="#view.index"></b> {{:thing}} Nested:{{for true}}{{for true}} #get(\'item\').index:<em data-link="#get(\'item\').index"></em> #parent.parent.index:<em data-link="#parent.parent.index"></em>|{{/for}}{{/for}}</div>{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -1327,7 +1781,7 @@ test("{^{for}}", function() {
 	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.templates('<div><ul>{{for things}}xxx{{/for}}</ul></div>')
+	$.templates('<div><ul>{^{for things}}xxx{{/for}}</ul></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -1339,6 +1793,53 @@ test("{^{for}}", function() {
 		&& !$._data(model.things).events,
 		'$(container).empty removes listeners for empty tags in element-only content (_dfr="#n_/n_")');
 	// -----------------------------------------------------------------------
+});
+
+test("{^{if}}...{{else}}...{{/if}}", function() {
+
+	// =============================== Arrange ===============================
+	var data = {one: true, two: false, three: true},
+		boundIfElseTmpl = $.templates(
+		'{^{if one pane=0}}'
+			+ '{^{if two pane=0}}'
+				+ '{^{if three pane=0}}ONE TWO THREE {{else}}ONE TWO notThree {{/if}}'
+			+ '{{else}}ONE notTwo {^{if three}}THREE {{/if}}{^{if !three}}notThree {{/if}}{{/if}}'
+		+ '{{else three pane=1}}'
+			+ '{^{if two pane=0}}notOne TWO THREE{{else}}notOne notTwo THREE {{/if}}'
+		+ '{{else}}'
+			+ '{^{if two pane=0}}notOne TWO notThree {{else}}notOne TWO notThree {{/if}}'
+		+ '{{/if}}');
+
+	// ................................ Act ..................................
+	boundIfElseTmpl.link("#result", data);
+
+	// ............................... Assert .................................
+	after = $("#result").text();
+	equal(after, boundIfElseTmpl.render(data),
+	'Bound if and else with link render the same as unbound, when using the JsRender render() method');
+
+	// ............................... Assert .................................
+	equal(after, "ONE notTwo THREE ",
+	'Bound if and else render correct blocks based on boolean expressions');
+
+	// ................................ Act ..................................
+	$.observable(data).setProperty({one: false, two: false, three: true});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, "notOne notTwo THREE ",
+	'Bound if and else render correct blocks based on boolean expressions');
+
+	// ................................ Act ..................................
+	$.observable(data).setProperty({one: false, two: true, three: false});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, "notOne TWO notThree ",
+	'Bound if and else render correct blocks based on boolean expressions');
+
+	// ................................ Reset ................................
+	$("#result").empty();
 });
 
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
@@ -1564,7 +2065,7 @@ test("ArrayChange: insert()", function() {
 
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('<ul>{^{liTag/}}{{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -1591,7 +2092,7 @@ test("ArrayChange: insert()", function() {
 
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -1618,7 +2119,7 @@ test("ArrayChange: insert()", function() {
 
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('{^{txtTag/}}{{for things}}{{:thing}}</span>{^{txtTag/}}{{/for}}|after')
+	$.templates('{^{txtTag/}}{^{for things}}{{:thing}}</span>{^{txtTag/}}{{/for}}|after')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -2569,7 +3070,7 @@ test("$.view() in element-only content", function() {
 	view = $.view("#spInFlow1");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, $.view(elem) gets nearest the "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
+	ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, $.view(elem) gets nearest "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", true);
@@ -2623,7 +3124,6 @@ test("view.get() and view.getIndex() in element-only content", function() {
 module("API - Tag Controls");
 
 test("view.childTags() and tag.childTags()", function() {
-
 	// =============================== Arrange ===============================
 	$.link.boundTmplHierarchy("#result", topData);
 
@@ -2642,7 +3142,7 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 5 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap2" && tags[2].tagName === "myFlow" && tags[3].tagName === "myFlow" && tags[4].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[2].tagCtx.props.val === 3 && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap2" && tags[2].tagName === "myWrap2"  && tags[3].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
@@ -2656,7 +3156,7 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags(true, "myWrap2");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrap2" && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[0].tagCtx.view.getIndex() === 0,
 		'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
@@ -2669,29 +3169,29 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.get(true, "myWrap").childTags(); // Get first myWrap view and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myFlow" && tags[1].tagCtx.props.val === 4 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrap").childTags(true); // Get first myWrap view and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myFlow" && tags[2].tagName === "myFlow",
-		'tag.childTags() returns descendant tags, and skips any unbound tags');
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
+		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap")[0].childTags(); // Get first myWrap tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myFlow" && tags[1].tagCtx.props.val === 4 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap")[0].childTags(true); // Get first myWrap tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myFlow" && tags[2].tagName === "myFlow",
-		'tag.childTags() returns descendant tags, and skips any unbound tags');
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
+		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 });
 
@@ -2714,7 +3214,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 5 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[2].tagName === "myFlow" && tags[3].tagName === "myFlowElCnt" && tags[4].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[2].tagName === "myWrap2ElCnt"  && tags[3].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
@@ -2728,7 +3228,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true, "myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrap2ElCnt" && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
@@ -2741,28 +3241,28 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.get(true, "myWrapElCnt").childTags(); // Get first myWrap view and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myFlowElCnt" && tags[1].tagCtx.props.val === 4 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrapElCnt").childTags(true); // Get first myWrap view and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myFlow" && tags[2].tagName === "myFlowElCnt",
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt",
 		'tag.childTags() returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt")[0].childTags(); // Get first myWrap tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myFlowElCnt" && tags[1].tagCtx.props.val === 4 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt")[0].childTags(true); // Get first myWrap tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myFlow" && tags[2].tagName === "myFlowElCnt",
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt",
 		'tag.childTags() returns descendant tags, and skips any unbound tags');
 
 });
@@ -2884,6 +3384,83 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 
 	// ............................... Assert .................................
 	equals($("#result div").html(), " init before after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init, onBeforeLink and onAfterLink');
+
+//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link (with or without inline=true) and {^{myTag}} inline data binding.
+});
+
+test("tag control events", function() {
+
+	// =============================== Arrange ===============================
+	var eventData = "";
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<div>{^{myWidget lastName/}}</div>',
+		tags: {
+			myWidget: {
+				init: function(tagCtx, linkCtx) {
+					eventData += " init";
+				},
+				render: function(val) {
+					eventData += " render";
+					return "<span>" + val + "</span>";
+				},
+				onUpdate: function(tagCtxs) {
+					eventData += " update";
+				},
+				onBeforeLink: function() {
+					eventData += " before";
+				},
+				onAfterLink: function() {
+					eventData += " after";
+				},
+				onDispose: function() {
+					eventData += " dispose";
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	// ............................... Assert .................................
+	equals($("#result").text() + "|" + eventData, "One| init render before after", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+
+	// ................................ Act ..................................
+	$.observable(person1).setProperty("lastName", "Two");
+
+	// ............................... Assert .................................
+	equals($("#result").text() + "|" + eventData, "Two| init render before after update render before after", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equals($("#result").text() + "|" + eventData, "| init render before after update render before after dispose", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
+
+	// ................................ Reset ................................
+	person1.lastName = "One";
+	eventData = "";
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<div>{^{myNoRenderWidget/}}</div>',
+		tags: {
+			myNoRenderWidget: {
+				init: function(tagCtx, linkCtx) {
+					eventData += " init";
+				},
+				onBeforeLink: function() {
+					eventData += " before";
+				},
+				onAfterLink: function() {
+					eventData += " after";
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	// ............................... Assert .................................
+	equals($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
 
 //TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link (with or without inline=true) and {^{myTag}} inline data binding.
 });
