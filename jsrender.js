@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 27
+// informal pre beta commit counter: 28
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -350,7 +350,7 @@
 			if (!i && (!tmpl || !tag)) {
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
 			}
-			tmpl = tmpl || !i && tagDef.template;
+			tmpl = tmpl || !i && tagDef.template || content;
 			tmpl = "" + tmpl === tmpl // if a string
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
@@ -388,8 +388,7 @@
 					};
 				}
 				tag._ = {
-					inline: !linkCtx,
-					tmpls: [tmpl]
+					inline: !linkCtx
 				};
 				if (linkCtx) {
 					// Set attr on linkCtx to ensure outputting to the correct target attribute.

@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 27
+// informal pre beta commit counter: 28
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street

@@ -45,7 +45,7 @@
 		<tr class="tabscontent">
 			<td colspan="{{:~tag.tagCtxs.length}}">
 				<div style="width:{{>~tag.width}}; height:{{>~tag.height}}">
-					{^{for tmpl=~tag.tagCtxs[~tag.selectedIndex].tmpl/}}
+					{^{for tmpl=~tag.tagCtxs[~tag.selectedIndex].content/}}
 				</div>
 			</td>
 		</tr>
@@ -67,8 +67,6 @@
 				var tagCtx = this.tagCtx, view = tagCtx.view;
 
 				return this.selectedIndex === tagCtx.index ? this.template.render(view, tagCtx.ctx) : "";
-			},
-			onUpdate: function() {
 			},
 			onAfterLink: function() {
 				var self = this;
