@@ -675,7 +675,7 @@ test('data-link="attr{:expression}"', function() {
 	// ............................... Assert .................................
 	equal(before + "|" + after,
 	'One|xxx',
-	'Data link using: <span data-link="class{:lastName}"></span>, and string lastName to "xxx" - sets className to "xxx"');
+	'Data link using: <span data-link="class{:lastName}"></span>, and setting lastName to "xxx" - sets className to "xxx"');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -695,7 +695,7 @@ test('data-link="attr{:expression}"', function() {
 	// ............................... Assert .................................
 	equal(before + "|" + after,
 	'One|xxx',
-	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to "xxx" - sets title to "xxx"');
+	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to "xxx" - sets title to "xxx"');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -714,7 +714,7 @@ test('data-link="attr{:expression}"', function() {
 
 	// ............................... Assert .................................
 	ok(before === 'One' && after === "",
-	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to "" - sets title to ""');
+	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to "" - sets title to ""');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -732,8 +732,65 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
+	ok(before === 'One' && after === null && $("#result span")[0].outerHTML === "<span data-link=\"title{:lastName}\"></span>",
+	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to null - removes title attribute');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span").html();
+	$.observable(person1).setProperty("lastName", null);
+	after = $("#result span").html();
+
+	// ............................... Assert .................................
 	ok(before === 'One' && after === "",
-	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to null - sets title to ""');
+	'Data link using: <span data-link="{:lastName}"></span>, and setting lastName to null - sets content to empty string');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span").html();
+	$.observable(person1).setProperty("lastName", null);
+	after = $("#result span").html();
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	"Data link using: <span data-link=\"html{:lastName||''}\"></span>, and setting lastName to null - sets content to empty string");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", undefined);
+	after = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to undefined - sets title to ""');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................

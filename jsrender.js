@@ -6,7 +6,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 28
+// informal pre beta commit counter: 29
 
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -346,7 +346,7 @@
 			// Set the tmpl property to the content of the block tag, unless set as an override property on the tag
 			content = tagCtx.tmpl;
 			content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
-			tmpl = tagCtx.props.tmpl || content;
+			tmpl = tagCtx.props.tmpl;
 			if (!i && (!tmpl || !tag)) {
 				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
 			}
@@ -1107,12 +1107,11 @@
 								: "{" + hash) + ");")
 							: tagName === ">"
 								? (hasEncoder = true, "h(" + params + ");")
-								: (getsVal = true, "(v=" + params + ')!=u?v:"";')
+								: (getsVal = true, "(v=" + params + ")!=" + (isLinkExpr ? "=" : "") + 'u?v:"";') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute 
 						)
 						: (hasTag = true, "{tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 							+ (content ? nestedTmpls.length: "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
 							+ hash + ","));
-
 
 					if (tagAndElses && !nextIsElse) {
 						code = "[" + code.slice(0, -1) + "]"; // This is a data-link expression or the last {{else}} of an inline bound tag. We complete the code for returning the tagCtxs array
