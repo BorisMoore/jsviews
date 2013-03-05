@@ -81,7 +81,7 @@ function fullName(reversed) {
 }
 
 // Declare dependencies, except for any values passed in as parameters
-fullName.depends = [person, "*"];
+fullName.depends = [person, "*"]; // "*" is the syntax for listening to a change to ANY property of the object (person).
 
 // For two-way binding of computed observables, provide a setter
 fullName.set = function(val) {

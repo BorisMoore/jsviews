@@ -10,7 +10,7 @@
 		return upper ? name.toUpperCase() : name;
 	}
 
-	fullName.depends = function(object) {
+	fullName.depends = function(object) { // object is also the this pointer, so we could write function(this) below
 		return [
 			"firstName",
 			function(object) {
@@ -102,15 +102,11 @@
 
 	personProto.firstName.depends = ["_firstName", settings, "title"];
 
-	updown.depends = function(tagCtx) {
+	updown.depends = function() {
 		return [person1, "firstName", "~settings.width"];
 	}
 
 // =============== RESOURCES ===============
-	var foo = {
-			markup: "#personTmpl"
-		};
-
 	$.views
 		.converters({
 			upper: updown,
@@ -122,7 +118,6 @@
 			settings: settings,
 			upper: updown
 		})
-		.templates({personTmpl: foo})
 		.tags({
 			tmplTag: {
 				template: "Name: {{:firstName()}}. Width: {{:~settings.width}}",
@@ -1828,8 +1823,8 @@ test("{^{for}}", function() {
 	$.observable(model.things).insert(0, {thing: "bush"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:0 #parent.parent.index:1|",
-	'Data-link to "#index" and "#get(\'item\').index" works correctly - but note that currently #get(\'item\').index does NOT update through data-linking. TODO provide as computed observable value');
+	equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:1 #parent.parent.index:1|",
+	'Data-link to "#index" and "#get(\'item\').index" work correctly');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -2059,7 +2054,15 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 module("API - PropertyChange");
 
-test("PropertyChange: setProperty()", 3, function() {
+test("PropertyChange: setProperty()", 4, function() {
+
+	// =============================== Arrange ===============================
+	$.observable(undefined).setProperty("street", "abc");
+
+	// ............................... Assert .................................
+	equals(result, "",
+	"$.observable(undefined).setProperty(...) does nothing");
+	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
 	reset();
@@ -2788,7 +2791,7 @@ test("filter", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length
+	handlersCount = $._data(obj).events.propertyChange.length;
 	$.observable.unobserve({}, "%name", myListener, filter);
 
 	// ................................ Reset ................................
@@ -2836,7 +2839,7 @@ test("filter", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length
+	handlersCount = $._data(obj).events.propertyChange.length;
 	$.observable.unobserve("%name", myListener, filter);
 
 	// ............................... Assert .................................
@@ -2880,7 +2883,7 @@ test("filter", function() {
 	"$.observable.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 
 	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length
+	handlersCount = $._data(obj).events.propertyChange.length;
 	$.observable.unobserve(true, "%name", myListener, filter);
 
 	// ............................... Assert .................................
@@ -2901,7 +2904,7 @@ test("filter", function() {
 	"$.observable.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 
 	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length
+	handlersCount = $._data(obj).events.propertyChange.length;
 	$.observable.unobserve(false, "%name", myListener, filter);
 
 	// ............................... Assert .................................
@@ -2912,10 +2915,46 @@ test("filter", function() {
 	// ................................ Reset ................................
 	obj.name = "One";
 
-	//TODO test cases for observe(object, true, "a.b.c") should bind only to leaf changes
-	//TODO test cases for observe(domElement, "a.b.c") should not bind at all
-	//TODO test cases for observe(array, "a.b.c") should not bind at all - or should bind only for observe(array, "length") - on collection change - but raise propertyChange event.
-	//TODO test cases for observe(object, "a.b.arrayProperty") should bind to collection change on leaaf
+	//TODO test case for observe(domElement, "a.b.c", callback) should not bind at all
+});
+
+test("array", function() {
+	// =============================== Arrange ===============================
+	var obj = {name:{first:"n", arr: [1,2]}};
+
+	function listen(ev,eventArgs) {
+		console.log(eventArgs.path + " prop");
+	}
+	myListener.array = function (ev,eventArgs) {
+		result += "calls: " + calls
+		+ ", eventArgs: change: " + eventArgs.change + "|";
+	}
+
+	$.observable.observe(obj, "name.arr", myListener)
+
+	// ................................ Act ..................................
+	$.observable(obj).setProperty("name.arr", [4,3,2,1]);
+
+	// ............................... Assert .................................
+	equals(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: 1,2 value: 4,3,2,1, eventArgs.path: arr|",
+	'$.observable.observe(object, "a.b.myArray", cbWithArrayCallback) listens to property change for swapping the array property');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(obj.name.arr).insert(0, 99);
+
+	// ............................... Assert .................................
+	equals(result, "calls: 0, eventArgs: change: insert|",
+	'$.observable.observe(object, "a.b.myArray", cbWithArrayCallback) listens to array change on leaf array property');
+	// ................................ Act ..................................
+	handlersCount = $._data(obj.name).events.propertyChange.length + $._data(obj.name.arr).events.arrayChange.length;
+	$.observable.unobserve(obj, "name.arr", myListener)
+
+	// ............................... Assert .................................
+	ok(handlersCount === 2 && !$._data(obj.name).events && !$._data(obj.name.arr).events,
+	'$.observable.unobserve(object, "a.b.myArray" removes both arrayChange and propertyChange event handlers');
+	// -----------------------------------------------------------------------
+
 });
 
 module("API - Settings");

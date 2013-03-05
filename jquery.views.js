@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 29
+// informal pre beta commit counter: 30 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -141,7 +141,7 @@
 
 						if ((!onBeforeChange || !(cancel = onBeforeChange.call(view, ev) === false)) && sourceValue !== undefined) {
 							cnvtName = to[1];
-							to = to[0]; // [object, path] or [object, true, path]
+							to = to[0]; // [object, path]
 							target = to[0];
 							to = to[2] || to[1];
 							if ($isFunction(cnvtName)) {
@@ -154,20 +154,9 @@
 								sourceValue = cvtBack.call(linkCtx.tag, sourceValue);
 							}
 							if (sourceValue !== undefined && target) {
-								try {
 	// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
 	// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
-									if ($isFunction(target)) {
-										target = target.set;
-										if ($isFunction(target)) {
-											target.call(linkCtx, sourceValue);
-										}
-									} else {
-										$observable(target).setProperty(to, sourceValue);
-									}
-								} catch(e) {
-									error(e);
-								}
+								$observable(target).setProperty(to, sourceValue);
 								if (onAfterChange) {  // TODO only call this if the target property changed
 									onAfterChange.call(linkCtx, ev);
 								}
@@ -227,7 +216,7 @@
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
-					cvt = cvt || linkCtx._cvtBk && "true";
+					cvt = cvt === "" ? "true" : cvt;
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue)
 						: $views._tag(linkFn._ctxs, view, view.tmpl, sourceValue);
@@ -578,7 +567,7 @@
 	//---------------
 
 	function observeAndBind(linkCtx, source, target) { //TODO ? linkFnArgs) {;
-		var tag, binding, cvtBack, toPath,
+		var tag, binding, cvtBack, toPath, objectCall,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++;
 
@@ -588,7 +577,7 @@
 			// Use the 'depends' paths set on linkCtx.tag - which may have been set on declaration
 			// or in events: init, render, onBeforeLink, onAfterLink etc.
 			depends = tag.depends || depends;
-			depends = $isFunction(depends) ? tag.depends() : depends;
+			depends = $isFunction(depends) ? tag.depends(tag) : depends;
 			cvtBack = tag.onChange;
 		}
 		cvtBack = cvtBack || linkCtx._cvtBk;
@@ -614,8 +603,15 @@
 			// temporarily stored tag by the stored binding. The tag will now be at binding.linkCtx.tag
 
 			if (cvtBack !== undefined) {
-				toPath = toPath[0].split("^").join("."); // For binding back, bind to the first path in the parsed parameters
-				binding.to = [linkCtx._filter(toPath) || [linkCtx.data, toPath], cvtBack];
+				//objectCall = (objectCall = toPath[0]) && "" + objectCall !== objectCall ? 1 : 0; // 1 if an object call, otherwise 0;
+				// If this is an object call: a.b.getObject().d.e, toPath[0] is the returned object and toPath[1] is the path d.e, and our
+				// target will be on the path d.e from the returned object
+				// Otherwise our target is the first path, toPath[0], which we will convert with filter() for paths like ~a.b.c or #x.y.z
+				var pathIndex = toPath.length - 1;
+				objectCall = toPath[pathIndex] = toPath[pathIndex].split("^").join("."); // We don't need the "^" since binding has happened. For to binding, require just "."s
+				binding.to = objectCall.charAt(0) === "."
+					? [[toPath[pathIndex-1], objectCall.slice(1)], cvtBack]
+					: [linkCtx._filter(toPath[0]) || [linkCtx.data, toPath[0]], cvtBack];
 // TODO binding.to.linkFnArgs = linkFnArgs; - need to compile this to provide args for setters on computed observables?
 			}
 		}
@@ -1274,10 +1270,27 @@
 
 	function bindDataLinkTarget(linkCtx, linkFn) {
 		// Add data link bindings for a link expression in data-link attribute markup
-		var arrChange;
+		var objectCall,
+			isLinkExpr = !linkCtx.tag,
+			view = linkCtx.view,
+			paths = linkFn.paths,
+			l = paths.length,
+			tmplLinks = view.tmpl[isLinkExpr ? "links" : "tags"]; // Use separate caches for compiled templates for tags and for link expressions.
+		// TODO optimize better for cached compiled templates, and share across parent templates, etc. too
+
 		function handler(ev, eventArgs) {
 			propertyChangeHandler.call(linkCtx, ev, eventArgs, linkFn);
 			// If the link expression uses a custom tag, the propertyChangeHandler call will call renderTag, which will set tagCtx on linkCtx
+		}
+
+		while (l--) {
+			if ((objectCall = paths[l])._jsvOb) {
+				// This is a binding to an object returned by a helper/data function, so we create a compiled function to get the object instance.
+				objectCall = delimOpenChar1 + ":" + objectCall._jsvOb + delimCloseChar0;
+				objectCall = tmplLinks[objectCall] = tmplLinks[objectCall] || $viewsSub.tmplFn(delimOpenChar0 + objectCall + delimCloseChar1, undefined, isLinkExpr);
+				// Put the object instance
+				linkFn.paths[l] = objectCall.call(view.tmpl, linkCtx.data, view, $views);
+			}
 		}
 
 		linkCtx._filter = filterHelperStrings(linkCtx); // _filter is for filtering dependency paths: function(path, object) { return [(object|path)*]}
@@ -1467,7 +1480,7 @@
 		if (sourceValue === undefined) {
 			sourceValue = tag._.bnd.call(view.tmpl, view.data, view, $views);
 			if (inline) {
-				sourceValue = $views._tag(tag, view, view.tmpl, sourceValue);
+				sourceValue = $views._tag(tag.tagName, view, view.tmpl, sourceValue); //renderTag
 			}
 		}
 		if (!tag.flow && !tag.render && !tag.template) {
@@ -1826,7 +1839,7 @@
 				var id, bindId, parentElem, prevNode, nextNode, nodesToRemove,
 					viewToRemove = views[index];
 
-				if (viewToRemove) {
+				if (viewToRemove && viewToRemove.link) {
 					id = viewToRemove._.id;
 					if (!keepNodes) {
 						// Remove the HTML nodes from the DOM, unless they have already been removed, including nodes of child views
@@ -2078,7 +2091,7 @@
 	// Extend topView
 	//===============
 
-	$extend(topView, { tmpl: { links: {} }});
+	$extend(topView, { tmpl: { links: {}, tags: {} }});
 	$extend(topView, LinkedView);
 	topView._.onRender = addBindingMarkers;
 

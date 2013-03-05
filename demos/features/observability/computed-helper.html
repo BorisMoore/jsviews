@@ -46,7 +46,7 @@
 			<td>reversed full name:</td>
 			<td colspan="2" data-link="~fullName(true)"></td>
 		{{!-- Parameterized setter not yet supported
-			<td><input data-link="fullName(true)" /></td>
+			<td><input data-link="~fullName(true)" /></td>
 		--}}
 		</tr>
 	</tbody></table>
@@ -74,8 +74,8 @@ var person = {
 function fullName(reverse) {
 	// We will declare dependencies (below) for any values that may change observably, and are not passed in as parameters
 	return reverse
-		? this.data.lastName + " " + this.data.firstName
-		: this.data.firstName + " " + this.data.lastName;
+		? person.lastName + " " + person.firstName
+		: person.firstName + " " + person.lastName;
 }
 
 // Dependencies for computed fullName
@@ -89,15 +89,13 @@ fullName.depends = ["#data.firstName", "#data.lastName"];
 //	}
 
 //	fullName.depends = function() {
-//		// The this pointer is the view.
-//		// When using data-link, this.linkCtx is the link context
-//		return [this.data, "firstName", "lastName"];
+//		return [this, "firstName", "lastName"];
 //	}
 
 // Setter for fullName - for two-way binding
 fullName.set = function(val) {
 	val = val.split(" ");
-	$.observable(this.data).setProperty({
+	$.observable(person).setProperty({
 		lastName: val.pop(),
 		firstName: val.join(" ")
 	});
