@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 30. (Beta Candidate)
+// informal pre beta commit counter: 31. (Beta Candidate)
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -149,7 +149,7 @@
 		// $.observable.observe(root, [1 or more objects, path or path Array params...], callback[, resolveDependenciesCallback][, unobserveOrOrigRoot)
 		function observeOnOff(namespace, pathStr, isArrayBinding) {
 			var obIdExpando = object[$expando],
-					boundObOrArr = wrapArray(object);
+				boundObOrArr = wrapArray(object);
 			cbBindings = 0;
 			if (unobserve) {
 				if (obIdExpando) {

@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 30 (Beta Candidate)
+// informal pre beta commit counter: 31 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -1480,7 +1480,7 @@
 		if (sourceValue === undefined) {
 			sourceValue = tag._.bnd.call(view.tmpl, view.data, view, $views);
 			if (inline) {
-				sourceValue = $views._tag(tag.tagName, view, view.tmpl, sourceValue); //renderTag
+				sourceValue = $views._tag(tag, view, view.tmpl, sourceValue); //renderTag
 			}
 		}
 		if (!tag.flow && !tag.render && !tag.template) {

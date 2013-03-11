@@ -1,5 +1,5 @@
 /// <reference path="../_references.js" />
-(function($, global, QUnit, undefined) {
+(function(global, $, undefined) {
 "use strict";
 (function() {
 /* Setup */
@@ -52,21 +52,21 @@
 		return (lower === true ? val.toLowerCase() : val.toUpperCase()) + settings.width + this.tagCtx.props.added;
 	}
 
-	function sort( array ) {
+	function sort(array) {
 		var ret = "";
-		if ( this.tagCtx.props.reverse ) {
+		if (this.tagCtx.props.reverse) {
 			// Render in reverse order
 			var test = this.tagCtx.view.getRsc("helpers", "foo");
 			if (arguments.length > 1) {
-				for ( i = arguments.length; i; i-- ) {
-					ret += sort.call( this, arguments[ i - 1 ]);
+				for (i = arguments.length; i; i--) {
+					ret += sort.call(this, arguments[ i - 1 ]);
 				}
-			} else for ( var i = array.length; i; i-- ) {
-				ret += this.tagCtx.render( array[ i - 1 ] );
+			} else for (var i = array.length; i; i--) {
+				ret += this.tagCtx.render(array[ i - 1 ]);
 			}
 		} else {
 			// Render in original order
-			ret += this.tagCtx.render( array );
+			ret += this.tagCtx.render(array);
 		}
 		return ret;
 	}
@@ -1803,7 +1803,7 @@ test("{^{for}}", function() {
 	// ............................... Assert .................................
 	equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
-	'Calling view("li").refresh() for a view in element-only content (elCnt true) updates correctly: "<ul>{{for}}<li>...</li>{{/for}}</ul>"' );
+	'Calling view("li").refresh() for a view in element-only content (elCnt true) updates correctly: "<ul>{{for}}<li>...</li>{{/for}}</ul>"');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -2057,6 +2057,7 @@ module("API - PropertyChange");
 test("PropertyChange: setProperty()", 4, function() {
 
 	// =============================== Arrange ===============================
+	reset();
 	$.observable(undefined).setProperty("street", "abc");
 
 	// ............................... Assert .................................
@@ -2961,9 +2962,9 @@ module("API - Settings");
 
 test("delimiters", 1, function() {
 	$.views.settings.delimiters("@%","%@");
-	var result = $.templates( "A_@%if true%@yes@%/if%@_B" ).render();
+	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
 	$.views.settings.delimiters("{{","}}");
-	equal( result, "A_yes_B", "Custom delimiters" );
+	equal(result, "A_yes_B", "Custom delimiters");
 });
 
 module("API - Declarations");
@@ -2984,7 +2985,7 @@ test("template encapsulation", function() {
 	$.link.myTmpl6("#result", { people: people });
 
 	// ............................... Assert .................................
-	equal( $("#result").text(), "TwoOne", "Template with tag resource");
+	equal($("#result").text(), "TwoOne", "Template with tag resource");
 
 	// =============================== Arrange ===============================
 	$.templates({
@@ -3003,7 +3004,7 @@ test("template encapsulation", function() {
 	$.link.myTmpl7("#result", {people: people, first: false});
 
 	// ............................... Assert .................................
-	equal( $("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
+	equal($("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
 });
 
 module("API - Views");
@@ -3562,4 +3563,4 @@ test("tag control events", function() {
 });
 
 })();
-})(jQuery, this, QUnit);
+})(this, this.jQuery);

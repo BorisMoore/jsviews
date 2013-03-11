@@ -18,9 +18,9 @@
 
 <script id="myTmpl" type="text/x-jsrender">
 
-	{^{tabs width="290px" height="135px" tabCaption="first"}}
+	{^{tabs id="outer" width="290px" height="135px" tabCaption="first"}}
 		<div class="special">Some tabbed content:</div>
-		{^{tabs selectedTab=1 height="35px" width="250px" tabCaption="Inner One"}}
+		{^{tabs id="inner" selectedTab=~state.innerSelect height="35px" width="250px" tabCaption="Inner One"}}
 			ONE inner
 		{{else tabCaption="Inner Two"}}
 			TWO  {{:label2}}
@@ -75,13 +75,20 @@
 						self.setTab($.view(this).index);
 					});
 			},
+			onDispose: function() {
+				if (this.tagCtx.props.id === "inner") {
+					this.tagCtx.ctx.state.innerSelect = this.selectedIndex;
+				}
+			},
 			template: "#tabsTemplate"
 		}
 	});
 
-	var myTmpl = $.templates("#myTmpl");
+	var state = { innerSelect: 1 },
+		myTmpl = $.templates("#myTmpl");
 
-	$("#tabsView").link(myTmpl, {label2: "Inner Tab Label2"});
+	myTmpl.link("#tabsView", {label2: "Inner Tab Label2"}, {state: state});
+
 </script>
 </body>
 </html>
