@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 31 (Beta Candidate)
+// informal pre beta commit counter: 32 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -419,8 +419,9 @@
 				}
 			} else if (data) {
 				// If this view is not being removed, but the data array has been replaced, then bind to the new data array
-				handler = function() {
-					if (view.data !== undefined) {
+				handler = function(ev) {
+					if (!(ev.data && ev.data.off)) {
+						// Skip if !!ev.data.off: - a handler that has already been removed (maybe was on handler collection at call time - then removed by another handler)
 						// If view.data is undefined, do nothing. (Corresponds to case where there is another handler on the same data whose
 						// effect was to remove this view, and which happened to precede this event in the trigger sequence. So although this
 						// event has been removed now, it is still called since already on the trigger sequence)
@@ -1146,22 +1147,24 @@
 						tag.onBeforeLink();
 					}
 					tag._.linking = true;
-				} else if (tag._.linking) {
-					// This is a 'close bound tag' binding annotation
-					// Add data binding
-					view = tag.tagCtx.view;
+				} else {
 					tag._nxt = elem;
-					tag.contents = getContents;
-					tag.nodes = getNodes;
-					tag.childTags = getChildTags;
+					if (tag._.linking) {
+						// This is a 'close bound tag' binding annotation
+						// Add data binding
+						view = tag.tagCtx.view;
+						tag.contents = getContents;
+						tag.nodes = getNodes;
+						tag.childTags = getChildTags;
 
-					delete tag._.linking;
-					if (tag && tag.onAfterLink) {
-						tag.onAfterLink();
-					}
-					if (!tag._.bound) {
-						tag._.bound = true;
-						addDataBinding(undefined, tag._prv, view, view.data||outerData, linkInfo.id);
+						delete tag._.linking;
+						if (tag && tag.onAfterLink) {
+							tag.onAfterLink();
+						}
+						if (!tag._.bound) {
+							tag._.bound = true;
+							addDataBinding(undefined, tag._prv, view, view.data||outerData, linkInfo.id);
+						}
 					}
 				}
 			} else {

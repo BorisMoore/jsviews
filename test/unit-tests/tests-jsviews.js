@@ -3406,6 +3406,7 @@ test("view.childTags() in element-only content, using data-link", function() {
 	ok(tags.length === 0, 'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 });
 
+//TODO add tests for tag.refresh()
 
 test("Modifying content, initializing widgets/tag controls, using data-link", function() {
 

@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 31. (Beta Candidate)
+// informal pre beta commit counter: 32 (Beta Candidate)
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -129,21 +129,23 @@
 	}
 
 	function onObservableChange(ev, eventArgs) {
-		var value = eventArgs.value,
-			ctx = ev.data;
-		if (ev.type === arrayChangeStr) {
-			ctx.cb.array(ev, eventArgs);
-		} else if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
-			if (typeof eventArgs.oldValue === OBJECT) {
-				$unobserve(eventArgs.oldValue, ctx.path, ctx.cb);
+		if (!(ev.data && ev.data.off)) {
+			// Skip if !!ev.data.off: - a handler that has already been removed (maybe was on handler collection at call time - then removed by another handler)
+			var value = eventArgs.oldValue,
+				ctx = ev.data;
+			if (ev.type === arrayChangeStr) {
+				ctx.cb.array(ev, eventArgs);
+			} else if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
+				if (typeof value === OBJECT) {
+					$unobserve(wrapArray(value), ctx.path, ctx.cb);
+				}
+				if (typeof (value = eventArgs.value) === OBJECT) {
+					$observe(wrapArray(value), ctx.path, ctx.cb, wrapArray(ctx.root)); // If value is an array, observe wrapped array, so that observe() doesn't flatten out this argument
+				}
+				ctx.cb.call(ctx.root, ev, eventArgs);
 			}
-			if (typeof value === OBJECT) {
-				$observe(wrapArray(value), ctx.path, ctx.cb, wrapArray(ctx.root)); // If value is an array, observe wrapped array, so that observe() doesn't flatten out this argument
-			}
-			ctx.cb.call(ctx.root, ev, eventArgs);
 		}
 	}
-
 
 	function $observe() {
 		// $.observable.observe(root, [1 or more objects, path or path Array params...], callback[, resolveDependenciesCallback][, unobserveOrOrigRoot)
@@ -520,7 +522,7 @@
 		// a jQuery special 'remove' event, and get the data.cb._bnd from the event here and provide it in the
 		// cbBindings var to the unobserve handler, so we can immediately remove this object from that cb._bnd collection, after 'unobserving'.
 		remove: function(evData) {
-			if ((evData = evData.data) && (evData = evData.cb)) {
+			if ((evData = evData.data) && (evData.off = 1, evData = evData.cb)) { //Set off=1 as marker for disposed event
 				// Get the cb._bnd from the ev.data object
 				cbBindings = cbBindingsStore[cbBindingsId = evData._bnd];
 			}
