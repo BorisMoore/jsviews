@@ -104,7 +104,7 @@
 			convertedPrice: function(selected, selectedCurrency) {
 				var currency = currencies[selectedCurrency];
 				if ( selected !== "none") {
-					return currency.symbol + parseFloat(movies[selectedCurrency].ticketPrice * currency.rate).toFixed(2);
+					return currency.symbol + parseFloat(movies[selected].ticketPrice * currency.rate).toFixed(2);
 				}
 			},
 			currencies: currencies,

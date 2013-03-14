@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 32 (Beta Candidate)
+// informal pre beta commit counter: 33 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -218,13 +218,14 @@
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
 					cvt = cvt === "" ? "true" : cvt;
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
-						? $views._cnvt(cvt, view, sourceValue)
-						: $views._tag(linkFn._ctxs, view, view.tmpl, sourceValue);
+						? $views._cnvt(cvt, view, sourceValue) // convertVal
+						: $views._tag(linkFn._ctxs, view, view.tmpl, sourceValue); // renderTag
 					tag = view._.tag; // In both convertVal and renderTag we have instantiated a tag
+					attr = linkCtx.attr || attr; // linkCtx.attr may have been set to tag.attr during tag instantiation in renderTag
 				}
 				if (tag) {
 					// Initialize the tag with element references
-					tag.parentElem = (!tag._.inline ||tag._elCnt) ? target : target.parentNode;
+					tag.parentElem = (linkCtx.expr || tag._elCnt) ? target : target.parentNode;
 					prevNode = tag._prv;
 					nextNode = tag._nxt;
 					tag.refresh = refreshTag;
@@ -254,7 +255,7 @@
 					if (changed = $.style(target, css) !== sourceValue) {
 						$.style(target, css, sourceValue);
 					}
-				} else {
+				} else if (attr !== "link") { // attr === "link" is for tag controls which do data binding but have no rendered output or target
 					if (attr === "value") {
 						if (target.type === "checkbox") {
 							sourceValue = sourceValue && sourceValue !== "false";
@@ -1510,6 +1511,7 @@
 				// data-link="{tagname ...}"
 				view._.tag = tag;
 				sourceValue = addBindingMarkers(sourceValue, view, true);
+				view._.tag = undefined;
 				skipBinding = tag._.inline = true;
 			}
 
