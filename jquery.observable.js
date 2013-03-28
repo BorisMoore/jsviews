@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 33 (Beta Candidate)
+// informal pre beta commit counter: 34 (Beta Candidate)
 
 // TODO, Array change on leaf. Caching compiled templates.
 // TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
@@ -40,7 +40,27 @@
 		observeStr = propertyChangeStr + ".observe",
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
-		observeCbKey = 1;
+		observeCbKey = 1,
+		$hasData = $.hasData,
+		getPropNames = Object.getOwnPropertyNames,
+		test = {};
+
+	$hasData(test);
+
+	if (getPropNames && getPropNames(test).length) {
+		// If we are not in IE8, and $hasData() has side effects (issue with jquery-2.0.0b2.js - which does not support IE8 anyway), we use a side-effect-free replacement:
+		$hasData = function (object) {
+			var keys = getPropNames(object),
+				l = keys.length;
+
+			while (l--) {
+				if (keys[l].indexOf($expando) + 1) {
+					return true
+				}
+			}
+			return false;
+		}
+	}
 
 	//========================== Top-level functions ==========================
 
@@ -150,7 +170,7 @@
 	function $observe() {
 		// $.observable.observe(root, [1 or more objects, path or path Array params...], callback[, resolveDependenciesCallback][, unobserveOrOrigRoot)
 		function observeOnOff(namespace, pathStr, isArrayBinding) {
-			var obIdExpando = object[$expando],
+			var obIdExpando = $hasData(object),
 				boundObOrArr = wrapArray(object);
 			cbBindings = 0;
 			if (unobserve) {
@@ -162,11 +182,11 @@
 					// So we have registered a jQuery special 'remove' event, which stored the cb._bnd in the cbBindings var,
 					// so we can immediately remove this object from that cb._bnd collection.
 					if (cbBindings) {
-						delete cbBindings[obIdExpando.obId];
+						delete cbBindings[$.data(object, "obId")];
 					}
 				}
 			} else {
-				if (events = obIdExpando) {
+				if (events = obIdExpando && $._data(object)) {
 					events = events && events.events;
 					events = events && events[isArrayBinding ? arrayChangeStr : propertyChangeStr];
 					el = events && events.length;
@@ -180,7 +200,7 @@
 								$(object).off(namespace + "." + data.prop, onObservableChange);
 									// We remove this object from that cb._bnd collection (see above).
 								if (cbBindings) {
-									delete cbBindings[obIdExpando.obId];
+									delete cbBindings[$.data(object, "obId")];
 								}
 							}
 						}
@@ -189,8 +209,7 @@
 				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { path: pathStr, prop: prop, cb: callback }, onObservableChange);
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
-					obIdExpando = object[$expando];
-					bindings[obIdExpando.obId = obIdExpando.obId || observeObjKey++] = object;
+					bindings[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
 				}
 			}
 		}
@@ -287,7 +306,7 @@
 					}
 					if ((parts.length < depth + 1) && !object.nodeType) {
 						// Add observer for each token in path starting at depth, and on to the leaf
-						if (!unobserve && (events = object[$expando])) {
+						if (!unobserve && (events = $hasData(object) && $._data(object))) {
 							events = events.events;
 							events = events && events.propertyChange;
 							el = events && events.length;
@@ -388,7 +407,7 @@
 					for (key in path) {
 						self.setProperty(key, path[key], value);
 					}
-				} else if ((leaf = getObjectOnPath(self._data, path, 1)) && path !== $expando) {
+				} else if ((leaf = getObjectOnPath(self._data, path, 1)) && !path || path.indexOf($expando) < 0) {
 					// Simple single property case.
 					self._setProperty(leaf[0], leaf[1], value, nonStrict);
 				}
@@ -529,7 +548,7 @@
 		},
 		teardown: function(namespaces) {
 			if (cbBindings) {
-				delete cbBindings[this[$expando].obId];
+				delete cbBindings[$.data(this, "obId")];
 				removeCbBindings(cbBindings, cbBindingsId);
 			}
 		}

@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 33 (Beta Candidate)
+// informal pre beta commit counter: 34 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -41,7 +41,7 @@
 		$viewsSub = $views.sub,
 		$viewsSettings = $views.settings,
 		$extend = $viewsSub.extend,
-		topView = $views.View(undefined, "top"), // Top-level view
+		topView = $viewsSub.View(undefined, "top"), // Top-level view
 		$isFunction = $.isFunction,
 		$templates = $views.templates,
 		$observable = $.observable,
@@ -312,7 +312,7 @@
 								if (target.textContent !== undefined) {
 									target.textContent = sourceValue;
 								} else {
-									target.innerText = sourceValue;
+									target.innerText = sourceValue === null ? "" : sourceValue;
 								}
 							} else {
 								$target[setter](sourceValue);
@@ -456,7 +456,7 @@
 	//==============================
 
 	function renderAndLink(view, index, tmpl, views, data, context, refresh) {
-		var html, linkToNode, prevView, tag, nodesToRemove,
+		var html, linkToNode, prevView, tag, nodesToRemove, bindId,
 			parentNode = view.parentElem,
 			prevNode = view._prv,
 			nextNode = view._nxt,
@@ -476,8 +476,8 @@
 
 			// Remove child views
 			view.removeViews(undefined, undefined, true);
-
 			linkToNode = nextNode;
+
 			if (elCnt) {
 				prevNode = prevNode
 					? prevNode.previousSibling
@@ -488,6 +488,12 @@
 
 			// Remove HTML nodes
 			$(nodesToRemove).remove();
+
+			for (bindId in view._.bnds) {
+				// The view bindings may have already been removed above in: $(nodesToRemove).remove();
+				// If not, remove them here:
+				removeViewBinding(bindId, true);
+			}
 		} else {
 			// addViews. Only called if view is of type "array"
 			if (index) {
@@ -581,6 +587,7 @@
 			depends = tag.depends || depends;
 			depends = $isFunction(depends) ? tag.depends(tag) : depends;
 			cvtBack = tag.onChange;
+//TODO complete onChange implementation for generic two-way binding of tag controls
 		}
 		cvtBack = cvtBack || linkCtx._cvtBk;
 		if (!linkCtx._depends || ("" + linkCtx._depends !== "" + depends)) {
@@ -733,6 +740,10 @@
 			//                 prec, slfCl, clTag,  spaceBefore, id,    spaceAfter, tag1,                  tag2,             clTag2,  sac   slfCl2,
 			// Convert the markers that were included by addBindingMarkers in template output, to appropriate DOM annotations:
 			// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
+
+// TODO consider detecting 'quoted' contexts (attribute strings) so that attribute encoding does not need to encode >
+// Currently rAttrEncode = /[><"'&]/g includes '>' encoding in order to avoid eronneous parsing of <span title="&lt;a/>">
+
 			var endOfElCnt = "";
 			tag = tag1 || tag2 || "";
 			closeTag = closeTag || selfClose || closeTag2 || selfClose2;
@@ -864,6 +875,7 @@
 									} else if (targetParent && (!elem || elem.parentNode !== targetParent)) {
 										// There is no ._nxt so add token to _dfr. It is deferred.
 										targetParent._dfr = "/" + id + bindChar + (targetParent._dfr || "");
+										elem = null; // elem (the nextNode up to which we are linking) to is not a sibling of tag._prv (it is at less deep level), so tag._nxt should be null, not elem. 
 									}
 								}
 

@@ -1748,39 +1748,105 @@ test("{^{for}}", function() {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}')
-	$.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
+	$.templates('<table><tbody>{^{for things}}{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}{{/for}}</tbody></table>')
 		.link("#result", model);
 
-	before = $("#result td").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
-	after = $("#result").text();
+	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	result = $._data(model.things[0]).events.propertyChange.length;
+	$.view("#result", true).views._1.views[0].refresh();
+	result += "|" + $._data(model.things[0]).events.propertyChange.length;
+	$("#result").empty();
+	result += "|" + $._data(model.things[0]).events;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'top|toptree',
-	'Complex template, with empty placeholder for tbody after thead, and subsequent data-linked insertion of tbody');
-	// -----------------------------------------------------------------------
+	equal(result, '1|1|undefined',
+	'Refreshing a view containing a tag which is bound to dependant data, and has no _prv node, removes the original binding and replaces it with a new one');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.view("#result", true).refresh();
-	result = "" + (after === $("#result").text());
-	$.view("#result", true).views["_2"].refresh();
-	result += " " + (after === $("#result").text());
-	$.view("#result", true).views["_2"].views[0].refresh();
-	result += " " + (after === $("#result").text());
-	$.view("#result", true).views["_2"].views[0].views["_2"].refresh();
-	result += " " + (after === $("#result").text());
-	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].refresh();
-	result += " " + (after === $("#result").text());
-	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].views[0].refresh();
-	result += " " + (after === $("#result").text());
+	$.templates("testTmpl", '{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}')
+	$.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
+		.link("#result", model);
 
+	result = $("#result td").text();
+	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	result += "|" + $("#result td").text();
+	$.observable(model.things[0]).setProperty("expanded", true);
+	$.observable(model.things[1]).setProperty("expanded", false);
+	result += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
-	equal(result, 'true true true true true true',
-	'view refresh at all levels correctly maintains content');
+	equal(result, '|bush|tree',
+	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
+
+	// ................................ Act ..................................
+	$.view("#result tr").parent.refresh();
+	result = $("#result td").text();
+	$.view("#result tr").parent.parent.views[1].refresh();
+	result += "|" + $("#result td").text();
+
+	// ............................... Assert .................................
+	equal(result, 'tree|tree',
+	'view refresh with deferred correctly refreshes content');
+
+	// ................................ Act ..................................
+	$.observable(model.things[1]).setProperty("expanded", true);
+	result = $("#result td").text();
+
+	$.observable(model.things[0]).setProperty("expanded", false);
+	result += "|" + $("#result td").text();
+
+	// ............................... Assert .................................
+	equal(result, 'treebush|bush',
+	'Changing dependant data on bindings with deferred, after view refresh correctly triggers refreshTag and refreshes content with updated data binding');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates("testTmpl", '<tr>{^{if expanded}}<td>{{:thing}}</td>{{/if}}</tr>')
+	$.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
+		.link("#result", model);
+
+	result = $("#result td").text();
+	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	result += "|" + $("#result").text();
+	$.observable(model.things[0]).setProperty("expanded", true);
+	$.observable(model.things[1]).setProperty("expanded", false);
+	result += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, '|bush|tree',
+	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
+
+	// ................................ Act ..................................
+	$.view("#result tr").refresh();
+	result = $("#result").text();
+	$.view("#result tr").parent.views[1].refresh();
+	result += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, 'tree|tree',
+	'view refresh with deferred correctly refreshes content');
+
+	// ................................ Act ..................................
+	$.observable(model.things[1]).setProperty("expanded", true);
+	result = $("#result").text();
+	$.observable(model.things[0]).setProperty("expanded", false);
+	result += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, 'treebush|bush',
+	'Changing dependant data on bindings with deferred, after view refresh correctly triggers refreshTag and refreshes content with updated data binding');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
