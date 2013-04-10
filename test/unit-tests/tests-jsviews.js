@@ -1212,6 +1212,176 @@ test('data-link="{tag...}"', function() {
 
 });
 
+test("computed observables in two-way binding", function() {
+(function() {
+	// =============================== Arrange ===============================
+	var person = {
+		firstName: "Jeff",
+		lastName: "Smith",
+		fullName: fullName
+	};
+	function fullName(reversed) {
+		return reversed
+			? this.lastName + " " + this.firstName
+			: this.firstName + " " + this.lastName;
+	}
+
+	fullName.depends = [person, "*"];
+
+	fullName.set = function(val) {
+		val = val.split(" ");
+		$.observable(this).setProperty({
+			lastName: val.pop(),
+			firstName: val.join(" ")
+		});
+	};
+
+	$.templates('{^{:firstName}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+		.link("#result", person);
+
+	// ................................ Act ..................................
+	var res = $("#result").text() + $("#full").val();
+
+	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	$.observable(person).setProperty({fullName: "compFirst compLast"});
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	$("#full").val("2wayFirst 2wayLast").change();
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	// ............................... Assert .................................
+	equal(res,
+	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	'Two-way binding to a computed observable data property correctly calls the setter');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+})();
+
+(function() {
+	// =============================== Arrange ===============================
+	// Constructor
+	var Person = function(first, last) {
+			this._firstName = first;
+			this.lastName = last;
+		},
+
+		// Prototype
+		personProto = {
+			// Computed firstName
+			firstName: function() {
+				return this._firstName;
+			},
+			// Computed fullName
+			fullName: fullName
+		};
+
+		personProto.firstName.set = function(val) {
+			this._firstName = val;
+		}
+
+	Person.prototype = personProto;
+
+	var person = new Person("Jeff", "Smith");
+
+	function fullName(reversed) {
+		return reversed
+			? this.lastName + " " + this.firstName()
+			: this.firstName() + " " + this.lastName;
+	}
+
+	fullName.depends = ["firstName", "lastName"];
+
+	fullName.set = function(val) {
+		val = val.split(" ");
+		$.observable(this).setProperty({
+			lastName: val.pop(),
+			firstName: val.join(" ")
+		});
+	};
+
+	$.templates('{^{:firstName()}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+		.link("#result", person);
+
+	// ................................ Act ..................................
+	var res = $("#result").text() + $("#full").val();
+
+	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	$.observable(person).setProperty({fullName: "compFirst compLast"});
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	$("#full").val("2wayFirst 2wayLast").change();
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	// ............................... Assert .................................
+	equal(res,
+	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+})();
+
+(function() {
+	// =============================== Arrange ===============================
+	var person = {
+		firstName: "Jeff",
+		lastName: "Friedman"
+	};
+
+	function fullName(reverse) {
+		return reverse
+			? person.lastName + " " + person.firstName
+			: person.firstName + " " + person.lastName;
+	}
+
+	fullName.depends = function() {
+		return [this, "firstName", "lastName"];
+	}
+
+	fullName.set = function(val) {
+		val = val.split(" ");
+		$.observable(person).setProperty({
+			lastName: val.pop(),
+			firstName: val.join(" ")
+		});
+	};
+
+	$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full" data-link="~fullName()"/>')
+		.link("#result", person, {fullName: fullName});
+
+	// ................................ Act ..................................
+	var res = $("#result").text() + $("#full").val();
+
+	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	$("#full").val("2wayFirst 2wayLast").change();
+
+	res += "|" + $("#result").text() + $("#full").val();
+
+	// ............................... Assert .................................
+	equal(res,
+	"Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+})();
+});
+
+
 module("API - data-bound tags");
 
 test("{^{:expression}}", function() {
@@ -2005,6 +2175,16 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	'Data link using: {^{:lastName}} <span data-link="lastName"></span> <input id="last" data-link="lastName"/> {^{:fullName()}}<span data-link="fullName()"></span> <input data-link="fullName()"/> {^{tmplTag/}} <span data-link="{tmplTag}"></span>');
 	// -----------------------------------------------------------------------
 
+	// ................................ Act ..................................
+	$("#full").val("newFirst newLast").change();
+
+	after = $("#result").text() + $("#last").val() + $("#full").val();
+
+	// ............................... Assert .................................
+	equal(after,
+	"prop:newLastnewLast computed:Sir newFirst newLastSir newFirst newLast Tag:Name: Sir newFirst. Width: 40Name: Sir newFirst. Width: 40newLastSir newFirst newLast",
+	'Two-way binding to a computed observable correctly calls the setter');
+
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
@@ -2237,33 +2417,35 @@ test("ArrayChange: insert()", function() {
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-// =============================== Arrange ===============================
-	$.views.tags({
-		txtTag: function() {
-			return "Tag"
-		}
-	});
-
+	// =============================== Arrange ===============================
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('{^{txtTag/}}{^{for things}}{{:thing}}</span>{^{txtTag/}}{{/for}}|after')
+	try {
+		$.templates('<table>{^{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>')
 		.link("#result", model);
-
-	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
-	$.observable(model.things).insert(1, {thing: "Last"});
-	$.observable(model.things).insert(1, {thing: "Middle"});
+	} catch (e) {
+		result = e.message;
+	}
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
-	'Within regular content between text nodes, insertion finds correctly the previous view, prevNode, nextNode, etc and establishes correct text node order and binding');
+	equal(result, '"tr" has incorrect parent tag', "Validation of table markup (to be moved to design-time checking)");
+
+	// =============================== Arrange ===============================
+	$.templates('<table><tbody>{^{for things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody></table>')
+		.link("#result", model);
+	// ................................ Act ..................................
+	$.observable(model.things).insert(0, {thing: "First"});
+	$.observable(model.things).remove(0);
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "Orig",
+	'Within element only content, insertion finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
+	//$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
-
 });
 
 module("API - observe()");
@@ -2832,7 +3014,7 @@ test("paths", function() {
 
 });
 
-test("filter", function() {
+test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	var str = "aa",
 		obj =  {
@@ -2840,7 +3022,7 @@ test("filter", function() {
 		},
 		arr = [1,2,3];
 
-	function filter(val) {
+	function observeCtxHelper(val) {
 		if (val) {
 			if (val.charAt(0) === "%") {
 				return [obj, val.slice(1)];
@@ -2849,24 +3031,24 @@ test("filter", function() {
 	}
 
 	// ................................ Act ..................................
-	$.observable.observe({}, "%name", myListener, filter);
+	$.observable.observe({}, "%name", myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observable.observe(object, path, cb, filter) uses filter correctly to substitute objects and paths");
+	"$.observable.observe(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths");
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.observable.unobserve({}, "%name", myListener, filter);
+	$.observable.unobserve({}, "%name", myListener, observeCtxHelper);
 
 	// ................................ Reset ................................
 	obj.name = "One";
 
 	// ............................... Assert .................................
 	ok(handlersCount===1 && !$._data(obj).events,
-	"$.observable.unobserve(object, path, cb, filter) uses filter correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	"$.observable.unobserve(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
 	// =============================== Arrange ===============================
@@ -2876,7 +3058,7 @@ test("filter", function() {
 
 	// ............................... Assert .................................
 	equals(result, "",
-	"$.observable.observe(path, cb): Observe with no root object and no filter does nothing");
+	"$.observable.observe(path, cb): Observe with no root object and no observeCtxHelper does nothing");
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -2884,12 +3066,12 @@ test("filter", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe(str, myListener, filter);
+	$.observable.observe(str, myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	equals(result, "",
-	"$.observable.observe(path, cb, filter) observe with no root object can use filter to substitute objects and paths. If no object is mapped by filter, does nothing");
+	"$.observable.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -2897,21 +3079,21 @@ test("filter", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe("%name", myListener, filter);
+	$.observable.observe("%name", myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observable.observe(path, cb, filter) observe with no root object can use filter to substitute objects and paths. Correctly observes object(s) mapped by filter");
+	"$.observable.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.observable.unobserve("%name", myListener, filter);
+	$.observable.unobserve("%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	ok(handlersCount===1 && !$._data(obj).events,
-	"$.observable.unobserve(path, cb, filter) uses filter correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	"$.observable.unobserve(path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
 	// ................................ Reset ................................
@@ -2919,17 +3101,17 @@ test("filter", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe(null, myListener, filter);
-	$.observable.observe(0, myListener, filter);
-	$.observable.observe(false, myListener, filter);
-	$.observable.observe(true, myListener, filter);
-	$.observable.observe(2, myListener, filter);
+	$.observable.observe(null, myListener, observeCtxHelper);
+	$.observable.observe(0, myListener, observeCtxHelper);
+	$.observable.observe(false, myListener, observeCtxHelper);
+	$.observable.observe(true, myListener, observeCtxHelper);
+	$.observable.observe(2, myListener, observeCtxHelper);
 
-	$.observable.observe(null, str, myListener, filter);
-	$.observable.observe(0, str, myListener, filter);
-	$.observable.observe(false, str, myListener, filter);
-	$.observable.observe(true, str, myListener, filter);
-	$.observable.observe(2, str, myListener, filter);
+	$.observable.observe(null, str, myListener, observeCtxHelper);
+	$.observable.observe(0, str, myListener, observeCtxHelper);
+	$.observable.observe(false, str, myListener, observeCtxHelper);
+	$.observable.observe(true, str, myListener, observeCtxHelper);
+	$.observable.observe(2, str, myListener, observeCtxHelper);
 
 	$.observable(obj).setProperty({name: "newName"});
 
@@ -2942,7 +3124,7 @@ test("filter", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe(true, "%name", myListener, filter);
+	$.observable.observe(true, "%name", myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
@@ -2951,7 +3133,7 @@ test("filter", function() {
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.observable.unobserve(true, "%name", myListener, filter);
+	$.observable.unobserve(true, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	ok(handlersCount===1 && !$._data(obj).events,
@@ -2963,7 +3145,7 @@ test("filter", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe(false, "%name", myListener, filter);
+	$.observable.observe(false, "%name", myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
@@ -2972,7 +3154,7 @@ test("filter", function() {
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.observable.unobserve(false, "%name", myListener, filter);
+	$.observable.unobserve(false, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	ok(handlersCount===1 && !$._data(obj).events,
@@ -3023,6 +3205,338 @@ test("array", function() {
 	// -----------------------------------------------------------------------
 
 });
+
+test("computed observables in paths", function() {
+	// =============================== Arrange ===============================
+	var app = { items: [
+		{
+			name: "one",
+			row: "1",
+			expanded: false
+		},
+		{
+			name: "two",
+			row: "2",
+			expanded: false
+		},
+		{
+			name: "three",
+			row: "3",
+			expanded: false
+		}
+	]};
+
+function testTemplate(message, template) {
+	$.templates(template)
+	.link("#result", app, {
+		getItems: function(exp) {
+			return exp ? ["a","b"]: [];
+		}
+	});
+
+	// ................................ Act ..................................
+	var ret = $("#result").text() + "|";
+    $.view("#result .groupdata").refresh();
+
+	$.observable(app.items[0]).setProperty("expanded", true);
+	ret += $("#result").text() + "|";
+
+	$.observable(app.items[0]).setProperty("expanded", false);
+	ret += $("#result").text() + "|";
+
+	$.observable(app.items[1]).setProperty("expanded", true);
+	ret += $("#result").text() + "|";
+
+	$.observable(app.items[1]).setProperty("expanded", false);
+	ret += $("#result").text() + "|";
+
+	$.observable(app.items).insert(0, {
+		name: "added",
+		row: "+",
+		expanded: false
+	});
+	ret += $("#result").text() + "|";
+	$.observable(app.items).remove(0);
+	ret += $("#result").text() + "|";
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|"
+	, "Interplay of view and tag refresh in deep content: " + message);
+}
+
+	// ............................... Assert .................................
+	testTemplate("div",
+	"{^{for items}}"
+		+ "{{:name}}"
+		+ "{^{for ~getItems(expanded) ~row=row}}"
+			+ "<div class='groupdata'>{{:~row}}{{:#data}}</div>"
+		+ "{{/for}}"
+	+ "{{/for}}");
+
+	// ............................... Assert .................................
+	testTemplate("deep div",
+	"{^{for items}}"
+		+ "<span>{{:name}}</span>"
+		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
+			+ "<span></span>"
+			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
+		+ "{{/for}}</div></div>"
+	+ "{{/for}}");
+
+	// ............................... Assert .................................
+	testTemplate("deep div2",
+	"{^{for items}}"
+		+ "<span>{{:name}}</span>"
+		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
+			+ "<span></span>"
+			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
+		+ "{{/for}}<div></div></div></div>"
+	+ "{{/for}}");
+
+	// ............................... Assert .................................
+	testTemplate("li",
+	"<ul>{^{for items}}"
+		+ "<li>{{:name}}</li>"
+		+ "<li><ul>{^{for ~getItems(expanded) ~row=row}}"
+			+ "<li></li>"
+			+ "<li class='groupdata'>{{:~row}}{{:#data}}</li>"
+		+ "{{/for}}</ul></li>"
+	+ "{{/for}}</ul>");
+
+	// ............................... Assert .................................
+	testTemplate("table",
+	"<table>{^{for items}}"
+		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
+		+ "{^{for ~getItems(expanded) ~row=row}}"
+			+ "<tbody class='groupdata'><tr>"
+				+ "<td>{{:~row}}{{:#data}}</td>"
+			+ "</tr></tbody>"
+		+ "{{/for}}"
+	+ " {{/for}}</table>");
+
+	// ............................... Assert .................................
+	testTemplate("deep table",
+	"<table>{^{for items}}"
+		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
+		+ "<tbody class='groupdata'>"
+			+ "{^{for ~getItems(expanded) ~row=row}}"
+				+ "<tr>"
+					+ "<td>{{:~row}}{{:#data}}</td>"
+				+ "</tr>"
+			+ "{{/for}}"
+		+ "</tbody>"
+	+ " {{/for}}</table>");
+
+	// =============================== Arrange ===============================
+	var ret = "",
+		people1 = [{address:{street: "1 first street"}}],
+		people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}],
+		data1 = {value: "data1", people:people1},
+		data2 = {value: "data2", people:people2},
+		app = {
+			alt:false,
+			index: 1,
+			getPeople: getPeople,
+			getData: getData,
+			options: {
+				getWidth: function() {
+					return "33";
+				}
+			}
+		};
+
+	function getPeople(type) {
+		return this.alt ? people2 : people1;
+	}
+
+	getPeople.depends = function() {
+		return [app, "alt"];
+	}
+
+	function getData(type) {
+		return this.alt ? data2 : data1;
+	}
+
+	getData.depends = function() {
+		return [app, "alt"];
+	}
+
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople()[index]||{}).address}}{^{:street}}{{/for}}").link("#result", app);
+
+	ret = "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("index", 0);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0].address).setProperty("street", "1 first streetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("index", 1);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Assert ..................................
+	equal(ret, "||1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new array");
+	$("#result").empty();
+
+	app.alt = false;
+	app.index = 0;
+	people1 = [{address:{street: "1 first street"}}];
+	people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}];
+	data1 = {value: "data1", people:people1};
+	data2 = {value: "data2", people:people2};
+
+	// ................................ Act ..................................
+	$.templates("{^{:(getData().people[index]).address^street}}").link("#result", app);
+
+	ret = $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0].address).setProperty("street", "1 first streetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret += "|" + $("#result").text();
+
+	// ................................ Assert ..................................
+	equal(ret, "1 first street|1 first streetB|1 first swappedstreet|1 second street",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new object");
+	$("#result").empty();
+
+	//TODO add support for binding to [expression] accessors in deep paths, including [index] accessors for arrays, as above
+	//$.observable(app).setProperty("index", 1);
+	//ret += "|" + $("#result").text();
+
+	//$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	//ret += "|" + $("#result").text();
+
+	//$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	//ret += "|" + $("#result").text();
+
+
+	// TODO allow the following to work by declaring getPeople as depending on collection change of app.alt ? people2 : people;
+	//$.observable(people2).insert(1, {address:{street: "99 new street"}})
+	//ret += "|" + $("#result").text();
+
+	// =============================== Arrange ===============================
+	function getValue(a) {
+		return this.value + a;
+	}
+	function switchAlt() {
+		$.observable(app).setProperty("alt", !app.alt);
+	}
+
+	app.alt = false;
+	app.index = 0;
+	people1 = [{address:{street: "1 first street"}}];
+	people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}];
+	data1 = {value: "val1", people:people1, getValue:getValue},
+	data2 = {value: "val2", people:people2, getValue:getValue},
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData().getValue(22)}}").link("#result", app);
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret = "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:(getData().getValue(22))}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData().getValue((getData().getValue(22)))}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData(getPeople(getData(alt || 2).getValue()).length).value}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople()[index]||{}).address}}{^{:street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:(((getData()).people[0]).address^street)}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:'b'+((getData().value) + ('a'+getData().value)) + getData().getValue(55)}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:'a' + getData().value}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Assert ..................................
+	equal(ret, "|val222--val122|1 first street--1 second street2 second street|1 second street2 second street--1 first street"
+		+ "|val122--val222|val2val222--val1val122|val1--val2|1 second street--1 first street"
+		+ "|1 first street--1 second street|bval2aval2val255--bval1aval1val155|aval1--aval2",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
+	});
 
 module("API - Settings");
 

@@ -81,14 +81,14 @@ var Person = function(first, last) {
 		fullName: fullName
 	};
 
-	//Setter for firstName - for two-way binding
-	personProto.firstName.set = function(val) {
-		this._firstName = val;
-	}
+//Setter for firstName - for two-way binding
+personProto.firstName.set = function(val) {
+	this._firstName = val;
+}
 
-	Person.prototype = personProto,
+Person.prototype = personProto;
 
-	person = new Person("Jeff", "Friedman");
+var person = new Person("Jeff", "Friedman");
 
 // Parameterized computed fullName
 function fullName(reversed) {

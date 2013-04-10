@@ -18,14 +18,16 @@
 <div class="box label">By default, binding to a path such as <b>app.selected.name.first</b> will 'observe' changes at the leaf level only. <br />
 To observe changes higher up the path, such as swapping the <b>app.selected</b> object (selected person), replace the <b>'.'</b> by <b>'^'</b>
 immediately after the highest-level item to be 'observed'.
-<br /><br />For paths in which objects higher in the path may sometimes be null or undefined, add <b>noerror = true</b> in order to suppress error rendering and default to an empty string.
+<br /><br />For paths in which objects higher in the path may sometimes be null or undefined,
+add <b>noerror = true</b> in order to suppress error rendering and default to an empty string.
+(<b>Note:</b> This API may be replaced in future versions.)
 
 <br /><br />Example: <b>&lt;div data-link="selected^name.first noerror=true">&lt;div></b></div>
 
 <!--====== Containers ======-->
 <div class="box">
 	<div class="subhead">Observing changes to object properties higher up the path<br /></div>
-	<table><tbody id="peopleList"></tbody></table>
+	<table id="peopleList"></table>
 </div>
 <div class="box">
 	<div class="subhead">Data-bound tag &mdash; {^{>selected^name.first noerror=true}}:<br /></div>
@@ -34,21 +36,24 @@ immediately after the highest-level item to be 'observed'.
 
 <!--====== Templates ======-->
 <script id="peopleTmpl" type="text/x-jsrender">
-	<tr>
-		<td colspan="2"><select data-link="{getIndex: selected array=people :setObject}" size="5">
-			<option value="0">Choose a person to edit</option>
-			{{for people}}
-				<option value="{{:#index + 1}}" data-link="{:name.first + ' ' + name.last}"></option>
-			{{/for}}
-		</select></td>
-	</tr>
-	<tr>
-		<td><input data-link="{:selected^name.first noerror=true:} disabled{:!selected}" /></td>
-		<td><input data-link="{:selected^name.last noerror=true:} disabled{:!selected}" /></td>
-	</tr>
-	<tr>
-		<td colspan="2" data-link="selected^name.first + ' ' + selected^name.last noerror=true"></td>
-	</tr>
+	<tbody><tr><td colspan="2"><button id="addBtn">Add</button> <button id="removeBtn" data-link="disabled{:!selected}">Remove</button></td></tr></tbody>
+	<tbody>
+		<tr>
+			<td colspan="2"><select data-link="{getIndex: selected array=people :setObject}" size="5">
+				<option value="0">Choose a person to edit</option>
+				{^{for people}}
+					<option data-link="{:name.first + ' ' + name.last} value{:#index + 1} selected{:#data === ~root.selected}"></option>
+				{{/for}}
+			</select></td>
+		</tr>
+		<tr>
+			<td><input data-link="{:selected^name.first noerror=true:} disabled{:!selected}" /></td>
+			<td><input data-link="{:selected^name.last noerror=true:} disabled{:!selected}" /></td>
+		</tr>
+		<tr>
+			<td colspan="2" data-link="selected^name.first + ' ' + selected^name.last noerror=true"></td>
+		</tr>
+	</tbody>
 </script>
 
 <script id="nameTmpl" type="text/x-jsrender">
@@ -78,7 +83,7 @@ var people = [{
 
 var app = {
 	people: people,
-	selected: null
+	selected: people[0]
 };
 
 //=========== Register converters ===========
@@ -104,6 +109,14 @@ $.templates({
 $.link.peopleTmpl( "#peopleList", app);
 $.link.nameTmpl( "#nameSection", app, { target: "replace" });
 
+	 $("#addBtn").on("click", function(){
+		$.observable(app.people).insert(app.people.length, {name: {first: "first", last: "last"}});
+		$.observable(app).setProperty("selected", app.people[app.people.length-1]);
+	 })
+	 $("#removeBtn").on("click", function(){
+		$.observable(app.people).remove($.inArray(app.selected, app.people));
+		$.observable(app).setProperty("selected", null);
+	 })
 </script>
 
 <!--================ End of Demo Section ================-->

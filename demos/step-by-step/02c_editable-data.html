@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
+	<script src="../../jsrender.js" type="text/javascript"></script>
+	<script src="../../jquery.observable.js" type="text/javascript"></script>
+	<script src="../../jquery.views.js" type="text/javascript"></script>
+	<link href="../resources/demos.css" rel="stylesheet" type="text/css" />
+	<link href="../resources/masterdetail.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="nav"><a href="../demos.html">JsViews Demos</a></div>
+
+<h3>Fully editable data: Using $.observable.observe(...) for detail view binding</h3>
+
+<br />
+<div class="subhead">Example of data-bound tags:</div>
+<pre>
+...
+$.observable.observe(app, "selectedItem",  function(event, args) { ... }
+...
+</pre>
+
+<div class="buttons">
+	<button onclick="showData()">show data</button>
+	<button onclick="deleteLastLanguage()">delete last language</button>
+</div>
+
+<div class="comment">Click to select and edit</div>
+
+<table>
+	<thead><tr><th>Title</th><th>Languages</th><th><span id="addMovieBtn">Add</span></th></tr></thead>
+	<tbody id="movieList"></tbody>
+</table>
+
+<div id="movieDetail"></div>
+
+<script id="movieTemplate" type="text/x-jsrender">
+	<tr class="hover" data-link="css-background-color{:~bgColor(#index, ~app.selectedItem)}">
+		<td>
+			{^{:#index + 1}}: {^{>title}}
+		</td>
+		<td>
+			{^{for languages}}
+				<div>{^{>name}}</div>
+			{{/for}}
+		</td>
+		<td>
+			<img class="close" src="../resources/close.png" />
+		</td>
+	</tr>
+</script>
+
+<script id="detailViewTemplate" type="text/x-jsrender">
+	<div>
+		<div class="title">Title:</div>
+		<div><input data-link="title" /></div>
+		<div class="title">Languages: <span id="addLanguageBtn">Add</span></div>
+		<div>
+			{^{for languages}}
+				<input data-link="name" /><img class="close" src="../resources/close.png" />
+			{{/for}}
+		</div>
+	</div>
+</script>
+
+<script type="text/javascript">
+	var counter = 0,
+		app = {
+			selectedItem: null
+		},
+
+		movies = [
+			{
+				title:"Meet Joe Black",
+				languages: [
+					{ name: "English" },
+					{ name: "French" }
+				]
+			},
+			{
+				title:"Eyes Wide Shut",
+				languages: [
+					{ name: "German" },
+					{ name: "French" },
+					{ name: "Spanish" }
+				]
+			}
+		];
+
+	$.templates({
+		movieTmpl: "#movieTemplate",
+		detailTmpl: "#detailViewTemplate"
+	});
+
+	$("#movieDetail")
+		.on("click", "#addLanguageBtn", function() {
+			var languages = $.view(this).data.languages;
+			$.observable(languages).insert(languages.length, {
+				name: "NewLanguage" + counter++
+			});
+		})
+
+		.on("click", ".close", function() {
+			var view = $.view(this);
+			$.observable(view.parent.data).remove(view.index, 1);
+// Or equivalently:	$.observable(app.selectedItem.data.languages).remove(view.index, 1);
+			return false;
+		});
+
+	$("#addMovieBtn").on("click", function() {
+		$.observable(movies).insert(movies.length, {
+			title: "NewTitle" + counter ,
+			languages: [
+				{ name: "NewLanguage" + counter++ }
+			]}
+		);
+
+		// Set selection on the added item
+		select($.view("#movieList tr:last"));
+	});
+
+	$.observable.observe(app, "selectedItem",  function(event, args) {
+		var selectedView = args.value;
+		if (selectedView) {
+			$.link.detailTmpl("#movieDetail", selectedView.data);
+		} else {
+			$("#movieDetail").empty();
+		}
+	});
+
+	$.views.helpers({
+		bgColor: function (index, selectedItem) {
+			// index could also be obtained from the view, which is available from the 'this' context for this function
+			// var index = this.view.index()
+			return (selectedItem && selectedItem.index === index) ? "yellow" : (index%2 ? "#fdfdfe" : "#efeff2");
+		},
+		app: app
+	});
+
+	$.link.movieTmpl("#movieList", movies)
+		.on("click", "tr", function() {
+			select($.view(this));
+		})
+		.on("click", ".close", function() {
+			select();
+			$.observable(movies).remove($.view(this).index, 1);
+			return false;
+		});
+
+	function select(view) {
+		if (app.selectedItem !== view) {
+			$.observable(app).setProperty("selectedItem", view);
+		}
+	}
+
+	function deleteLastLanguage() {
+		if (movies.length) {
+			var languages = movies[ movies.length - 1 ].languages;
+			$.observable(languages).remove(languages.length - 1, 1);
+		}
+	}
+</script>
+
+<!--================ End of Demo Section ================-->
+
+<!--Console-->
+
+<script id="showData" type="text/x-jsrender">
+	<div><b>Movie:</b> {{>title}} <b>Languages:</b> {{for languages}} {{>name}}{{/for}}</div>
+</script>
+
+<div id="console">
+</div>
+
+<script type="text/javascript">
+	function showData() {
+		$("#console").append("<hr/>");
+		$("#console").append($("#showData").render(movies));
+	}
+</script>
+
+</body>
+</html>
