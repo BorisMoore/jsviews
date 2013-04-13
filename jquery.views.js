@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 35 (Beta Candidate)
+// informal pre beta commit counter: 36 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -127,14 +127,13 @@
 			l = bindings.length;
 			while (l--) {
 				if (binding = bindingStore[bindings[l]]) {
-// TODO is it an error when bindingStore[bindings[l]] is undefined. Should we ever get to that state?
 					linkCtx = binding.linkCtx;
 					view = linkCtx.view;
 					if (to = binding.to) {
 						// The binding has a 'to' field, which is of the form [[targetObject, toPath], cvtBack]
 						$source = $(source);
-						onBeforeChange = view.hlp(onBeforeChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
-						onAfterChange = view.hlp(onAfterChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
+						onBeforeChange = view.hlp(onBeforeChangeStr);
+						onAfterChange = view.hlp(onAfterChangeStr);
 						fromAttr = defaultAttr(source);
 						setter = fnSetters[fromAttr];
 						sourceValue = $isFunction(fromAttr) ? fromAttr(source) : setter ? $source[setter]() : $source.attr(fromAttr);
@@ -155,14 +154,11 @@
 								sourceValue = cvtBack.call(linkCtx.tag, sourceValue);
 							}
 							if (sourceValue !== undefined && target) {
-	// TODO add support for _parameterized_ set() and depends() on computed observables //$observable(target).setProperty(to, sourceValue, args);
-	// Consider getting args by a compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
 								$observable(target).setProperty(to, sourceValue);
-								if (onAfterChange) {  // TODO only call this if the target property changed
+								if (onAfterChange) {
 									onAfterChange.call(linkCtx, ev);
 								}
 							}
-							//ev.stopPropagation(); // Stop bubbling
 						}
 						if (cancel) {
 							ev.stopImmediatePropagation();
@@ -184,7 +180,7 @@
 			targetElem = parentElem,
 			$target = $(target),
 			view = linkCtx.view,
-			onEvent = view.hlp(onBeforeChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
+			onEvent = view.hlp(onBeforeChangeStr);
 
 		if (parentElem && (!onEvent || !(eventArgs && onEvent.call(linkCtx, ev, eventArgs) === false))
 				// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
@@ -260,6 +256,7 @@
 					if (attr === "value") {
 						if (target.type === "checkbox") {
 							sourceValue = sourceValue && sourceValue !== "false";
+							// The string value "false" can occur with data-link="checked{attr:expr}" - as a result of attr, and hence using convertVal()
 							attrOrProp = "prop";
 							attr = "checked";
 							// We will set the "checked" property
@@ -281,17 +278,20 @@
 						} else {
 							// Otherwise, go straight to observeAndBind, without updating.
 							// (The browser will remove the 'checked' attribute, when another radio button in the group is checked).
-							observeAndBind(linkCtx, source, target, linkFn); //TODO ? linkFnArgs);
+							observeAndBind(linkCtx, source, target, linkFn);
 							view.linkCtx = oldLinkCtx;
 							return;
 						}
+					} else if (attr === "selected" || attr === "disabled" || attr === "multiple" || attr === "readlonly") {
+						sourceValue = (sourceValue && sourceValue !== "false") ? attr : null;
+						// Use attr, not prop, so when the options (for example) are changed dynamically, but include the previously selected value,
+						// they will still be selected after the change
 					}
 
 					setter = fnSetters[attr];
 
 					if (setter) {
 						if (changed = tag || $target[setter]() !== sourceValue) {
-// TODO support for testing whether {^{: or {^{tag have changed or not. Currently always true, since sourceValue has not been converted yet by convertMarkers
 							if (attr === "html") {
 								if (tag) {
 									inlineTag = tag._.inline;
@@ -330,7 +330,6 @@
 				}
 
 				if (eventArgs && changed && (onEvent = view.hlp(onAfterChangeStr))) {
-//TODO improve this for perf optimization. We are calling this view.hlp() every time.
 					onEvent.call(linkCtx, ev, eventArgs);
 				}
 			}
@@ -343,8 +342,8 @@
 
 	function arrayChangeHandler(ev, eventArgs) {
 		var self = this,
-			onBeforeChange = self.hlp(onBeforeChangeStr),  //TODO improve this for perf optimization. We are calling this every time.
-			onAfterChange = self.hlp(onAfterChangeStr);  //TODO improve this for perf optimization. We are calling this every time.
+			onBeforeChange = self.hlp(onBeforeChangeStr),
+			onAfterChange = self.hlp(onAfterChangeStr);
 
 		if (!onBeforeChange || onBeforeChange.call(ev, eventArgs) !== false) {
 			if (eventArgs) {
@@ -575,12 +574,11 @@
 	// observeAndBind
 	//---------------
 
-	function observeAndBind(linkCtx, source, target, linkFn) { //TODO ? linkFnArgs) {;
+	function observeAndBind(linkCtx, source, target, linkFn) { //TODO? linkFnArgs) {;
 		var tag, binding, cvtBack, paths, lastPath, pathIndex,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++,
 			handler = linkCtx._hdlr;
-			//TODO optimize better for cached compiled templates, and share across parent templates, etc. too
 
 		delete linkCtx._bndId;
 
@@ -590,7 +588,6 @@
 			depends = tag.depends || depends;
 			depends = $isFunction(depends) ? tag.depends(tag) : depends;
 			cvtBack = tag.onChange;
-//TODO complete onChange implementation for generic two-way binding of tag controls
 		}
 		cvtBack = cvtBack || linkCtx._cvtBk;
 		if (!linkCtx._depends || ("" + linkCtx._depends !== "" + depends)) {
@@ -626,7 +623,6 @@
 				binding.to = lastPath.charAt(0) === "."
 					? [[paths[pathIndex-1], lastPath.slice(1)], cvtBack]
 					: [linkCtx._ctxCb(paths[0]) || [source, paths[0]], cvtBack];
-// TODO binding.to.linkFnArgs = linkFnArgs; - need to compile this to provide args for setters on computed observables?
 			}
 		}
 	}
@@ -747,7 +743,7 @@
 			// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
 
 // TODO consider detecting 'quoted' contexts (attribute strings) so that attribute encoding does not need to encode >
-// Currently rAttrEncode = /[><"'&]/g includes '>' encoding in order to avoid eronneous parsing of <span title="&lt;a/>">
+// Currently rAttrEncode = /[><"'&]/g includes '>' encoding in order to avoid erroneous parsing of <span title="&lt;a/>">
 
 			var endOfElCnt = "";
 			tag = tag1 || tag2 || "";
@@ -810,7 +806,7 @@
 				}
 				prevElCnt = elCnt;
 //TODO Consider providing validation which throws if you place <span> as child of <tr>, etc. - since if not caught,
-//this can cause errors subsequently which are difficult to bug.
+//this can cause errors subsequently which are difficult to debug.
 //				if (elContent[tagStack[0]]>2 && !elCnt) {
 //					error(parentTag + " in " + tagStack[0]);
 //				}
@@ -985,7 +981,7 @@
 			bindEls = [],
 			tagStack = [],
 			deferStack = [],
-			onAfterCreate = self.hlp(onAfterCreateStr), //TODO improve this for perf optimization. We are calling this every time.
+			onAfterCreate = self.hlp(onAfterCreateStr),
 			processInfos = processViewInfos;
 
 		if (refresh) {
@@ -1625,7 +1621,7 @@
 				$.each(to, function() {
 					var innerView;
 //TODO fix this for better perf. Rather that calling inner view multiple times which does querySelectorAll each time, consider a single querySelectorAll
-					// or simply call view.removeViews() on the top-level views under the target 'to' node, then clean(...)
+// or simply call view.removeViews() on the top-level views under the target 'to' node, then clean(...)
 					while ((innerView = $view(this, true)) && innerView.parent) {
 						innerView.parent.removeViews(innerView._.key, undefined, true);
 					}
@@ -1991,7 +1987,7 @@
 		// jQuery $.view() plugin
 		//=======================
 
-		view: $view = function(node, inner, type) {
+		view: $views.view = $view = function(node, inner, type) {
 			// $.view() returns top view
 			// $.view(node) returns view that contains node
 			// $.view(selector) returns view that contains first selected element
@@ -2065,8 +2061,8 @@
 			return inner ? undefined : topView;
 		},
 
-		link: $link,
-		unlink: $unlink,
+		link: $views.link = $link,
+		unlink: $views.unlink = $unlink,
 
 		//=====================
 		// override $.cleanData
@@ -2089,8 +2085,8 @@
 		link: function(expr, from, context, parentView, prevNode, nextNode) {
 			return $link(expr, this, from, context, parentView, prevNode, nextNode);
 		},
-		unlink: function(expr, from) {
-			return $unlink(expr, this, from);
+		unlink: function(expr) {
+			return $unlink(expr, this);
 		},
 		view: function(type) {
 			return $view(this[0], type);

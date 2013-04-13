@@ -2064,7 +2064,6 @@ test("{^{for}}", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
 
@@ -2238,6 +2237,21 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 		.link("#result", person1);
 
 	// ................................ Act ..................................
+	$("#result").unlink(true);
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	"$(container).unlink(true) removes the views and current listeners from that content");
+	// -----------------------------------------------------------------------
+
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
 	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 	$.observable(settings).setProperty({ title: "Sir", width: 40});
@@ -2386,7 +2400,6 @@ test("ArrayChange: insert()", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	//$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
 
@@ -2413,7 +2426,6 @@ test("ArrayChange: insert()", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
 
@@ -2443,7 +2455,6 @@ test("ArrayChange: insert()", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	//$.unlink(true, "#result");
 	$("#result").empty();
 	model.things = []; // reset Prop
 });
