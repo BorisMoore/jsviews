@@ -1915,6 +1915,47 @@ test("{^{for}}", function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates("testTmpl", '{{if ~things.length}}<div>{{for ~things}}<span>{{:thing}}</span>{{/for}}</div>{{/if}}')
+	$.templates('<div><span>top</span>{^{for things ~things=things tmpl="testTmpl"/}}</div>')
+		.link("#result", model);
+
+	before = $("#result div").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'top|toptree',
+	'Complex template, with empty placeholder for span, and subsequent data-linked insertion of in div');
+	// -----------------------------------------------------------------------
+
+	// ................................ Act ..................................
+	$.view("#result", true).refresh();
+	result = "" + (after === $("#result").text());
+	$.view("#result", true).views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].refresh();
+	result += " " + (after === $("#result").text());
+	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].views[0].refresh();
+	result += " " + (after === $("#result").text());
+
+
+	// ............................... Assert .................................
+	equal(result, 'true true true true true true',
+	'view refresh at all levels correctly maintains content');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
@@ -1931,6 +1972,44 @@ test("{^{for}}", function() {
 	// ............................... Assert .................................
 	equal(result, '1|1|undefined',
 	'Refreshing a view containing a tag which is bound to dependant data, and has no _prv node, removes the original binding and replaces it with a new one');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates('<div>{^{for things}}{^{if expanded}}{{:thing}}{{/if}}{{/for}}</div>')
+		.link("#result", model);
+
+	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	result = $._data(model.things[0]).events.propertyChange.length;
+	$.view("#result", true).views._1.views[0].refresh();
+	result += "|" + $._data(model.things[0]).events.propertyChange.length;
+	$("#result").empty();
+	result += "|" + $._data(model.things[0]).events;
+
+	// ............................... Assert .................................
+	equal(result, '1|1|undefined',
+	'Refreshing a view containing a tag which is bound to dependant data, and has no _prv node, removes the original binding and replaces it with a new one');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates('<div>{{if true}}{^{:things.length||""}}{{/if}}</div>')
+		.link("#result", model);
+
+	before = $("#result div *").length;
+	$.view("#result div", true).refresh();
+	after = $("#result div *").length
+	// ............................... Assert .................................
+	equal(after, before,
+	'Refreshing a view containing non-elOnly content, with a data-bound tag with no rendered content removes the original script node markers for the tag and replace with the new ones');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -2457,6 +2536,18 @@ test("ArrayChange: insert()", function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
+});
+
+test("ArrayChange: remove()", function() {
+	// TODO
+});
+
+test("ArrayChange: move()", function() {
+	// TODO
+});
+
+test("ArrayChange: refresh()", function() {
+	// TODO
 });
 
 module("API - observe()");
@@ -4081,19 +4172,21 @@ test("tag control events", function() {
 
 	// =============================== Arrange ===============================
 	var eventData = "";
+	model.things = [{thing: "box"}]; // reset Prop
+
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<div>{^{myWidget lastName/}}</div>',
+		markup: '<div>{^{myWidget person1.lastName things/}}</div>',
 		tags: {
 			myWidget: {
 				init: function(tagCtx, linkCtx) {
 					eventData += " init";
 				},
-				render: function(val) {
+				render: function(name, things) {
 					eventData += " render";
-					return "<span>" + val + "</span>";
+					return "<span>" + name + "</span> <span>" + things.length + "</span> <span>" + this.getType() + "</span>";
 				},
-				onUpdate: function(tagCtxs) {
+				onUpdate: function(ev, eventArgs, tagCtxs) {
 					eventData += " update";
 				},
 				onBeforeLink: function() {
@@ -4102,30 +4195,45 @@ test("tag control events", function() {
 				onAfterLink: function() {
 					eventData += " after";
 				},
+				onArrayChange: function(ev, eventArgs) {
+					eventData += " onArrayChange";
+				},
 				onDispose: function() {
 					eventData += " dispose";
-				}
+				},
+				getType: function() {
+					eventData += " getType";
+					return this.type;
+				},
+				type: "special"
 			}
 		}
-	}).link("#result", person1);
+	}).link("#result", model);
 
 	// ............................... Assert .................................
-	equals($("#result").text() + "|" + eventData, "One| init render before after", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+	equals($("#result").text() + "|" + eventData, "One 1 special| init render getType before after", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	equals($("#result").text() + "|" + eventData, "Two| init render before after update render before after", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
+	equals($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
+
+	// ................................ Act ..................................
+	$.observable(model.things).insert(0, {thing: "tree"});
+
+	// ............................... Assert .................................
+	equals($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after onArrayChange", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equals($("#result").text() + "|" + eventData, "| init render before after update render before after dispose", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
+	equals($("#result").text() + "|" + eventData, "| init render getType before after update render getType before after onArrayChange dispose", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
 
 	// ................................ Reset ................................
 	person1.lastName = "One";
+	model.things = [];
 	eventData = "";
 
 	// =============================== Arrange ===============================

@@ -23,7 +23,7 @@
 		{^{tabs id="inner" selectedTab=~state.innerSelect height="35px" width="250px" tabCaption="Inner One"}}
 			ONE inner
 		{{else tabCaption="Inner Two"}}
-			TWO  {{:label2}}
+			TWO  {{>label2}}
 		{{else tabCaption="Inner Three"}}
 			THREE inner
 		{{/tabs}}
@@ -38,7 +38,7 @@
 		<tr class="tabstrip">
 			{{for ~tag.tagCtxs}}
 				<th data-link="class{:'header_' + (#index === ~tag.selectedIndex)}">
-					{{:props.tabCaption}}
+					{{>props.tabCaption}}
 				</th>
 			{{/for}}
 		</tr>
@@ -64,9 +64,8 @@
 				this.selectedIndex = tagCtx.props.selectedTab || 0;
 			},
 			render: function() {
-				var tagCtx = this.tagCtx, view = tagCtx.view;
-
-				return this.selectedIndex === tagCtx.index ? this.template.render(view, tagCtx.ctx) : "";
+				var tagCtx = this.tagCtx;
+				return this.selectedIndex === tagCtx.index ? tagCtx.render() : "";
 			},
 			onAfterLink: function() {
 				var self = this;

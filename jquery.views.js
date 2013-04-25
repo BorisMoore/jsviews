@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 36 (Beta Candidate)
+// informal pre beta commit counter: 37 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -73,7 +73,8 @@
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
 		syntaxError = $viewsSub.syntaxError,
-		rFirstElem = /<(?!script)(\w+)[>\s]/,
+		// rFirstElem = /<(?!script)(\w+)([>]*\s+on\w+\s*=)?[>\s]/, // This was without the DomLevel0 test.
+		rFirstElem = /<(?!script)(\w+)(?:[^>]*(on\w+)\s*=)?[^>]*>/,
 		safeFragment = document.createDocumentFragment(),
 		qsa = document.querySelector,
 
@@ -492,7 +493,7 @@
 			for (bindId in view._.bnds) {
 				// The view bindings may have already been removed above in: $(nodesToRemove).remove();
 				// If not, remove them here:
-				removeViewBinding(bindId, true);
+				removeViewBinding(bindId);
 			}
 		} else {
 			// addViews. Only called if view is of type "array"
@@ -974,6 +975,7 @@
 
 		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName,
 			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found,
+			noDomLevel0 = $viewsSettings.noDomLevel0,
 			self = this,
 			thisId = self._.id + "_",
 			defer = "",
@@ -1030,7 +1032,9 @@
 			wrapper = div;
 			prevIds = ids = "";
 			htmlTag = parentNode.namespaceURI === "http://www.w3.org/2000/svg" ? "svg" : (firstTag = rFirstElem.exec(html)) && firstTag[1] || "";
-
+			if (noDomLevel0 && firstTag && firstTag[2]) {
+				error("Unsupported: " + firstTag[2]); // For security reasons, don't allow insertion of elements with onFoo attributes.
+			}
 			if (elCnt) {
 				// Now look for following view, and find its tokens, or if not found, get the parentNode._dfr tokens
 				node = nextNode;
@@ -1330,7 +1334,6 @@
 
 	function viewInfos(node, isVal, rBinding) {
 		// Test whether node is a script marker nodes, and if so, return metadata
-		// If tagBinding, return true if last info is an open tag binding: "#^nnn"
 		function getInfos(all, open, close, id, ch, elPath) {
 			infos.push({
 				elCnt: elCnt,
@@ -1479,10 +1482,11 @@
 			elCnt = tag._elCnt,
 			inline = tag._.inline;
 
+		if (tag.disposed) { error("Removed tag"); }
 		if (sourceValue === undefined) {
-			sourceValue = tag._.bnd.call(view.tmpl, view.data, view, $views);
+			sourceValue = tag._.bnd.call(view.tmpl, view.data, view, $views); // get tagCtxs
 			if (inline) {
-				sourceValue = $views._tag(tag, view, view.tmpl, sourceValue); //renderTag
+				sourceValue = $views._tag(tag, view, view.tmpl, sourceValue); // get rendered HTML for tag
 			}
 		}
 		if (!tag.flow && !tag.render && !tag.template) {
@@ -1532,14 +1536,18 @@
 
 	function clean(elems) {
 		// Remove data-link bindings, or contained views
-		var i, j, l, l2, elem, vwInfos, vwItem, bindings,
-			elemArray = [];
-		for (i = 0; elem = elems[i]; i++) {
+		var j, l, l2, elem, vwInfos, vwItem, bindings,
+			elemArray = [],
+			len = elems.length,
+			i = len;
+		while (i--) {
 			// Copy into an array, so that deletion of nodes from DOM will not cause our 'i' counter to get shifted
 			// (Note: This seems as fast or faster than elemArray = [].slice.call(elems); ...)
-			elemArray.push(elem);
+			elemArray.push(elems[i]);
 		}
-		for (i = 0; elem = elemArray[i]; i++) {
+		i = len;
+		while (i--) {
+			elem = elemArray[i];
 			if (elem.parentNode) {
 				// Has not already been removed from the DOM
 				if (bindings = elem._jsvBnd) {
@@ -1597,9 +1605,10 @@
 					tag._prv.parentNode.removeChild(tag._prv);
 					tag._nxt.parentNode.removeChild(tag._nxt);
 				}
+				tag.disposed = true;
 			}
 			delete linkCtx.view._.bnds[bindId];
-			delete bindingStore[bindId]
+			delete bindingStore[bindId];
 			delete $viewsSub._cbBnds[binding.cbId];
 		}
 	}
@@ -1870,8 +1879,8 @@
 						$(nodesToRemove).remove();
 					}
 					if (!viewToRemove._elCnt) {
-						parentElem.removeChild(prevNode);
-						parentElem.removeChild(nextNode);
+						prevNode.parentNode && parentElem.removeChild(prevNode);
+						nextNode.parentNode && parentElem.removeChild(nextNode);
 					}
 					setArrayChangeLink(viewToRemove);
 					for (bindId in viewToRemove._.bnds) {

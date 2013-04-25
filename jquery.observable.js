@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore and Brad Olenick
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 36 (Beta Candidate)
+// informal pre beta commit counter: 37 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -516,7 +516,7 @@
 			oldLength = _data.length;
 			_data.splice( oldIndex, numToMove );
 			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
-			this._trigger( { change: "move", oldIndex: oldIndex, index: newIndex, items: items } );
+			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items});
 		},
 
 		refresh: function(newItems) {
@@ -533,9 +533,12 @@
 		},
 
 		_trigger: function(eventArgs) {
-			var $data = $([_data]);
+			var length = _data.length,
+				$data = $([_data]);
 			$data.triggerHandler(arrayChangeStr, eventArgs);
-			$data.triggerHandler(propertyChangeStr, {path: "length", value: _data.length, oldValue: oldLength});
+			if (length !== oldLength) {
+				$data.triggerHandler(propertyChangeStr, {path: "length", value: length, oldValue: oldLength});
+			}
 		}
 	};
 
