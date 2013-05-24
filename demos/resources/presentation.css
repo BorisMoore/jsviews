@@ -48,13 +48,18 @@ pre {
 	font-weight: bold;
 }
 
-table {
-	border-collapse: collapse;
-}
-
 table tr {
 	color: blue;
 	height: 25px;
+}
+
+table {
+	border-collapse: collapse;
+	border: 2px solid blue;
+	width: 480px;
+	margin: 6px 0 24px;
+	padding: 2px;
+	background-color: #f8f8f8;
 }
 
 thead tr {
@@ -68,18 +73,6 @@ thead th {
 	border: 1px solid #77c;
 }
 
-#movieList tr td:first-child {
-	width: 130px;
-}
-
-table {
-	border: 2px solid blue;
-	width: 480px;
-	margin: 6px 0 24px;
-	padding: 2px;
-	background-color: #f8f8f8;
-}
-
 table td {
 	width: 50%;
 	padding: 3px;
@@ -88,17 +81,21 @@ table td {
 	border: solid #77C 1px;
 }
 
+table input {
+	width: 96%;
+	border: 1px solid #000;
+	padding: 4px;
+}
+
+#movieList tr td:first-child {
+	width: 130px;
+}
+
 table.three td {
 	width: 33%;
 	padding: 3px;
 	margin: 3px;
 	border: solid #77c 1px;
-}
-
-table input {
-	width: 96%;
-	border: 1px solid #000;
-	padding: 4px;
 }
 
 table.three input {

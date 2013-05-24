@@ -17,19 +17,20 @@
 <div id="tabsView">..loading</div>
 
 <script id="myTmpl" type="text/x-jsrender">
-
-	{^{tabs id="outer" width="290px" height="135px" tabCaption="first"}}
+	{^{tabs id="outer" width=width + "px" height="135px" tabCaption="first"}}
 		<div class="special">Some tabbed content:</div>
 		{^{tabs id="inner" selectedTab=~state.innerSelect height="35px" width="250px" tabCaption="Inner One"}}
 			ONE inner
 		{{else tabCaption="Inner Two"}}
-			TWO  {{>label2}}
+			TWO {{>label2}}
 		{{else tabCaption="Inner Three"}}
 			THREE inner
 		{{/tabs}}
 	{{else tabCaption="second"}}
 		<ul><li>Some</li><li>other</li><li>content</li></ul>
 	{{/tabs}}
+
+	<br /><br />Modify width (pixels): <input data-link="width" />
 
 </script>
 
@@ -44,7 +45,7 @@
 		</tr>
 		<tr class="tabscontent">
 			<td colspan="{{:~tag.tagCtxs.length}}">
-				<div style="width:{{attr:~tag.width}}; height:{{attr:~tag.height}}">
+				<div style="width:{{attr:~tag.tagCtx.props.width}}; height:{{attr:~tag.tagCtx.props.height}}">
 					{^{for tmpl=~tag.tagCtxs[~tag.selectedIndex].content /}}
 				</div>
 			</td>
@@ -55,12 +56,7 @@
 <script type="text/javascript">
 	$.views.tags({
 		tabs: {
-			setTab: function(index) {
-				$.observable(this).setProperty("selectedIndex", index);
-			},
 			init: function(tagCtx) {
-				this.width = tagCtx.props.width;
-				this.height = tagCtx.props.height;
 				this.selectedIndex = tagCtx.props.selectedTab || 0;
 			},
 			render: function() {
@@ -79,14 +75,19 @@
 					this.tagCtx.ctx.state.innerSelect = this.selectedIndex;
 				}
 			},
-			template: "#tabsTemplate"
+			template: "#tabsTemplate",
+
+			//METHODS
+			setTab: function(index) {
+				$.observable(this).setProperty("selectedIndex", index);
+			}
 		}
 	});
 
 	var state = { innerSelect: 1 },
 		myTmpl = $.templates("#myTmpl");
 
-	myTmpl.link("#tabsView", {label2: "Inner Tab Label2"}, {state: state});
+	myTmpl.link("#tabsView", {label2: "Inner Tab Label2", width: 290}, {state: state});
 
 </script>
 </body>

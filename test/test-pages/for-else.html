@@ -24,6 +24,7 @@
 <button id="settings">Add/Remove settings</button>
 <button id="swapTeam">Swap team</button>
 <button id="swapWithEmpty">Swap with empty team</button>
+<button id="refreshPeople">Refresh people</button>
 <br/>
 <button id="replace">replace all</button>
 </p>
@@ -155,6 +156,16 @@ $( "#insertPerson" ).click( function() {
 		$.observable( app ).setProperty("team.people", []);
 	}
 	$.observable( app.team.people ).insert( 0, { name: "NewPerson" + counter++ });
+});
+
+$( "#refreshPeople" ).click( function() {
+	if (!app.team.people) {
+		$.observable( app ).setProperty("team.people", []);
+	}
+	var newArray = [];
+	newArray.push({name: "added"});
+	newArray.push({name: "added2"});
+	$.observable( app.team.people ).refresh(newArray);
 });
 
 $( "#removePerson" ).click( function() {

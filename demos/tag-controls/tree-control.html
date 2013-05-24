@@ -45,12 +45,6 @@
 
 $.views.tags({
 	tree: {
-		toggle: function() {
-			$.observable(this).setProperty("expanded", !this.expanded);
-		},
-		select: function() {
-			$.observable(this).setProperty("selected", !this.selected);
-		},
 		onAfterLink: function() {
 			var self = this;
 			self.contents("li").first()
@@ -61,8 +55,18 @@ $.views.tags({
 					self.select();
 				});
 		},
+		template: "#treeTemplate",
+
+		//PROPERTIES
 		expanded: false, // default to unexpanded
-		template: "#treeTemplate"
+
+		//METHODS
+		toggle: function() {
+			$.observable(this).setProperty("expanded", !this.expanded);
+		},
+		select: function() {
+			$.observable(this).setProperty("selected", !this.selected);
+		},
 	}
 });
 

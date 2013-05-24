@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: 37 (Beta Candidate)
+// informal pre beta commit counter: 38 (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -971,10 +971,126 @@
 				}
 			}
 		}
+
+		function dataLink() {
+			//================ Data-link and fixup of data-jsv annotations ================
+			elems = qsa ? parentNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, parentNode).get();
+			l = elems.length;
+
+			// The prevNode will be in the returned query, since we called markPrevOrNextNode() on it.
+			// But it may have contained nodes that satisfy the selector also.
+			if (prevNode) {
+				// Find the last contained node one to use as the prevNode - so we only link subsequent elems in the query
+				prevNodes = qsa ? prevNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, prevNode).get();
+				prevNode = prevNodes.length ? prevNodes[prevNodes.length - 1] : prevNode;
+			}
+			tagDepth = 0;
+			for (i = 0; i < l; i++) {
+				elem = elems[i];
+				if (prevNode && !found) {
+					// If prevNode is set, not false, skip linking. If this element is the prevNode, set to false so subsequent elements will link.
+					found = (elem === prevNode);
+				} else if (nextNode && elem === nextNode) {
+					// If nextNode is set then break when we get to nextNode
+					break;
+				} else if (elem.parentNode
+					// elem has not been removed from DOM
+						&& processInfos(viewInfos(elem, undefined, tags && rOpenTagMarkers))
+						// If a link() call, processViewInfos() adds bindings to bindEls, and returns true for non-script nodes, for adding data-link bindings
+						// If a childTags() call getViewInfos adds tag bindings to tags array.
+							&& elem.getAttribute($viewsLinkAttr)) {
+								bindEls.push([elem]);
+							}
+			}
+
+			// Remove temporary marker script nodes they were added by markPrevOrNextNode
+			unmarkPrevOrNextNode(prevNode, elCnt);
+			unmarkPrevOrNextNode(nextNode, elCnt);
+
+			if (get) {
+				lazyLink && lazyLink.resolve();
+				return;
+			}
+
+			if (elCnt && defer + ids) {
+				// There are some views with elCnt, for which the open or close did not precede any HTML tag - so they have not been processed yet
+				elem = nextNode;
+				if (defer) {
+					if (nextNode) {
+						processViewInfos(viewInfos(defer + "+", true), nextNode);
+					} else {
+						processViewInfos(viewInfos(defer, true), parentNode);
+					}
+				}
+				processViewInfos(viewInfos(ids, true), parentNode);
+				// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
+				if (nextNode) {
+					tokens = nextNode.getAttribute(jsvAttrStr);
+					if (l = tokens.indexOf(prevIds) + 1) {
+						tokens = tokens.slice(l + prevIds.length - 1);
+					}
+					nextNode.setAttribute(jsvAttrStr, ids + tokens);
+				}
+			}
+
+			//================ Bind the data-link elements, and the data-bound tags ================
+			l = bindEls.length;
+			for (i = 0; i < l; i++) {
+				elem = bindEls[i];
+				linkInfo = elem[1];
+				elem = elem[0];
+				if (linkInfo) {
+					tag = bindingStore[linkInfo.id];
+					tag = tag.linkCtx ? tag.linkCtx.tag : tag;
+					// The tag may have been stored temporarily on the bindingStore - or may have already been replaced by the actual binding
+					if (linkInfo.open) {
+						// This is an 'open bound tag' binding annotation for a data-bound tag {^{...}}
+						if (elem) {
+							tag.parentElem = elem.parentNode;
+							tag._prv = elem;
+						}
+						tag._elCnt = linkInfo.elCnt;
+						if (tag && (!tag.onBeforeLink || tag.onBeforeLink() !== false) && !tag._.bound) {
+							// By default we data-link depth-first ("on the way in"), which is better for perf. But if a tag needs nested tags to be linked (refreshed)
+							// first, before linking its content, then make onBeforeLink() return false. In that case we data-link depth-first, so nested tags will have already refreshed.
+							tag._.bound = true;
+							view = tag.tagCtx.view;
+							addDataBinding(undefined, tag._prv, view, view.data||outerData, linkInfo.id);
+						}
+
+						tag._.linking = true;
+					} else {
+						tag._nxt = elem;
+						if (tag._.linking) {
+							// This is a 'close bound tag' binding annotation
+							// Add data binding
+							view = tag.tagCtx.view;
+							tag.contents = getContents;
+							tag.nodes = getNodes;
+							tag.childTags = getChildTags;
+
+							delete tag._.linking;
+							if (tag && tag.onAfterLink) {
+								tag.onAfterLink();
+							}
+							if (!tag._.bound) {
+								tag._.bound = true;
+								addDataBinding(undefined, tag._prv, view, view.data||outerData, linkInfo.id);
+							}
+						}
+					}
+				} else {
+					view = $view(elem);
+					// Add data binding for a data-linked element (with data-link attribute)
+					addDataBinding(elem.getAttribute($viewsLinkAttr), elem, view, view.data||outerData);
+				}
+			}
+			lazyLink && lazyLink.resolve();
+		}
 		//==== /end of nested functions ====
 
 		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName,
-			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found,
+			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, lazyLink,
 			noDomLevel0 = $viewsSettings.noDomLevel0,
 			self = this,
 			thisId = self._.id + "_",
@@ -987,6 +1103,7 @@
 			processInfos = processViewInfos;
 
 		if (refresh) {
+			lazyLink = refresh.lazyLink && $.Deferred();
 			if (refresh.tmpl) {
 				// refresh is the prevView, passed in from addViews()
 				prevView = "/" + refresh._.id + "_";
@@ -1088,112 +1205,13 @@
 			parentNode.insertBefore(fragment, nextNode);
 		}
 
-		//================ Data-link and fixup of data-jsv annotations ================
-		elems = qsa ? parentNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, parentNode).get();
-		l = elems.length;
-
-		// The prevNode will be in the returned query, since we called markPrevOrNextNode() on it.
-		// But it may have contained nodes that satisfy the selector also.
-		if (prevNode) {
-			// Find the last contained node one to use as the prevNode - so we only link subsequent elems in the query
-			prevNodes = qsa ? prevNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, prevNode).get();
-			prevNode = prevNodes.length ? prevNodes[prevNodes.length - 1] : prevNode;
-		}
-		tagDepth = 0;
-		for (i = 0; i < l; i++) {
-			elem = elems[i];
-			if (prevNode && !found) {
-				// If prevNode is set, not false, skip linking. If this element is the prevNode, set to false so subsequent elements will link.
-				found = (elem === prevNode);
-			} else if (nextNode && elem === nextNode) {
-				// If nextNode is set then break when we get to nextNode
-				break;
-			} else if (elem.parentNode
-				// elem has not been removed from DOM
-					&& processInfos(viewInfos(elem, undefined, tags && rOpenTagMarkers))
-					// If a link() call, processViewInfos() adds bindings to bindEls, and returns true for non-script nodes, for adding data-link bindings
-					// If a childTags() call getViewInfos adds tag bindings to tags array.
-						&& elem.getAttribute($viewsLinkAttr)) {
-							bindEls.push([elem]);
-						}
+		if (lazyLink) {
+			setTimeout(dataLink, 0);
+		} else {
+			dataLink();
 		}
 
-		// Remove temporary marker script nodes they were added by markPrevOrNextNode
-		unmarkPrevOrNextNode(prevNode, elCnt);
-		unmarkPrevOrNextNode(nextNode, elCnt);
-
-		if (get) {
-			return;
-		}
-
-		if (elCnt && defer + ids) {
-			// There are some views with elCnt, for which the open or close did not precede any HTML tag - so they have not been processed yet
-			elem = nextNode;
-			if (defer) {
-				if (nextNode) {
-					processViewInfos(viewInfos(defer + "+", true), nextNode);
-				} else {
-					processViewInfos(viewInfos(defer, true), parentNode);
-				}
-			}
-			processViewInfos(viewInfos(ids, true), parentNode);
-			// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
-			if (nextNode) {
-				tokens = nextNode.getAttribute(jsvAttrStr);
-				if (l = tokens.indexOf(prevIds) + 1) {
-					tokens = tokens.slice(l + prevIds.length - 1);
-				}
-				nextNode.setAttribute(jsvAttrStr, ids + tokens);
-			}
-		}
-
-		//================ Bind the data-link elements, and the data-bound tags ================
-		l = bindEls.length;
-		for (i = 0; i < l; i++) {
-			elem = bindEls[i];
-			linkInfo = elem[1];
-			elem = elem[0];
-			if (linkInfo) {
-				tag = bindingStore[linkInfo.id];
-				tag = tag.linkCtx ? tag.linkCtx.tag : tag;
-				// The tag may have been stored temporarily on the bindingStore - or may have already been replaced by the actual binding
-				if (linkInfo.open) {
-					// This is an 'open bound tag' binding annotation for a data-bound tag {^{...}}
-					if (elem) {
-						tag.parentElem = elem.parentNode;
-						tag._prv = elem;
-					}
-					tag._elCnt = linkInfo.elCnt;
-					if (tag && tag.onBeforeLink) {
-						tag.onBeforeLink();
-					}
-					tag._.linking = true;
-				} else {
-					tag._nxt = elem;
-					if (tag._.linking) {
-						// This is a 'close bound tag' binding annotation
-						// Add data binding
-						view = tag.tagCtx.view;
-						tag.contents = getContents;
-						tag.nodes = getNodes;
-						tag.childTags = getChildTags;
-
-						delete tag._.linking;
-						if (tag && tag.onAfterLink) {
-							tag.onAfterLink();
-						}
-						if (!tag._.bound) {
-							tag._.bound = true;
-							addDataBinding(undefined, tag._prv, view, view.data||outerData, linkInfo.id);
-						}
-					}
-				}
-			} else {
-				view = $view(elem);
-				// Add data binding for a data-linked element (with data-link attribute)
-				addDataBinding(elem.getAttribute($viewsLinkAttr), elem, view, view.data||outerData);
-			}
-		}
+		return lazyLink && lazyLink.promise();
 	}
 
 	function addDataBinding(linkMarkup, node, currentView, data, boundTagId) {
@@ -1298,6 +1316,11 @@
 			propertyChangeHandler.call(linkCtx, ev, eventArgs, linkFn);
 			// If the link expression uses a custom tag, the propertyChangeHandler call will call renderTag, which will set tagCtx on linkCtx
 		}
+
+// Consider for issue https://github.com/BorisMoore/jsviews/issues/158 arrayChange support on data-link etc.
+		//handler.array = function() {
+		//	...
+		//}
 
 		linkCtx._ctxCb = getContextCb(linkCtx.view); // _ctxCb is for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 		linkCtx._hdlr = handler;
@@ -1473,14 +1496,15 @@
 	}
 
 	function refreshTag(sourceValue) {
-		var skipBinding, nodesToRemove,
+		var skipBinding, nodesToRemove, promise,
 			tag = this,
 			target = tag.parentElem,
 			view = tag.tagCtx.view,
 			prevNode = tag._prv,
 			nextNode = tag._nxt,
 			elCnt = tag._elCnt,
-			inline = tag._.inline;
+			inline = tag._.inline,
+			props = tag.tagCtx.props;
 
 		if (tag.disposed) { error("Removed tag"); }
 		if (sourceValue === undefined) {
@@ -1509,7 +1533,7 @@
 			$(nodesToRemove).remove();
 		} else {
 			// data-linked value using converter(s): data-link="{cvt: ... :cvtBack}" or tag: data-link="{tagname ...}"
-			if (!tag.flow && tag.tagCtx.props.inline) {
+			if (!tag.flow && props.inline) {
 				// data-link="{tagname ...}"
 				view._.tag = tag;
 				sourceValue = addBindingMarkers(sourceValue, view, true);
@@ -1523,11 +1547,17 @@
 		if (!skipBinding && tag.onBeforeLink) {
 			tag.onBeforeLink();
 		}
-		view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId});
+		promise = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId, lazyLink: props.lazyLink});
 		if (!skipBinding && tag.onAfterLink) {
-			tag.onAfterLink();
+			if (promise) {
+				promise.then(function () {
+					tag.onAfterLink();
+				});
+			} else {
+				tag.onAfterLink();
+			}
 		}
-		return tag;
+		return promise || tag;
 	}
 
 	//=========
@@ -1559,7 +1589,7 @@
 					l = bindings.length;
 					while (l--) {
 						// Remove associated bindings
-						removeViewBinding(bindings[l], true); // unbind bindings with this bindingId on this view
+						removeViewBinding(bindings[l]); // unbind bindings with this bindingId on this view
 					}
 				}
 				if (vwInfos = viewInfos(markerNodeInfo(elem) + (elem._dfr || ""), true, rOpenMarkers)) {
@@ -1572,7 +1602,7 @@
 								vwItem.parent.removeViews(vwItem._.key, undefined, true);
 							}
 						} else {
-							removeViewBinding(vwItem.id, true); // unbind bindings with this bindingId on this view
+							removeViewBinding(vwItem.id); // unbind bindings with this bindingId on this view
 						}
 					}
 				}
@@ -1580,7 +1610,7 @@
 		}
 	}
 
-	function removeViewBinding(bindId, keepNodes) {
+	function removeViewBinding(bindId) {
 		// Unbind
 		var objId, linkCtx, tag, object, obsId,
 			binding = bindingStore[bindId];
@@ -1601,9 +1631,9 @@
 				if (tag.onDispose) {
 					tag.onDispose();
 				}
-				if (!keepNodes && !tag._elCnt) {
-					tag._prv.parentNode.removeChild(tag._prv);
-					tag._nxt.parentNode.removeChild(tag._nxt);
+				if (!tag._elCnt) {
+					tag._prv && tag._prv.parentNode.removeChild(tag._prv);
+					tag._nxt && tag._nxt.parentNode.removeChild(tag._nxt);
 				}
 				tag.disposed = true;
 			}
@@ -1679,10 +1709,6 @@
 							// "~tag.xxx"
 							tokens = path.slice(5).split(".");
 							tag = tag.tag;
-						} else if (path.slice(4, 6) === "s.") {
-							// "~tags.xxx"
-							tokens = path.slice(6).split(".");
-							tag = tag.tags[tokens.shift()];
 						}
 						if (tokens) {
 							return tag ? [tag, tokens.join("."), object] : [];
@@ -1884,7 +1910,7 @@
 					}
 					setArrayChangeLink(viewToRemove);
 					for (bindId in viewToRemove._.bnds) {
-						removeViewBinding(bindId, keepNodes);
+						removeViewBinding(bindId);
 					}
 					delete viewStore[id];
 				}
