@@ -1,12 +1,12 @@
-/*! jsObservable: http://github.com/BorisMoore/jsviews */
+/*! jsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2013, Boris Moore and Brad Olenick
+ * Copyright 2013, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 38 (Beta Candidate)
+// informal pre beta commit counter: v1.0.0-alpha (39) (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -20,7 +20,7 @@
 
 	//========================== Top-level vars ==========================
 
-	var versionNumber = "v1.0pre",
+	var versionNumber = "v1.0.0-alpha",
 
 		cbBindings, cbBindingsId, oldLength, _data,
 		$eventSpecial = $.event.special,
