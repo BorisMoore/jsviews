@@ -93,14 +93,6 @@ table td {
 	clear: both;
 }
 
-#movieDetail input.special {
-	float: none;
-	padding: inherit;
-	width: inherit;
-	margin: 3px;
-	border: inherit;
-}
-
 #movieDetail .title {
 	padding-top: 8px;
 }

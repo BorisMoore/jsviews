@@ -11,16 +11,15 @@
 <body>
 <div class="nav"><a href="../demos.html">JsViews Demos</a></div>
 
-<h3>Fully editable data: Change events with templates and data-Linked elements</h3>
+<h3>Fully editable data: Top-level data-linked elements. Use of data-link="{for ...}"</h3>
 
 <br />
-<div class="subhead">Example of data-linking:</div>
+<div class="subhead">Examples of data-linking using {for ...}, either top-level or within templates:</div>
 <pre>
 ...
-&lt;td>
-    &lt;span data-link="#index + 1">&lt;/span>:
-    &lt;span data-link="title">&lt;/span>
-&lt;/td>
+    &lt;tbody data-link="{for movies tmpl='movieTmpl'}">&lt;/tbody>
+    &lt;div data-link="{for movies[selectedIndex] tmpl='#detailTemplate'}">&lt;/div>
+    &lt;td data-link="{for languages tmpl='languageName'}">&lt;/td>
 ...
 </pre>
 
@@ -31,41 +30,35 @@
 
 <div class="comment">Click to select and edit</div>
 
-<div id="movieList"></div>
-
-<script id="movieTemplate" type="text/x-jsrender">
+<div id="linkedContent">
 	<table>
 		<thead><tr><th>Title</th><th>Languages</th><th><span class="addMovie">Add</span></th></tr></thead>
-		<tbody class="movies">
-			{^{for movies}}
-				<tr class="hover" data-link="css-background-color{:~bgColor()}">
-					<td>
-						<span data-link="#index + 1"></span>:
-						<span data-link="title"></span>
-					</td>
-					<td>
-						{^{for languages}}
-							<div data-link="name"></div>
-						{{/for}}
-					</td>
-					<td>
-						<img class="removeMovie" src="../resources/close.png" />
-					</td>
-				</tr>
-			{{/for}}
-		</tbody>
+		<tbody class="movies" data-link="{for movies tmpl='movieTmpl'}"></tbody>
 	</table>
 
-	<div class="detail">
-		{^{for movies[selectedIndex]}}
-			<div>
-				<div class="title">Title:</div>
-				<div><input data-link="title" /></div>
-				<div class="title">Languages: <span class="addLanguage">Add</span></div>
-				{^{for languages}}
-					<input data-link="name" /><img class="removeLanguage" src="../resources/close.png" />
-				{{/for}}
-			</div>
+	<div class="detail" data-link="{for movies[selectedIndex] tmpl='#detailTemplate'}"></div>
+</div>
+
+<script id="movieTemplate" type="text/x-jsrender">
+	<tr class="hover" data-link="css-background-color{:~bgColor()}">
+		<td>
+			<span data-link="#index + 1"></span>:
+			<span data-link="title"></span>
+		</td>
+		<td data-link="{for languages tmpl='languageName'}"></td>
+		<td>
+			<img class="removeMovie" src="../resources/close.png" />
+		</td>
+	</tr>
+</script>
+
+<script id="detailTemplate" type="text/x-jsrender">
+	<div>
+		<div class="title">Title:</div>
+		<div><input data-link="title" /></div>
+		<div class="title">Languages: <span class="addLanguage">Add</span></div>
+		{^{for languages}}
+			<input data-link="name" /><img class="removeLanguage" src="../resources/close.png" />
 		{{/for}}
 	</div>
 </script>
@@ -104,16 +97,19 @@
 			markup: "#movieTemplate",
 			helpers: {
 				bgColor: bgColor,
+			},
+			templates: {
+				languageName: "<div data-link=\"name\"></div>"
 			}
 		}
 	});
 
 	function bgColor() {
-		return (this.ctx.root.selectedIndex === this.index) ? "yellow" : (this.index%2 ? "#fdfdfe" : "#efeff2");
+		return (app.selectedIndex === this.index) ? "yellow" : (this.index%2 ? "#fdfdfe" : "#efeff2");
 	}
-	bgColor.depends = "~root.selectedIndex"
+	bgColor.depends = [app, "selectedIndex"];
 
-	$.link.movieTmpl("#movieList", app)
+	$.link(true, "#linkedContent", app)
 		.on("click", ".addMovie", function() {
 			$.observable(movies).insert(movies.length, {
 				title: "NewTitle" + counter ,

@@ -93,12 +93,8 @@ table td {
 	clear: both;
 }
 
-.detail input.special {
-	float: none;
-	padding: inherit;
-	width: inherit;
-	margin: 3px;
-	border: inherit;
+.detail > div > input {
+	margin: 0 0 3px 3px;
 }
 
 .detail .title {
@@ -111,8 +107,12 @@ table td {
 	padding: 6px;
 }
 
+.detail .title .addLanguage {
+	margin-bottom: 3px;
+	display: inline-block;
+}
+
 .addLanguage, .addMovie {
-	float: right;
 	text-decoration: underline;
 	font-style: italic;
 	color: #1010c0;
