@@ -1,4 +1,4 @@
-/*! jsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews */
+/*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -6,7 +6,7 @@
  * Copyright 2013, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: v1.0.0-alpha (39) (Beta Candidate)
+// informal pre beta commit counter: v1.0.0-alpha (40) (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -187,7 +187,7 @@
 				if (typeof obj === OBJECT) {
 					bindArray(obj, true);
 					if (len) {
-						$unobserve(wrapArray(obj), paths, callback, contextCb, origRt);
+						$unobserve(wrapArray(obj), paths, callback, contextCb);
 					}
 				}
 				obj = exprOb._ob = contextCb(exprOb, origRt);
