@@ -59,28 +59,37 @@ $.templates({
 });
 
 $.views.converters({
-	dayToInt: function( val ) {
-		for ( var i = 0; i < 7; i++ ) {
-			if ( days[ i ].toLowerCase().slice( 0, val.length ) === val.toLowerCase()) {
-				return i;
+	dayToInt: function(val) {
+		var dayOff = parseInt(val);
+		if (isNaN(dayOff)) {
+			for (var i = 0; i < 7; i++) {
+				if ( days[ i ].toLowerCase().slice(0, val.length) === val.toLowerCase()) {
+					dayOff = i;
+					break;
+				}
 			}
 		}
-		return parseInt(val) || val;
+		if (isNaN(dayOff)) {
+			dayOff = val;
+		} else {
+			this.linkCtx.elem.value = days[dayOff]; // Set the text box value to the Day Off name
+		}
+		return dayOff;
 	},
-	intToDay: function( val ) {
-		return days[ val ] || val;
+	intToDay: function(val) {
+		return days[val] || val;
 	}
 });
 
 // Observable property change
-$( "#changeDay" ).on( "click", function() {
+$("#changeDay").on("click", function() {
 	var dayOff = myWeek.dayOff;
-	$.observable( myWeek ).setProperty( "dayOff", dayOff < 6 ? dayOff + 1 : 0);
+	$.observable(myWeek).setProperty("dayOff", dayOff < 6 ? dayOff + 1 : 0);
 });
 
-$( "#notLinked" ).html( $.render.notLinkedTmpl( myWeek ));
+$("#notLinked").html($.render.notLinkedTmpl(myWeek));
 
-$.link.linkedTmpl( "#linked", myWeek );
+$.link.linkedTmpl("#linked", myWeek);
 
 </script>
 
@@ -115,10 +124,10 @@ var days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
 
 // Convert and ConvertBack
 $.views.converters({
-    dayToInt: function( val ) {
+    dayToInt: function(val) {
         ...
     },
-    intToDay: function( val ) {
+    intToDay: function(val) {
         ...
     }
 });

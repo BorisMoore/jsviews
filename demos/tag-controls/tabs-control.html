@@ -17,7 +17,7 @@
 <div id="tabsView">..loading</div>
 
 <script id="myTmpl" type="text/x-jsrender">
-	{^{tabs id="outer" width=width + "px" height="135px" tabCaption="first"}}
+	{^{tabs id="outer" ^width=width + "px" height="135px" tabCaption="first"}}
 		<div class="special">Some tabbed content:</div>
 		{^{tabs id="inner" selectedTab=~state.innerSelect height="35px" width="250px" tabCaption="Inner One"}}
 			ONE inner
@@ -46,7 +46,7 @@
 		<tr class="tabscontent">
 			<td colspan="{{:~tag.tagCtxs.length}}">
 				<div style="width:{{attr:~tag.tagCtx.props.width}}; height:{{attr:~tag.tagCtx.props.height}}">
-					{^{for tmpl=~tag.tagCtxs[~tag.selectedIndex].content /}}
+					{^{for ^tmpl=~tag.tagCtxs[~tag.selectedIndex].content /}}
 				</div>
 			</td>
 		</tr>

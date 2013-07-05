@@ -157,7 +157,7 @@ Activation would be run only if JavaScript is enabled in the browser (simulated 
 	function bgColor() {
 		return (this.ctx.root.selectedIndex === this.index) ? "yellow" : (this.index%2 ? "#fdfdfe" : "#efeff2");
 	}
-	bgColor.depends = "~root.selectedIndex"
+	bgColor.depends = ["#index", "~root.selectedIndex"];
 
 	function activate() {
 		if ( activated ) {

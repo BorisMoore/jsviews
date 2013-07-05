@@ -21,7 +21,7 @@
 <!--====== Container ======-->
 <table>
 	<tbody id="movieList"></tbody>
-</table> 
+</table>
 
 <script id="movieTemplate" type="text/x-jsrender">
 <tr>
@@ -80,19 +80,19 @@
 
 	function go1() {
 		view = $.view(this);
-		view.get("item").data.name ="bar" + count++; 
+		view.get("item").data.name ="bar" + count++;
 		view.refresh();
 	}
 
 	function go2() {
 		view = $.view(this);
-		view.get("item").data.name ="bar" + count++; 
+		view.get("item").data.name ="bar" + count++;
 		view.parent.refresh();
 	}
 
 	function go3() {
 		view = $.view(this);
-		view.get("item").data.name ="bar" + count++; 
+		view.get("item").data.name ="bar" + count++;
 		view.parent.parent.refresh();
 	}
 
