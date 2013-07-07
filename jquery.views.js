@@ -7,7 +7,7 @@
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-// informal pre beta commit counter: v1.0.0-alpha (40) (Beta Candidate)
+// informal pre beta commit counter: v1.0.0-alpha (41) (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -599,7 +599,8 @@
 	//---------------
 
 	function observeAndBind(linkCtx, source, target) { //TODO? linkFnArgs) {;
-		var binding, l, linkedElem,
+		var binding, l,
+			linkedElem = linkCtx.linkedElem,
 			cvtBk = linkCtx.convertBack,
 			tag = linkCtx.tag,
 			depends = [],
@@ -625,13 +626,11 @@
 			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
 			binding._tgId = bindId;
-			if (cvtBk) {
-				binding.to = [[], cvtBk];
-			}
 			// Add to the _jsvBnd on the target the view id and binding id - for unbinding when the target element is removed
 			target._jsvBnd = target._jsvBnd || "";
 			target._jsvBnd += "&" + bindId;
-			if (linkedElem = linkCtx.linkedElem) {
+			if (linkedElem) {
+				binding.to = [[], cvtBk];
 				l = linkedElem.length;
 				while (l--) {
 					linkedElem[l]._jsvBnd = target._jsvBnd;
@@ -643,7 +642,7 @@
 			// Store the binding.
 			bindingStore[bindId] = binding; // Note: If this corresponds to a data-linked tag, we are replacing the
 			// temporarily stored tag by the stored binding. The tag will now be at binding.linkCtx.tag
-			if (cvtBk !== undefined) {
+			if (linkedElem || cvtBk !== undefined) {
 				bindTo(binding, cvtBk);
 			}
 		}
@@ -1012,7 +1011,7 @@
 			// The prevNode will be in the returned query, since we called markPrevOrNextNode() on it.
 			// But it may have contained nodes that satisfy the selector also.
 			if (prevNode) {
-				// Find the last contained node one to use as the prevNode - so we only link subsequent elems in the query
+				// Find the last contained node of prevNode, to use as the prevNode - so we only link subsequent elems in the query
 				prevNodes = qsa ? prevNode.querySelectorAll(linkViewsSel) : $(linkViewsSel, prevNode).get();
 				prevNode = prevNodes.length ? prevNodes[prevNodes.length - 1] : prevNode;
 			}
@@ -1531,7 +1530,10 @@
 
 	function callAfterLink(tag, tagCtx) {
 		var cvt, linkedElem, elem, isRadio, val, bindings, binding, i, l,
-			linkCtx = tag.linkCtx = tag.linkCtx || {};
+			linkCtx = tag.linkCtx = tag.linkCtx || {
+				tag: tag,
+				data: tagCtx.view.data
+			};
 
 		if (tag.onAfterLink) {
 			tag.onAfterLink(tagCtx, linkCtx);
