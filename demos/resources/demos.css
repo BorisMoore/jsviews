@@ -1,119 +1,43 @@
-﻿body {
-	padding: 10px;
-	font-family: Verdana;
-	font-size: small;
-}
+﻿body { padding: 10px; font-family: Verdana; font-size: small; }
 
-h4 {
-	font-size: inherit;
-	font-variant: small-caps;
-}
+h4 { font-size: inherit; font-variant: small-caps; }
 
-.height {
-	width: 100%;
-	margin-bottom: 10px;
-	float: left;
-	clear: both;
-}
+.height { width: 100%; margin-bottom: 10px; float: left; clear: both; }
 
-.bottom {
-	height: 400px;
-	width: 100%;
-	margin-bottom: 10px;
-	float: left;
-	clear: both;
-}
+.bottom { height: 400px; width: 100%; margin-bottom: 10px; float: left; clear: both; }
 
-body > button {
-	float: left;
-	clear: right;
-	margin: 3px;
-}
+body > button { float: left; clear: right; margin: 3px; }
 
-.subhead {
-	margin: 3px 0 5px 0;
-	font-weight: bolder;
-	color: #116;
-	font-family: Arial;
-	font-size: 10pt;
-}
+.subhead { margin: 3px 0 5px 0; font-weight: bolder; color: #116; font-family: Arial; font-size: 10pt; }
 
-a {
-	color: #55b;
-}
+.subsubhead { margin: 3px 0 5px 0; font-weight: 600; padding-left: 9px; color: #5A5A78; font-style: italic; font-family: Arial; font-size: 10pt; }
 
-pre {
-	font-size: 10pt;
-	font-weight: bold;
-}
+a { color: #55b; }
 
-.inset {
-	padding-left: 18px;
-}
+pre { font-size: 10pt; font-weight: bold; border-left: 3px solid #aaa; padding: 10px; margin-bottom: 30px; }
 
-.box {
-	border: 1px solid #777;
-	padding: 10px;
-	margin: 5px 0 30px;
-}
+.inset { padding-left: 18px; }
 
-.box div {
-	margin: 3px 0 10px 0;
-}
+.box { border: 1px solid #777; padding: 10px; margin: 5px 0 30px; }
 
-.box .label {
-	margin: 0;
-	padding: 10px 0 0 0;
-	font-style: italic;
-	color: #55b;
-}
+.box div { margin: 3px 0 10px 0; }
 
-.box.label {
-	font-style: italic;
-	color: #55b;
-}
+.box .label { margin: 0; padding: 10px 0 0 0; font-style: italic; color: #55b; }
 
-.desc {
-	font-style: italic;
-	margin: 0 0 15px;
-	color: #116;
-}
+.box.label { font-style: italic; color: #55b; }
 
-pre {
-	border-left: 3px solid #aaa;
-	padding: 10px;
-	margin-bottom: 30px;
-}
+.desc { font-style: italic; margin: 0 0 15px; color: #116; }
 
-.indexitems {
-	list-style-type: none;
-	padding-left: 10px;
-	margin: 0 0 20px;
-}
+.indexitems { list-style-type: none; padding-left: 10px; margin: 0 0 20px; }
 
-.indexitems li {
-	margin-top: 14px;
-}
+.indexitems li { margin-top: 14px; }
 
-.indexitems .inset {
-	margin-top: 6px;
-}
+.indexitems .inset { margin-top: 6px; }
 
-h3 {
-	margin-bottom: 10px;
-	font-size: 11pt;
-}
+h3 { margin-bottom: 10px; font-size: 11pt; }
 
-select {
-	margin-bottom: 15px;
-	width: 200px;
-}
+select.full { margin-bottom: 15px; width: 200px; }
 
-select[size] {
-	margin-bottom: 0;
-	width: 100%;
-}
+select[size].full { margin-bottom: 0; width: 100%; }
 
-.two tr td {
-	width: 50%;
-}
+.two tr td { width: 50%; }

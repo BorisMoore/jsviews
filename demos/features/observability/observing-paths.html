@@ -40,7 +40,7 @@ add <b>noerror = true</b> in order to suppress error rendering and default to an
 	<tbody>
 		<tr>
 			<td colspan="2">
-				<select data-link="{getIndex: selected array=people :setObject}" size="5">
+				<select data-link="{getIndex: selected array=people :setObject}" size="5" class="full">
 					<option value="0">Choose a person to edit</option>
 					{^{for people}}
 						<option data-link="{:name.first + ' ' + name.last} value{:#index + 1} selected{:#data === ~root.selected}"></option>

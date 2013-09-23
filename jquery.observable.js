@@ -1,4 +1,5 @@
-/*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews */
+/*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
+informal pre V1.0 commit counter: 42 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -6,7 +7,6 @@
  * Copyright 2013, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: v1.0.0-alpha (40) (Beta Candidate)
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -22,7 +22,7 @@
 
 	var versionNumber = "v1.0.0-alpha",
 
-		cbBindings, cbBindingsId, oldLength, _data,
+		cbBindings, cbBindingsId, _oldLength, _data,
 		$eventSpecial = $.event.special,
 		$viewsSub = $.views ? $.views.sub: {},
 		cbBindingKey = 1,
@@ -218,7 +218,7 @@
 			paths = concat.apply([], arguments),	// flatten the arguments
 			lastArg = paths.pop(),
 			origRoot = paths[0],
-			root = "" + origRoot !== origRoot ? paths.shift() : undefined,	// First parameter is the root object, unless a string
+			root = paths.shift(),
 			l = paths.length;
 
 		origRoot = root;
@@ -288,7 +288,7 @@
 							// This is a compiled function for binding to an object returned by a helper/data function.
 							path._cb = innerCb = onUpdatedExpression(path, paths.slice(i+1));
 							path._rt = origRoot;
-							innerCb._bnd = callback._bnd; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too. 
+							innerCb._bnd = callback._bnd; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
 						}
 						$observe(path._rt, paths.slice(0, i), path._cb, contextCb, unobserve);
 						path = path._ob;
@@ -298,8 +298,8 @@
 				root = path;
 				parts = [root];
 			}
-			while (object && typeof object === "object" && (prop = parts.shift()) !== undefined) {
-				if ("" + prop === prop) {
+			while (object && (prop = parts.shift()) !== undefined) {
+				if (typeof object === "object" && "" + prop === prop) {
 					if (prop === "") {
 						continue;
 					}
@@ -473,7 +473,7 @@
 
 		_insert: function(index, data) {
 			_data = this._data;
-			oldLength = _data.length;
+			_oldLength = _data.length;
 			splice.apply(_data, [index, 0].concat(data));
 			this._trigger({change: "insert", index: index, items: data});
 		},
@@ -494,7 +494,7 @@
 
 		_remove: function(index, numToRemove, items) {
 			_data = this._data;
-			oldLength = _data.length;
+			_oldLength = _data.length;
 			_data.splice(index, numToRemove);
 			this._trigger({change: "remove", index: index, items: items});
 		},
@@ -513,7 +513,7 @@
 
 		_move: function(oldIndex, newIndex, numToMove, items) {
 			_data = this._data;
-			oldLength = _data.length;
+			_oldLength = _data.length;
 			_data.splice( oldIndex, numToMove );
 			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
 			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items});
@@ -527,13 +527,14 @@
 
 		_refresh: function(oldItems, newItems) {
 			_data = this._data;
-			oldLength = _data.length;
+			_oldLength = _data.length;
 			splice.apply(_data, [0, _data.length].concat(newItems));
 			this._trigger({change: "refresh", oldItems: oldItems});
 		},
 
 		_trigger: function(eventArgs) {
 			var length = _data.length,
+				oldLength = _oldLength,
 				$data = $([_data]);
 			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {

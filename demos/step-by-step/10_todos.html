@@ -56,7 +56,7 @@
 				editing = view;
 				view.tmpl = $.templates.editTemplate;
 				view.refresh();
-				$( view.contents('input', true)).focus();
+				$( view.contents(true, 'input')).focus();
 			},
 			removeItem: function( index, item ) {
 				$.observable( this.items ).remove( index, 1 );

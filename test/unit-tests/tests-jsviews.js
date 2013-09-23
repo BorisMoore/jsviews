@@ -301,12 +301,12 @@
 				+ '{{if true ~index=#index}}'
 					+ '{^{myWrapElCnt val=1}}'
 						+ '<tr id="tr{{:~index+1}}">'
-							+ '{^{myWrap2ElCnt}}'
+							+ '{^{myWrap2ElCnt val=11}}'
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 							+ '{{/myWrap2ElCnt}}'
 							+ '{^{if true}}'
-								+ '{^{myWrap2ElCnt}}'
+								+ '{^{myWrap2ElCnt val=22}}'
 									+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 									+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 								+ '{{/myWrap2ElCnt}}'
@@ -325,9 +325,9 @@
 				+ '<tbody id="b{{:#index+1}}"></tbody>'
 			+ '{{/for}}</table>',
 
-		boundTmplHierarchyElCntWithDataLink: '<table data-link="{myWrapElCnt val=1 tmpl=\'wrapCnt\' inline=true} class{:lastName}"></table>',
+		boundTmplHierarchyElCntWithDataLink: '<table data-link="{myWrapElCnt val=1 tmpl=\'wrapCnt\'} class{:lastName}"></table>',
 
-		wrapCnt: '<tr id="tr{{:~index+1}}" data-link="{myWrap2ElCnt val=2 tmpl=\'innerWrap\' inline=true}"></tr>',
+		wrapCnt: '<tr id="tr{{:~index+1}}" data-link="{myWrap2ElCnt val=2 tmpl=\'innerWrap\'}"></tr>',
 
 		innerWrap: 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 	});
@@ -364,6 +364,161 @@ function myListener(ev, eventArgs) {
 //test("TEST", function() {
 //});
 //return;
+module("Template structure");
+
+test("Template validation", function() {
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>')
+		.link("#result", {things: [{thing: "Orig"}]});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Parent of <tr> must be <tbody>"), 0, "Validation - missing closing tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div>{{:Thing}}<span></div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing closing tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div>{{:Thing}}</span></div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - missing opening tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<span>{{:Thing}}</span></span>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - extra closing tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<span>{{:Thing}}</span></div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - extra closing tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div>{{:Thing}}<span/></div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\n'<span.../>'"), 0, "Validation - self-closing tag is not a void element");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div>{{:Thing}}')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatched '<div...>'"), 0, "Validation - missing closing tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('</div>{{:Thing}}')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing opening tag");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div/>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\n'<div.../>'"), 0, "Validation - self-closing tag is not a void element");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div>{{:Thing}}<input></input></div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result.indexOf("Syntax error\n'</input>'"), 0, "Validation - closing tag for a void element");
+	result = "";
+
+	// =============================== Arrange ===============================
+	$.templates('prop: <input id="last" data-link="lastName"/><br><div><br/>{{if true}}<input id="{{:\'last\'}}" data-link="lastName">{{/if}}<img/></div><img>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	result = $("#result input")[0].value + $("#result input")[1].value;
+
+	$.observable(person1).setProperty("lastName", "Two");
+	result += $("#result input")[0].value + $("#result input")[1].value;
+	// ............................... Assert .................................
+	equal(result, "OneOneTwoTwo", "Validation - void elements can have self-close slashes, or not...");
+	result = "";
+
+	// TODO Later add support for validation error messages in these cases:
+	//'<span {{if true}}id="last\"{{/if}}>a</ps'
+	//'<input {{if true}}id="last\"{{/if}} data-link="lastName">'
+	//'<input {{if true}}id="last\"/> {{else}}... />{{/if}}'
+
+	// ................................ Reset ................................
+
+	person1.lastName = "One";
+	// The syntax error exceptions thrown above meant some views were not fully linked. We will 'force remove' them from the viewStore and the top view children
+	var v, viewstore = $.view().views;
+	for (v in viewstore) {
+		delete viewstore[v];
+	}
+	viewstore = _jsv.views;
+	for (v in viewstore) {
+		delete viewstore[v];
+	}
+});
 
 module("API - data-link");
 
@@ -1031,6 +1186,39 @@ test('data-link="{for...}"', function() {
 
 test('data-link="{tag...}"', function() {
 
+	$.views.tags({
+		norendernotemplate: {},
+		voidrender: function() {},
+		emptyrender: function() {return ""},
+		emptytemplate: {
+			template: ""
+		},
+		templatereturnsempty: {
+			template: "{{:a}}"
+		}
+	});
+
+	// ............................... Assert .................................
+	$.templates('a<span date-link="{norendernotemplate}"></span>b').link("#result", 1);
+	equals($("#result").text(), "ab",
+	"non-rendering tag (no template, no render function) renders empty string");
+
+	$.templates('a<span date-link="{voidrender}"></span>b').link("#result", 1);
+	equals($("#result").text(), "ab",
+	"non-rendering tag (no template, no return from render function) renders empty string");
+
+	$.templates('a<span date-link="{emptyrender}"></span>b').link("#result", 1);
+	equals($("#result").text(), "ab",
+	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
+
+	$.templates('a<span date-link="{emptytemplate}"></span>b').link("#result", 1);
+	equals($("#result").text(), "ab",
+	"non-rendering tag (template has no content, no render function) renders empty string");
+
+	$.templates('a<span date-link="{templatereturnsempty}"></span>b').link("#result", 1);
+	equals($("#result").text(), "ab",
+	"non-rendering tag (template returns empty string, no render function) renders empty string");
+
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="{tmplTag}"></span>')
@@ -1517,6 +1705,40 @@ test("{^{>expression}}", function() {
 });
 
 test("{^{tag}}", function() {
+
+	// =============================== Arrange ===============================
+	$.views.tags({
+		norendernotemplate: {},
+		voidrender: function() {},
+		emptyrender: function() {return ""},
+		emptytemplate: {
+			template: ""
+		},
+		templatereturnsempty: {
+			template: "{{:a}}"
+		}
+	});
+
+	// ............................... Assert .................................
+	$.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").link("#result", 1);
+	equals($("#result").text(), "abcde",
+	"non-rendering tag (no template, no render function) renders empty string");
+
+	$.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").link("#result", 1);
+	equals($("#result").text(), "abcde",
+	"non-rendering tag (no template, no return from render function) renders empty string");
+
+	$.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").link("#result", 1);
+	equals($("#result").text(), "abcde",
+	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
+
+	$.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").link("#result", 1);
+	equals($("#result").text(), "abcde",
+	"non-rendering tag (template has no content, no render function) renders empty string");
+
+	$.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").link("#result", 1);
+	equals($("#result").text(), "abcde",
+	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	// =============================== Arrange ===============================
 
@@ -2506,20 +2728,7 @@ test("ArrayChange: insert()", function() {
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	model.things = []; // reset Prop
-
-	// =============================== Arrange ===============================
 	model.things = [{thing: "Orig"}]; // reset Prop
-
-	try {
-		$.templates('<table>{^{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>')
-		.link("#result", model);
-	} catch (e) {
-		result = e.message;
-	}
-
-	// ............................... Assert .................................
-	equal(result, '"tr" has incorrect parent tag', "Validation of table markup (to be moved to design-time checking)");
 
 	// =============================== Arrange ===============================
 	$.templates('<table><tbody>{^{for things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody></table>')
@@ -2539,6 +2748,7 @@ test("ArrayChange: insert()", function() {
 });
 
 test("ArrayChange: remove()", function() {
+  // If one remove triggers another remove ensure one oldLength var is not affected by other one.
 	// TODO
 });
 
@@ -3173,7 +3383,7 @@ test("observe context helper", function() {
 
 	// ............................... Assert .................................
 	equals(result, "",
-	"$.observable.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
+	"$.observable.observe(path, cb): Observe with no root object and with observeCtxHelper does nothing");
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -3181,22 +3391,57 @@ test("observe context helper", function() {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observable.observe("%name", myListener, observeCtxHelper);
+	$.observable.observe(null, "%name", myListener, observeCtxHelper);
 	$.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observable.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
+	"$.observable.observe(null, path, cb, observeCtxHelper) observe with null as root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.observable.unobserve("%name", myListener, observeCtxHelper);
+	$.observable.unobserve(null, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	ok(handlersCount===1 && !$._data(obj).events,
-	"$.observable.unobserve(path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	"$.observable.unobserve(null, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
+
+	// ................................ Reset ................................
+	obj.name = "One";
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	$.observable.observe(undefined, "%name", myListener, observeCtxHelper);
+	$.observable(obj).setProperty({name: "newName"});
+
+	// ............................... Assert .................................
+	equals(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
+	"$.observable.observe(undefined, path, cb, observeCtxHelper) observe with undefined root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
+	// -----------------------------------------------------------------------
+
+	// ................................ Act ..................................
+	handlersCount = $._data(obj).events.propertyChange.length;
+	$.observable.unobserve(undefined, "%name", myListener, observeCtxHelper);
+
+	// ............................... Assert .................................
+	ok(handlersCount===1 && !$._data(obj).events,
+	"$.observable.unobserve(undefined, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	reset();
+
+	// ................................ Reset ................................
+	obj.name = "One";
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	$.observable.observe(undefined, str, myListener, observeCtxHelper);
+	$.observable(obj).setProperty({name: "newName"});
+
+	// ............................... Assert .................................
+	equals(result, "",
+	"$.observable.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
+	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
 	obj.name = "One";
@@ -3276,7 +3521,7 @@ test("array", function() {
 	function listen(ev,eventArgs) {
 		console.log(eventArgs.path + " prop");
 	}
-	myListener.array = function (ev,eventArgs) {
+	myListener.array = function(ev,eventArgs) {
 		result += "calls: " + calls
 		+ ", eventArgs: change: " + eventArgs.change + "|";
 	}
@@ -4121,31 +4366,6 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<div data-link="{myInlineWidget inline=true}"></div>',
-		tags: {
-			myInlineWidget: {
-				init: function(tagCtx, linkCtx) {
-				},
-				render: function() {
-					return "<span></span>";
-				},
-				onBeforeLink: function() {
-					$(this.linkCtx.elem).find("span").append(" before");
-				},
-				onAfterLink: function() {
-					this.contents("span").append(" after");
-				}
-			}
-		}
-	}).link("#result", person1);
-
-	// ............................... Assert .................................
-	equals($("#result div span").html(), " before after", 'A data-linked tag control, with inline=true, allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.templates({
 		markup: '<div data-link="{myRenderInLinkEventsWidget}"></div>',
 		tags: {
 			myRenderInLinkEventsWidget: {
@@ -4165,7 +4385,954 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	// ............................... Assert .................................
 	equals($("#result div").html(), " init before after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init, onBeforeLink and onAfterLink');
 
-//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link (with or without inline=true) and {^{myTag}} inline data binding.
+//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
+});
+
+test('two-way bound tag controls', function() {
+	// =============================== Arrange ===============================
+	var person = {name: "Jo"},
+		cancelChange = false,
+		noRenderOnUpdate = true,
+		renders = false,
+		eventData = "";
+
+	$.views.tags({ twoWayTag: {
+		init: function(tagCtx, linkCtx) {
+			eventData += "init ";
+			if (this._.inline && !tagCtx.content) {
+				this.template = tagCtx.tmpl = "<input/>";
+			}
+		},
+		render: function(val) {
+			eventData += "render ";
+			return renders ? (val + ' <input id="linkedEl"/> rendered') : undefined;
+		},
+		onBeforeLink: function(tagCtx, linkCtx) {
+			eventData += "onBeforeLink ";
+			//return false;
+		},
+		onAfterLink: function(tagCtx, linkCtx) {
+			eventData += "onAfterLink ";
+			this.value = tagCtx.args[0];
+			linkCtx.convert = tagCtx.props.convert;
+			linkCtx.convertBack = tagCtx.props.convertBack;
+
+			this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+		},
+		onUpdate: function(ev, eventArgs, tagCtxs) {
+			eventData += "onUpdate ";
+			return !noRenderOnUpdate;
+		},
+		onBeforeChange: function(val) {
+			eventData += "onBeforeChange ";
+			return !cancelChange;
+		},
+		onChange: function(val) {
+			eventData += "onChange ";
+			this.value = val + "*";
+			return this.value;
+		},
+		onDispose: function(val) {
+			eventData += "onDispose ";
+		}
+	} });
+
+	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT
+	// ................................ Act ..................................
+	$.templates('<input id="linkedEl" data-link="{twoWayTag name}"/>')
+		.link("#result", person);
+
+	var tag =  $("#result").view(true).childTags("twoWayTag")[0],
+		linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(eventData, "init render onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for init, render, link');
+	eventData = "";
+
+	// ................................ Act ..................................
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "onUpdate onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning false) - render not called');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"JoJo|newNamenewName",
+	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName2"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "onUpdate render onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newNamenewName|newName2newName2",
+	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	renders = true;
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName3"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "onUpdate render onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName2newName2|newName3newName3",
+	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem - (replacing any value set during rendering)');
+
+	// ................................ Reset ..................................
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	linkedEl.value = "newVal";
+	$(linkedEl).change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange onChange onUpdate onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName3newName3|newVal*newVal*",
+	'Data link using: <input data-link="{twoWayTag name}"/> - binds linkedElem back to data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	cancelChange = true;
+	linkedEl.value = "2ndNewVal";
+	$(linkedEl).change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for cancelled onBeforeChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*newVal*|newVal*newVal*",
+	'Data link using: <input data-link="{twoWayTag name}"/> - if onBeforeChange returns false -> no change to data');
+
+	// ................................ Reset ..................................
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	person.name = "updatedName";
+	linkedEl.value = "updatedVal";
+	before = tag.value + linkedEl.value;
+	tag.refresh();
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "render onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for tag.refresh');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*updatedVal|updatedNameupdatedName",
+	'Data link using: <input data-link="{twoWayTag name}"/> - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(eventData, "onDispose ",
+	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onDispose');
+	eventData = "";
+
+	// ................................ Reset ..................................
+	person.name = "Jo";
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<input id="linkedEl" data-link="{twoWayTag name convert=\'myupper\' convertBack=~lower}"/>',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	linkedEl.value = "ChangeTheName";
+	$(linkedEl).change();
+
+	// ............................... Assert .................................
+	equal(person.name + "|" + tag.value,
+	"changethename*|changethename*",
+	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+
+	// ................................ Reset ..................................
+	$("#result").empty();
+	person.name = "Jo";
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+	eventData = "";
+
+	// =============================== Arrange ===============================
+	//INLINE DATA-LINKED TAGS ON INPUT
+	// ................................ Act ..................................
+	$.templates('{^{twoWayTag name}}<input id="linkedEl"/>{{/twoWayTag}}')
+		.link("#result", person);
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(eventData, "init render onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name}} - event order for init, render, link');
+	eventData = "";
+
+	// ................................ Act ..................................
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onBeforeLink onAfterLink true",
+	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"JoJo|newNamenewName",
+	'Data link using: {^{twoWayTag name}} - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName2"});
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
+	eventData = "";
+
+	linkedEl = $("#linkedEl")[0];
+	after = tag.value + linkedEl.value;
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newNamenewName|newName2newName2",
+	'Data link using: {^{twoWayTag name}} - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	renders = true;
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName3"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
+	eventData = "";
+
+	linkedEl = $("#linkedEl")[0];
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName2newName2|newName3newName3",
+	'Data link using: {^{twoWayTag name}} - binds data to newly rendered linkedElem');
+
+	// ................................ Reset ..................................
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	linkedEl.value = "newVal";
+	$(linkedEl).change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange onChange onUpdate onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name}} - event order for onChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName3newName3|newVal*newVal*",
+	'Data link using: {^{twoWayTag name}} - binds linkedElem back to data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	cancelChange = true;
+	linkedEl.value = "2ndNewVal";
+	$(linkedEl).change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange ",
+	'Data link using: {^{twoWayTag name}} - event order for cancelled onBeforeChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*newVal*|newVal*newVal*",
+	'Data link using: {^{twoWayTag name}} - if onBeforeChange returns false -> no change to data');
+
+	// ................................ Reset ..................................
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	person.name = "updatedName";
+	linkedEl.value = "updatedVal";
+	before = tag.value + linkedEl.value;
+	tag.refresh();
+	linkedEl = $("#linkedEl")[0];
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "render onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*updatedVal|updatedNameupdatedName",
+	'Data link using: {^{twoWayTag name}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(eventData, "onDispose ",
+	'Data link using: {^{twoWayTag name}} - event order for onDispose');
+	eventData = "";
+
+	// ................................ Reset ..................................
+	person.name = "Jo";
+
+	// =============================== Arrange ===============================
+	$.templates({
+		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower}}<input id="linkedEl"/>{{/twoWayTag}}',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	linkedEl = $("#linkedEl")[0];
+	linkedEl.value = "ChangeTheName";
+	$(linkedEl).change();
+
+	// ............................... Assert .................................
+	equal(person.name + "|" + tag.value,
+	"changethename*|changethename*",
+	'Data link using: {^{twoWayTag name convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+
+	// ................................ Reset ..................................
+	$("#result").empty();
+	person.name = "Jo";
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+	eventData = "";
+
+	// =============================== Arrange ===============================
+	//INLINE DATA-LINKED SELF-CLOSED TAG rendering INPUT
+
+	// ................................ Act ..................................
+	$.templates('{^{twoWayTag name/}}')
+		.link("#result", person);
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+
+	// ............................... Assert .................................
+	equal(eventData, "init render onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name/}} - event order for init, render, link');
+	eventData = "";
+
+	// ................................ Act ..................................
+	linkedEl = tag.linkedElem[0];
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = tag.value + tag.linkedElem[0].value;
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onBeforeLink onAfterLink true",
+	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"JoJo|newNamenewName",
+	'Data link using: {^{twoWayTag name/}} - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	linkedEl = tag.linkedElem[0];
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName2"});
+	after = tag.value + tag.linkedElem[0].value;
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newNamenewName|newName2newName2",
+	'Data link using: {^{twoWayTag name/}} - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	noRenderOnUpdate = false;
+	renders = true;
+	linkedEl = tag.linkedElem[0];
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName3"});
+	after = tag.value + tag.linkedElem[0].value;
+
+	// ............................... Assert .................................
+	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName2newName2|newName3newName3",
+	'Data link using: {^{twoWayTag name/}} - binds data to newly rendered linkedElem');
+
+	// ................................ Reset ..................................
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	tag.linkedElem[0].value = "newVal";
+	tag.linkedElem.change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange onChange onUpdate onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name/}} - event order for onChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newName3newName3|newVal*newVal*",
+	'Data link using: {^{twoWayTag name/}} - binds linkedElem back to data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = tag.value + person.name;
+	cancelChange = true;
+	tag.linkedElem[0].value = "2ndNewVal";
+	tag.linkedElem.change();
+	after = tag.value + person.name;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange ",
+	'Data link using: {^{twoWayTag name/}} - event order for cancelled onBeforeChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*newVal*|newVal*newVal*",
+	'Data link using: {^{twoWayTag name/}} - if onBeforeChange returns false -> no change to data');
+
+	// ................................ Reset ..................................
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+
+	// ................................ Act ..................................
+	person.name = "updatedName";
+	tag.linkedElem[0].value = "updatedVal";
+	before = tag.value + tag.linkedElem[0].value;
+	tag.refresh();
+	after = tag.value + tag.linkedElem[0].value;
+
+	// ............................... Assert .................................
+	equal(eventData, "render onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"newVal*updatedVal|updatedNameupdatedName",
+	'Data link using: {^{twoWayTag name/}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(eventData, "onDispose ",
+	'Data link using: {^{twoWayTag name/}} - event order for onDispose');
+	eventData = "";
+
+	// ................................ Reset ..................................
+	person.name = "Jo";
+
+	// =============================== Arrange ===============================
+	$.templates({
+		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower/}}',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+
+	// ............................... Assert .................................
+	equal(tag.linkedElem[0].value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: {^{twoWayTag name convert="myupper"/}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(tag.linkedElem[0].value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: {^{twoWayTag name convert="myupper"/}} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	tag.linkedElem[0].value = "ChangeTheName";
+	tag.linkedElem.change();
+
+	// ............................... Assert .................................
+	equal(person.name + "|" + tag.value,
+	"changethename*|changethename*",
+	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+});
+
+test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=target}', function() {
+	// =============================== Arrange ===============================
+	var before, after, person = {name: "Jo", name2: "Jo2"},
+		cancelChange = false,
+		eventData = "";
+
+	$.views.tags({ twoWayTag: {
+		init: function(tagCtx, linkCtx) {
+			eventData += "init ";
+			if (this._.inline && !tagCtx.content) {
+				this.template = tagCtx.tmpl = "<input/>";
+			}
+		},
+		render: function(val) {
+			eventData += "render ";
+		},
+		onBeforeLink: function(tagCtx, linkCtx) {
+			eventData += "onBeforeLink ";
+		},
+		onAfterLink: function(tagCtx, linkCtx) {
+			eventData += "onAfterLink ";
+			this.value = tagCtx.args[0];
+			linkCtx.convert = tagCtx.props.convert;
+			linkCtx.convertBack = tagCtx.props.convertBack;
+
+			this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+		},
+		onUpdate: function(ev, eventArgs, tagCtxs) {
+			eventData += "onUpdate ";
+			return false;
+		},
+		onBeforeChange: function(val) {
+			eventData += "onBeforeChange ";
+			return !cancelChange;
+		},
+		onChange: function(val) {
+			eventData += "onChange ";
+			this.value = val + "*";
+			return this.value;
+		},
+		onDispose: function(val) {
+			eventData += "onDispose ";
+		}
+	} });
+
+	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
+	$.templates('<input id="linkedEl" data-link="{:name linkTo=name2:}"/>')
+		.link("#result", person);
+
+	var linkedEl = $("#linkedEl")[0];
+
+	// ................................ Act ..................................
+	before = linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"Jo|newName",
+	'Data link using: <input data-link="{:name linkTo=name2:}"/> - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	before = "name:" + person.name + " name2:" + person.name2;
+	linkedEl.value = "newVal";
+	$(linkedEl).change();
+	after = "name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"name:newName name2:Jo2|name:newName name2:newVal",
+	'Data link using: <input data-link="{:name linkTo=name2:}"/> - binds linkedElem back to "linkTo" target data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = "name:" + person.name + " name2:" + person.name2;
+	cancelChange = true;
+	linkedEl.value = "2ndNewVal";
+	$(linkedEl).change();
+	after = "name:" + person.name + " name2:" + person.name2;
+
+	person.name = "Jo";
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<input id="linkedEl" data-link="{myupper:name linkTo=name2:mylower}"/>',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			},
+			mylower: function(val) {
+				return val.toLowerCase();
+			}
+		}
+	}).link("#result", person);
+
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value, "JO",
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value,
+	"ANEWNAME",
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	linkedEl.value = "ChangeTheName";
+	$(linkedEl).change();
+
+	// ............................... Assert .................................
+	equal("name:" + person.name + " name2:" + person.name2,
+	"name:ANewName name2:changethename",
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
+
+	// ................................ Reset ..................................
+	$("#result").empty();
+	person.name = "Jo";
+	person.name2 = "Jo2";
+	cancelChange = false;
+	eventData = "";
+
+	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
+	// ................................ Act ..................................
+	$.templates('<input id="linkedEl" data-link="{twoWayTag name linkTo=name2}"/>')
+		.link("#result", person);
+
+	var tag =  $("#result").view(true).childTags("twoWayTag")[0],
+		linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(eventData, "init render onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for init, render, link');
+	eventData = "";
+
+	// ................................ Act ..................................
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "onUpdate onAfterLink ",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onUpdate');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"JoJo|newNamenewName",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+	linkedEl.value = "newVal";
+	$(linkedEl).change();
+	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange onChange ",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value:newName name:newName name2:Jo2|value:newVal* name:newName name2:newVal*",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds linkedElem back to "linkTo" target data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+	cancelChange = true;
+	linkedEl.value = "2ndNewVal";
+	$(linkedEl).change();
+	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange ",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for cancelled onBeforeChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value:newVal* name:newName name2:newVal*|value:newVal* name:newName name2:newVal*",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - if onBeforeChange returns false -> no change to data');
+
+	// ................................ Reset ..................................
+	cancelChange = false;
+	person.name = "Jo";
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<input id="linkedEl" data-link="{twoWayTag name linkTo=name2 convert=\'myupper\' convertBack=~lower}"/>',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	linkedEl.value = "ChangeTheName";
+	$(linkedEl).change();
+
+	// ............................... Assert .................................
+	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
+	"name:ANewName name2:changethename* value:changethename*",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
+
+	// ................................ Reset ..................................
+	$("#result").empty();
+	person.name = "Jo";
+	person.name2 = "Jo2";
+	cancelChange = false;
+	eventData = "";
+
+	// =============================== Arrange ===============================
+	//INLINE DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
+	// ................................ Act ..................................
+	$.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedEl"/>{{/twoWayTag}}')
+		.link("#result", person);
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(eventData, "init render onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for init, render, link');
+	eventData = "";
+
+	// ................................ Act ..................................
+	before = tag.value + linkedEl.value;
+
+	$.observable(person).setProperty({name: "newName"});
+	after = tag.value + linkedEl.value;
+
+	// ............................... Assert .................................
+	equal(eventData, "onUpdate onBeforeLink onAfterLink ",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onUpdate');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"JoJo|newNamenewName",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - binds data to linkedElem');
+
+	// ................................ Act ..................................
+	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+	linkedEl.value = "newVal";
+	$(linkedEl).change();
+	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange onChange ",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value:newName name:newName name2:Jo2|value:newVal* name:newName name2:newVal*",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - binds linkedElem back to "linkTo" target data - using return value of onChange');
+
+	// ................................ Act ..................................
+	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+	cancelChange = true;
+	linkedEl.value = "2ndNewVal";
+	$(linkedEl).change();
+	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(eventData, "onBeforeChange ",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for cancelled onBeforeChange');
+	eventData = "";
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value:newVal* name:newName name2:newVal*|value:newVal* name:newName name2:newVal*",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - if onBeforeChange returns false -> no change to data');
+
+	// ................................ Reset ..................................
+	cancelChange = false;
+	person.name = "Jo";
+	person.name2 = "Jo2";
+
+	// =============================== Arrange ===============================
+	$.templates({
+		markup: '{^{twoWayTag name linkTo=name2 convert="myupper" convertBack=~lower}}<input id="linkedEl"/>{{/twoWayTag}}',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+
+	// ................................ Act ..................................
+	linkedEl = $("#linkedEl")[0];
+	linkedEl.value = "ChangeTheName";
+	$(linkedEl).change();
+
+	// ............................... Assert .................................
+	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
+	"name:ANewName name2:changethename* value:changethename*",
+	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
 });
 
 test("tag control events", function() {
@@ -4259,7 +5426,7 @@ test("tag control events", function() {
 	// ............................... Assert .................................
 	equals($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
 
-//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link (with or without inline=true) and {^{myTag}} inline data binding.
+//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
 });
 
 })();

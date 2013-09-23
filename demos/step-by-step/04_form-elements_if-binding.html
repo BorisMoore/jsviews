@@ -22,7 +22,7 @@
 	<div class="box">
 		<div class="subhead" data-link="~selectedTitle(selectedMovie) || 'Choose a movie'"></div>
 
-		<select data-link="selectedMovie">
+		<select data-link="selectedMovie" class="full">
 			<option value="none">Choose...</option>
 			{{for ~movies}}
 				<option value="{{:#index}}">{{>title}}</option>
