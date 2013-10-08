@@ -60,7 +60,7 @@ $( "#insertPerson" ).click( function() {
 // Observable array change: remove
 $( "#details" )
 	.on( "click", ".close", function() {
-		$.observable( people ).remove( $.view( this ).index, 1 );
+		$.observable( people ).remove( $.view( this ).index );
 		return false;
 	});
 
@@ -90,7 +90,7 @@ $( "#insertPerson" ).on( "click", function() {
 // Observable array change: remove
 $( "#details" )
     .on( "click", ".close", function() {
-        $.observable( people ).remove( $.view( this ).index, 1 );
+        $.observable( people ).remove( $.view( this ).index );
     });
 
 </pre>

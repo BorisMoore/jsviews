@@ -103,7 +103,7 @@
 
 	$.link.movieTmpl("#movieList", app)
 		.on("click", ".addMovie", function() {
-			$.observable(movies).insert(movies.length, {
+			$.observable(movies).insert({
 				title: "NewTitle" + counter ,
 				languages: [
 					{ name: "NewLanguage" + counter++ }
@@ -119,27 +119,27 @@
 
 		.on("click", ".removeMovie", function() {
 			app.select();
-			$.observable(movies).remove($.view(this).index, 1);
+			$.observable(movies).remove($.view(this).index);
 			return false;
 		})
 
 		.on("click", ".addLanguage", function() {
 			var languages = $.view(this).data.languages;
-			$.observable(languages).insert(languages.length, {
+			$.observable(languages).insert({
 				name: "NewLanguage" + counter++
 			});
 		})
 
 		.on("click", ".removeLanguage", function() {
 			var view = $.view(this);
-			$.observable(view.parent.data).remove(view.index, 1);
+			$.observable(view.parent.data).remove(view.index);
 			return false;
 		});
 
 	function deleteLastLanguage() {
 		if (movies.length) {
 			var languages = movies[ movies.length - 1 ].languages;
-			$.observable(languages).remove(languages.length - 1, 1);
+			$.observable(languages).remove();
 		}
 	}
 </script>

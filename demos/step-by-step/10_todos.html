@@ -59,7 +59,7 @@
 				$( view.contents(true, 'input')).focus();
 			},
 			removeItem: function( index, item ) {
-				$.observable( this.items ).remove( index, 1 );
+				$.observable( this.items ).remove( index );
 				this.doneChanged( item.done ? -1 : 0 );
 			},
 			clearCompleted: function( index ) {
@@ -123,7 +123,7 @@
 	// UI Event bindings
 	$( "#new-todo" ).keypress( function( ev ) {
 		if ( ev.keyCode === 13 ) {
-			$.observable( todos.items ).insert( todos.items.length, { content: this.value, done: false });
+			$.observable( todos.items ).insert({ content: this.value, done: false });
 			todos.doneChanged( 0 );
 			this.value = "";
 		}

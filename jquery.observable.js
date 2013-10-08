@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 42 (Beta Candidate) */
+informal pre V1.0 commit counter: 43 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -22,7 +22,7 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 
 	var versionNumber = "v1.0.0-alpha",
 
-		cbBindings, cbBindingsId, _oldLength, _data,
+		cbBindings, cbBindingsId,
 		$eventSpecial = $.event.special,
 		$viewsSub = $.views ? $.views.sub: {},
 		cbBindingKey = 1,
@@ -31,6 +31,7 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		$isArray = $.isArray,
 		$expando = $.expando,
 		OBJECT = "object",
+		PARSEINT = parseInt,
 		propertyChangeStr = $viewsSub.propChng = $viewsSub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
 		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
 		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
@@ -62,12 +63,6 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		return $isArray(data)
 			? [data]
 			: data;
-	}
-
-	function validateIndex(index) {
-		if (typeof index !== "number") {
-			throw "Invalid index.";
-		}
 	}
 
 	function resolvePathObjects(paths, root) {
@@ -457,12 +452,16 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		},
 
 		insert: function(index, data) {
-			validateIndex(index);
-
-			if (arguments.length > 1) {
+			var _data = this._data;
+			if (arguments.length === 1) {
+				data = index;
+				index = _data.length;
+			}
+			index = PARSEINT(index);
+			if (index > -1 && index <= _data.length) {
 				data = $isArray(data) ? data : [data];
 				// data can be a single item (including a null/undefined value) or an array of items.
-				// Note the provided items are inserted without being cloned, as direct feferences to the provided objects
+				// Note the provided items are inserted without being cloned, as direct references to the provided objects
 
 				if (data.length) {
 					this._insert(index, data);
@@ -472,18 +471,24 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		},
 
 		_insert: function(index, data) {
-			_data = this._data;
-			_oldLength = _data.length;
+			var _data = this._data,
+				oldLength = _data.length;
 			splice.apply(_data, [index, 0].concat(data));
-			this._trigger({change: "insert", index: index, items: data});
+			this._trigger({change: "insert", index: index, items: data}, oldLength);
 		},
 
 		remove: function(index, numToRemove) {
-			validateIndex(index);
+			var items,
+				_data = this._data;
 
-			numToRemove = (numToRemove === undefined || numToRemove === null) ? 1 : numToRemove;
-			if (numToRemove && index > -1) {
-				var items = this._data.slice(index, index + numToRemove);
+			if (index === undefined) {
+				index = _data.length - 1;
+			}
+
+			index = PARSEINT(index);
+			numToRemove = numToRemove ? PARSEINT(numToRemove) : numToRemove === 0 ? 0 : 1; // if null or undefined: remove 1
+			if (numToRemove > -1 && index > -1) {
+				items = _data.slice(index, index + numToRemove);
 				numToRemove = items.length;
 				if (numToRemove) {
 					this._remove(index, numToRemove, items);
@@ -493,30 +498,34 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		},
 
 		_remove: function(index, numToRemove, items) {
-			_data = this._data;
-			_oldLength = _data.length;
+			var _data = this._data,
+				oldLength = _data.length;
+
 			_data.splice(index, numToRemove);
-			this._trigger({change: "remove", index: index, items: items});
+			this._trigger({change: "remove", index: index, items: items}, oldLength);
 		},
 
 		move: function(oldIndex, newIndex, numToMove) {
-			validateIndex(oldIndex);
-			validateIndex(newIndex);
+			numToMove = numToMove ? PARSEINT(numToMove) : numToMove === 0 ? 0 : 1; // if null or undefined: move 1
+			oldIndex = PARSEINT(oldIndex);
+			newIndex = PARSEINT(newIndex);
 
-			numToMove = (numToMove === undefined || numToMove === null) ? 1 : numToMove;
-			if (numToMove) {
+			if (numToMove > 0 && oldIndex > -1 && newIndex > -1 && oldIndex !== newIndex) {
 				var items = this._data.slice(oldIndex, oldIndex + numToMove);
-				this._move(oldIndex, newIndex, numToMove, items);
+				numToMove = items.length;
+				if (numToMove) {
+					this._move(oldIndex, newIndex, numToMove, items);
+				}
 			}
 			return this;
 		},
 
 		_move: function(oldIndex, newIndex, numToMove, items) {
-			_data = this._data;
-			_oldLength = _data.length;
+			var _data = this._data,
+				oldLength = _data.length;
 			_data.splice( oldIndex, numToMove );
 			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
-			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items});
+			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
 		refresh: function(newItems) {
@@ -526,16 +535,18 @@ informal pre V1.0 commit counter: 42 (Beta Candidate) */
 		},
 
 		_refresh: function(oldItems, newItems) {
-			_data = this._data;
-			_oldLength = _data.length;
+			var _data = this._data,
+				oldLength = _data.length;
+
 			splice.apply(_data, [0, _data.length].concat(newItems));
-			this._trigger({change: "refresh", oldItems: oldItems});
+			this._trigger({change: "refresh", oldItems: oldItems}, oldLength);
 		},
 
-		_trigger: function(eventArgs) {
-			var length = _data.length,
-				oldLength = _oldLength,
+		_trigger: function(eventArgs, oldLength) {
+			var _data = this._data,
+				length = _data.length,
 				$data = $([_data]);
+
 			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
 				$data.triggerHandler(propertyChangeStr, {path: "length", value: length, oldValue: oldLength});

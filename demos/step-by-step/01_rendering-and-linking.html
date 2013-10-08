@@ -78,14 +78,14 @@
 
 	// Modify the data
 	function addMovie() {
-		$.observable( movies ).insert( movies.length, {
+		$.observable( movies ).insert({
 			name: "NewTitle" + counter++,
 			releaseYear: "YYYY"
 		});
 	}
 
 	function removeMovie() {
-		$.observable( movies ).remove( movies.length - 1, 1 );
+		$.observable( movies ).remove();
 	}
 </script>
 </body>

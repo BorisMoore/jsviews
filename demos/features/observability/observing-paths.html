@@ -112,7 +112,7 @@ $.link.peopleTmpl( "#peopleList", app);
 $.link.nameTmpl( "#nameSection", app, { target: "replace" });
 
 	 $("#addBtn").on("click", function(){
-		$.observable(app.people).insert(app.people.length, {name: {first: "first", last: "last"}});
+		$.observable(app.people).insert({name: {first: "first", last: "last"}});
 		$.observable(app).setProperty("selected", app.people[app.people.length-1]);
 	 })
 	 $("#removeBtn").on("click", function(){

@@ -79,7 +79,7 @@ $( "#insertPerson" ).on( "click", function() {
 // Observable array change: remove
 $( "#details1" )
 	.on( "click", ".close", function() {
-		$.observable( people ).remove( $.view( this ).index, 1 );
+		$.observable( people ).remove( $.view( this ).index );
 	});
 
 </script>

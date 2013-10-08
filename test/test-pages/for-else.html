@@ -169,7 +169,7 @@ $( "#refreshPeople" ).click( function() {
 });
 
 $( "#removePerson" ).click( function() {
-	$.observable( app.team.people ).remove( 0, 1);
+	$.observable( app.team.people ).remove(0);
 });
 
 $( "#swapPeople" ).click( function() {
@@ -195,7 +195,7 @@ $( "#replace" ).click( function() {
 
 $( "#container" )
 	.on( "click", ".close", function() {
-		$.observable( app.team.people ).remove( $.view( this ).index, 1 );
+		$.observable( app.team.people ).remove( $.view( this ).index );
 		return false;
 	});
 
