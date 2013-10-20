@@ -1,13 +1,12 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 43 (Beta Candidate) */
+informal pre V1.0 commit counter: 44 (Beta Candidate) */
 
 /* JsRender:
 *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
 * Copyright 2013, Boris Moore
 * Released under the MIT License.
 */
-
 (function(global, jQuery, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
 	"use strict";
@@ -346,7 +345,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				? parentView.getRsc("templates", tmpl) || $templates(tmpl)
 				: tmpl;
 
-			$extend( tagCtx, {
+			$extend(tagCtx, {
 				tmpl: tmpl,
 				render: renderContent,
 				index: i,
@@ -681,8 +680,8 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		htmlTag = wrapMap[tmpl.htmlTag];
 		if (htmlTag && htmlTag !== wrapMap.div) {
 			// When using JsViews, we trim templates which are inserted into HTML contexts where text nodes are not rendered (i.e. not 'Phrasing Content').
+			// Currently not trimmed for <li> tag. (Not worth adding perf cost)
 			tmpl.markup = $.trim(tmpl.markup);
-			tmpl._elCnt = true; // element content model (no rendered text nodes), not phrasing content model
 		}
 
 		return tmpl;
@@ -774,7 +773,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			tmpl = tagCtx.tmpl;
 			context = extendCtx(context, self.ctx);
 			contentTmpl = tagCtx.content; // The wrapped content - to be added to views, below
-			if ( tagCtx.props.link === false ) {
+			if (tagCtx.props.link === false) {
 				// link=false setting on block tag
 				// We will override inherited value of link by the explicit setting link=false taken from props
 				// The child views of an unlinked view are also unlinked. So setting child back to true will not have any effect.
@@ -886,7 +885,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 
 			//    bind         tag        converter colon html     comment            code      params            slash   closeBlock
 			// /{(\^)?{(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|!--((?:[^-]|-(?!-))*)--|(\*)))\s*((?:[^}]|}(?!}))*?)(\/)?|(?:\/(\w+)))}}/g
-			// Build abstract syntax tree (AST): [ tagName, converter, params, content, hash, bindings, contentMarkup ]
+			// Build abstract syntax tree (AST): [tagName, converter, params, content, hash, bindings, contentMarkup]
 			if (html) {
 				colon = ":";
 				converter = "html";
@@ -1022,7 +1021,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			nestedTmpls = tmpl.tmpls;
 		}
 		for (i = 0; i < l; i++) {
-			// AST nodes: [ tagName, converter, params, content, hash, noError, pathBindings, contentMarkup, link ]
+			// AST nodes: [tagName, converter, params, content, hash, noError, pathBindings, contentMarkup, link]
 			node = ast[i];
 
 			// Add newline for each callout to t() c() etc. and each markup string
@@ -1181,7 +1180,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				if (object) {
 					if (bindings) {
 						if (named === "linkTo") {
-							bindto = bindings.to = bindings.to || [];
+							bindto = bindings._jsvto = bindings._jsvto || [];
 							bindto.push(path);
 						}
 						if (!named || boundName) {
@@ -1367,7 +1366,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				// If not done (a previous block has not been rendered), look at expression for this block and render the block if expression is truthy
 				// Otherwise return ""
 				var self = this,
-					ret = (self.rendering.done || !val && (val !== undefined || !self.tagCtx.index))
+					ret = (self.rendering.done || !val && (arguments.length || !self.tagCtx.index))
 						? ""
 						: (self.rendering.done = true, self.selected = self.tagCtx.index,
 							// Test is satisfied, so render content on current context. We call tagCtx.render() rather than return undefined
@@ -1594,12 +1593,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			var value = eventArgs.oldValue,
 				ctx = ev.data;
 			if (ev.type === arrayChangeStr) {
-				ctx.cb.array(ev, eventArgs);
-			} else if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
-				if (typeof value === OBJECT) {
+				(ctx.cb.array || ctx.cb)(ev, eventArgs);
+			} else if (ctx.prop === eventArgs.path || ctx.prop === "*") {
+				if (typeof value === OBJECT && (ctx.path || $isArray(value))) { // Note: && (ctx.path || $isArray(value)) is for perf optimization
 					$unobserve(wrapArray(value), ctx.path, ctx.cb);
 				}
-				if (typeof (value = eventArgs.value) === OBJECT) {
+				if (typeof (value = eventArgs.value) === OBJECT && (ctx.path || $isArray(value))) { // Note: && (ctx.path || $isArray(value)) is for perf optimization
 					$observe(wrapArray(value), ctx.path, ctx.cb); // If value is an array, observe wrapped array, so that observe() doesn't flatten out this argument
 				}
 				ctx.cb(ev, eventArgs);
@@ -1644,7 +1643,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 						}
 					}
 				}
-				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { path: pathStr, prop: prop, cb: callback }, onObservableChange);
+				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { fullPath: path, path: pathStr, prop: prop, cb: callback }, onObservableChange);
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
 					bindings[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
@@ -1678,7 +1677,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		}
 
 		function bindArray(arr, unbind) {
-			if (callback && callback.array && $isArray(arr)) {
+			if (callback && $isArray(arr)) {
 				// This is a data-bound tag which has an onArrayChange handler, e.g. {^{for}}, and the leaf object is an array
 				// - so we add the arrayChange binding
 				var prevObj = object;
@@ -1688,16 +1687,15 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			}
 		}
 
-		var i, parts, prop, path, dep, object, unobserve, callback, cbId, el, data, events, contextCb, items, bindings, depth, innerCb,
+		var i, p, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, bindings, depth, innerCb,
 			topLevel = 1,
 			ns = observeStr,
 			paths = concat.apply([], arguments),	// flatten the arguments
 			lastArg = paths.pop(),
-			origRoot = paths[0],
-			root = paths.shift(),
+			origRoot = paths.shift(),
+			root =origRoot,
+			object = root,
 			l = paths.length;
-
-		origRoot = root;
 
 		if ($isFunction(lastArg)) {
 			callback = lastArg;
@@ -1714,7 +1712,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				l--;
 			}
 		}
-		if ($isFunction(paths[l-1])) {
+		if (l && $isFunction(paths[l-1])) {
 			contextCb = callback;
 			callback = paths.pop();
 			l--;
@@ -1733,12 +1731,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			bindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
 		}
 		depth = 0;
+		bindArray(root, unobserve);
 		for (i = 0; i < l; i++) {
 			path = paths[i];
-			bindArray(object, unobserve);
 			object = root;
 			if ("" + path === path) {
-				//path = path || "*"; // This ensures that foo(person) will depend on any changes in foo
+				//path = path || "*"; // This ensures that foo(person) will depend on any changes in person
 				// - equivalent to foo(person.*) - were it legal, or to adding foo.depends = []
 				parts = path.split("^");
 				if (parts[1]) {
@@ -1775,56 +1773,60 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				parts = [root];
 			}
 			while (object && (prop = parts.shift()) !== undefined) {
-				if (typeof object === "object" && "" + prop === prop) {
-					if (prop === "") {
-						continue;
-					}
-					if ((parts.length < depth + 1) && !object.nodeType) {
-						// Add observer for each token in path starting at depth, and on to the leaf
-						if (!unobserve && (events = $hasData(object) && $._data(object))) {
-							events = events.events;
-							events = events && events.propertyChange;
-							el = events && events.length;
-							while (el--) { // Skip duplicates
-								data = events[el].data;
-								if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
-									break;
+				if (typeof object === OBJECT) {
+					if ("" + prop === prop) {
+						if (prop === "") {
+							continue;
+						}
+						if ((parts.length < depth + 1) && !object.nodeType) {
+							// Add observer for each token in path starting at depth, and on to the leaf
+							if (!unobserve && (events = $hasData(object) && $._data(object))) {
+								events = events.events;
+								events = events && events.propertyChange;
+								el = events && events.length;
+								while (el--) { // Skip duplicates
+									data = events[el].data;
+									if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
+										break;
+									}
+								}
+								if (el > -1) {
+									// Duplicate binding found, so move on
+									object = object[prop];
+									continue;
 								}
 							}
-							if (el > -1) {
-								// Duplicate binding found, so move on
-								object = object[prop];
-								continue;
-							}
-						}
-						if (prop === "*") {
-							if ($isFunction(object)) {
-								if (dep = object.depends) {
-									$observe(dep, callback, unobserve||origRoot);
+							if (prop === "*") {
+								if ($isFunction(object)) {
+									if (dep = object.depends) {
+										$observe(dep, callback, unobserve||origRoot);
+									}
+								} else {
+									observeOnOff(ns, "");
 								}
-							} else {
-								observeOnOff(ns, prop);
+								for (p in object) {
+									// observing "*" listens to any prop change, and also to arraychange on props of type array
+									bindArray(object[p], unobserve);
+								}
+								break;
+							} else if (prop) {
+								observeOnOff(ns + "." + prop, parts.join("."));
 							}
-							break;
-						} else if (prop && !($isFunction(dep = object[prop]) && dep.depends)) {
-							// If leaf is a computed observable (function with declared dependencies) we do not
-							// currently observe 'swapping' of the observable - only changes in its dependencies.
-							observeOnOff(ns + "." + prop, parts.join("."));
 						}
+						prop = object[prop];
 					}
-					prop = prop ? object[prop] : object;
-				}
-				if ($isFunction(prop)) {
-					if (dep = prop.depends) {
-						// This is a computed observable. We will observe any declared dependencies
-						$observe(object, resolvePathObjects(dep, object), callback, contextCb, unobserve||wrapArray(origRoot));
+					if ($isFunction(prop)) {
+						if (dep = prop.depends) {
+							// This is a computed observable. We will observe any declared dependencies
+							$observe(object, resolvePathObjects(dep, object), callback, contextCb, unobserve||wrapArray(origRoot));
+						}
+						break;
 					}
-					break;
+					object = prop;
 				}
-				object = prop;
 			}
+			bindArray(object, unobserve);
 		}
-		bindArray(object, unobserve);
 		if (cbId) {
 			removeCbBindings(bindings, cbId);
 		}
@@ -1902,7 +1904,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
 					getter = property;
 					setter = property.set === true ? property : property.set;
-					property = property.call(leaf); //get
+					property = property.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
 				}
 			}
 
@@ -1915,7 +1917,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 					} else {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, {path: path, value: value, oldValue: property});
+					this._trigger(leaf, {change: "prop", path: path, value: value, oldValue: property});
 				}
 			}
 		},
@@ -2004,8 +2006,8 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		_move: function(oldIndex, newIndex, numToMove, items) {
 			var _data = this._data,
 				oldLength = _data.length;
-			_data.splice( oldIndex, numToMove );
-			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
+			_data.splice(oldIndex, numToMove);
+			_data.splice.apply(_data, [newIndex, 0].concat(items));
 			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
@@ -2030,7 +2032,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 
 			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
-				$data.triggerHandler(propertyChangeStr, {path: "length", value: length, oldValue: oldLength});
+				$data.triggerHandler(propertyChangeStr, {change: "prop", path: "length", value: length, oldValue: oldLength});
 			}
 		}
 	};
@@ -2125,7 +2127,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			html: "html",
 			text: "text"
 		},
-		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
+		valueBinding = { from: "value", to: "value"},
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
@@ -2136,25 +2138,25 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		qsa = document.querySelector,
 
 		// elContent maps tagNames which have only element content, so may not support script nodes.
-		elContent = { ol: 1, ul: 1, table: 1, tbody: 1, thead: 1, tfoot: 1, tr: 1, colgroup: 1, dl: 1, select: 1, optgroup: 1, svg: 1, svg_ns: 1 }, //TODO - For svg support see issue 206
+		elContent = {ol: 1, ul: 1, table: 1, tbody: 1, thead: 1, tfoot: 1, tr: 1, colgroup: 1, dl: 1, select: 1, optgroup: 1, svg: 1, svg_ns: 1},
 		badParent = {tr: "table"},
 		// wrapMap provide appropriate wrappers for inserting innerHTML, used in insertBefore
 		// We have to close these tags to support XHTML (#13200)
 		// TODO investigate whether more recent jQuery implementation using wrapMap in domManip/$().html() etc. is better optimized now...
 		wrapMap = $viewsSettings.wrapMap = {
-			option: [ 1, "<select multiple='multiple'>", "</select>" ],
-			legend: [ 1, "<fieldset>", "</fieldset>" ],
-			area: [ 1, "<map>", "</map>" ],
-			param: [ 1, "<object>", "</object>" ],
-			thead: [ 1, "<table>", "</table>" ],
-			tr: [ 2, "<table><tbody>", "</tbody></table>" ],
-			td: [ 3, "<table><tbody><tr>", "</tr></tbody></table>" ],
-			col: [ 2, "<table><tbody></tbody><colgroup>", "</colgroup></table>" ],
-			svg_ns: [ 1, "<svg>", "</svg>" ],
+			option: [1, "<select multiple='multiple'>", "</select>"],
+			legend: [1, "<fieldset>", "</fieldset>"],
+			area: [1, "<map>", "</map>"],
+			param: [1, "<object>", "</object>"],
+			thead: [1, "<table>", "</table>"],
+			tr: [2, "<table><tbody>", "</tbody></table>"],
+			td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
+			col: [2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
+			svg_ns: [1, "<svg>", "</svg>"],
 
 			// IE6-8 can't serialize link, script, style, or any html5 (NoScope) tags,
 			// unless wrapped in a div with non-breaking characters in front of it.
-			div: jQuery.support.htmlSerialize ? [ 0, "", "" ] : [ 1, "X<div>", "</div>" ]
+			div: jQuery.support.htmlSerialize ? [0, "", ""] : [1, "X<div>", "</div>"]
 		},
 		voidElems = {br: 1, img: 1, input: 1, hr: 1, area: 1, base: 1, col: 1, link: 1, meta: 1,
 			command: 1, embed: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1},
@@ -2501,7 +2503,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 						// Insert and link new content
 						promise = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId, lazyLink: tag.tagCtx.props.lazyLink});
 					} else {
-						// data-linked value targetting innerHTML: data-link="html{:expr}"
+						// data-linked value targeting innerHTML: data-link="html{:expr}"
 						if (renders) {
 							$target.empty();
 						}
@@ -2644,8 +2646,8 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
 					? RADIO
-					: attr.to.toAttr)
-				: attr.from.fromAttr)
+					: attr.to)
+				: attr.from)
 			: to
 				? linkGetVal ? "text" : "html" // Default innerText for data-link="a.b.c" or data-link="{:a.b.c}" (with or without converters)- otherwise innerHTML
 				: ""; // Default is not to bind from
@@ -3087,7 +3089,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			if (vwInfos) {
 				//targetParent = targetParent || targetElem && targetElem.previousSibling;
 				//targetParent = targetElem ? targetElem.previousSibling : targetParent;
-				if (vwInfos.tokens.charAt(0) === "@") {
+				if (vwInfos._tkns.charAt(0) === "@") {
 					// We are processing newly inserted content. This is a special script element that was created in convertMarkers() to process deferred bindings,
 					// and inserted following the target parent element - because no element tags (outside elCnt) were encountered to carry those binding tokens.
 					// We will step back from the  preceding sibling of this element, looking at targetParent elements until we find the one that the current binding
@@ -3414,7 +3416,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				while (node && !(nextView = viewInfos(node))) {
 					node = node.nextSibling;
 				}
-				if (tokens = nextView ? nextView.tokens : parentNode._dfr) {
+				if (tokens = nextView ? nextView._tkns : parentNode._dfr) {
 					token = prevView || "";
 					if (refresh || !prevView) {
 						token += "#" + thisId;
@@ -3506,7 +3508,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 //			if (!(linkTags = links[linkMarkup])) {
 			// This is the first time this view template has been linked, so we compile the data-link expressions, and store them on the template.
 
-				linkMarkup = normalizeLinkTag(linkMarkup, node);
+				linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
 				rTag.lastIndex = 0;
 				while (tokens = rTag.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
 					// Iterate over the data-link expressions, for different target attrs,
@@ -3634,7 +3636,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		if (tokens = isVal ? node : markerNodeInfo(node)) {
 			infos.elCnt = !node.type;
 			elCnt = tokens.charAt(0) === "@" || !node.type;
-			infos.tokens = tokens;
+			infos._tkns = tokens;
 			// rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
 			tokens.replace(rBinding || rMarkerTokens, getInfos);
 			return infos;
@@ -3671,12 +3673,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		return marker;
 	}
 
-	function normalizeLinkTag(linkMarkup, node) {
+	function normalizeLinkTag(linkMarkup, twoway) {
 		linkMarkup = $.trim(linkMarkup);
 		return linkMarkup.slice(-1) !== delimCloseChar0
 		// If simplified syntax is used: data-link="expression", convert to data-link="{:expression}",
 		// or for inputs, data-link="{:expression:}" for (default) two-way binding
-			? linkMarkup = delimOpenChar1 + ":" + linkMarkup + (defaultAttr(node) ? ":" : "") + delimCloseChar0
+			? linkMarkup = delimOpenChar1 + ":" + linkMarkup + (twoway ? ":" : "") + delimCloseChar0
 			: linkMarkup;
 	}
 
@@ -3832,7 +3834,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			source = lct.data,
 			paths = lct.fn.paths;
 		if (binding) {
-			if (bindto = paths.to) {
+			if (bindto = paths._jsvto) {
 				paths = bindto;
 			}
 			pathIndex = paths.length;
@@ -4146,7 +4148,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			}
 			tokens = nextNode ? nextNode.getAttribute(jsvAttrStr) : parentElem._dfr;
 			if (l = tokens.indexOf("/" + id + viewOrTagChar) + 1) {
-				tokens = vwInfos.tokens.slice(0, precedingLength) + tokens.slice(l + (refresh ? -1 : id.length + 1));
+				tokens = vwInfos._tkns.slice(0, precedingLength) + tokens.slice(l + (refresh ? -1 : id.length + 1));
 			}
 			if (tokens) {
 				if (nextNode) {
@@ -4315,12 +4317,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 
 	$viewsSettings.merge = {
 		input: {
-			from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
+			from: inputAttrib, to: "value"
 		},
 		textarea: valueBinding,
 		select: valueBinding,
 		optgroup: {
-			from: { fromAttr: "label" }, to: { toAttr: "label" }
+			to: "label"
 		}
 	};
 
@@ -4480,7 +4482,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 	// Extend topView
 	//===============
 
-	$extend(topView, { tmpl: { links: {}, tags: {} }});
+	$extend(topView, {tmpl: {links: {}, tags: {}}});
 	$extend(topView, LinkedView);
 	topView._.onRender = addBindingMarkers;
 

@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 43 (Beta Candidate) */
+informal pre V1.0 commit counter: 44 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -113,12 +113,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			var value = eventArgs.oldValue,
 				ctx = ev.data;
 			if (ev.type === arrayChangeStr) {
-				ctx.cb.array(ev, eventArgs);
-			} else if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
-				if (typeof value === OBJECT) {
+				(ctx.cb.array || ctx.cb)(ev, eventArgs);
+			} else if (ctx.prop === eventArgs.path || ctx.prop === "*") {
+				if (typeof value === OBJECT && (ctx.path || $isArray(value))) { // Note: && (ctx.path || $isArray(value)) is for perf optimization
 					$unobserve(wrapArray(value), ctx.path, ctx.cb);
 				}
-				if (typeof (value = eventArgs.value) === OBJECT) {
+				if (typeof (value = eventArgs.value) === OBJECT && (ctx.path || $isArray(value))) { // Note: && (ctx.path || $isArray(value)) is for perf optimization
 					$observe(wrapArray(value), ctx.path, ctx.cb); // If value is an array, observe wrapped array, so that observe() doesn't flatten out this argument
 				}
 				ctx.cb(ev, eventArgs);
@@ -163,7 +163,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 						}
 					}
 				}
-				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { path: pathStr, prop: prop, cb: callback }, onObservableChange);
+				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { fullPath: path, path: pathStr, prop: prop, cb: callback }, onObservableChange);
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
 					bindings[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
@@ -197,7 +197,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		}
 
 		function bindArray(arr, unbind) {
-			if (callback && callback.array && $isArray(arr)) {
+			if (callback && $isArray(arr)) {
 				// This is a data-bound tag which has an onArrayChange handler, e.g. {^{for}}, and the leaf object is an array
 				// - so we add the arrayChange binding
 				var prevObj = object;
@@ -207,16 +207,15 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			}
 		}
 
-		var i, parts, prop, path, dep, object, unobserve, callback, cbId, el, data, events, contextCb, items, bindings, depth, innerCb,
+		var i, p, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, bindings, depth, innerCb,
 			topLevel = 1,
 			ns = observeStr,
 			paths = concat.apply([], arguments),	// flatten the arguments
 			lastArg = paths.pop(),
-			origRoot = paths[0],
-			root = paths.shift(),
+			origRoot = paths.shift(),
+			root =origRoot,
+			object = root,
 			l = paths.length;
-
-		origRoot = root;
 
 		if ($isFunction(lastArg)) {
 			callback = lastArg;
@@ -233,7 +232,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				l--;
 			}
 		}
-		if ($isFunction(paths[l-1])) {
+		if (l && $isFunction(paths[l-1])) {
 			contextCb = callback;
 			callback = paths.pop();
 			l--;
@@ -252,12 +251,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			bindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
 		}
 		depth = 0;
+		bindArray(root, unobserve);
 		for (i = 0; i < l; i++) {
 			path = paths[i];
-			bindArray(object, unobserve);
 			object = root;
 			if ("" + path === path) {
-				//path = path || "*"; // This ensures that foo(person) will depend on any changes in foo
+				//path = path || "*"; // This ensures that foo(person) will depend on any changes in person
 				// - equivalent to foo(person.*) - were it legal, or to adding foo.depends = []
 				parts = path.split("^");
 				if (parts[1]) {
@@ -294,56 +293,60 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				parts = [root];
 			}
 			while (object && (prop = parts.shift()) !== undefined) {
-				if (typeof object === "object" && "" + prop === prop) {
-					if (prop === "") {
-						continue;
-					}
-					if ((parts.length < depth + 1) && !object.nodeType) {
-						// Add observer for each token in path starting at depth, and on to the leaf
-						if (!unobserve && (events = $hasData(object) && $._data(object))) {
-							events = events.events;
-							events = events && events.propertyChange;
-							el = events && events.length;
-							while (el--) { // Skip duplicates
-								data = events[el].data;
-								if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
-									break;
+				if (typeof object === OBJECT) {
+					if ("" + prop === prop) {
+						if (prop === "") {
+							continue;
+						}
+						if ((parts.length < depth + 1) && !object.nodeType) {
+							// Add observer for each token in path starting at depth, and on to the leaf
+							if (!unobserve && (events = $hasData(object) && $._data(object))) {
+								events = events.events;
+								events = events && events.propertyChange;
+								el = events && events.length;
+								while (el--) { // Skip duplicates
+									data = events[el].data;
+									if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
+										break;
+									}
+								}
+								if (el > -1) {
+									// Duplicate binding found, so move on
+									object = object[prop];
+									continue;
 								}
 							}
-							if (el > -1) {
-								// Duplicate binding found, so move on
-								object = object[prop];
-								continue;
-							}
-						}
-						if (prop === "*") {
-							if ($isFunction(object)) {
-								if (dep = object.depends) {
-									$observe(dep, callback, unobserve||origRoot);
+							if (prop === "*") {
+								if ($isFunction(object)) {
+									if (dep = object.depends) {
+										$observe(dep, callback, unobserve||origRoot);
+									}
+								} else {
+									observeOnOff(ns, "");
 								}
-							} else {
-								observeOnOff(ns, prop);
+								for (p in object) {
+									// observing "*" listens to any prop change, and also to arraychange on props of type array
+									bindArray(object[p], unobserve);
+								}
+								break;
+							} else if (prop) {
+								observeOnOff(ns + "." + prop, parts.join("."));
 							}
-							break;
-						} else if (prop && !($isFunction(dep = object[prop]) && dep.depends)) {
-							// If leaf is a computed observable (function with declared dependencies) we do not
-							// currently observe 'swapping' of the observable - only changes in its dependencies.
-							observeOnOff(ns + "." + prop, parts.join("."));
 						}
+						prop = object[prop];
 					}
-					prop = prop ? object[prop] : object;
-				}
-				if ($isFunction(prop)) {
-					if (dep = prop.depends) {
-						// This is a computed observable. We will observe any declared dependencies
-						$observe(object, resolvePathObjects(dep, object), callback, contextCb, unobserve||wrapArray(origRoot));
+					if ($isFunction(prop)) {
+						if (dep = prop.depends) {
+							// This is a computed observable. We will observe any declared dependencies
+							$observe(object, resolvePathObjects(dep, object), callback, contextCb, unobserve||wrapArray(origRoot));
+						}
+						break;
 					}
-					break;
+					object = prop;
 				}
-				object = prop;
 			}
+			bindArray(object, unobserve);
 		}
-		bindArray(object, unobserve);
 		if (cbId) {
 			removeCbBindings(bindings, cbId);
 		}
@@ -421,7 +424,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
 					getter = property;
 					setter = property.set === true ? property : property.set;
-					property = property.call(leaf); //get
+					property = property.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
 				}
 			}
 
@@ -434,7 +437,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 					} else {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, {path: path, value: value, oldValue: property});
+					this._trigger(leaf, {change: "prop", path: path, value: value, oldValue: property});
 				}
 			}
 		},
@@ -523,8 +526,8 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		_move: function(oldIndex, newIndex, numToMove, items) {
 			var _data = this._data,
 				oldLength = _data.length;
-			_data.splice( oldIndex, numToMove );
-			_data.splice.apply( _data, [ newIndex, 0 ].concat( items ) );
+			_data.splice(oldIndex, numToMove);
+			_data.splice.apply(_data, [newIndex, 0].concat(items));
 			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
@@ -549,7 +552,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 
 			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
-				$data.triggerHandler(propertyChangeStr, {path: "length", value: length, oldValue: oldLength});
+				$data.triggerHandler(propertyChangeStr, {change: "prop", path: "length", value: length, oldValue: oldLength});
 			}
 		}
 	};

@@ -41,7 +41,7 @@
 		};
 
 	personProto.firstName.set = function(val) {
-		$.observable(this).setProperty("_firstName", val);
+		this._firstName = val;
 	}
 
 	Person.prototype = personProto;
@@ -100,7 +100,7 @@
 
 		people = [person1, person2];
 
-	personProto.firstName.depends = ["_firstName", settings, "title"];
+	personProto.firstName.depends = [settings, "title"];
 
 	updown.depends = function() {
 		return [person1, "firstName", "~settings.width"];
@@ -349,14 +349,29 @@ function myListener(ev, eventArgs) {
 	calls++;
 	lastEventArgs = eventArgs;
 	lastEvData = ev.data;
-	var oldValue = eventArgs.oldValue,
-		value = eventArgs.value;
 
-	oldValue = (typeof oldValue === "function") ? (oldValue = "" + oldValue, oldValue.slice(0, oldValue.indexOf("{"))) : oldValue;
-	value = (typeof value === "function") ? (value = "" + value, value.slice(0, value.indexOf("{"))) : value;
-	result += "calls: " + calls
-		+ ", ev.data: prop: " + ev.data.prop + (ev.data.path ? ", path: " + ev.data.path : "")
-		+ ", eventArgs: oldValue: " + oldValue + " value: " + value + ", eventArgs.path: " + eventArgs.path + "|";
+	switch (eventArgs.change) {
+		case "prop":
+			var oldValue = eventArgs.oldValue,
+				value = eventArgs.value;
+
+			oldValue = (typeof oldValue === "function") ? (oldValue = "" + oldValue, oldValue.slice(0, oldValue.indexOf("{"))) : oldValue;
+			value = (typeof value === "function") ? (value = "" + value, value.slice(0, value.indexOf("{"))) : value;
+			result += "calls: " + calls
+				+ ", ev.data: prop: " + ev.data.prop + (ev.data.path ? ", path: " + ev.data.path : "")
+				+ ", eventArgs: oldValue: " + oldValue + " value: " + value + ", eventArgs.path: " + eventArgs.path + "|";
+			break;
+		case "insert":
+		case "remove":
+		case "move":
+		case "refresh":
+			result += "regularCallbackCalls: " + calls
+			+ ", eventArgs: change: " + eventArgs.change + "|";
+			break;
+		default:
+			throw "Error";
+	}
+	return result;
 }
 
 // End Setup
@@ -524,7 +539,7 @@ module("API - data-link");
 
 test("link(expression, container, data)", function() {
 
-	//  =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>')
 	$.link("lastName 44 a=3", "#inner", person1);
 
@@ -1115,7 +1130,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 	// ............................... Assert .................................
 	equal(person1.lastName,
 	"One+toMr Jo",
-	'Data link using: <input data-link="{:expr:to}"/>  with no convert. - convertBack called with tag as this pointer.');
+	'Data link using: <input data-link="{:expr:to}"/> with no convert. - convertBack called with tag as this pointer.');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -2706,7 +2721,7 @@ test("PropertyChange: setProperty()", 4, function() {
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|",
-	"setProperty triggers 'observer.observe() callbacks with ev and eventArgs correctly populated");
+	"setProperty triggers 'observable.observe() callbacks with ev and eventArgs correctly populated");
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -3514,8 +3529,8 @@ test("JsViews ArrayChange: refresh()", function() {
 module("API - observe()");
 
 test("observe/unobserve alternative signatures", function() {
-	// =============================== Arrange ===============================
 	reset();
+	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observable.observe(person1.home.address, "street", myListener);
 	$.observable(person1.home.address).setProperty("street", "newValue");
@@ -3533,6 +3548,21 @@ test("observe/unobserve alternative signatures", function() {
 
 	//Act
 	$.observable.unobserve(person1.home.address, "street", myListener);
+	$.observable(person1.home.address).setProperty("street", "newValue");
+
+	// ............................... Assert .................................
+	equals(result, "",
+	"$.observable.unobserve(object, path, cb)");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1.home.address.street = "StreetOne"; // reset Prop
+	reset();
+
+	// =============================== Arrange ===============================
+
+	//Act
+	$.observable.unobserve(person1.home.address, myListener);
 	$.observable(person1.home.address).setProperty("street", "newValue");
 
 	// ............................... Assert .................................
@@ -3612,7 +3642,7 @@ test("observe/unobserve alternative signatures", function() {
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-				+  "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
+				+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
 	"$.observable.observe(object, path1, path2, cb)");
 	// -----------------------------------------------------------------------
 
@@ -3645,7 +3675,7 @@ test("observe/unobserve alternative signatures", function() {
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-				+  "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
+				+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
 	"$.observable.observe(object, [path1, path2], cb)");
 	// -----------------------------------------------------------------------
 
@@ -3678,7 +3708,7 @@ test("observe/unobserve alternative signatures", function() {
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-				+  "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
+				+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
 	"$.observable.observe([object, path1, path2], cb)");
 	// -----------------------------------------------------------------------
 
@@ -3753,7 +3783,7 @@ test("paths", function() {
 
 	// ............................... Assert .................................
 	ok(result === "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-		+  "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
+		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
 	"$.observable.observe(object, some.deep.path, object2, path, cb) is listening to leaf");
 	// -----------------------------------------------------------------------
 
@@ -3874,11 +3904,12 @@ test("paths", function() {
 	$.observable(person1.home.address).setProperty({street: "newValue4", ZIP: "newZip4"});
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: *, path: *, eventArgs: oldValue: newValue3 value: newValue4, eventArgs.path: street|"
-				+ "calls: 2, ev.data: prop: *, path: *, eventArgs: oldValue: newZip3 value: newZip4, eventArgs.path: ZIP|",
+
+	equal(result, "calls: 1, ev.data: prop: *, eventArgs: oldValue: newValue3 value: newValue4, eventArgs.path: street|"
+							+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: newZip3 value: newZip4, eventArgs.path: ZIP|",
 	'listen to both "*" and specific prop. Note: Eliminates duplicates for specific props when there is also a "*"');
 	// -----------------------------------------------------------------------
-
+  
 	// ................................ Reset ................................
 	address1.street = "StreetOne"; // reset Prop
 	address1.ZIP = "111"; // reset Prop
@@ -3917,7 +3948,7 @@ test("paths", function() {
 	$.observable.observe(person1, "fullName", myListener);
 
 	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "2",
+	equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property');
 	// -----------------------------------------------------------------------
 
@@ -3926,7 +3957,7 @@ test("paths", function() {
 	$.observable(settings).setProperty({title: "Sir"});
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: _firstName, eventArgs: oldValue: Jo value: newFirst, eventArgs.path: _firstName|"
+	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Mr Jo value: Mr newFirst, eventArgs.path: firstName|"
 				+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|"
 				+ "calls: 3, ev.data: prop: title, eventArgs: oldValue: Mr value: Sir, eventArgs.path: title|",
 	'listen to changes in dependent props for a computed');
@@ -3947,7 +3978,7 @@ test("paths", function() {
 
 	// ............................... Assert .................................
 	equal(listeners + ". After: "
-		+ !$._data(model.person1).events, "Before: 2. After: true",
+		+ !$._data(model.person1).events, "Before: 3. After: true",
 	'unobserve(object, "computed", cb) removes handlers');
 	// -----------------------------------------------------------------------
 
@@ -3955,7 +3986,7 @@ test("paths", function() {
 	$.observable.observe(model, "person1^fullName", myListener);
 
 	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "2",
+	equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property on a deep path');
 	// -----------------------------------------------------------------------
 
@@ -3963,7 +3994,8 @@ test("paths", function() {
 	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: _firstName, eventArgs: oldValue: Jo value: newFirst, eventArgs.path: _firstName|"
+
+	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
 				+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|",
 	'listen to changes in dependent props for a computed');
 	// -----------------------------------------------------------------------
@@ -3984,7 +4016,7 @@ test("paths", function() {
 	// ............................... Assert .................................
 	equal(listeners + ". After: "
 		+ !$._data(model).events + " "
-		+ !$._data(model.person1).events, "Before: 1 2. After: true true",
+		+ !$._data(model.person1).events, "Before: 1 3. After: true true",
 	'unobserve(object, "computed", cb) removes handlers');
 	// -----------------------------------------------------------------------
 
@@ -3992,7 +4024,7 @@ test("paths", function() {
 	$.observable.observe(model, "person1^fullName", "person1^firstName", "person1^lastName", "person1^firstName", myListener);
 
 	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "2",
+	equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property on deep path plus redundant computed dependency plus redundant computed prop.');
 	// -----------------------------------------------------------------------
 
@@ -4000,7 +4032,7 @@ test("paths", function() {
 	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: _firstName, eventArgs: oldValue: Jo value: newFirst, eventArgs.path: _firstName|"
+	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
 		+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|",
 	'listen to changes in dependent props for a computed. (Note: We avoid duplicate handlers)');
 	// -----------------------------------------------------------------------
@@ -4023,7 +4055,7 @@ test("paths", function() {
 	equal(listeners + ". After: "
 		+ !$._data(settings).events + " "
 		+ !$._data(model).events + " "
-		+ !$._data(model.person1).events, "Before: 1 3 2. After: true true true",
+		+ !$._data(model.person1).events, "Before: 1 3 3. After: true true true",
 	'unobserve(object, "computed", cb) removes handlers');
 	// -----------------------------------------------------------------------
 
@@ -4037,7 +4069,7 @@ test("paths", function() {
 	$.observable.unobserve(person1);
 
 	// ............................... Assert .................................
-	equal("" + handlersCount + " " + !$._data(model).events + " " + !$._data(model.person1).events, "2 true true",
+	equal("" + handlersCount + " " + !$._data(model).events + " " + !$._data(model.person1).events, "3 true true",
 	'unobserve(object) removes all observe handlers from object, but does not remove handlers on paths on descendant objects');
 	// -----------------------------------------------------------------------
 
@@ -4051,7 +4083,7 @@ test("paths", function() {
 	$.observable.unobserve(person1, "*", settings, "*");
 
 	// ............................... Assert .................................
-	equal("" + handlersCount + " " + !$._data(person1).events + " " + !$._data(settings).events, "3 true true",
+	equal("" + handlersCount + " " + !$._data(person1).events + " " + !$._data(settings).events, "5 true true",
 	'unobserve(object1, "*", object2, "*") removes all observe handlers from objects');
 	// -----------------------------------------------------------------------
 
@@ -4067,7 +4099,6 @@ test("paths", function() {
 	'Can observe properties of type function');
 	// -----------------------------------------------------------------------
 
-
 	// ................................ Reset ................................
 	settings.onFoo = "Jo";
 	person1.lastName = "One";
@@ -4080,7 +4111,7 @@ test("paths", function() {
 test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	var str = "aa",
-		obj =  {
+		obj = {
 			name: "One"
 		},
 		arr = [1,2,3];
@@ -4266,20 +4297,210 @@ test("observe context helper", function() {
 });
 
 test("array", function() {
-	// =============================== Arrange ===============================
-	var obj = {name:{first:"n", arr: [1,2]}};
+// For V1 >>>>> $.observable.observe(person, "**", changeHandler);  // all props and arraychange on all array-type props - over complete object graph of person.
+// For V1 >>>>> $.observable.observe(person.phones, "**", changeHandler);  // all props and arraychange on all array-type props over complete object graph of each phone
+// =============================== Arrange ===============================
+	// Using an the same event handler for arrayChange and propertyChange
 
-	function listen(ev,eventArgs) {
-		console.log(eventArgs.path + " prop");
-	}
+	var myArray = [1,2];
+
+	// ................................ Act ..................................
+	$.observable.observe([myArray], myListener);
+
+	$.observable(myArray).insert(10);
+
+	// ............................... Assert .................................
+	equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
+		"regularCallbackCalls: 1, eventArgs: change: insert|1 true",
+		"$.observable.observe([myArray], myListener) listens just to array change on the array");
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.unobserve([myArray], myListener);
+
+	$.observable(myArray).insert(11);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(myArray).events + " " + !$._data(myArray).events, "true true",
+		"$.observable.unobserve([myArray], cbWithoutArrayCallback) removes the arraychange handler");
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.observe([myArray], "length", myListener);
+
+	$.observable(myArray).insert(14);
+
+	// ............................... Assert .................................
+	equal(result + $._data(myArray).events.arrayChange.length + " " + $._data(myArray).events.propertyChange.length,
+		"regularCallbackCalls: 1, eventArgs: change: insert|"
+		+ "calls: 2, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|1 1",
+		'$.observable.observe([myArray], "length", myListener) listens to array change on the array and to length propertyChange on the array');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.unobserve([myArray], "length", myListener);
+
+	$.observable(myArray).insert(15);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(myArray).events + " " + !$._data(myArray).events, "true true",
+		'$.observable.unobserve([myArray], "length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
+
+	// =============================== Arrange ===============================
+		reset();
+
+var initialArray = [1,2],
+		altArray = [4,3,2,1],
+		obj = {name:{first:"n", arr: initialArray}};
+
+	$.observable.observe(obj, "name.arr", myListener);
+
+	// ................................ Act ..................................
+	$.observable(initialArray).insert(10);
+
+	// ............................... Assert .................................
+	equal(result + $._data(initialArray).events.arrayChange.length + " " + !$._data(initialArray).events.propertyChange,
+		"regularCallbackCalls: 1, eventArgs: change: insert|1 true",
+		'$.observable.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens just to array change on the array');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(obj).setProperty("name.arr", altArray);
+
+	// ............................... Assert .................................
+	equals(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: 1,2,10 value: 4,3,2,1, eventArgs.path: arr|",
+	'$.observable.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens to property change for swapping the array property');
+
+	// ............................... Assert .................................
+	reset();
+	equals(!$._data(initialArray).events + " " + $._data(altArray).events.arrayChange.length, "true 1",
+	'$.observable(obj).setProperty("name.arr", newArray) removes the arrayChange handler on previous array, and adds arrayChange to new array');
+
+	// ................................ Act ..................................
+	$.observable(obj.name.arr).insert(11);
+
+	// ............................... Assert .................................
+	equals(result, "regularCallbackCalls: 1, eventArgs: change: insert|",
+	'$.observable.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens to array changes on leaf array property (regular callback)');
+
+	// ................................ Act ..................................
+	handlersCount = $._data(obj.name).events.propertyChange.length + $._data(obj.name.arr).events.arrayChange.length;
+	$.observable.unobserve(obj, "name.arr", myListener);
+
+	// ............................... Assert .................................
+	ok(handlersCount === 2 && !$._data(obj.name).events && !$._data(obj.name.arr).events,
+	'$.observable.unobserve(object, "a.b.myArray") removes both arrayChange and propertyChange event handlers');
+	// -----------------------------------------------------------------------
+	reset();
+	$.observable.observe(obj, "name.arr", "name.arr.length", myListener);
+
+	$.observable(obj.name.arr).insert(16);
+
+	// ............................... Assert .................................
+	equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name.arr).events.propertyChange.length,
+		"regularCallbackCalls: 1, eventArgs: change: insert|"
+		+ "calls: 2, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|1 1",
+		'$.observable.observe(object, "a.b.array", "a.b.array.length", myListener) listens to array change on the array and to length propertyChange on the array');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.unobserve(obj, "name.arr", "name.arr.length", myListener);
+
+	$.observable(obj.name.arr).insert(17);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(obj.name.arr).events, "true",
+		'$.observable.unobserve(object, "a.b.array", "a.b.array.length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.observe(obj, "name.*", myListener);
+
+	$.observable(obj.name.arr).insert(18);
+
+	$.observable(obj.name).setProperty({
+		first: "1st",
+		notThereBefore: "2nd",
+		arr: initialArray
+	});
+	$.observable(obj.name.arr).insert(19);
+
+	// ............................... Assert .................................
+	equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name).events.propertyChange.length + " " + !$._data(altArray).events,
+		"regularCallbackCalls: 1, eventArgs: change: insert|"
+		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: 1st, eventArgs.path: first|"
+		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2nd, eventArgs.path: notThereBefore|"
+		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: 4,3,2,1,11,16,17,18 value: 1,2,10, eventArgs.path: arr|"
+		+ "regularCallbackCalls: 5, eventArgs: change: insert|1 1 true",
+		'$.observable.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.unobserve(obj, "name.*", myListener);
+
+	$.observable(obj.name.arr).insert(17);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(obj.name.arr).events, "true",
+		'$.observable.unobserve(object, "a.b.*", cbWithoutArrayCallback) removes the propertychange handler and any arraychange handlers');
+
+	// =============================== Arrange ===============================
+	// Using an array event handler
+	obj = {name:{first:"n", arr: initialArray}};
+	var newArray1 = [1, 1],
+		newArray2 = [2, 2],
+		newArray3 = [3, 3];
+
+	reset();
+	$.observable.observe(obj, "name.*", myListener);
+
+	$.observable(obj.name.arr).insert(18);
+
+	$.observable(obj.name).setProperty({
+		first: newArray1,
+		arrayNotThereBefore: newArray2,
+		arr: newArray3
+	});
+	$.observable(obj.name.first).insert(10);
+	$.observable(obj.name.arrayNotThereBefore).insert(11);
+	$.observable(obj.name.arr).insert(12);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(initialArray).events + " " + $._data(obj.name).events.propertyChange.length + " "
+		+ $._data(newArray1).events.arrayChange.length + " " + $._data(newArray2).events.arrayChange.length + " " + $._data(newArray3).events.arrayChange.length,
+		"regularCallbackCalls: 1, eventArgs: change: insert|"
+		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: 1,1, eventArgs.path: first|"
+		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2,2, eventArgs.path: arrayNotThereBefore|"
+		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: 1,2,10,19,17,18 value: 3,3, eventArgs.path: arr|"
+		+ "regularCallbackCalls: 5, eventArgs: change: insert|"
+		+ "regularCallbackCalls: 6, eventArgs: change: insert|"
+		+ "regularCallbackCalls: 7, eventArgs: change: insert|"
+		+ "true 1 1 1 1",
+		'$.observable.observe(object, "a.b.*", myListener) listens to array change on any array properties of object.a.b whether intially present, or added subsequently');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable.unobserve(obj, "name.*", myListener);
+
+	$.observable(obj.name.arr).insert(17);
+
+	// ............................... Assert .................................
+	equal(result + !$._data(obj.name.arr).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events, "true true true true",
+		'$.observable.unobserve(object, "a.b.*", cbWithoutArrayCallback) removes the propertychange handler and any arraychange handlers');
+
+	// =============================== Arrange ===============================
+	// Using an array event handler
+	obj = {name:{first:"n", arr: [1,2]}};
+
 	myListener.array = function(ev,eventArgs) {
-		result += "calls: " + calls
+		result += "arrayListenerCalls: " + calls
 		+ ", eventArgs: change: " + eventArgs.change + "|";
 	}
 
-	$.observable.observe(obj, "name.arr", myListener)
+	$.observable.observe(obj, "name.arr", myListener);
 
 	// ................................ Act ..................................
+	reset();
 	$.observable(obj).setProperty("name.arr", [4,3,2,1]);
 
 	// ............................... Assert .................................
@@ -4288,18 +4509,38 @@ test("array", function() {
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj.name.arr).insert(0, 99);
+	$.observable(obj.name.arr).insert(12);
 
 	// ............................... Assert .................................
-	equals(result, "calls: 0, eventArgs: change: insert|",
-	'$.observable.observe(object, "a.b.myArray", cbWithArrayCallback) listens to array change on leaf array property');
+	equals(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
+	'$.observable.observe(object, "a.b.myArray", cbWithArrayCallback) listens to array changes on leaf array property (array callback handler)');
+
 	// ................................ Act ..................................
-	handlersCount = $._data(obj.name).events.propertyChange.length + $._data(obj.name.arr).events.arrayChange.length;
-	$.observable.unobserve(obj, "name.arr", myListener)
+	handlersCount = $._data(obj.name.arr).events.arrayChange.length;
+	$.observable.unobserve(obj, "name.arr", myListener);
 
 	// ............................... Assert .................................
-	ok(handlersCount === 2 && !$._data(obj.name).events && !$._data(obj.name.arr).events,
-	'$.observable.unobserve(object, "a.b.myArray" removes both arrayChange and propertyChange event handlers');
+	ok(handlersCount === 1 && !$._data(obj.name.arr).events,
+	'$.observable.unobserve(object, "a.b.myArray") removes arrayChange event handler');
+	// -----------------------------------------------------------------------
+
+	// =============================== Arrange ===============================
+		$.observable.observe([obj.name.arr], myListener);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(obj.name.arr).insert(13);
+
+	// ............................... Assert .................................
+	equals(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
+	'$.observable.observe(myArray, cbWithArrayCallback) listens to array changes (array callback handler)');
+	// ................................ Act ..................................
+	handlersCount = $._data(obj.name.arr).events.arrayChange.length;
+	$.observable.unobserve([obj.name.arr], myListener);
+
+	// ............................... Assert .................................
+	ok(handlersCount === 1 && !$._data(obj.name.arr).events,
+	'$.observable.unobserve([myArray]) removes arrayChange event handler');
 	// -----------------------------------------------------------------------
 
 });
@@ -4989,7 +5230,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[2].tagName === "myWrap2ElCnt"  && tags[3].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[2].tagName === "myWrap2ElCnt" && tags[3].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
@@ -5193,7 +5434,7 @@ test('two-way bound tag controls', function() {
 	$.templates('<input id="linkedEl" data-link="{twoWayTag name}"/>')
 		.link("#result", person);
 
-	var tag =  $("#result").view(true).childTags("twoWayTag")[0],
+	var tag = $("#result").view(true).childTags("twoWayTag")[0],
 		linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5338,7 +5579,7 @@ test('two-way bound tag controls', function() {
 		}
 	});
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5377,7 +5618,7 @@ test('two-way bound tag controls', function() {
 	$.templates('{^{twoWayTag name}}<input id="linkedEl"/>{{/twoWayTag}}')
 		.link("#result", person);
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5525,7 +5766,7 @@ test('two-way bound tag controls', function() {
 		}
 	});
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5566,7 +5807,7 @@ test('two-way bound tag controls', function() {
 	$.templates('{^{twoWayTag name/}}')
 		.link("#result", person);
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
 	equal(eventData, "init render onBeforeLink onAfterLink ",
@@ -5711,7 +5952,7 @@ test('two-way bound tag controls', function() {
 		}
 	});
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
 	equal(tag.linkedElem[0].value + "|" + tag.value,
@@ -5868,7 +6109,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	$.templates('<input id="linkedEl" data-link="{twoWayTag name linkTo=name2}"/>')
 		.link("#result", person);
 
-	var tag =  $("#result").view(true).childTags("twoWayTag")[0],
+	var tag = $("#result").view(true).childTags("twoWayTag")[0],
 		linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5945,7 +6186,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 		}
 	});
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -5983,7 +6224,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	$.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedEl"/>{{/twoWayTag}}')
 		.link("#result", person);
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
@@ -6059,7 +6300,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 		}
 	});
 
-	tag =  $("#result").view(true).childTags("twoWayTag")[0];
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................

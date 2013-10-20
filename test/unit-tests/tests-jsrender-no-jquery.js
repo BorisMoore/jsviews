@@ -53,12 +53,14 @@ test("{{if}}", 4, function() {
 	equal($.templates("A_{{if false}}{{/if}}_B").render(), "A__B", "{{if a}}: empty: !a");
 });
 
-test("{{if}} {{else}}", 7, function() {
+test("{{if}} {{else}}", 9, function() {
 	equal($.templates("A_{{if true}}yes{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else}}: a");
 	equal($.templates("A_{{if false}}yes{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else}}: !a");
 	equal($.templates("A_{{if true}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_yes_B", "{{if a}} {{else b}} {{else}}: a");
 	equal($.templates("A_{{if false}}yes{{else true}}or{{else}}no{{/if}}_B").render(), "A_or_B", "{{if a}} {{else b}} {{else}}: b");
 	equal($.templates("A_{{if false}}yes{{else false}}or{{else}}no{{/if}}_B").render(), "A_no_B", "{{if a}} {{else b}} {{else}}: !a!b");
+	equal($.templates("A_{{if undefined}}yes{{else true}}or{{else}}no{{/if}}_B").render({}), "A_or_B", "{{if undefined}} {{else b}} {{else}}: !a!b");
+	equal($.templates("A_{{if false}}yes{{else undefined}}or{{else}}no{{/if}}_B").render({}), "A_no_B", "{{if a}} {{else undefined}} {{else}}: !a!b");
 	equal($.templates("A_{{if false}}<div title='yes'{{else}}<div title='no'{{/if}}>x</div>_B").render(), "A_<div title='no'>x</div>_B", "{{if}} and {{else}} work across HTML tags");
 	equal($.templates("A_<div title='{{if true}}yes'{{else}}no'{{/if}}>x</div>_B").render(), "A_<div title='yes'>x</div>_B", "{{if}} and {{else}} work across quoted strings");
 });
@@ -171,7 +173,7 @@ test("context", 5, function() {
 });
 
 test("values", 4, function() {
-	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:undefined}} returns "0"');
+	equal($.templates("{{:a}}").render({ a: 0 }), "0", '{{:0}} returns "0"');
 	equal($.templates("{{:a}}").render({}), "", "{{:undefined}} returns empty string");
 	equal($.templates("{{:a}}").render({ a: "" }), "", "{{:''}} returns empty string");
 	equal($.templates("{{:a}}").render({ a: null }), "", "{{:null}} returns empty string");

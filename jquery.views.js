@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 43 (Beta Candidate) */
+informal pre V1.0 commit counter: 44 (Beta Candidate) */
 /*
 * Interactive data-driven views using templates and data-linking.
 * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -74,7 +74,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			html: "html",
 			text: "text"
 		},
-		valueBinding = { from: { fromAttr: "value" }, to: { toAttr: "value"} },
+		valueBinding = { from: "value", to: "value"},
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
@@ -85,25 +85,25 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		qsa = document.querySelector,
 
 		// elContent maps tagNames which have only element content, so may not support script nodes.
-		elContent = { ol: 1, ul: 1, table: 1, tbody: 1, thead: 1, tfoot: 1, tr: 1, colgroup: 1, dl: 1, select: 1, optgroup: 1, svg: 1, svg_ns: 1 }, //TODO - For svg support see issue 206
+		elContent = {ol: 1, ul: 1, table: 1, tbody: 1, thead: 1, tfoot: 1, tr: 1, colgroup: 1, dl: 1, select: 1, optgroup: 1, svg: 1, svg_ns: 1},
 		badParent = {tr: "table"},
 		// wrapMap provide appropriate wrappers for inserting innerHTML, used in insertBefore
 		// We have to close these tags to support XHTML (#13200)
 		// TODO investigate whether more recent jQuery implementation using wrapMap in domManip/$().html() etc. is better optimized now...
 		wrapMap = $viewsSettings.wrapMap = {
-			option: [ 1, "<select multiple='multiple'>", "</select>" ],
-			legend: [ 1, "<fieldset>", "</fieldset>" ],
-			area: [ 1, "<map>", "</map>" ],
-			param: [ 1, "<object>", "</object>" ],
-			thead: [ 1, "<table>", "</table>" ],
-			tr: [ 2, "<table><tbody>", "</tbody></table>" ],
-			td: [ 3, "<table><tbody><tr>", "</tr></tbody></table>" ],
-			col: [ 2, "<table><tbody></tbody><colgroup>", "</colgroup></table>" ],
-			svg_ns: [ 1, "<svg>", "</svg>" ],
+			option: [1, "<select multiple='multiple'>", "</select>"],
+			legend: [1, "<fieldset>", "</fieldset>"],
+			area: [1, "<map>", "</map>"],
+			param: [1, "<object>", "</object>"],
+			thead: [1, "<table>", "</table>"],
+			tr: [2, "<table><tbody>", "</tbody></table>"],
+			td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
+			col: [2, "<table><tbody></tbody><colgroup>", "</colgroup></table>"],
+			svg_ns: [1, "<svg>", "</svg>"],
 
 			// IE6-8 can't serialize link, script, style, or any html5 (NoScope) tags,
 			// unless wrapped in a div with non-breaking characters in front of it.
-			div: jQuery.support.htmlSerialize ? [ 0, "", "" ] : [ 1, "X<div>", "</div>" ]
+			div: jQuery.support.htmlSerialize ? [0, "", ""] : [1, "X<div>", "</div>"]
 		},
 		voidElems = {br: 1, img: 1, input: 1, hr: 1, area: 1, base: 1, col: 1, link: 1, meta: 1,
 			command: 1, embed: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1},
@@ -450,7 +450,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 						// Insert and link new content
 						promise = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId, lazyLink: tag.tagCtx.props.lazyLink});
 					} else {
-						// data-linked value targetting innerHTML: data-link="html{:expr}"
+						// data-linked value targeting innerHTML: data-link="html{:expr}"
 						if (renders) {
 							$target.empty();
 						}
@@ -593,8 +593,8 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
 					? RADIO
-					: attr.to.toAttr)
-				: attr.from.fromAttr)
+					: attr.to)
+				: attr.from)
 			: to
 				? linkGetVal ? "text" : "html" // Default innerText for data-link="a.b.c" or data-link="{:a.b.c}" (with or without converters)- otherwise innerHTML
 				: ""; // Default is not to bind from
@@ -1036,7 +1036,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			if (vwInfos) {
 				//targetParent = targetParent || targetElem && targetElem.previousSibling;
 				//targetParent = targetElem ? targetElem.previousSibling : targetParent;
-				if (vwInfos.tokens.charAt(0) === "@") {
+				if (vwInfos._tkns.charAt(0) === "@") {
 					// We are processing newly inserted content. This is a special script element that was created in convertMarkers() to process deferred bindings,
 					// and inserted following the target parent element - because no element tags (outside elCnt) were encountered to carry those binding tokens.
 					// We will step back from the  preceding sibling of this element, looking at targetParent elements until we find the one that the current binding
@@ -1363,7 +1363,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 				while (node && !(nextView = viewInfos(node))) {
 					node = node.nextSibling;
 				}
-				if (tokens = nextView ? nextView.tokens : parentNode._dfr) {
+				if (tokens = nextView ? nextView._tkns : parentNode._dfr) {
 					token = prevView || "";
 					if (refresh || !prevView) {
 						token += "#" + thisId;
@@ -1455,7 +1455,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 //			if (!(linkTags = links[linkMarkup])) {
 			// This is the first time this view template has been linked, so we compile the data-link expressions, and store them on the template.
 
-				linkMarkup = normalizeLinkTag(linkMarkup, node);
+				linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
 				rTag.lastIndex = 0;
 				while (tokens = rTag.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
 					// Iterate over the data-link expressions, for different target attrs,
@@ -1583,7 +1583,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		if (tokens = isVal ? node : markerNodeInfo(node)) {
 			infos.elCnt = !node.type;
 			elCnt = tokens.charAt(0) === "@" || !node.type;
-			infos.tokens = tokens;
+			infos._tkns = tokens;
 			// rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
 			tokens.replace(rBinding || rMarkerTokens, getInfos);
 			return infos;
@@ -1620,12 +1620,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 		return marker;
 	}
 
-	function normalizeLinkTag(linkMarkup, node) {
+	function normalizeLinkTag(linkMarkup, twoway) {
 		linkMarkup = $.trim(linkMarkup);
 		return linkMarkup.slice(-1) !== delimCloseChar0
 		// If simplified syntax is used: data-link="expression", convert to data-link="{:expression}",
 		// or for inputs, data-link="{:expression:}" for (default) two-way binding
-			? linkMarkup = delimOpenChar1 + ":" + linkMarkup + (defaultAttr(node) ? ":" : "") + delimCloseChar0
+			? linkMarkup = delimOpenChar1 + ":" + linkMarkup + (twoway ? ":" : "") + delimCloseChar0
 			: linkMarkup;
 	}
 
@@ -1781,7 +1781,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			source = lct.data,
 			paths = lct.fn.paths;
 		if (binding) {
-			if (bindto = paths.to) {
+			if (bindto = paths._jsvto) {
 				paths = bindto;
 			}
 			pathIndex = paths.length;
@@ -2095,7 +2095,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 			}
 			tokens = nextNode ? nextNode.getAttribute(jsvAttrStr) : parentElem._dfr;
 			if (l = tokens.indexOf("/" + id + viewOrTagChar) + 1) {
-				tokens = vwInfos.tokens.slice(0, precedingLength) + tokens.slice(l + (refresh ? -1 : id.length + 1));
+				tokens = vwInfos._tkns.slice(0, precedingLength) + tokens.slice(l + (refresh ? -1 : id.length + 1));
 			}
 			if (tokens) {
 				if (nextNode) {
@@ -2264,12 +2264,12 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 
 	$viewsSettings.merge = {
 		input: {
-			from: { fromAttr: inputAttrib }, to: { toAttr: "value" }
+			from: inputAttrib, to: "value"
 		},
 		textarea: valueBinding,
 		select: valueBinding,
 		optgroup: {
-			from: { fromAttr: "label" }, to: { toAttr: "label" }
+			to: "label"
 		}
 	};
 
@@ -2429,7 +2429,7 @@ informal pre V1.0 commit counter: 43 (Beta Candidate) */
 	// Extend topView
 	//===============
 
-	$extend(topView, { tmpl: { links: {}, tags: {} }});
+	$extend(topView, {tmpl: {links: {}, tags: {}}});
 	$extend(topView, LinkedView);
 	topView._.onRender = addBindingMarkers;
 
