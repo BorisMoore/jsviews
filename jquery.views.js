@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 44 (Beta Candidate) */
+informal pre V1.0 commit counter: 45 (Beta Candidate) */
 /*
 * Interactive data-driven views using templates and data-linking.
 * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -154,8 +154,8 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 						view = linkCtx.view;
 						tag = linkCtx.tag;
 						$source = $(source);
-						onBeforeChange = view.hlp(onBeforeChangeStr, linkCtx.ctx);
-						onAfterChange = view.hlp(onAfterChangeStr, linkCtx.ctx);
+						onBeforeChange = view.hlp(onBeforeChangeStr, linkCtx.ctx); // TODO Can we optimize this an other instances of same?
+						onAfterChange = view.hlp(onAfterChangeStr, linkCtx.ctx); // TODO Can we optimize this an other instances of same
 						fromAttr = defaultAttr(source);
 						setter = fnSetters[fromAttr];
 						if (sourceValue === undefined) {
@@ -171,8 +171,7 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 							if ($isFunction(cnvtName)) {
 								cvtBack = cnvtName;
 							} else {
-								cvtBack = view.tmpl.converters;
-								cvtBack = cvtBack && cvtBack[cnvtName] || $converters[cnvtName];
+								cvtBack = view.getRsc("converters", cnvtName)
 							}
 						}
 						if (cvtBack) {
@@ -296,7 +295,16 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 				tag.refresh = refreshTag;
 				callAfterLink(tag, tag.tagCtx);
 			}
-
+			if ((tag = linkCtx.tag) && tag.tagName.slice(-1) !== ":") {
+				// See also for issue https://github.com/BorisMoore/jsviews/issues/158 arrayChange support on data-link etc.
+				// This code is partial support for the above issue
+				linkCtx._hdlr.array = tag.onArrayChange ?
+					function(ev, eventArgs) {
+						linkCtx.tag.onArrayChange(ev, eventArgs);
+					}
+					: $.noop; // If tag has no onArrayChange handler, then here we ensure that neither {^{tag myArray}} nor
+										// <foo data-link="{tag myArray}"></foo> will update when an array change occurs on myArray, or on an array that tag depends on.
+			}
 			observeAndBind(linkCtx, source, target);
 
 			// Remove dynamically added linkCtx and ctx from view
@@ -713,7 +721,8 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 		}
 		// Example: "#23^TheValue/23^"
 		return "#" + id + end
-			+ (value === undefined ? "" : value) // For {^{:name}} this gives the equivalent semantics to compiled (v=data.name)!=u?v:""; used in {{:name}} or data-link="name"
+			+ (value === undefined ? "" : value)  // For {^{:name}} this gives the equivalent semantics to compiled
+													// (v=data.name)!=u?v:""; used in {{:name}} or data-link="name"
 			+ "/" + id + end;
 	}
 
@@ -746,9 +755,9 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 			// Only bind the first time, or if the new depends (toString) has changed from when last bound
 			if (linkCtx._depends) {
 				// Unobserve previous binding
-				$observe(source, linkCtx._depends, handler, true);
+				$observable._apply(source, linkCtx._depends, handler, true);
 			}
-			binding = $observe($.isArray(source) ? [source] : source , linkCtx.fn.paths || linkCtx.fn, depends, handler, linkCtx._ctxCb);
+			binding = $observable._apply(source, linkCtx.fn.paths || linkCtx.fn, depends, handler, linkCtx._ctxCb);
 			// The binding returned by $observe has a bnd array with the source objects of the individual bindings.
 			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
@@ -870,13 +879,7 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 					}
 
 					// Link the content of the element, since this is a call to template.link(), or to $(el).link(true, ...),
-					oldData = parentView.data;
-					oldCtx = parentView.ctx;
-					parentView.data = from;
-					parentView.ctx = context;
 					parentView.link(from, targetEl, prevNode, nextNode, html);
-					parentView.data = oldData;
-					parentView.ctx = oldCtx;
 //}, 0);
 				}
 			}
@@ -1503,6 +1506,11 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 					linkCtx.expr = attr + tagExpr;
 					linkFn = tmpl.links[tagExpr];
 					if (!linkFn) {
+						//TODO Optimize along the lines of:
+						//var paths = [];
+						//tmpl.links[tagExpr] = linkFn = $viewsSub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, tmpl, true, convertBack, paths);
+						//linkFn.paths = paths
+
 						tmpl.links[tagExpr] = linkFn = $viewsSub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, tmpl, true, convertBack);
 						$viewsSub.parse(params, linkFn.paths = [], tmpl); // TODO optimize - since parse(params) was already called within tmplFn()
 					}
@@ -1527,18 +1535,8 @@ informal pre V1.0 commit counter: 44 (Beta Candidate) */
 			// If the link expression uses a custom tag, the propertyChangeHandler call will call renderTag, which will set tagCtx on linkCtx
 		}
 
-// Consider for issue https://github.com/BorisMoore/jsviews/issues/158 arrayChange support on data-link etc.
-		//handler.array = function() {
-		//	...
-		//}
-
 		linkCtx._ctxCb = getContextCb(linkCtx.view); // _ctxCb is for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 		linkCtx._hdlr = handler;
-		if (linkCtx.tag && linkCtx.tag.onArrayChange) {
-			handler.array = function(ev, eventArgs) {
-				linkCtx.tag.onArrayChange(ev, eventArgs);
-			};
-		}
 		handler(true);
 	}
 

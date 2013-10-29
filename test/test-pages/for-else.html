@@ -67,7 +67,7 @@
 			<tr>
 				<td>amount: {{:amount}}</td>
 			</tr>
-		{{else }}
+		{{else}}
 			<tr>
 				<td>None</td>
 			</tr>
@@ -141,61 +141,61 @@ var counter = 0,
 	};
 
 // Compile template
-$.templates( "personTmpl", "#personTmpl" );
+$.templates("personTmpl", "#personTmpl");
 
 // Data-link details container to people, using the personTmpl template
-$.link.personTmpl( "#container", app);
+$.link.personTmpl("#container", app);
 
-// Observable array change: insert
-$( "#removePeople" ).click( function() {
-	$.observable( app ).setProperty("team.people", undefined);
+// Observable array change: insert}
+$("#removePeople").click(function() {
+	$.observable(app).setProperty("team.people", undefined);
 });
 
-$( "#insertPerson" ).click( function() {
+$("#insertPerson").click(function() {
 	if (!app.team.people) {
-		$.observable( app ).setProperty("team.people", []);
+		$.observable(app).setProperty("team.people", []);
 	}
-	$.observable( app.team.people ).insert( 0, { name: "NewPerson" + counter++ });
+	$.observable(app.team.people).insert(0, {name: "NewPerson" + counter++});
 });
 
-$( "#refreshPeople" ).click( function() {
+$("#refreshPeople").click(function() {
 	if (!app.team.people) {
-		$.observable( app ).setProperty("team.people", []);
+		$.observable(app).setProperty("team.people", []);
 	}
 	var newArray = [];
 	newArray.push({name: "added"});
 	newArray.push({name: "added2"});
-	$.observable( app.team.people ).refresh(newArray);
+	$.observable(app.team.people).refresh(newArray);
 });
 
-$( "#removePerson" ).click( function() {
-	$.observable( app.team.people ).remove(0);
+$("#removePerson").click(function() {
+	$.observable(app.team.people).remove(0);
 });
 
-$( "#swapPeople" ).click( function() {
-	$.observable( app ).setProperty("team.people", app.team.people === people1 ?  people2 : people1);
+$("#swapPeople").click(function() {
+	$.observable(app).setProperty("team.people", app.team.people === people1 ? people2 : people1);
 });
 
-$( "#swapTeam" ).click( function() {
-	$.observable( app ).setProperty("team", app.team === team1 ?  team2 : team1);
+$("#swapTeam").click(function() {
+	$.observable(app).setProperty("team", app.team === team1 ? team2 : team1);
 });
 
-$( "#swapWithEmpty" ).click( function() {
-	$.observable( app ).setProperty("team", app.team === team1 ?  emptyTeam : team1);
+$("#swapWithEmpty").click(function() {
+	$.observable(app).setProperty("team", app.team === team1 ? emptyTeam : team1);
 });
 
-$( "#settings" ).click( function() {
-	$.observable( app.team ).setProperty("settings", app.team.settings ? undefined : settings);
+$("#settings").click(function() {
+	$.observable(app.team).setProperty("settings", app.team.settings ? undefined : settings);
 });
 
-$( "#replace" ).click( function() {
-	$( ".container").empty();
-	$.link.personTmpl( "#container", app);
+$("#replace").click(function() {
+	$(".container").empty();
+	$.link.personTmpl("#container", app);
 });
 
-$( "#container" )
-	.on( "click", ".close", function() {
-		$.observable( app.team.people ).remove( $.view( this ).index );
+$("#container")
+	.on("click", ".close", function() {
+		$.observable(app.team.people).remove($.view(this).index);
 		return false;
 	});
 
