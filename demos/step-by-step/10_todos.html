@@ -97,7 +97,7 @@
 		onAfterChange: function( ev ) {
 			switch( ev.type ) {
 				case "change":
-					var view = this;
+					var view = this.view;
 					switch(ev.target.className) {
 						case "check":
 							todos.doneChanged( view.data.done ? 1 : -1 );

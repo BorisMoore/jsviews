@@ -647,6 +647,199 @@ test("link(expression, container, data)", function() {
 	person1.lastName = "One"; // reset Prop
 });
 
+module("template.link()");
+
+test("helper overriding", 12, function() {
+	// =============================== Arrange ===============================
+	$.views.helpers("a", "globalHelper");
+
+	var tmpl = $.templates({
+		markup: "{{:~a}} {{:~b}} {{:~c}}",
+		helpers: {
+			b: "templateHelper"
+		}
+	});
+
+	tmpl.link("#result", {}, {c:"optionHelper"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates({
+		markup: "{{:~a}}",
+		helpers: {
+			a: "templateHelper"
+		}
+	});
+
+	tmpl.link("#result", {})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "templateHelper", 'template helper overrides global helper');
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates({
+		markup: "{{:~a}}"
+	});
+
+	tmpl.link("#result", {}, {a: "optionHelper"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates({
+		markup: "{{:~b}}",
+		helpers: {
+			b: "templateHelper"
+		}
+	});
+
+	tmpl.link("#result", {}, {b: "optionHelper"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
+
+	// =============================== Arrange ===============================
+	$.views.helpers("a", "globalHelper");
+
+	$("#result").html("<div data-link='~a + ~b'></div>")
+
+	$.link(true, "#result", {}, {b:"optionHelper"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
+
+	// =============================== Arrange ===============================
+	$.views.helpers("a", "globalHelper");
+
+	$("#result").html("<div data-link='~a'></div>")
+
+	$.link(true, "#result", {}, {a:"optionHelper"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
+
+	// =============================== Arrange ===============================
+	$.views.helpers({
+		onBeforeChange: function(ev, eventArgs) {
+			result+= "globalBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterChange: function(ev, eventArgs) {
+			result+= "globalAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterCreate: function(ev, eventArgs) {
+			result+= "globalAfterCreate ";
+		}
+	});
+	result = '';
+
+	var pson = {name: "Jo"},
+
+		tmpl = $.templates({
+			markup: "<input data-link='name'/> {^{:name}}"
+		});
+
+	tmpl.link("#result", pson);
+
+	$.observable(pson).setProperty("name", "name3");
+
+	// ............................... Assert .................................
+	equal(result, "globalAfterCreate globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
+		'Global onAfterCreate, onBeforeChange, onAfterChange - setProperty');
+
+	result = '';
+
+	$("#result input").val("editedName").change();
+
+		// ............................... Assert .................................
+	equal(result, "globalBeforeChange|change|INPUT globalBeforeChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: globalAfterChange|change|INPUT ",
+		'Global onAfterCreate, onBeforeChange, onAfterChange - elemChange');
+
+	result = '';
+
+	// =============================== Arrange ===============================
+	tmpl.link("#result", pson, {
+			onBeforeChange: function(ev, eventArgs) {
+				result+= "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterChange: function(ev, eventArgs) {
+				result+= "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterCreate: function(ev, eventArgs) {
+				result+= "optionsAfterCreate ";
+			}
+		});
+
+	$.observable(pson).setProperty("name", "name2");
+
+	// ............................... Assert .................................
+	equal(result, "optionsAfterCreate optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
+		'options helper overrides global helper');
+
+	result = '';
+
+	$("#result input").val("editedName").change();
+
+		// ............................... Assert .................................
+	equal(result, "optionsBeforeChange|change|INPUT optionsBeforeChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: optionsAfterChange|change|INPUT ",
+		'options helper overrides global helper');
+
+	result = '';
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: "<input data-link='name'/> {^{:name}}",
+		helpers: {
+			onBeforeChange: function(ev, eventArgs) {
+				result+= "templateBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterChange: function(ev, eventArgs) {
+				result+= "templateAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterCreate: function(ev, eventArgs) {
+				result+= "templateAfterCreate ";
+			}
+		}
+	});
+
+	tmpl.link("#result", pson, {
+			onBeforeChange: function(ev, eventArgs) {
+				result+= "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterChange: function(ev, eventArgs) {
+				result+= "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			},
+			onAfterCreate: function(ev, eventArgs) {
+				result+= "optionsAfterCreate ";
+			}
+		});
+
+	$.observable(pson).setProperty("name", "name4");
+
+	// ............................... Assert .................................
+	equal(result, "templateAfterCreate templateBeforeChange|set|INPUT templateAfterChange|set|INPUT templateBeforeChange|set|: templateAfterChange|set|: ",
+		'template helper overrides options helper');
+
+	result = '';
+
+	$("#result input").val("editedName").change();
+
+		// ............................... Assert .................................
+	equal(result, "templateBeforeChange|change|INPUT templateBeforeChange|set|INPUT templateBeforeChange|set|: templateAfterChange|set|: templateAfterChange|change|INPUT ",
+		'template helper overrides options helper');
+
+	result = '';
+
+	$.views.helpers({
+		onBeforeChange: null,
+		onAfterChange: null,
+		onAfterCreate: null
+	});
+	$("#result").empty()
+});
+
 test('data-link="expression"', function() {
 
 	// =============================== Arrange ===============================
@@ -5047,7 +5240,7 @@ test("MVVM", function() {
 	function Person(name, address, phones) {
 		this._name = name;
 		this._address = address;
-		this._phones = phones; // Last name does not use a getter, and so does not trigger a lazyGet. (Normally all properties would use getters)
+		this._phones = phones;
 	}
 
 	var personProto = {
@@ -5108,7 +5301,7 @@ test("MVVM", function() {
 
 	Phone.prototype = phoneProto;
 
-	var person = new Person("pete", new Address("1stAve"), []),
+	var person = new Person("pete", new Address("1st Ave"), []),
 		message = '',
 		ret = '',
 		input,
@@ -5131,12 +5324,12 @@ test("MVVM", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(ret, "|1stAve/1stAve--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
+	equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
 		"Paths with computed/getters: address()^street() - Swapping object higher in path then updating leaf getter, works correctly");
 
 	// =============================== Arrange ===============================
 
-	person = new Person("pete", new Address("1stAve"), []);
+	person = new Person("pete", new Address("1st Ave"), []);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -5156,12 +5349,12 @@ test("MVVM", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(ret, "|1stAve/1stAve--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
+	equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
 		"Paths with computed/getters: address().street() - Paths with computed/getter followed by '.' still update preceding getter"
 		+ "- same as if there was a '^' separator");
 	// =============================== Arrange ===============================
 
-	person = new Person("pete", new Address("1stAve"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -5189,7 +5382,7 @@ test("MVVM", function() {
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
 
 	// ............................... Assert .................................
-	equal(message, '{\"change\":\"set\",\"path\":\"street\",\"value\":\"InputStreet\",\"oldValue\":\"1stAve\"}\n\
+	equal(message, '{\"change\":\"set\",\"path\":\"street\",\"value\":\"InputStreet\",\"oldValue\":\"1st Ave\"}\n\
 {\"change\":\"set\",\"path\":\"street\",\"value\":\"oldAddressChgStreet\",\"oldValue\":\"InputStreet\"}\n\
 {\"change\":\"set\",\"path\":\"address\",\"value\":{\"_street\":\"newAddressStreet\"},\"oldValue\":{\"_street\":\"oldAddressChgStreet\"}}\n\
 {\"change\":\"set\",\"path\":\"street\",\"value\":\"newAddressChgStreet\",\"oldValue\":\"newAddressStreet\"}\n',
@@ -5235,7 +5428,7 @@ test("MVVM", function() {
 
 	getResult = function(sep){ret += (sep || "|") + $("#result").text();};
 
-	person = new Person("pete", new Address("1stAve"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -5278,7 +5471,7 @@ test("MVVM", function() {
 		"Array operations with getters allow complete functionality, and track the modified tree at all times");
 	// =============================== Arrange ===============================
 
-	person = new Person("pete", new Address("1stAve"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -6035,16 +6228,11 @@ test('two-way bound tag controls', function() {
 			eventData += "onUpdate ";
 			return !noRenderOnUpdate;
 		},
-		onBeforeChange: function(val) {
+		onBeforeChange: function(ev, eventArgs) {
 			eventData += "onBeforeChange ";
 			return !cancelChange;
 		},
-		onChange: function(val) {
-			eventData += "onChange ";
-			this.value = val + "*";
-			return this.value;
-		},
-		onDispose: function(val) {
+		onDispose: function() {
 			eventData += "onDispose ";
 		}
 	} });
@@ -6124,14 +6312,14 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onChange onUpdate onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newName3newName3|newVal*newVal*",
-	'Data link using: <input data-link="{twoWayTag name}"/> - binds linkedElem back to data - using return value of onChange');
+	"newName3newName3|newValnewVal",
+	'Data link using: <input data-link="{twoWayTag name}"/> - binds linkedElem back to data');
 
 	// ................................ Act ..................................
 	before = tag.value + person.name;
@@ -6147,7 +6335,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*newVal*|newVal*newVal*",
+	"newValnewVal|newValnewVal",
 	'Data link using: <input data-link="{twoWayTag name}"/> - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -6169,7 +6357,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*updatedVal|updatedNameupdatedName",
+	"newValupdatedVal|updatedNameupdatedName",
 	'Data link using: <input data-link="{twoWayTag name}"/> - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
 	// ................................ Act ..................................
@@ -6221,8 +6409,8 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
-	"changethename*|changethename*",
-	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+	"changethename|changethename",
+	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6312,14 +6500,14 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onChange onUpdate onBeforeLink onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onBeforeLink onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newName3newName3|newVal*newVal*",
-	'Data link using: {^{twoWayTag name}} - binds linkedElem back to data - using return value of onChange');
+	"newName3newName3|newValnewVal",
+	'Data link using: {^{twoWayTag name}} - binds linkedElem back to data');
 
 	// ................................ Act ..................................
 	before = tag.value + person.name;
@@ -6335,7 +6523,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*newVal*|newVal*newVal*",
+	"newValnewVal|newValnewVal",
 	'Data link using: {^{twoWayTag name}} - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -6358,7 +6546,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*updatedVal|updatedNameupdatedName",
+	"newValupdatedVal|updatedNameupdatedName",
 	'Data link using: {^{twoWayTag name}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
 	// ................................ Act ..................................
@@ -6409,8 +6597,8 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
-	"changethename*|changethename*",
-	'Data link using: {^{twoWayTag name convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+	"changethename|changethename",
+	'Data link using: {^{twoWayTag name convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6499,14 +6687,14 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onChange onUpdate onBeforeLink onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onBeforeLink onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newName3newName3|newVal*newVal*",
-	'Data link using: {^{twoWayTag name/}} - binds linkedElem back to data - using return value of onChange');
+	"newName3newName3|newValnewVal",
+	'Data link using: {^{twoWayTag name/}} - binds linkedElem back to dataonChange');
 
 	// ................................ Act ..................................
 	before = tag.value + person.name;
@@ -6522,7 +6710,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*newVal*|newVal*newVal*",
+	"newValnewVal|newValnewVal",
 	'Data link using: {^{twoWayTag name/}} - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -6544,7 +6732,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newVal*updatedVal|updatedNameupdatedName",
+	"newValupdatedVal|updatedNameupdatedName",
 	'Data link using: {^{twoWayTag name/}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
 	// ................................ Act ..................................
@@ -6593,8 +6781,8 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
-	"changethename*|changethename*",
-	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on data');
+	"changethename|changethename",
+	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
 });
 
 test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=target}', function() {
@@ -6628,16 +6816,14 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 			eventData += "onUpdate ";
 			return false;
 		},
-		onBeforeChange: function(val) {
+		onBeforeChange: function(ev, eventArgs) {
 			eventData += "onBeforeChange ";
+			if (!cancelChange) {
+				this.value = eventArgs.value;
+			}
 			return !cancelChange;
 		},
-		onChange: function(val) {
-			eventData += "onChange ";
-			this.value = val + "*";
-			return this.value;
-		},
-		onDispose: function(val) {
+		onDispose: function() {
 			eventData += "onDispose ";
 		}
 	} });
@@ -6715,7 +6901,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2,
 	"name:ANewName name2:changethename",
-	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6760,14 +6946,14 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onChange ",
+	equal(eventData, "onBeforeChange ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newName name:newName name2:Jo2|value:newVal* name:newName name2:newVal*",
-	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds linkedElem back to "linkTo" target data - using return value of onChange');
+	"value:newName name:newName name2:Jo2|value:newVal name:newName name2:newVal",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds linkedElem back to "linkTo" target dataonChange');
 
 	// ................................ Act ..................................
 	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
@@ -6783,7 +6969,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newVal* name:newName name2:newVal*|value:newVal* name:newName name2:newVal*",
+	"value:newVal name:newName name2:newVal|value:newVal name:newName name2:newVal",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -6828,8 +7014,8 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
-	"name:ANewName name2:changethename* value:changethename*",
-	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
+	"name:ANewName name2:changethename value:changethename",
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6875,14 +7061,14 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onChange ",
+	equal(eventData, "onBeforeChange ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newName name:newName name2:Jo2|value:newVal* name:newName name2:newVal*",
-	'Data link using: {^{twoWayTag name linkTo=name2}} - binds linkedElem back to "linkTo" target data - using return value of onChange');
+	"value:newName name:newName name2:Jo2|value:newVal name:newName name2:newVal",
+	'Data link using: {^{twoWayTag name linkTo=name2}} - binds linkedElem back to "linkTo" target data');
 
 	// ................................ Act ..................................
 	before = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
@@ -6898,7 +7084,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newVal* name:newName name2:newVal*|value:newVal* name:newName name2:newVal*",
+	"value:newVal name:newName name2:newVal|value:newVal name:newName name2:newVal",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -6943,8 +7129,8 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
-	"name:ANewName name2:changethename* value:changethename*",
-	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, then passes through tag.onChange() event, and sets on "linkTo" target data');
+	"name:ANewName name2:changethename value:changethename",
+	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 });
 
 test("tag control events", function() {

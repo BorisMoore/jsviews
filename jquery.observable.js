@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 45 (Beta Candidate) */
+informal pre V1.0 commit counter: 46 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
