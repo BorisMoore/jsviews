@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 46 (Beta Candidate) */
+informal pre V1.0 commit counter: 47 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -660,7 +660,7 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 				// Create template object
 				tmpl = TmplObject(tmplOrMarkup, options);
 				// Compile to AST and then to compiled function
-				tmplFn(tmplOrMarkup, tmpl);
+				tmplFn(tmplOrMarkup.replace(rEscapeQuotes, "\\$&"), tmpl);
 			}
 			compileChildResources(options);
 			return tmpl;
@@ -986,8 +986,6 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 			content = astTop,
 			current = [, , , astTop];
 
-		markup = markup.replace(rEscapeQuotes, "\\$&");
-
 //TODO	result = tmplFnsCache[markup]; // Only cache if template is not named and markup length < ...,
 //and there are no bindings or subtemplates?? Consider standard optimization for data-link="a.b.c"
 //		if (result) {
@@ -997,7 +995,6 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 //		result = markup;
 
 		blockTagCheck(stack[0] && stack[0][3].pop()[0]);
-
 		// Build the AST (abstract syntax tree) under astTop
 		markup.replace(rTag, parseTag);
 
@@ -2265,8 +2262,8 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
 		syntaxError = $viewsSub.syntaxError,
-		// rFirstElem = /<(?!script)(\w+)([>]*\s+on\w+\s*=)?[>\s]/, // This was without the DomLevel0 test.
 		rFirstElem = /<(?!script)(\w+)(?:[^>]*(on\w+)\s*=)?[^>]*>/,
+		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
 		safeFragment = document.createDocumentFragment(),
 		qsa = document.querySelector,
 
@@ -3822,7 +3819,7 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 	}
 
 	function normalizeLinkTag(linkMarkup, twoway) {
-		linkMarkup = $.trim(linkMarkup);
+		linkMarkup = $.trim(linkMarkup).replace(rEscapeQuotes, "\\$&");
 		return linkMarkup.slice(-1) !== delimCloseChar0
 		// If simplified syntax is used: data-link="expression", convert to data-link="{:expression}",
 		// or for inputs, data-link="{:expression:}" for (default) two-way binding

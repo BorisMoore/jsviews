@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 46 (Beta Candidate) */
+informal pre V1.0 commit counter: 47 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -79,8 +79,8 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 		oldJsvDelimiters = $viewsSettings.delimiters,
 		error = $viewsSub.error,
 		syntaxError = $viewsSub.syntaxError,
-		// rFirstElem = /<(?!script)(\w+)([>]*\s+on\w+\s*=)?[>\s]/, // This was without the DomLevel0 test.
 		rFirstElem = /<(?!script)(\w+)(?:[^>]*(on\w+)\s*=)?[^>]*>/,
+		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
 		safeFragment = document.createDocumentFragment(),
 		qsa = document.querySelector,
 
@@ -1636,7 +1636,7 @@ informal pre V1.0 commit counter: 46 (Beta Candidate) */
 	}
 
 	function normalizeLinkTag(linkMarkup, twoway) {
-		linkMarkup = $.trim(linkMarkup);
+		linkMarkup = $.trim(linkMarkup).replace(rEscapeQuotes, "\\$&");
 		return linkMarkup.slice(-1) !== delimCloseChar0
 		// If simplified syntax is used: data-link="expression", convert to data-link="{:expression}",
 		// or for inputs, data-link="{:expression:}" for (default) two-way binding

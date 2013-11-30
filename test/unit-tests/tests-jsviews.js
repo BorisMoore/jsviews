@@ -944,6 +944,26 @@ test('data-link="expression"', function() {
 
 	// =============================== Arrange ===============================
 
+	$.templates('<span data-link="foo(\'x\\x\').b"></span>')
+		.link("#result",{
+			foo: function(val){
+				return {b:val};
+			}
+		});
+
+	// ............................... Assert .................................
+	equal($("#result span")[0].outerHTML,
+	'<span data-link="foo(\'x\\x\').b">x\\x</span>',
+	'Escaping of characters: data-link="foo(\'x\\x\').b"');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	$.templates('<span data-link="person1.home.address.street"></span><span data-link="person1.home^address.street"></span>')
 		.link("#result", model);
 
@@ -2471,7 +2491,6 @@ test("{^{tag}}", function() {
 	'Data link using: {^{tagDependsOnArray/}} with onArrayChange handler: updates correctly when setting dependent props,'
 	+ ' and fires onArrayChange once for each array change on dependent arrays');
 
-
 	// =============================== Arrange ===============================
 	app = {
 		arr: [1,2],
@@ -2505,7 +2524,6 @@ test("{^{tag}}", function() {
 	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 4, 3, false|insertArr2: 4, 3, false",
 	'Data link using: {^{tagDependsOnArray/}} WITHOUT onArrayChange handler: updates correctly when setting dependent props, does NOT update when modifying dependent arrays');
 
-
 	// ................................ Reset ................................
 	$("#result").empty();
 	person1._firstName = "Jo"; // reset Prop
@@ -2515,6 +2533,26 @@ test("{^{tag}}", function() {
 	settings.reverse = true; // reset Prop
 	address1.street = "StreetOne"; // reset Prop
 
+	// =============================== Arrange ===============================
+	$.views.tags({
+		myTag: {
+			template: "<span>{{:~tag.tagCtx.args[0]}}</span>",
+			attr: "html"
+		}
+	});
+
+	$.templates("{^{myTag foo(\"w\\x\'y\").b/}} <div data-link=\"{myTag foo('w\\x').b}\" ></div>")
+		.link("#result", {
+			foo: function(val) {
+				return {b: val};
+			}
+		});
+
+	// ............................... Assert .................................
+	equal($("#result span")[0].outerHTML, "<span>w\\x\'y</span>",
+	"{^{myTag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
+	equal($("#result span")[1].outerHTML, "<span>w\\x</span>",
+	"<div data-link=\"{myTag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 });
 
 test("{^{for}}", function() {
