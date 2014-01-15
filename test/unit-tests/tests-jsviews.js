@@ -1711,116 +1711,6 @@ test('data-link="{tag...}"', function() {
 	settings.reverse = true; // reset Prop
 	address1.street = "StreetOne"; // reset Prop
 
-	// =============================== Arrange ===============================
-	var refreshCount = 0,
-		app = {
-			arr: [1,2],
-			editable: true
-		};
-	$.views.tags("tagDependsOnArray", {
-		template:"{{:things.length}}, {{:~app.arr.length}}, {{:~app.editable}}",
-		onArrayChange: function() {
-			refreshCount++;
-			this.refresh();
-		},
-		depends: ["things", "~app.arr", "~app.editable"]
-	});
-
-	$.templates('<span data-link="{tagDependsOnArray}"></span>')
-		.link("#result", model, {app: app});
-
-	// ................................ Act ..................................
-	result = $("#result span").text();
-	$.observable(app).setProperty({editable: false});
-	result += "|setBoolProp: " + $("#result span").text();
-	$.observable(model).setProperty({things: [4,5,6,7]});
-	result += "|setArrProp1: " + $("#result span").text();
-	$.observable(app).setProperty({arr: [1,2,3]});
-	result += "|setArrProp2: " + $("#result span").text();
-	$.observable(model.things).insert([8,9]);
-	result += "|insertArr1: " + $("#result span").text();
-	$.observable(app.arr).insert(8);
-	result += "|insertArr2: " + $("#result span").text();
-
-	// ............................... Assert .................................
-	equal(result + "|" + refreshCount,
-	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 6, 3, false|insertArr2: 6, 4, false|2",
-	'Data link using: <span data-link="{tagDependsOnArray}"></span> with onArrayChange handler: updates correctly when setting dependent props,'
-	+  ' and fires onArrayChange once for each array change on dependent arrays');
-
-
-	// =============================== Arrange ===============================
-	app = {
-		arr: [1,2],
-		editable: true
-	};
-	model.things = [];
-
-	$.views.tags("tagDependsOnArray", {
-		template:"{{:things.length}}, {{:~app.arr.length}}, {{:~app.editable}}",
-		depends: ["things", "~app.arr", "~app.editable"]
-	});
-
-	$.templates('<span data-link="{tagDependsOnArray}"></span>')
-		.link("#result", model, {app: app});
-
-	// ................................ Act ..................................
-	result = $("#result span").text();
-	$.observable(app).setProperty({editable: false});
-	result += "|setBoolProp: " + $("#result span").text();
-	$.observable(model).setProperty({things: [4,5,6,7]});
-	result += "|setArrProp1: " + $("#result span").text();
-	$.observable(app).setProperty({arr: [1,2,3]});
-	result += "|setArrProp2: " + $("#result span").text();
-	$.observable(model.things).insert([8,9]);
-	result += "|insertArr1: " + $("#result span").text();
-	$.observable(app.arr).insert(8);
-	result += "|insertArr2: " + $("#result span").text();
-
-	// ............................... Assert .................................
-	equal(result,
-	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 4, 3, false|insertArr2: 4, 3, false",
-	'Data link using: <span data-link="{tagDependsOnArray}"></span> WITHOUT onArrayChange handler: updates correctly when setting dependent props, does NOT update when modifying dependent arrays');
-
-	// =============================== Arrange ===============================
-	app = {
-		arr: [1,2],
-		editable: true
-	};
-	model.things = [];
-	refreshCount = 0;
-
-	$.views.tags("tagDependsOnArray", {
-		template:"<li>{{:things.length}}, {{:~app.arr.length}}, {{:~app.editable}}</li>",
-		onArrayChange: function() {
-			refreshCount++;
-			this.refresh();
-		},
-		depends: ["things", "~app.arr", "~app.editable"]
-	});
-
-	$.templates('<ul data-link="{tagDependsOnArray}"></ul>')
-		.link("#result", model, {app: app});
-
-	// ................................ Act ..................................
-	result = $("#result ul").text();
-	$.observable(app).setProperty({editable: false});
-	result += "|setBoolProp: " + $("#result ul").text();
-	$.observable(model).setProperty({things: [4,5,6,7]});
-	result += "|setArrProp1: " + $("#result ul").text();
-	$.observable(app).setProperty({arr: [1,2,3]});
-	result += "|setArrProp2: " + $("#result ul").text();
-	$.observable(model.things).insert([8,9]);
-	result += "|insertArr1: " + $("#result ul").text();
-	$.observable(app.arr).insert(8);
-	result += "|insertArr2: " + $("#result ul").text();
-
-	// ............................... Assert .................................
-	equal(result + "|" + refreshCount,
-	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 6, 3, false|insertArr2: 6, 4, false|2",
-	'Data link using: <span data-link="{tagDependsOnArray}"></span> with onArrayChange handler: updates correctly when setting dependent props,'
-	+  ' and fires onArrayChange once for each array change on dependent arrays');
-
 });
 
 test("computed observables in two-way binding", function() {
@@ -2452,78 +2342,6 @@ test("{^{tag}}", function() {
 	'Data link with: {{fnTagWithProps ~some.path foo=~other.path ~bar=another.path/}} does nothing');
 	// -----------------------------------------------------------------------
 
-	// =============================== Arrange ===============================
-	var refreshCount = 0,
-		app = {
-			arr: [1,2],
-			editable: true
-		};
-	model.things = [];
-
-	$.views.tags("tagDependsOnArray", {
-		template:"{{:things.length}}, {{:~app.arr.length}}, {{:~app.editable}}",
-		onArrayChange: function() {
-			refreshCount++;
-			this.refresh();
-		},
-		depends: ["things", "~app.arr", "~app.editable"]
-	});
-
-	$.templates('{^{tagDependsOnArray/}}')
-		.link("#result", model, {app: app});
-
-	// ................................ Act ..................................
-	result = $("#result").text();
-	$.observable(app).setProperty({editable: false});
-	result += "|setBoolProp: " + $("#result").text();
-	$.observable(model).setProperty({things: [4,5,6,7]});
-	result += "|setArrProp1: " + $("#result").text();
-	$.observable(app).setProperty({arr: [1,2,3]});
-	result += "|setArrProp2: " + $("#result").text();
-	$.observable(model.things).insert([8,9]);
-	result += "|insertArr1: " + $("#result").text();
-	$.observable(app.arr).insert(8);
-	result += "|insertArr2: " + $("#result").text();
-
-	// ............................... Assert .................................
-	equal(result + "|" + refreshCount,
-	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 6, 3, false|insertArr2: 6, 4, false|2",
-	'Data link using: {^{tagDependsOnArray/}} with onArrayChange handler: updates correctly when setting dependent props,'
-	+ ' and fires onArrayChange once for each array change on dependent arrays');
-
-	// =============================== Arrange ===============================
-	app = {
-		arr: [1,2],
-		editable: true
-	};
-	model.things = [];
-
-	$.views.tags("tagDependsOnArray", {
-		template:"{{:things.length}}, {{:~app.arr.length}}, {{:~app.editable}}",
-		depends: ["things", "~app.arr", "~app.editable"]
-	});
-
-	$.templates('{^{tagDependsOnArray/}}')
-		.link("#result", model, {app: app});
-
-	// ................................ Act ..................................
-	result = $("#result").text();
-	$.observable(app).setProperty({editable: false});
-	result += "|setBoolProp: " + $("#result").text();
-	$.observable(model).setProperty({things: [4,5,6,7]});
-	result += "|setArrProp1: " + $("#result").text();
-	$.observable(app).setProperty({arr: [1,2,3]});
-	result += "|setArrProp2: " + $("#result").text();
-	$.observable(model.things).insert([8,9]);
-	result += "|insertArr1: " + $("#result").text();
-	$.observable(app.arr).insert(8);
-	result += "|insertArr2: " + $("#result").text();
-
-	// ............................... Assert .................................
-	equal(result,
-	"0, 2, true|setBoolProp: 0, 2, false|setArrProp1: 4, 2, false|setArrProp2: 4, 3, false|insertArr1: 4, 3, false|insertArr2: 4, 3, false",
-	'Data link using: {^{tagDependsOnArray/}} WITHOUT onArrayChange handler: updates correctly when setting dependent props, does NOT update when modifying dependent arrays');
-
 	// ................................ Reset ................................
 	$("#result").empty();
 	person1._firstName = "Jo"; // reset Prop
@@ -2593,12 +2411,12 @@ test("{^{for}}", function() {
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-		// =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
 
-	$.templates('{^{for #data}}{{:thing}}{{/for}}')
-		.link("#result", model.things);
+	$.templates('{^{:length}} {^{for #data}}{{:thing}}{{/for}}')
+		.link("#result", model.things, null, true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -2606,8 +2424,48 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
-	'{{for #data}} when #data is an array binds to array changes on #data');
+	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	'{^{for #data}} when #data is an array binds to array changes on #data');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
+
+	$.templates('{^{:length}} {^{for}}{{:thing}}{{/for}}')
+		.link("#result", model.things, null, true);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	'{^{for}} when #data is an array binds to array changes on #data');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
+
+	$.templates('{{include things}}{^{:length}} {^{for}}{{:thing}}{{/for}}{{/include}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	'{{include things}} moves context to things array, and {^{for}} then iterates and binds to array');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -3014,6 +2872,231 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	equal(!deferredString && after, 'afterShallow',
 	'With shallow bound {^{if}} tag, there is no deferred binding and binding behaves correctly after further remove');
 
+});
+
+test("{^{props}} basic", function() {
+	// =============================== Arrange ===============================
+	var root = {
+		objA: {propA1: "valA1a"},
+		objB: {propB1: "valB1a"}
+	};
+
+	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},{{/props}}')
+		.link("#result", root);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'propA1:valA1a,|propA1:valA1b,',
+	'{^{props}} - set existing property');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty({propA1: "valA1c",propA2: "valA2a"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'propA1:valA1b,|propA1:valA1c,propA2:valA2a,',
+	'{^{props}} - set new property');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty({propA1: "",propA2: null});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'propA1:valA1c,propA2:valA2a,|propA1:,',
+	'{^{props}} - set property to empty string or null');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty({propA1: null});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'propA1:,|',
+	'{^{props}} - all properties null');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "|propA1:valA1b,",
+	'{^{props}} - set property where there were none');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root).setProperty({ objA: {}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1b,|",
+	'{^{props}} - set whole object to empty object');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root).setProperty({ objA: {propX: "XX"}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "|propX:XX,",
+	'{^{props}} - set whole object to different object');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+		"{^{props}}  DataMap bindings all removed when tag disposed (content removed from DOM)");
+});
+
+test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function() {
+	// =============================== Arrange ===============================
+
+	var root = {
+		objA: { propA1: "valA1a" }
+	};
+
+	$.templates(
+		'{^{props objA}}'
+			+ '{^{:key}}:{^{:prop}},'
+			+ '<button class="removeProp" data-link="{on ~remove}">remove</button>'
+			+ '<button class="addProp" data-link="{on ~add}">add</button>,'
+			+ '<button class="changeProp" data-link="{on ~change}">change</button>,'
+			+ '<input class="changePropInput" data-link="prop"/>'
+			+ '<input class="changeKeyInput" data-link="key"/>'
+		+ '{{/props}}')
+
+		.link("#result", root, {
+			add: function(ev, eventArgs) {
+				var view = eventArgs.view,
+					arr = view.get("array").data;
+				$.observable(arr).insert({key: "addkey", prop: "addprop"});
+			},
+			remove: function(ev, eventArgs) {
+				var view = eventArgs.view,
+					arr = view.get("array").data,
+					index = view.index;
+				$.observable(arr).remove(index);
+			},
+			change: function(ev, eventArgs) {
+				var view = eventArgs.view,
+					item = view.data,
+					index = view.index;
+				$.observable(item).setProperty({ key: "changed", prop: "changedValue" });
+			}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".addProp").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1a,removeadd,change,|propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,",
+	'{^{props}} - add properties to props target array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".removeProp:first()").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,|addkey:addprop,removeadd,change,",
+	'{^{props}} - remove properties from props target array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".changeProp").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "addkey:addprop,removeadd,change,|changed:changedValue,removeadd,change,",
+	'{^{props}} - change value of key and prop in props target array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".changePropInput").val("newValue").change();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after + "|" +  JSON.stringify(root.objA), "changed:changedValue,removeadd,change,|changed:newValue,removeadd,change,|{\"changed\":\"newValue\"}",
+	'{^{props}} - change value of input bound to prop in props target array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".changeKeyInput").val("newKey").change();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after + "|" +  JSON.stringify(root.objA), "changed:newValue,removeadd,change,|newKey:newValue,removeadd,change,|{\"newKey\":\"newValue\"}",
+	'{^{props}} - change value of input bound to key in props target array');
+
+	// ................................ Reset ................................
+
+	before = "" + $._data(root).events.propertyChange.length + "-" + $._data(root.objA).events.propertyChange.length
+	$("#result").empty();
+	after = "" + ($._data(root).events === undefined) + "-" + ($._data(root.objA).events === undefined) + " -" + JSON.stringify($.views.sub._cbBnds)
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "1-1|true-true -{}",
+	'{^{props}} DataMap bindings all removed when tag disposed (content removed from DOM)');
+});
+
+test("{^{props}}..{{else}} ...", function() {
+	// =============================== Arrange ===============================
+
+	var root = {
+		objA: { propA1: "valA1" },
+		objB: { propB1: "valb1", propB2: "valb2" }
+	};
+
+	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
+			+ '<button class="removePropA" data-link="{on ~remove}">remove</button>,'
+		+ '{{else objB}}{^{:key}}:{^{:prop}},'
+			+ '<button class="removePropB" data-link="{on ~remove}">remove</button>,'
+		+ '{{else}}'
+			+ 'NONE'
+		+ '{{/props}}')
+
+		.link("#result", root, {
+			remove: function(ev, eventArgs) {
+				var view = eventArgs.view,
+					arr = view.get("array").data,
+					index = view.index;
+				$.observable(arr).remove(index);
+			}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".removePropA").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1,remove,|propB1:valb1,remove,propB2:valb2,remove,",
+	'{^{props}} - remove properties from objA target array - switches to {{else objB}}');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$(".removePropB").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propB1:valb1,remove,propB2:valb2,remove,|NONE",
+	'{^{props}} - remove properties from objB target array - switches to {{else}}');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+		"{^{props}}  DataMap bindings all removed when tag disposed (content removed from DOM)");
 });
 
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
@@ -4523,7 +4606,7 @@ test("observe context helper", function() {
 
 	// ............................... Assert .................................
 	equals(result, "calls: 1, ev.data: prop: title, eventArgs: oldValue: foo value: newTitle, eventArgs.path: title|"
-							 + "calls: 2, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
+							+ "calls: 2, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
 	"$.observe(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths");
 	// -----------------------------------------------------------------------
 
@@ -5466,7 +5549,7 @@ test("MVVM", function() {
 
 	getResult = function(sep){ret += (sep || "|") + $("#result").text();};
 
-	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number: "phone2"})]);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -7195,13 +7278,28 @@ test("tag control events", function() {
 				onBeforeLink: function() {
 					eventData += " before";
 				},
-				onAfterLink: function() {
-					eventData += " after";
-				},
 				onArrayChange: function(ev, eventArgs) {
 					eventData += " onArrayChange";
 				},
+				onAfterLink: function(ev, eventArgs) {
+					var tag = this,
+						data = tag.tagCtx.args[1];
+					if (tag._boundArray && data !== tag._boundArray) {
+						$.unobserve(tag._boundArray, tag._arCh); // Different array, so remove handler from previous array
+						tag._boundArray = undefined;
+					}
+					if (!tag._boundArray && $.isArray(data)) {
+						$.observe(tag._boundArray = data, tag._arCh = function(ev, eventArgs) { // Store array data as tag._boundArray, and arrayChangeHandler as tag._arCh
+							tag.onArrayChange(ev, eventArgs);
+						});
+					}
+					eventData += " after";
+				},
 				onDispose: function() {
+					var tag = this;
+					if (tag._boundArray) {
+						$.unobserve(tag._boundArray, tag._arCh); // Remove arrayChange handler from bound array
+					}
 					eventData += " dispose";
 				},
 				getType: function() {
