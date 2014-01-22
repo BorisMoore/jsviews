@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 49 (Beta Candidate) */
+informal pre V1.0 commit counter: 50 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -2442,8 +2442,12 @@ informal pre V1.0 commit counter: 49 (Beta Candidate) */
 		}
 	}
 
+	function shallowArrayFilter(key, object, allPath) { // Filter used by {{props}} for the mappedProps target array
+		return (allPath.indexOf(".") < 0) && object[key];
+	}
+
 	$views.tags({
-		props: $.extend({}, $views.tags["for"], $viewsSub.DataMap($views.tags.props.getTgt, observeProps, observeMappedProps))
+		props: $.extend({}, $views.tags["for"], $viewsSub.DataMap($views.tags.props.getTgt, observeProps, observeMappedProps, undefined, shallowArrayFilter))
 	});
 
 	//========================
