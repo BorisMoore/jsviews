@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 50 (Beta Candidate) */
+informal pre V1.0 commit counter: 51 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -1287,7 +1287,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 				return allPath;
 			}
 
-			if (err) {
+			if (err && !aposed && !quoted) {
 				syntaxError(params);
 			} else {
 				if (bindings && rtPrnDot && !aposed && !quoted) {
@@ -2426,7 +2426,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 
 	var versionNumber = "v1.0.0-alpha",
 
-		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, validate, noDomLevel0,
+		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, noDomLevel0,
 		propsTag, $viewsLinkAttr, linkViewsSel, wrapMap,
 
 		document = global.document,
@@ -3316,7 +3316,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 				//	parentTag = "table";
 				//	tagStack.shift();
 				//}
-				if (validate) {
+				if (!$viewsSettings.noValidate) {
 					if (selfClose || selfClose2) {
 						if (!voidElems[parentTag]) {
 							errorMsg = "'<" + parentTag + ".../"; // self-closed tag such as <div/>
@@ -3778,7 +3778,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 //			if (!!oldElCnt !== !!elCnt) {
 //				error("Parse: " + html); // Parse error. Content not well-formed?
 //			}
-			if (validate && tagStack.length) {
+			if (!$viewsSettings.noValidate && tagStack.length) {
 				syntaxError("Mismatched '<" + parentTag + "...>' in:\n" + html); // Unmatched tag
 			}
 			// Append wrapper element to doc fragment
@@ -5009,7 +5009,6 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 			$viewsSettings.debugMode($viewsSettings._dbgMode);
 			$viewsLinkAttr = $viewsSettings.linkAttr;
 			linkViewsSel = bindElsSel + ",[" + $viewsLinkAttr + "]";
-			validate = !$viewsSettings.noValidate;
 			noDomLevel0 = $viewsSettings.noDomLevel0;
 			wrapMap.optgroup = wrapMap.option;
 			wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;

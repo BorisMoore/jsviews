@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 50 (Beta Candidate) */
+informal pre V1.0 commit counter: 51 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -37,7 +37,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 
 	var versionNumber = "v1.0.0-alpha",
 
-		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, validate, noDomLevel0,
+		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, noDomLevel0,
 		propsTag, $viewsLinkAttr, linkViewsSel, wrapMap,
 
 		document = global.document,
@@ -927,7 +927,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 				//	parentTag = "table";
 				//	tagStack.shift();
 				//}
-				if (validate) {
+				if (!$viewsSettings.noValidate) {
 					if (selfClose || selfClose2) {
 						if (!voidElems[parentTag]) {
 							errorMsg = "'<" + parentTag + ".../"; // self-closed tag such as <div/>
@@ -1389,7 +1389,7 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 //			if (!!oldElCnt !== !!elCnt) {
 //				error("Parse: " + html); // Parse error. Content not well-formed?
 //			}
-			if (validate && tagStack.length) {
+			if (!$viewsSettings.noValidate && tagStack.length) {
 				syntaxError("Mismatched '<" + parentTag + "...>' in:\n" + html); // Unmatched tag
 			}
 			// Append wrapper element to doc fragment
@@ -2620,7 +2620,6 @@ informal pre V1.0 commit counter: 50 (Beta Candidate) */
 			$viewsSettings.debugMode($viewsSettings._dbgMode);
 			$viewsLinkAttr = $viewsSettings.linkAttr;
 			linkViewsSel = bindElsSel + ",[" + $viewsLinkAttr + "]";
-			validate = !$viewsSettings.noValidate;
 			noDomLevel0 = $viewsSettings.noDomLevel0;
 			wrapMap.optgroup = wrapMap.option;
 			wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
