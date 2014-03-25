@@ -3,6 +3,7 @@
 "use strict";
 (function() {
 /* Setup */
+	var isIE8 = window.attachEvent && !window.addEventListener;
 
 // =============== Model ===============
 	function fullName(reverse, upper) {
@@ -178,8 +179,8 @@
 		},
 		myWrapElCnt: {
 			attr: "html",
-			render: function() {
-				return "<tbody>" + this.tagCtx.render() + "</tbody>";
+			render: function(val) {
+				return "<tbody>" + this.tagCtx.render(val) + "</tbody>";
 			},
 			onAfterLink: function() {
 				//debugger;
@@ -187,8 +188,8 @@
 		},
 		myWrap2ElCnt: {
 			attr: "html",
-			render: function() {
-				return "<td>" + this.tagCtx.render() + "</td>";
+			render: function(val) {
+				return "<td>" + this.tagCtx.render(val) + "</td>";
 			},
 			onAfterLink: function() {
 				//debugger;
@@ -197,8 +198,8 @@
 		myFlowElCnt: {
 			attr: "html",
 			flow: true,
-			render: function() {
-				return "<td>" + this.tagCtx.render() + "</td>";
+			render: function(val) {
+				return "<td>" + this.tagCtx.render(val) + "</td>";
 			}
 		}
 	});
@@ -649,6 +650,21 @@ test("link(expression, container, data)", function() {
 
 module("template.link()");
 
+test("top-level linking", function() {
+
+	// =============================== Arrange ===============================
+	$.views.helpers("a", "globalHelper");
+
+	$("#result").html("<div data-link='name'></div>")
+
+	$.link(true, "#result", {name: "Jo"})
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "Jo", 'Passing in data to top-level linking');
+
+	$("#result").empty()
+});
+
 test("helper overriding", 12, function() {
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
@@ -952,8 +968,11 @@ test('data-link="expression"', function() {
 		});
 
 	// ............................... Assert .................................
-	equal($("#result span")[0].outerHTML,
-	'<span data-link="foo(\'x\\x\').b">x\\x</span>',
+	var html = $("#result span")[0].outerHTML;
+	equal(html,
+	isIE8 
+	? "<SPAN data-link=\"foo('x\\x').b\"" + html.slice(30)
+	: '<span data-link="foo(\'x\\x\').b">x\\x</span>',
 	'Escaping of characters: data-link="foo(\'x\\x\').b"');
 	// -----------------------------------------------------------------------
 
@@ -1101,12 +1120,13 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", person1);
 
 	// ................................ Act ..................................
+	var html = $("#result span")[0].outerHTML;
 	before = $("#result span")[0].getAttribute("title");
 	$.observable(person1).setProperty("lastName", null);
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === null && $("#result span")[0].outerHTML === "<span data-link=\"title{:lastName}\"></span>",
+	ok(before === 'One' && after === null && html === isIE8 ? ("<SPAN data-link=\"title{:lastName}\"" + html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>",
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to null - removes title attribute');
 	// -----------------------------------------------------------------------
 
@@ -1596,7 +1616,7 @@ test('data-link="{tag...}"', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	'<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
+	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link fnTagEl rendering <span>, using: <div data-link="{fnTagEl}"></div>');
 	// -----------------------------------------------------------------------
 
@@ -1757,7 +1777,9 @@ test("computed observables in two-way binding", function() {
 
 	// ............................... Assert .................................
 	equal(res,
-	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	isIE8 
+	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property correctly calls the setter');
 
 	// ................................ Reset ................................
@@ -1826,7 +1848,9 @@ test("computed observables in two-way binding", function() {
 
 	// ............................... Assert .................................
 	equal(res,
-	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	isIE8 
+	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
 
 	// ................................ Reset ................................
@@ -1874,7 +1898,9 @@ test("computed observables in two-way binding", function() {
 
 	// ............................... Assert .................................
 	equal(res,
-	"Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+	isIE8
+	? "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+	: "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
 
 	// ................................ Reset ................................
@@ -2162,7 +2188,7 @@ test("{^{tag}}", function() {
 	after = $("#result div *")[1].outerHTML;
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	'<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
+	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link with: {^{fnTagEl/}} rendering <span>, updates when dependant object paths change');
 	// -----------------------------------------------------------------------
 
@@ -2367,9 +2393,9 @@ test("{^{tag}}", function() {
 		});
 
 	// ............................... Assert .................................
-	equal($("#result span")[0].outerHTML, "<span>w\\x\'y</span>",
+	equal($("#result span")[0].outerHTML, isIE8 ? "<SPAN>w\\x\'y</SPAN>" : "<span>w\\x\'y</span>",
 	"{^{myTag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
-	equal($("#result span")[1].outerHTML, "<span>w\\x</span>",
+	equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
 	"<div data-link=\"{myTag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 });
 
@@ -2424,7 +2450,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for #data}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
@@ -2444,7 +2470,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
@@ -2464,7 +2490,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{{include things}} moves context to things array, and {^{for}} then iterates and binds to array');
 
 	// ................................ Reset ................................
@@ -2788,7 +2814,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "notOne notTwo THREE ",
+	equal(after, isIE8 ? "notOne notTwo THREE  " : "notOne notTwo THREE ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
@@ -2796,7 +2822,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "notOne TWO notThree ",
+	equal(after, isIE8 ? "notOne TWO notThree  " : "notOne TWO notThree ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Reset ................................
@@ -4190,6 +4216,71 @@ test("observe/unobserve alternative signatures", function() {
 	person1.home.address.ZIP = "111"; // reset Prop
 	reset();
 
+	// =============================== Arrange ===============================
+	var person = {last: " L"};
+	function onch(ev, eventArgs) {
+	}
+
+	// ................................ Act ..................................
+	$.observe(person, "last", onch);
+	$.templates("{^{:last}}").link("#result", person);
+	$.unobserve(person, "last", onch);
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+		"observe/unobserve API calls combined with template binding: all bindings removed when content removed from DOM and unobserve called");
+
+	// =============================== Arrange ===============================
+	function onch2(ev, eventArgs) {
+	}
+
+	// ................................ Act ..................................
+	$.observe(person, "last", onch);
+	$.observe(person, "last", onch2);
+	$.unobserve(person, "last", onch);
+	$.unobserve(person, "last", onch2);
+
+	// ............................... Assert .................................
+	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+		"observe/unobserve API calls in different orders: all bindings removed when unobserve called");
+
+	// =============================== Arrange ===============================
+	var person = {first: "F", last: " L"};
+
+	// ................................ Act ..................................
+	$.observe(person, "last", onch);
+	$.observe(person, "last", onch2);
+	$.observe(person, "first", onch);
+	$.observe(person, "first", onch2);
+	$.unobserve(person, "last", onch);
+	$.unobserve(person, "last", onch2);
+	$.unobserve(person, "first", onch);
+	$.unobserve(person, "first", onch2);
+
+	// ............................... Assert .................................
+	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+		"observe/unobserve API calls in different orders (version 2): all bindings removed when unobserve called");
+
+	// =============================== Arrange ===============================
+	var person = {first: "F", last: " L"};
+
+	// ................................ Act ..................................
+	$.observe(person, "last", onch);
+	$.observe(person, "last", onch2);
+	$.templates("{^{:last}} <input data-link='last'/>}} {^{:first + last}}").link("#result", person);
+	$.observe(person, "first", onch);
+	$.observe(person, "first", onch2);
+	$.unobserve(person, "last", onch);
+	$.unobserve(person, "last", onch2);
+	$("#result").empty();
+	$.unobserve(person, "first", onch);
+	$.unobserve(person, "first", onch2);
+
+	// ............................... Assert .................................
+	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+		"Observe API calls combined with template binding (version 2): all bindings removed when content removed from DOM and unobserve called");
+
 });
 
 test("paths", function() {
@@ -5020,6 +5111,26 @@ var initialArray = [1,2],
 	'$.unobserve(myArray) removes arrayChange event handler');
 	// -----------------------------------------------------------------------
 
+	// =============================== Arrange ===============================
+	var people = [1,2];
+	function onch() {}
+	function onch2() {}
+
+	// ................................ Act ..................................
+	$.observe(people, "length", onch);
+	$.observe(people, "length", onch2);
+	$.observe(people, "length2", onch);
+	$.templates("{^{for people}}{{/for}} {^{:people}}").link("#result", {people: people});
+	$.observe(people, "length2", onch2);
+	$.unobserve(people, "length2", onch);
+	$.unobserve(people, "length2", onch2);
+	$("#result").empty();
+	$.unobserve(people, "length", onch);
+	$.unobserve(people, "length", onch2);
+
+	// ............................... Assert .................................
+	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(people).events]), "[{},{},null]",
+		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
 });
 
 test("computed observables in paths", function() {
@@ -6286,7 +6397,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equals($("#result div").html(), " before render after", 'A data-linked tag control allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
+	equals($("#result div").html(), isIE8 ? " beforerender after" : " before render after", 'A data-linked tag control allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
 
 	// =============================== Arrange ===============================
 
@@ -6326,7 +6437,7 @@ test('two-way bound tag controls', function() {
 		init: function(tagCtx, linkCtx) {
 			eventData += "init ";
 			if (this._.inline && !tagCtx.content) {
-				this.template = tagCtx.tmpl = "<input/>";
+				this.template = "<input/>";
 			}
 		},
 		render: function(val) {
@@ -6340,9 +6451,6 @@ test('two-way bound tag controls', function() {
 		onAfterLink: function(tagCtx, linkCtx) {
 			eventData += "onAfterLink ";
 			this.value = tagCtx.args[0];
-			linkCtx.convert = tagCtx.props.convert;
-			linkCtx.convertBack = tagCtx.props.convertBack;
-
 			this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 		},
 		onUpdate: function(ev, eventArgs, tagCtxs) {
@@ -6358,6 +6466,7 @@ test('two-way bound tag controls', function() {
 		}
 	} });
 
+	//TODO add tests for convert and convertBack declared on tag def or on tag instance and declared dependencies on tag and/or convert - either arrays or functions.
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT
 	// ................................ Act ..................................
 	$.templates('<input id="linkedEl" data-link="{twoWayTag name}"/>')
@@ -6514,7 +6623,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
-	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -6522,7 +6631,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
-	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	linkedEl.value = "ChangeTheName";
@@ -6531,7 +6640,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
-	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
+	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6701,7 +6810,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
-	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -6709,7 +6818,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
-	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	linkedEl = $("#linkedEl")[0];
@@ -6719,7 +6828,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
-	'Data link using: {^{twoWayTag name convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
+	'Data link using: {^{twoWayTag name convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -6886,7 +6995,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(tag.linkedElem[0].value + "|" + tag.value,
 	"JO|Jo",
-	'Data link using: {^{twoWayTag name convert="myupper"/}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -6894,7 +7003,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(tag.linkedElem[0].value + "|" + tag.value,
 	"ANEWNAME|ANewName",
-	'Data link using: {^{twoWayTag name convert="myupper"/}} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	tag.linkedElem[0].value = "ChangeTheName";
@@ -6903,7 +7012,7 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
-	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on data');
+	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
 });
 
 test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=target}', function() {
@@ -6916,7 +7025,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 		init: function(tagCtx, linkCtx) {
 			eventData += "init ";
 			if (this._.inline && !tagCtx.content) {
-				this.template = tagCtx.tmpl = "<input/>";
+				this.template = "<input/>";
 			}
 		},
 		render: function(val) {
@@ -6928,9 +7037,6 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 		onAfterLink: function(tagCtx, linkCtx) {
 			eventData += "onAfterLink ";
 			this.value = tagCtx.args[0];
-			linkCtx.convert = tagCtx.props.convert;
-			linkCtx.convertBack = tagCtx.props.convertBack;
-
 			this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 		},
 		onUpdate: function(ev, eventArgs, tagCtxs) {
@@ -7005,7 +7111,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 
 	// ............................... Assert .................................
 	equal(linkedEl.value, "JO",
-	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -7013,7 +7119,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal(linkedEl.value,
 	"ANEWNAME",
-	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	linkedEl.value = "ChangeTheName";
@@ -7022,7 +7128,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2,
 	"name:ANewName name2:changethename",
-	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
+	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -7119,7 +7225,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
-	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -7127,7 +7233,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
-	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	linkedEl.value = "ChangeTheName";
@@ -7136,7 +7242,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
 	"name:ANewName name2:changethename value:changethename",
-	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
+	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ................................ Reset ..................................
 	$("#result").empty();
@@ -7233,7 +7339,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
-	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (linkCtx.convert setting) - initial linking: converts the value on the target input');
+	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
@@ -7241,7 +7347,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
-	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"} - (linkCtx.convert setting) - on data change: converts the value on the target input');
+	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"} - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
 	linkedEl = $("#linkedEl")[0];
@@ -7251,7 +7357,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=targe
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
 	"name:ANewName name2:changethename value:changethename",
-	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (linkCtx.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
+	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 });
 
 test("tag control events", function() {

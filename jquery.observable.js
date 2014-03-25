@@ -1,10 +1,10 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 51 (Beta Candidate) */
+informal pre V1.0 commit counter: 52 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2013, Boris Moore
+ * Copyright 2014, Boris Moore
  * Released under the MIT License.
  */
 
@@ -14,7 +14,7 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 	"use strict";
 
 	if (!$) {
-		throw "requires jQuery or JsRender";
+		throw "jsViews/jsObservable require jQuery";
 	}
 	if ($.observable) { return; } // JsObservable is already loaded
 
@@ -22,7 +22,6 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 
 	var versionNumber = "v1.0.0-alpha",
 
-		currentCbBindings, currentCbBindingsId,
 		$eventSpecial = $.event.special,
 		$viewsSub = $.views 
 			? $.views.sub // jsrender was loaded before jquery.observable 
@@ -43,6 +42,23 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 		$hasData = $.hasData;
 
 	//========================== Top-level functions ==========================
+
+	$viewsSub.getDeps = function() {
+		var args = arguments;
+		return function() {
+			var arg, dep,
+				deps = [],
+				l=args.length;
+			while (l--) {
+				arg = args[l--],
+				dep = args[l];
+				if (dep) {
+					deps = deps.concat($isFunction(dep) ? dep(arg, arg) : dep);
+				}
+			}
+			return deps;
+		}
+	}
 
 	function $observable(data) {
 		return $isArray(data)
@@ -99,7 +115,7 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 		// If the cbBindings collection is empty we will remove it from the cbBindingsStore
 		var cb, found;
 
-		for(cb in cbBindings) {
+		for (cb in cbBindings) {
 			found = true;
 			break;
 		}
@@ -154,16 +170,9 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 			var j, evData,
 				obIdExpando = $hasData(object),
 				boundObOrArr = wrapArray(object);
-			currentCbBindings = 0;
 			if (unobserve || off) {
 				if (obIdExpando) {
 					$(boundObOrArr).off(namespace, onObservableChange);
-					// jQuery off event does not provide the event data, with the callback and we need to remove this object from the corresponding cbBindings hash, cbBindingsStore[cb._cId].
-					// So we have registered a jQuery special 'remove' event, which stored the cbBindingsStore[cb._cId] cbBindings hash in the currentCbBindings var,
-					// so we can immediately remove this object from that cbBindings hash.
-					if (currentCbBindings) {
-						delete currentCbBindings[$.data(object, "obId")];
-					}
 				}
 			} else {
 				if (events = obIdExpando && $._data(object)) {
@@ -178,10 +187,6 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 								return;
 							} else if (pathStr === "*" && data.prop !== pathStr || data.prop === prop) {
 								$(object).off(namespace, onObservableChange);
-								// We remove this object from cbBindings hash (see above).
-								if (currentCbBindings) {
-									delete currentCbBindings[$.data(object, "obId")];
-								}
 							}
 						}
 					}
@@ -809,20 +814,29 @@ informal pre V1.0 commit counter: 51 (Beta Candidate) */
 	};
 
 	$eventSpecial[propertyChangeStr] = $eventSpecial[arrayChangeStr] = {
-		// The jQuery 'off' method does not provide the event data from the event(s) that are being unbound, so we register
-		// a jQuery special 'remove' event, and get the data.cb._cId from the event here and provide the corresponding currentCbBindings hash via the
-		// currentCbBindings var to the unobserve handler, so we can immediately remove this object from that bindings hash, after 'unobserving'.
-		remove: function(evData) {
-			if ((evData = evData.data) && (evData.off = 1, evData = evData.cb)) { //Set off=1 as marker for disposed event
-				// Get the cb._cId from ev.data.cb._cId
-				currentCbBindings = cbBindingsStore[currentCbBindingsId = evData._cId];
-			}
-		},
-		teardown: function(namespaces) {
-			if (currentCbBindings) {
-				delete currentCbBindings[$.data(this, "obId")];
-				removeCbBindings(currentCbBindings, currentCbBindingsId);
+		// Register a jQuery special 'remove' event, to access the data associated with handlers being removed by jQuery.off().
+		// We get data.cb._cId from the event handleObj and get the corresponding cbBindings hash from the cbBindingsStore,
+		// then remove this object from that bindings hash - if the object does not have any other handlers associated with the same callback.
+		remove: function (handleObj) {
+			var cbBindings, found, events, l, data,
+				evData = handleObj.data;
+			if ((evData) && (evData.off = 1, evData = evData.cb)) { //Set off=1 as marker for disposed event
+				// Get the cb._cId from handleObj.data.cb._cId
+				if (cbBindings = cbBindingsStore[evData._cId]) {
+					// There were bindings for this callback. If this was the last one, we'll remove it.
+					events = $._data(this).events[handleObj.type];
+					l = events.length;
+					while (l-- && !found) {
+						found = (data = events[l].data) && data.cb === evData; // Found another one with same callback
+					}
+					if (!found) {
+						// This was the last handler for this callback and object, so remove the binding entry
+						delete cbBindings[$.data(this, "obId")];
+						removeCbBindings(cbBindings, evData._cId);
+					}
+				}
 			}
 		}
 	};
-})(this, this.jQuery || this.jsviews);
+
+})(this, this.jQuery);
