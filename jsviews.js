@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 52 (Beta Candidate) */
+informal pre V1.0 commit counter: 53 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -78,13 +78,16 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			sub: {
 				// subscription, e.g. JsViews integration
 				View: View,
-				Error: JsViewsError,
+				Err: JsViewsError,
 				tmplFn: tmplFn,
 				cvt: convertArgs,
 				parse: parseParams,
 				extend: $extend,
-				error: error,
-				syntaxError: syntaxError,
+				err: error,
+				syntaxErr: syntaxError,
+				isFn: function(ob) {
+					return typeof ob === "function"
+				},
 				DataMap: DataMap
 			},
 			_cnvt: convertVal,
@@ -107,7 +110,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 
 	function dbgMode(debugMode) {
 		$viewsSettings._dbgMode = debugMode;
-		indexStr = debugMode ? "Error: #index in nested view: use #getIndex()" : ""; // If in debug mode set #index to a warning when in nested contexts
+		indexStr = debugMode ? "Unavailable (nested view): use #getIndex()" : ""; // If in debug mode set #index to a warning when in nested contexts
 		$tags("dbg", $helpers.dbg = $converters.dbg = debugMode ? dbgBreak : retVal); // If in debug mode, register {{dbg/}}, {{dbg:...}} and ~dbg() to insert break points for debugging.
 	}
 
@@ -139,8 +142,8 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				return;
 			}
 		}
-		this.name = "JsRender Error";
-		this.message = message || "JsRender error";
+		this.name = ($.link ? "JsViews" : "JsRender") + " Error";
+		this.message = message || this.name;
 	}
 
 	function $extend(target, source) {
@@ -271,7 +274,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		}
 
 		if (res) {
-			if (typeof res === "function" && !res._wrp) {
+			if ($isFunction(res) && !res._wrp) {
 				wrapped = function() {
 					// If it is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
 					// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
@@ -356,7 +359,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		args = !args.length && !tagCtx.index && tag.autoBind // On the opening tag with no args, if autoBind is true, bind the the current data context
 			? [view.data]
 			: converter
-				? args.slice(0) // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
+				? args.slice() // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
 				// the copied array with the converted value. But we don not modify the value of tag.tagCtx.args[0] (the original args array)
 				: args; // If no converter, render with the original tagCtx.args
 
@@ -644,7 +647,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 
 	function compileTag(name, tagDef, parentTmpl) {
 		var init, tmpl;
-		if (typeof tagDef === "function") {
+		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
 			tagDef = {
 				depends: tagDef.depends,
@@ -713,6 +716,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 						// Use tmpl as options
 						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options);
 					}
+					elem = null;
 				}
 				return value;
 			}
@@ -976,7 +980,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 	// (Compile AST then build template function)
 
 	function error(message) {
-		throw new $viewsSub.Error(message);
+		throw new $viewsSub.Err(message);
 	}
 
 	function syntaxError(message) {
@@ -1081,7 +1085,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		}
 		//==== /end of nested functions ====
 
-		var newNode, hasHandlers, 
+		var newNode, hasHandlers,
 			allowCode = tmpl && tmpl.allowCode,
 			astTop = [],
 			loc = 0,
@@ -1452,6 +1456,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		$helpers = $views.helpers,
 		$tags = $views.tags,
 		$viewsSub = $views.sub,
+		$isFunction = $viewsSub.isFn,
 		$viewsSettings = $views.settings;
 
 	if (jQuery) {
@@ -1575,7 +1580,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			for (key in source) {
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
-					if (typeof prop !== "function") {
+					if (!$isFunction(prop)) {
 						props.push({ key: key, prop: source[key] });
 					}
 				}
@@ -1635,8 +1640,8 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 	var versionNumber = "v1.0.0-alpha",
 
 		$eventSpecial = $.event.special,
-		$viewsSub = $.views 
-			? $.views.sub // jsrender was loaded before jquery.observable 
+		$viewsSub = $.views
+			? $.views.sub // jsrender was loaded before jquery.observable
 			: ($observable.sub = {}), // jsrender not loaded so store sub on $observable, and merge back in to $.views.sub in jsrender if loaded afterwards
 		cbBindingKey = 1,
 		splice = [].splice,
@@ -1644,11 +1649,12 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		$expando = $.expando,
 		OBJECT = "object",
 		PARSEINT = parseInt,
+		rNotWhite = /\S+/g,
 		propertyChangeStr = $viewsSub.propChng = $viewsSub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
 		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
 		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
 		observeStr = propertyChangeStr + ".observe",
-		$isFunction = $.isFunction,
+		$isFunction = $viewsSub.isFn,
 		observeObjKey = 1,
 		observeCbKey = 1,
 		$hasData = $.hasData;
@@ -1752,22 +1758,22 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				// or observeAll() with an array in the graph. Note that on data-link bindings we ensure always to have an array handler - $.noop if none is specified e.g. on the data-linked tag.
 			} else if (ctx.prop === eventArgs.path || ctx.prop === "*") {
 				oldValue = typeof oldValue === OBJECT && (paths[0] || allowArray && $isArray(oldValue)) && oldValue; // Note: && (paths[0] || $isArray(value)) is for perf optimization
-				value = typeof (value = eventArgs.value) === OBJECT && (paths[0] || allowArray && $isArray(value)) && value; 
+				value = typeof (value = eventArgs.value) === OBJECT && (paths[0] || allowArray && $isArray(value)) && value;
 				if (observeAll) {
 					allPath = observeAll._path + "." + eventArgs.path;
 					filter = observeAll.filter;
-					parentObs = [observeAll.parents().slice(0)];
+					parentObs = [observeAll.parents().slice()];
 					if (oldValue) {
-						observe_apply(allowArray, [oldValue], paths, ctx.cb, true, filter, parentObs, allPath); // unobserve
+						observe_apply(allowArray, observeAll.ns, [oldValue], paths, ctx.cb, true, filter, parentObs, allPath); // unobserve
 					}
 					if (value) {
-						observe_apply(allowArray, [value], paths, ctx.cb, undefined, filter, parentObs, allPath);
+						observe_apply(allowArray, observeAll.ns, [value], paths, ctx.cb, undefined, filter, parentObs, allPath);
 					}
 				} else {
-					if (oldValue) {
+					if (oldValue) { // oldValue is an object, so unobserve
 						observe_apply(allowArray, [oldValue], paths, ctx.cb, true); // unobserve
 					}
-					if (value) {
+					if (value) { // value is an object, so observe
 						observe_apply(allowArray, [value], paths, ctx.cb);
 					}
 				}
@@ -1777,11 +1783,14 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 	}
 
 	function $observe() {
-		// $.observe(root, [1 or more objects, path or path Array params...], callback[, contextCallback][, unobserveOrOrigRoot)
+		// $.observe([namespace, ]root, [1 or more objects, path or path Array params...], callback[, contextCallback][, unobserveOrOrigRoot])
 		function observeOnOff(namespace, pathStr, isArrayBinding, off) {
 			var j, evData,
 				obIdExpando = $hasData(object),
 				boundObOrArr = wrapArray(object);
+
+			namespace = initialNs ? namespace + "." + initialNs : namespace;
+
 			if (unobserve || off) {
 				if (obIdExpando) {
 					$(boundObOrArr).off(namespace, onObservableChange);
@@ -1793,7 +1802,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					el = events && events.length;
 
 					while (el--) {
-						if ((data = events[el].data) && data.cb._cId === callback._cId) {
+						if ((data = events[el].data) && data.cb._cId === callback._cId && data.ns === initialNs) {
 							if (isArrayBinding) {
 								// Duplicate exists, so skip. (This can happen e.g. with {^{for people ~foo=people}})
 								return;
@@ -1803,13 +1812,14 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 						}
 					}
 				}
-				evData = isArrayBinding ? {cb: callback}
+				evData = isArrayBinding ? {}
 					: {
 						fullPath: path,
 						paths: pathStr ? [pathStr] : [],
 						prop: prop,
-						cb: callback
 					};
+				evData.ns = initialNs;
+				evData.cb = callback;
 
 				if (allPath) {
 					evData.observeAll = {
@@ -1824,9 +1834,10 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 							});
 						},
 						parents: function() {
-							return parentObs; // The chain or parents between the modified object and the root object used in the observeAll() call
+							return parentObs; // The chain of parents between the modified object and the root object used in the observeAll() call
 						},
 						filter: filter,
+						ns: initialNs
 					}
 				}
 				$(boundObOrArr).on(namespace, null, evData, onObservableChange);
@@ -1885,7 +1896,8 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			}
 		}
 
-		var i, p, skip, parts, prop, path, isArray, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs, allPath, filter,
+		var i, p, skip, parts, prop, path, isArray, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
+			allPath, filter, initialNs, initNsArr, initNsArrLen,
 			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
 			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
@@ -1894,9 +1906,15 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			paths = Array.apply(0, arguments),
 			lastArg = paths.pop(),
 			origRoot = paths.shift(),
-			root =origRoot,
+			root = origRoot,
 			object = root,
 			l = paths.length;
+
+		if (origRoot + "" === origRoot && allowArray) {
+			initialNs = origRoot; // The first arg is a namespace, since it is  a string, and this call is not from observeAndBind
+			origRoot = object = root = paths.shift();
+			l--;
+		}
 
 		if ($isFunction(lastArg)) {
 			callback = lastArg;
@@ -1925,7 +1943,6 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			callback = paths.pop();
 			l--;
 		}
-
 		// Use a unique namespace (e.g. obs7) associated with each observe() callback to allow unobserve to remove handlers
 		ns += unobserve
 			? (callback ? ".obs" + callback._cId: "")
@@ -1934,127 +1951,131 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		if (!unobserve) {
 			cbBindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
 		}
-		if ($isArray(root)) {
-			bindArray(root, unobserve, true);
-		} else {
-			// remove onObservableChange handlers that wrap that callback
-			if (unobserve && l === 0 && root) {
-				observeOnOff(ns, "");
-			}
-		}
-		depth = 0;
-		for (i = 0; i < l; i++) {
-			path = paths[i];
-			if (path === "") {
-				continue;
-			}
-			object = root;
-			if ("" + path === path) {
-				//path = path || "*"; // This ensures that foo(person) will depend on any changes in person
-				// - equivalent to foo(person.*) - were it legal, or to adding foo.depends = []
-				parts = path.split("^");
-				if (parts[1]) {
-					// We bind the leaf, plus additional nodes based on depth.
-					// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
-					depth = parts[0].split(".").length;
-					path = parts.join(".");
-					depth = path.split(".").length - depth;
-						// if more than one ^ in the path, the first one determines depth
+
+		initNsArr = initialNs && initialNs.match(rNotWhite) || [""];
+		initNsArrLen = initNsArr.length;
+
+		while (initNsArrLen--) {
+			initialNs = initNsArr[initNsArrLen];
+
+			if ($isArray(root)) {
+				bindArray(root, unobserve, true);
+			} else {
+				// remove onObservableChange handlers that wrap that callback
+				if (unobserve && l === 0 && root) {
+					observeOnOff(ns, "");
 				}
-				if (contextCb && (items = contextCb(path, root))) {
-					// If contextCb returns an array of objects and paths, we will insert them
-					// into the sequence, replacing the current item (path)
-					l += items.length - 1;
-					splice.apply(paths, [i--, 1].concat(items));
+			}
+			depth = 0;
+			for (i = 0; i < l; i++) {
+				path = paths[i];
+				if (path === "") {
 					continue;
 				}
-				parts = path.split(".");
-			} else {
-				if (topLevel && !$isFunction(path)) {
-					if (path._jsvOb) {
-						if (!unobserve) {
+				object = root;
+				if ("" + path === path) {
+					parts = path.split("^");
+					if (parts[1]) {
+						// We bind the leaf, plus additional nodes based on depth.
+						// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
+						depth = parts[0].split(".").length;
+						path = parts.join(".");
+						depth = path.split(".").length - depth;
+							// if more than one ^ in the path, the first one determines depth
+					}
+					if (contextCb && (items = contextCb(path, root))) {
+						// If contextCb returns an array of objects and paths, we will insert them
+						// into the sequence, replacing the current item (path)
+						l += items.length - 1;
+						splice.apply(paths, [i--, 1].concat(items));
+						continue;
+					}
+					parts = path.split(".");
+				} else {
+					if (topLevel && !$isFunction(path)) {
+						if (path._jsvOb) {
+							// Currently this will only occur if !unobserve
 							// This is a compiled function for binding to an object returned by a helper/data function.
 							path._cb = innerCb = onUpdatedExpression(path, paths.slice(i+1));
 							innerCb.noArray = allowArray === false;
-							path._rt = origRoot;
 							innerCb._cId = callback._cId; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
+							observe_apply(allowArray, [origRoot], paths.slice(0, i), path._cb, contextCb);
+							path = path._ob;
 						}
-						observe_apply(allowArray, [path._rt], paths.slice(0, i), path._cb, contextCb, unobserve);
-						path = path._ob;
+						object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
 					}
-					object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
+					root = path;
+					parts = [root];
 				}
-				root = path;
-				parts = [root];
-			}
-			while (object && (prop = parts.shift()) !== undefined) {
-				if (typeof object === OBJECT) {
-					if ("" + prop === prop) {
-						if (prop === "") {
-							continue;
-						}
-						if ((parts.length < depth + 1) && !object.nodeType) {
-							// Add observer for each token in path starting at depth, and on to the leaf
-							if (!unobserve && (events = $hasData(object) && $._data(object))) {
-								events = events.events;
-								events = events && events[propertyChangeStr];
-								el = events && events.length;
-								skip = 0;
-								while (el--) { // Skip duplicates
-									data = events[el].data;
-									if (data && data.cb === callback) {
-										if (data.prop === prop || data.prop === "*") {
-											if (p = parts.join(".")) {
-												data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
-												// need to keep bindings rest of path, ready for if the object gets swapped.
+				while (object && (prop = parts.shift()) !== undefined) {
+					if (typeof object === OBJECT) {
+						if ("" + prop === prop) {
+							if (prop === "") {
+								continue;
+							}
+							if ((parts.length < depth + 1) && !object.nodeType) {
+								// Add observer for each token in path starting at depth, and on to the leaf
+								if (!unobserve && (events = $hasData(object) && $._data(object))) {
+									events = events.events;
+									events = events && events[propertyChangeStr];
+									el = events && events.length;
+									skip = 0;
+									while (el--) { // Skip duplicates
+										data = events[el].data;
+										if (data && data.cb === callback && data.ns === initialNs) {
+											if (data.prop === prop || data.prop === "*") {
+												if (p = parts.join(".")) {
+													data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
+													// need to keep bindings rest of path, ready for if the object gets swapped.
+												}
+												skip++;
 											}
-											skip++;
 										}
 									}
-								}
-								if (skip) {
-									// Duplicate binding(s) found, so move on
-									object = object[prop];
-									continue;
-								}
-							}
-							if (prop === "*") {
-								if (!unobserve && events && events.length) {
-									// Remove existing bindings, since they will be duplicates with "*"
-									observeOnOff(ns, "", false, true);
-								}
-								if ($isFunction(object)) {
-									if (dep = object.depends) {
-										observe_apply(allowArray, [dep], callback, unobserve || origRoot);
+									if (skip) {
+										// Duplicate binding(s) found, so move on
+										object = object[prop];
+										continue;
 									}
-								} else {
-									observeOnOff(ns, ""); // observe the object for any property change
 								}
-								for (p in object) {
-									// observing "*" listens to any prop change, and also to arraychange on props of type array
-									bindArray(object, unobserve, undefined, p);
+								if (prop === "*") {
+									if (!unobserve && events && events.length) {
+										// Remove existing bindings, since they will be duplicates with "*"
+										observeOnOff(ns, "", false, true);
+									}
+									if ($isFunction(object)) {
+										if (dep = object.depends) {
+											observe_apply(allowArray, [dep], callback, unobserve || origRoot);
+										}
+									} else {
+										observeOnOff(ns, ""); // observe the object for any property change
+									}
+									for (p in object) {
+										// observing "*" listens to any prop change, and also to arraychange on props of type array
+										bindArray(object, unobserve, undefined, p);
+									}
+									break;
+								} else if (prop) {
+									observeOnOff(ns + "." + prop, parts.join("."));
 								}
-								break;
-							} else if (prop) {
-								observeOnOff(ns + "." + prop, parts.join("."));
 							}
+							if (allPath) {
+								allPath += "." + prop;
+							}
+							prop = object[prop];
 						}
-						if (allPath) {
-							allPath += "." + prop;
+						if ($isFunction(prop)) {
+							if (dep = prop.depends) {
+								// This is a computed observable. We will observe any declared dependencies
+								observe_apply(allowArray, [object], resolvePathObjects(dep, object), callback, contextCb, unobserve || [origRoot]);
+							}
+							break;
 						}
-						prop = object[prop];
+						object = prop;
 					}
-					if ($isFunction(prop)) {
-						if (dep = prop.depends) {
-							// This is a computed observable. We will observe any declared dependencies
-							observe_apply(allowArray, [object], resolvePathObjects(dep, object), callback, contextCb, unobserve || [origRoot]);
-						}
-						break;
-					}
-					object = prop;
 				}
+				bindArray(object, unobserve);
 			}
-			bindArray(object, unobserve);
 		}
 		if (cbId) {
 			removeCbBindings(cbBindings, cbId);
@@ -2133,21 +2154,26 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 
 	//========================== Initialize ==========================
 
-	function $observeAll(cb, filter) {
-		observeAll(this._data, cb, filter, [], "root");
+	function $observeAll(namespace, cb, filter, unobserve) {
+		if (namespace + "" !== namespace) {
+			filter = cb;
+			cb = namespace;
+			namespace = "";
+		}
+		observeAll(namespace, this._data, cb, filter, [], "root", unobserve);
 	}
 
-	function $unobserveAll(cb, filter) {
-		observeAll(this._data, cb, filter, [], "root", true);
+	function $unobserveAll(namespace, cb, filter) {
+		$observeAll.call(this, namespace, cb, filter, true);
 	}
 
-	function observeAll(object, cb, filter, parentObs, allPath, unobserve) {
+	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve) {
 		function observeArray(arr, unobs) {
 			l = arr.length;
 			newAllPath = allPath + "[]";
 			while (l--) {
 				if (newObject = $observable._fltr(l, arr, newAllPath, filter)) {
-					observeAll(newObject, cb, filter || "", parentObs.slice(0), newAllPath, unobs); // If nested array, need to observe the array too - so set filter to ""
+					observeAll(namespace, newObject, cb, filter || "", parentObs.slice(), newAllPath, unobs); // If nested array, need to observe the array too - so set filter to ""
 				}
 			}
 		}
@@ -2157,7 +2183,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			allPath = ev.data.observeAll._path;
 			var oldParentObs = parentObs;
 			if (parentObs[0]!==ev.target) {
-				parentObs = parentObs.slice(0);
+				parentObs = parentObs.slice();
 				parentObs.unshift(ev.target);
 			}
 			switch (eventArgs.change) { // observeAll/unobserveAll on added or removed objects
@@ -2173,8 +2199,8 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					break;
 				case "set":
 					newAllPath = allPath + "." + eventArgs.path;
-					observeAll(eventArgs.oldValue, cb, 0, parentObs.slice(0), newAllPath, true); // unobserveAll on previous value object
-					observeAll(eventArgs.value, cb, 0, parentObs.slice(0), newAllPath); // observeAll on new value object
+					observeAll(namespace, eventArgs.oldValue, cb, 0, parentObs.slice(), newAllPath, true); // unobserveAll on previous value object
+					observeAll(namespace, eventArgs.value, cb, 0, parentObs.slice(), newAllPath); // observeAll on new value object
 			}
 			cb.apply(this, arguments); // Observe this object (invoke the callback)
 			parentObs = oldParentObs;
@@ -2193,11 +2219,11 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					// (But not for array properties lower in the tree, since they get arrayChange binding added during regular $.observe(array ...) binding.
 					wrappedCb._cId = cb._cId = cb._cId || observeCbKey++; // Identify wrapped callback with unwrapped callback, so unobserveAll will
 																		  // remove previous observeAll wrapped callback, if inner callback was the same;
-					$observe(object, isObject, wrappedCb, unobserve, filter, parentObs.slice(), allPath);
+					$observe(namespace, object, isObject, wrappedCb, unobserve, filter, parentObs.slice(), allPath);
 				}
 			} else {
 				// No callback. Just unobserve if unobserve === true.
-				$observe(object, isObject, undefined, unobserve, filter, parentObs.slice(), allPath);
+				$observe(namespace, object, isObject, undefined, unobserve, filter, parentObs.slice(), allPath);
 			}
 
 			if (isObject) {
@@ -2207,7 +2233,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					if (l.charAt(0) !== "_" && l !== $expando) { // Filter props with keys that start with _ or jquery, and also apply the custom filter function if any.
 						newAllPath = allPath + "." + l;
 						if (newObject = $observable._fltr(l, object, newAllPath, filter)) {
-							observeAll(newObject, cb, filter || 0, parentObs.slice(0), newAllPath, unobserve);
+							observeAll(namespace, newObject, cb, filter || 0, parentObs.slice(), newAllPath, unobserve);
 						}
 					}
 				}
@@ -2400,7 +2426,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		},
 
 		refresh: function(newItems) {
-			var oldItems = this._data.slice(0);
+			var oldItems = this._data.slice();
 			this._refresh(oldItems, newItems);
 			return this;
 		},
@@ -2478,7 +2504,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		$viewsSettings = $views.settings,
 		$extend = $viewsSub.extend,
 		topView = $viewsSub.View(undefined, "top"), // Top-level view
-		$isFunction = $.isFunction,
+		$isFunction = $viewsSub.isFn,
 		$templates = $views.templates,
 		$converters = $views.converters,
 		$observable = $.observable,
@@ -2508,10 +2534,11 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			text: "text"
 		},
 		valueBinding = { from: "value", to: "value"},
+		isCleanCall = 0,
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
-		error = $viewsSub.error,
-		syntaxError = $viewsSub.syntaxError,
+		error = $viewsSub.err,
+		syntaxError = $viewsSub.syntaxErr,
 		rFirstElem = /<(?!script)(\w+)(?:[^>]*(on\w+)\s*=)?[^>]*>/,
 		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
 		safeFragment = document.createDocumentFragment(),
@@ -2530,7 +2557,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		bindingStore = {},
 		bindingKey = 1,
 		rViewPath = /^#(view\.?)?/,
-		rConvertMarkers = /(^|(\/>)|<\/(\w+)>|>|)(\s*)([#\/]\d+[_^])`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*)/g,
+		rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#\/]\d+[_^])`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
 		rOpenViewMarkers = /(#)()(\d+)(_)/g,
 		rOpenMarkers = /(#)()(\d+)([_^])/g,
 		rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
@@ -2782,7 +2809,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		// When called for a tag, either in tag.refresh() or propertyChangeHandler(), returns a promise (and supports async)
 		// When called (in propertyChangeHandler) for target HTML returns true
 		// When called (in propertyChangeHandler) for other targets returns boolean for "changed"
-		var setter, changed, prevNode, nextNode, promise, nodesToRemove, useProp,
+		var setter, changed, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex,
 			renders = sourceValue !== undefined,
 			source = linkCtx.data,
 			target = tag && tag.parentElem || linkCtx.elem,
@@ -2860,6 +2887,19 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 							if (prevNode && prevNode !== nextNode) {
 								// This prevNode will be removed from the DOM, so transfer the view tokens on prevNode to nextNode of this 'viewToRefresh'
 								transferViewTokens(prevNode, nextNode, target, tag._tgId, "^", true);
+							} else if (tokens = target._dfr) { // This occurs when there is no nextNode, and so the target._dfr may include tokens referencing
+								// view and tag bindings contained within the open an close tokens of the updated tag control. They need to be processed (disposed)
+								id = tag._tgId + "^";
+								openIndex = tokens.indexOf("#" + id) + 1;
+								closeIndex = tokens.indexOf("/" + id);
+
+								if (openIndex && closeIndex > 0) {
+									openIndex += id.length;
+									if (closeIndex > openIndex) {
+										target._dfr = tokens.slice(0, openIndex) + tokens.slice(closeIndex);
+										disposeTokens(tokens.slice(openIndex, closeIndex));
+									}
+								}
 							}
 							prevNode = prevNode
 								? prevNode.previousSibling
@@ -2868,7 +2908,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 									: target.lastChild;
 						}
 						// Remove HTML nodes
-						$(nodesToRemove).remove();
+						$(nodesToRemove).remove(); // Note if !tag._elCnt removing the nodesToRemove will process and dispose view and tag bindings contained within the updated tag control
 
 						if (tag && tag.onBeforeLink) {
 							tag.onBeforeLink();
@@ -3049,7 +3089,6 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				// This prevNode will be removed from the DOM, so transfer the view tokens on prevNode to nextNode of this 'viewToRefresh'
 				transferViewTokens(prevNode, nextNode, parentNode, view._.id, "_", true);
 			}
-
 			// Remove child views
 			view.removeViews(undefined, undefined, true);
 			linkToNode = nextNode;
@@ -3178,7 +3217,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			}
 			binding = $observable._apply(false, [source], linkCtx.fn.paths, depends, handler, linkCtx._ctxCb);
 			// The binding returned by $observe has a bnd array with the source objects of the individual bindings.
-		
+
 			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
 			binding._tgId = bindId;
@@ -3271,7 +3310,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					view = $view(targetEl);
 					oldCtx = view.ctx;
 					view.ctx = context;
-					addDataBinding(tmplOrLinkTag, targetEl, $view(targetEl), from);
+					addDataBinding(tmplOrLinkTag, targetEl, view, from);
 					view.ctx = oldCtx;
 				} else {
 					parentView = parentView || $view(targetEl);
@@ -3316,7 +3355,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 						// We are inserting new content and the target element has some deferred binding annotations,and there is no nextNode.
 						// Those views may be stale views (that will be recreated in this new linking action) so we will first remove them
 						// (if not already removed).
-						vwInfos = viewInfos(targetEl._dfr, true, rOpenViewMarkers);
+						vwInfos = viewInfos(targetEl._dfr, 1, rOpenViewMarkers);
 
 						for (i = 0, k = vwInfos.length; i < k; i++) {
 							view = vwInfos[i];
@@ -3354,18 +3393,20 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		//     _nxt: References the last node (script element of type "jsv/123"), or (for elCnt=true), the next element node after the view.
 
 		//==== nested functions ====
-		function convertMarkers(all, preceding, selfClose, closeTag, spaceBefore, id, spaceAfter, tag1, tag2, closeTag2, spaceAfterClose, selfClose2) {
-			// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|>|)(\s*)([#\/]\d+[_^])`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*)/g,
-			//                 prec, slfCl, clTag,  spaceBefore, id,    spaceAfter, tag1,                  tag2,               clTag2,sac  slfCl2,
+		function convertMarkers(all, preceding, selfClose, closeTag, spaceBefore, id, spaceAfter, tag1, tag2, closeTag2, spaceAfterClose, selfClose2, endOpenTag) {
+			// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#\/]\d+[_^])`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
+			//                 prec, slfCl, clsTag,  spBefore, id,	     spAfter,tag1,                   tag2,               clTag2,sac  slfCl2, endOpenTag
 			// Convert the markers that were included by addBindingMarkers in template output, to appropriate DOM annotations:
 			// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
 
 // TODO consider detecting 'quoted' contexts (attribute strings) so that attribute encoding does not need to encode >
-// Currently rAttrEncode = /[><"'&]/g includes '>' encoding in order to avoid erroneous parsing of <span title="&lt;a/>">
-
+// Currently rAttrEncode = /[><"'&]/g includes '>' encoding in order to avoid erroneous parsing of <span title="&lt;a/>"><span title="&lt;a/>">
 			var errorMsg,
 				endOfElCnt = "";
-
+			if (endOpenTag) {
+				inTag = 0;
+				return all;
+			}
 			tag = tag1 || tag2 || "";
 			closeTag = closeTag || closeTag2;
 			selfClose = selfClose || selfClose2;
@@ -3375,6 +3416,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			}
 			closeTag = closeTag || selfClose;
 			if (closeTag) {
+				inTag = 0,
 				isVoid = undefined;
 				// TODO: smart insertion of <tbody> - to be completed for robust insertion of deferred bindings etc.
 				//if (closeTag === "table" && parentTag === "tbody") {
@@ -3385,7 +3427,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				if (!$viewsSettings.noValidate) {
 					if (selfClose || selfClose2) {
 						if (!voidElems[parentTag]) {
-							errorMsg = "'<" + parentTag + ".../"; // self-closed tag such as <div/>
+							errorMsg = "'<" + parentTag + ".../"; // self-closed tag such as <div/>. We don't throw for this - it gets treated as if self-closed by the browser.
 						}
 					} else if (voidElems[closeTag]) {
 						errorMsg = "'</" + closeTag; // closing tag such as </input>
@@ -3450,7 +3492,13 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					? (preceding + endOfElCnt + spaceBefore + openScript + id + closeScript + spaceAfter + tag)
 					: endOfElCnt || all;
 			}
+
+			if (inTag && id) {
+				// JsViews data-linking tags are not allowed within element markup. See https://github.com/BorisMoore/jsviews/issues/213
+				syntaxError(' No {^{ tags within elem markup (' + inTag + ' ). Use data-link="..."');
+			}
 			if (tag) {
+				inTag = tag;
 				// If there are ids (markers since the last tag), move them to the defer string
 				tagStack.unshift(parentTag);
 				parentTag = tag.slice(1);
@@ -3673,12 +3721,12 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				elem = nextNode;
 				if (defer) {
 					if (nextNode) {
-						processViewInfos(viewInfos(defer + "+", true), nextNode);
+						processViewInfos(viewInfos(defer + "+", 1), nextNode);
 					} else {
-						processViewInfos(viewInfos(defer, true), parentNode);
+						processViewInfos(viewInfos(defer, 1), parentNode);
 					}
 				}
-				processViewInfos(viewInfos(ids, true), parentNode);
+				processViewInfos(viewInfos(ids, 1), parentNode);
 				// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
 				if (nextNode) {
 					tokens = nextNode.getAttribute(jsvAttrStr);
@@ -3714,7 +3762,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 								// first, before linking its content, then make onBeforeLink() return false. In that case we data-link depth-first ("on the way out"), so nested tags will have already refreshed.
 								tag._.bound = true;
 								view = tag.tagCtx.view;
-								addDataBinding(undefined, tag._prv, view, view.data || outerData, linkInfo.id);
+								addDataBinding(undefined, tag._prv, view, outerData, linkInfo.id);
 							}
 
 							tag._.linking = true;
@@ -3734,7 +3782,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 								delete tag._.linking;
 								if (!tag._.bound) {
 									tag._.bound = true;
-									addDataBinding(undefined, tag._prv, view, view.data || outerData, linkInfo.id);
+									addDataBinding(undefined, tag._prv, view, outerData, linkInfo.id);
 								}
 								callAfterLink(tag, tagCtx);
 							}
@@ -3743,14 +3791,14 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 				} else {
 					view = $view(elem);
 					// Add data binding for a data-linked element (with data-link attribute)
-					addDataBinding(elem.getAttribute($viewsLinkAttr), elem, view, view.data || outerData, undefined, context);
+					addDataBinding(elem.getAttribute($viewsLinkAttr), elem, view, outerData, undefined, context);
 				}
 			}
 			lazyLink && lazyLink.resolve();
 		}
 		//==== /end of nested functions ====
 
-		var linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx, cvt,
+		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfos, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx, cvt,
 			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, isVoid, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, lazyLink, linkedElem,
 			self = this,
 			thisId = self._.id + "_",
@@ -3885,7 +3933,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		// Add data binding for data-linked elements or {^{...}} data-linked tags
 		var tmpl, tokens, attr, convertBack, params, trimLen, tagExpr, linkFn, linkCtx, tag, rTagIndex;
 
-		data = data || {};
+		data = currentView.data === undefined ? data || {} : currentView.data;
 		if (boundTagId) {
 			// {^{...}} data-linked tag. So only one linkTag in linkMarkup
 			tag = bindingStore[boundTagId];
@@ -4020,7 +4068,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 	}
 
 	function viewInfos(node, isVal, rBinding) {
-		// Test whether node is a script marker nodes, and if so, return metadata
+		// Test whether node is a script marker node, and if so, return metadata
 		function getInfos(all, open, close, id, ch, elPath) {
 			infos.push({
 				elCnt: elCnt,
@@ -4234,7 +4282,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		// Otherwise our target is the first path, paths[0], which we will convert with contextCb() for paths like ~a.b.c or #x.y.z
 //TODO add support for two-way binding with bound named props and no bindto expression. <input data-link="{:a ^foo=b:}"
 //- currently will not bind to the correct target - but bindto does gives workaround
-		var bindto, pathIndex, lastPath, bindtoOb,
+		var bindto, pathIndex, firstPath, lastPath, bindtoOb,
 			lct = binding.linkCtx,
 			source = lct.data,
 			paths = lct.fn.paths;
@@ -4245,10 +4293,10 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			pathIndex = paths.length;
 			while (pathIndex && "" + (lastPath = paths[--pathIndex]) !== lastPath) {}; // If the lastPath is an object (e.g. with _jsvOb property), take preceding one
 			if (lastPath && (!lct.tag || lct.tag.tagCtx.args.length)) {
-				lastPath = paths[pathIndex] = lastPath.split("^").join("."); // We don't need the "^" since binding has happened. For to binding, require just "."s
-				binding.to = (lastPath.charAt(0) === "."
+				lastPath = lastPath.split("^").join("."); // We don't need the "^" since binding has happened. For to binding, require just "."s
+				binding.to = lastPath.charAt(0) === "."
 					? [[bindtoOb = paths[pathIndex-1], lastPath.slice(1)], cvtBk] // someexpr().lastpath - so need to get the bindtoOb object returned from the expression
-					: [lct._ctxCb(paths[0]) || [source, paths[0]], cvtBk]);
+					: [lct._ctxCb(firstPath = pathIndex ? paths[0].split("^").join(".") : lastPath) || [source, firstPath], cvtBk];
 
 				if (bindto && bindtoOb) {
 					// This is a bindto binding {:expr bindto=someob().some.path:}
@@ -4314,20 +4362,7 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 						removeViewBinding(bindings[l], elem._jsvLnkdEl, elem); // unbind bindings with this bindingId on this view
 					}
 				}
-				if (vwInfos = viewInfos(markerNodeInfo(elem) + (elem._dfr || ""), true, rOpenMarkers)) {
-					for (j = 0, l2 = vwInfos.length; j < l2; j++) {
-						vwItem = vwInfos[j];
-						if (vwItem.ch === "_") {
-							if ((vwItem = viewStore[vwItem.id]) && vwItem.data !== undefined) {
-								// If this is the _prv (prevNode) for a view, remove the view
-								// - unless view.data is undefined, in which case it is already being removed
-								vwItem.parent.removeViews(vwItem._.key, undefined, true);
-							}
-						} else {
-							removeViewBinding(vwItem.id); // unbind bindings with this bindingId on this view
-						}
-					}
-				}
+				disposeTokens(markerNodeInfo(elem) + (elem._dfr || ""));
 			}
 		}
 	}
@@ -4403,9 +4438,9 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 					}
 					clean(this.getElementsByTagName("*"));
 				});
-			} else if (tmplOrLinkTag === undefined) {
-				// Call to $(el).unlink()
-				clean(to);
+//			} else if (tmplOrLinkTag === undefined) {
+//				// Call to $(el).unlink() // Not currently supported
+//				clean(to);
 //TODO provide this unlink API
 //			} else if ("" + tmplOrLinkTag === tmplOrLinkTag) {
 //				// Call to $(el).unlink(tmplOrLinkTag ...)
@@ -4582,6 +4617,24 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 			if (!refresh && !nextNode) {
 				// If this viewOrTag is being removed, and there was no .nxt, remove closing token from deferred tokens
 				parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id + viewOrTagChar);
+			}
+		}
+	}
+
+	function disposeTokens(tokens) {
+		var i, l, vwItem, vwInfos;
+		if (vwInfos = viewInfos(tokens, 1, rOpenMarkers)) {
+			for (i = 0, l = vwInfos.length; i < l; i++) {
+				vwItem = vwInfos[i];
+				if (vwItem.ch === "_") {
+					if ((vwItem = viewStore[vwItem.id]) && vwItem.data !== undefined) {
+						// If this is the _prv (prevNode) for a view, remove the view
+						// - unless view.data is undefined, in which case it is already being removed
+						vwItem.parent.removeViews(vwItem._.key, undefined, true);
+					}
+				} else {
+					removeViewBinding(vwItem.id); // unbind bindings with this bindingId on this view
+				}
 			}
 		}
 	}
@@ -5005,12 +5058,11 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		// override $.cleanData
 		//=====================
 		cleanData: function(elems) {
-			if (elems.length) {
+			if (elems.length && isCleanCall) {
 				// Remove JsViews bindings. Also, remove from the DOM any corresponding script marker nodes
 				clean(elems);
-				// (elems HTMLCollection no longer includes removed script marker nodes)
-				oldCleanData.apply($, arguments);
 			}
+			oldCleanData.apply($, arguments);
 		}
 	});
 
@@ -5038,6 +5090,25 @@ informal pre V1.0 commit counter: 52 (Beta Candidate) */
 		},
 		view: function(type) {
 			return $view(this[0], type);
+		}
+	});
+
+	//==============================================================================
+	// Override jQuery methods that call our overridden cleanData, for disposal etc.
+	//==============================================================================
+
+	$.each([htmlStr, "replaceWith", "empty", "remove"], function(i, name) {
+		var result,
+			oldFn = $.fn[name];
+		$.fn[name] = function() {
+			isCleanCall = 1; // Make sure cleanData does disposal only when coming from these calls.
+			try {
+				result = oldFn.apply(this, arguments);
+			}
+			finally {
+				isCleanCall = 0;
+			}
+			return result;
 		}
 	});
 

@@ -511,15 +511,58 @@ test("Template validation", function() {
 	equal(result, "OneOneTwoTwo", "Validation - void elements can have self-close slashes, or not...");
 	result = "";
 
-	// TODO Later add support for validation error messages in these cases:
-	//'<span {{if true}}id="last\"{{/if}}>a</ps'
-	//'<input {{if true}}id="last\"{{/if}} data-link="lastName">'
-	//'<input {{if true}}id="last\"/> {{else}}... />{{/if}}'
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<span {{if true}}id="last"{{/if}}>a</span>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, "Syntax error\n No {^{ tags within elem markup (<span ). Use data-link=\"...\"", "Validation - {{if}} within <span> markup");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<input {{if true}}id="last\"{{/if}} data-link="lastName">')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, "Syntax error\n No {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input/> markup");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<input {{if true}}id="last\"/> {{else}}/>{{/if}}')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, "Syntax error\n No {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input markup wrapping />");
+	result = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<div {^{:true}}>a</div>')
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, "Syntax error\n No {^{ tags within elem markup (<div ). Use data-link=\"...\"", "Validation - {{:...}} within element markup");
+	result = "";
 
 	// ................................ Reset ................................
 
 	person1.lastName = "One";
-	// The syntax error exceptions thrown above meant some views were not fully linked. We will 'force remove' them from the viewStore and the top view children
+	// The syntax error exceptions thrown above meant some views were not fully linked. We will 'force remove' them from the viewStore, the top view children, and the bindingStore.
 	var v, viewstore = $.view().views;
 	for (v in viewstore) {
 		delete viewstore[v];
@@ -530,6 +573,82 @@ test("Template validation", function() {
 			delete viewstore[v];
 		}
 	}
+	viewstore = _jsv.bindings;
+	for (v in viewstore) {
+		delete viewstore[v];
+	}
+});
+
+module("data-link scenarios");
+
+test("jQuery cleanData integration", function() {
+
+	// =============================== Arrange ===============================
+	$("#result").html('<span id="inner"></span>')
+	$.link("lastName", "#inner", person1);
+	$("#inner").on("click", function() {});
+
+	// ................................ Act ..................................
+	result = $("#inner").html();
+	$.observable(person1).setProperty("lastName", "last2");
+	result += "|" + $("#inner").html();
+	$("#inner").off("click");
+	$.observable(person1).setProperty("lastName", "last3");
+	result += "|" + $("#inner").html();
+
+	// ............................... Assert .................................
+	equal(result,
+	'One|last2|last3',
+	'Removing jQuery handlers does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	$("#result").html('<span id="inner"></span>')
+	$.link("lastName", "#inner", person1);
+
+	// ................................ Act ..................................
+	result = $("#inner").html();
+	$.observable(person1).setProperty("lastName", "last2");
+	result += "|" + $("#inner").html();
+	$("#inner").data('foo', 'bar').removeData('foo');
+	$.observable(person1).setProperty("lastName", "last3");
+	result += "|" + $("#inner").html();
+
+	// ............................... Assert .................................
+	equal(result,
+	'One|last2|last3',
+	'Adding and removing jQuery data does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	$("#result").html('<span id="inner"></span>')
+	$.link("lastName", "#inner", person1);
+
+	// ................................ Act ..................................
+	result = $("#inner").html();
+	$.observable(person1).setProperty("lastName", "last2");
+	result += "|" + $("#inner").html();
+	$("#inner").dequeue("foo", null);
+	$.observable(person1).setProperty("lastName", "last3");
+	result += "|" + $("#inner").html();
+
+	// ............................... Assert .................................
+	equal(result,
+	'One|last2|last3',
+	'Calling dequeue does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	$("#result").empty();
 });
 
 module("API - data-link");
@@ -1051,6 +1170,192 @@ test('data-link="expression"', function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+	var foobar = {
+		foo : {
+			bar : "initial "
+		}
+	};
+
+	$.views.converters({
+		noop : function(val) {
+			return val;
+		}
+	});
+
+	$.templates('1 {^{:foo^bar}} 2 {^{:foo^bar}} 3 <span data-link="{:foo^bar}"></span>'
+		+ ' 4 <span data-link="{:foo^bar}"></span> 5 <span data-link="{noop:foo^bar}"></span> 6 <span data-link="{noop:foo^bar}"></span>'
+		+ ' INPUTS <input class="linked" data-link="{noop:foo^bar}" /><input class="linked" data-link="{noop:foo^bar}" /><input class="linked" data-link="foo^bar" />'
+		+ '<input class="linked" data-link="foo^bar" /><input class="linked" data-link="{:foo^bar:noop}" /><input class="linked" data-link="{:foo^bar:noop}" />'
+		+ '<input class="linked" data-link="{noop:foo^bar:noop}" /><input class="linked" data-link="{noop:foo^bar:noop}" />')
+		.link("#result", foobar);
+
+	// ................................ Act ..................................
+	$.observable(foobar).setProperty("foo", { bar : "new " } );
+	result = $("#result").text();
+	$("input.linked").each(function(i, el) {result+= el.value; });
+	
+	// ............................... Assert .................................
+	equal(result,
+	"1 new  2 new  3 new  4 new  5 new  6 new  INPUTS new new new new new new new new ",
+	'Duplicate paths bind correctly (https://github.com/BorisMoore/jsviews/issues/250)');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	var data = { name: "Jo"};
+	result = "";
+	
+	// ................................ Act ..................................
+	result =
+		$.templates('{{:#data}}')
+		.render(["aa", 22, 0, false, "", true]);
+
+	// ............................... Assert .................................
+	equal(result,
+	"aa220falsetrue",
+	'{{:#data}} renders correctly for different data types');
+
+	// ................................ Act ..................................
+	result =
+		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
+		.render({items: ["aa", 22, 0, false, "", true]});
+
+	// ............................... Assert .................................
+	equal(result,
+	"0 aa 1 22 2 0 3 false 4  5 true ",
+	'{{:#data}} within {{for}} is correct for different data types');
+
+	// ................................ Act ..................................
+
+	result =
+		$.templates('{{:#data}}')
+		.link("#result", ["aa", 22, 0, false, "", true]).text();
+
+	// ............................... Assert .................................
+	equal(result,
+	"aa220falsetrue",
+	'With link, {{:#data}} renders correctly for different data types');
+
+	// ................................ Act ..................................
+	result =
+		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
+		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
+
+	// ............................... Assert .................................
+	equal(result,
+	"0 aa 1 22 2 0 3 false 4  5 true ",
+	'with link, {{:#data}} within {{for}} is correct for different data types');
+
+	// ................................ Act ..................................
+	result =
+		$.templates('{^{:#data}}')
+		.link("#result", ["aa", 22, 0, false, "", true]).text();
+
+	// ............................... Assert .................................
+	equal(result,
+	"aa220falsetrue",
+	'With link, {^{:#data}} renders correctly for different data types');
+
+	// ................................ Act ..................................
+	result =
+		$.templates('{^{for items}}{{:#index}} {^{:#data}} {{/for}}')
+		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
+
+	// ............................... Assert .................................
+	equal(result,
+	"0 aa 1 22 2 0 3 false 4  5 true ",
+	'with link, {^{:#data}} within {^{for}} is correct for different data types');
+
+	// ................................ Act ..................................
+	data = { name: "Jo"};
+	result = "";
+
+	$.templates(
+	'{{for "some string" ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{{for 22 ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{{for 0 ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{{for false ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{{for "" ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{{for true ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	)
+		.link("#result", data);
+
+	$("#result input").each(function(i, el) { 
+		result += el.value + " | "; 
+	});
+
+	$.observable(data).setProperty("name", "new");
+
+	$("#result input").each(function(i, el) { 
+		result += el.value + " | "; 
+	});
+
+	// ............................... Assert .................................
+	equal(result,
+	"Josome string | Jo22 | Jo0 | Jofalse | Jo | Jotrue | newsome string | new22 | new0 | newfalse | new | newtrue | ",
+	'data-linking inside {{for sometype}} works correctly even when #data is not an object');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	data = { name: "Jo"};
+	result = "";
+
+	$.templates(
+	'{^{for "some string" ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{^{for 22 ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{^{for 0 ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{^{for false ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{^{for "" ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	+ '{^{for true ~item=#data}}'
+		+ '<input data-link="~item.name + #data"/>'
+	+ '{{/for}}'
+	)
+		.link("#result", data);
+
+	$("#result input").each(function(i, el) { 
+		result += el.value + " | "; 
+	});
+
+	$.observable(data).setProperty("name", "new");
+
+	$("#result input").each(function(i, el) { 
+		result += el.value + " | "; 
+	});
+
+	// ............................... Assert .................................
+	equal(result,
+	"Josome string | Jo22 | Jo0 | Jofalse | Jo | Jotrue | newsome string | new22 | new0 | newfalse | new | newtrue | ",
+	'data-linking inside {^{for sometype}} works correctly even when #data is not an object');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	result = "";
 });
 
 test('data-link="attr{:expression}"', function() {
@@ -1447,7 +1752,7 @@ test('data-link="{for...}"', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after, 'box|treebox',
-	'data-link="{for things}" binds to array changes on leaf array');
+	'data-link="{for things}" binds to array changes on leaf array. (But note that data-link="title{for things}" is NOT supported)');
 
 	// ................................ Act ..................................
 	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
@@ -2578,7 +2883,6 @@ test("{^{for}}", function() {
 	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
-
 	// ................................ Act ..................................
 	$.templates('<table><tbody>{^{for things}}{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}{{/for}}</tbody></table>')
 		.link("#result", model);
@@ -2779,6 +3083,31 @@ test("{^{for}}", function() {
 	ok(viewsAndBindings().split(" ").length === 3 // We removed view inside div, but still have the view for the outer template.
 		&& !$._data(model.things).events,
 		'$(container).empty removes listeners for empty tags in element-only content (_dfr="#n_/n_")');
+	// -----------------------------------------------------------------------
+
+	// =============================== Arrange ===============================
+	var data = {
+		list:[],
+		q:true
+	};
+
+	$.templates('<ul class="list">{^{if q}}{^{for list}}<li>{{:#data}}</li>{{/for}}{{/if}}</ul>')
+		.link("#result", data);
+
+	// ................................ Act ..................................
+	$.observable(data).setProperty("q", false);
+	$.observable(data).setProperty("q", true);
+	$.observable(data.list).insert("added");
+
+	// ............................... Assert .................................
+	var test = $("#result ul").text();
+	ok(viewsAndBindings().split(" ").length === 9 // We removed view inside div, but still have the view for the outer template.
+		&& $._data(data.list).events.arrayChange.length === 1
+		&& $("#result ul").text() === "added",
+		'In element-only content, updateContent calls disposeTokens on _dfr inner bindings');
+
+	// ................................ Reset ................................
+	$("#result").empty();
 	// -----------------------------------------------------------------------
 });
 
@@ -4155,23 +4484,8 @@ test("observe/unobserve alternative signatures", function() {
 
 	// =============================== Arrange ===============================
 
-	//Act
+	// ................................ Act ..................................
 	$.unobserve(person1.home.address, "street", myListener);
-	$.observable(person1.home.address).setProperty("street", "newValue");
-
-	// ............................... Assert .................................
-	equals(result, "",
-	"$.unobserve(object, path, cb)");
-	// -----------------------------------------------------------------------
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-
-	//Act
-	$.unobserve(person1.home.address, myListener);
 	$.observable(person1.home.address).setProperty("street", "newValue");
 
 	// ............................... Assert .................................
@@ -4280,6 +4594,260 @@ test("observe/unobserve alternative signatures", function() {
 	// ............................... Assert .................................
 	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
 		"Observe API calls combined with template binding (version 2): all bindings removed when content removed from DOM and unobserve called");
+
+	// =============================== Arrange ===============================
+	var person = {
+		name: "Pete",
+		address: {
+			street: "1st Ave",
+		},
+		phones: [{number: "111 111 1111"}, {number:"222 222 2222"}] 
+	};
+
+	// ................................ Act ..................................
+	$.observe(person, "name", myListener);
+	$.unobserve(person, "name", myListener);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve with path and handler works");
+
+	// ................................ Act ..................................
+	$.observe(person, "name", myListener);
+	$.unobserve(person);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve without path and handler works");
+
+	// ................................ Act ..................................
+	$.observe(person, "name", "address^street", "phones", myListener);
+	$.unobserve(person, "name", "address^street", "phones", myListener);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]),"[{},null,null,null]",
+		"unobserve with multiple paths and handler works");
+
+	// ................................ Act ..................................
+	$.observe(person.phones, myListener);
+	$.unobserve(person.phones);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]),"[{},null]",
+		"unobserve for array works");
+
+	// ................................ Act ..................................
+	$.observe(person, "name", "address^street", "phones", myListener);
+	$.unobserve(person, "*", person.address, "*");
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve with deep paths using '*' works");
+});
+
+test("observe/unobserve using namespaces", function() {
+	var thing = {val: "initVal"};
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	$.observe("my.nmspace", thing, "val", myListener);
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+	
+	// ............................... Assert .................................
+	equals(result + $._data(thing).events.propertyChange.length,
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
+		"$.observe(namespace, object, path, cb)");
+
+	// -----------------------------------------------------------------------
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	$.unobserve("my.nmspace", thing);
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+
+	// ............................... Assert .................................
+	equals(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
+		"[{},{},null]",
+		"$.observe(namespace, object, path, cb); $.unobserve(namespace, object); removes all events added with the same namespace");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace", thing, "val", myListener);
+	$.unobserve(thing);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+
+	// ............................... Assert .................................
+	equals(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
+		"[{},{},null]",
+		"$.observe(namespace, object, path, cb); $.unobserve(object); removes all events even if added with the namespace");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace", thing, "val", myListener);
+	$.unobserve("my2.nmspace", thing);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+
+	// ............................... Assert .................................
+	equals(result + $._data(thing).events.propertyChange.length,
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
+		"$.observe(namespace, object, path, cb); $.unobserve(otherNamespace, object); does not remove events if added with a different namespace");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace", thing, "val", myListener);
+	$.observe("your.nmspace", thing, "val", myListener);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+	$.unobserve("my.nmspace", thing);
+	$.observable(thing).setProperty("val", "newVal2");
+
+	// ............................... Assert .................................
+	equals(result + $._data(thing).events.propertyChange.length,
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
+		"$.observe(namespace1, object, path, cb); $.observe(namespace2, object, path, cb); $.unobserve(namespace1, object); Add two events with different namespaces, then remove one of the namespaces - leaves the other handlers");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace your.nmspace", thing, "val", myListener);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+	$.unobserve("my.nmspace", thing);
+	$.observable(thing).setProperty("val", "newVal2");
+
+	// ............................... Assert .................................
+	equals(result + $._data(thing).events.propertyChange.length,
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
+		'$.observe("my.nmspace your.nmspace", object, path, cb); $.unobserve(my.nmspace, object); Whitepace separated namespaces adds events for each namespace, then remove one of the namespaces - leaves the other handlers - as in previous test');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace", thing, "val", myListener);
+	$.observe("your.nmspace", thing, "val", myListener);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+	$.unobserve("my.nmspace your.nmspace", thing);
+	$.observable(thing).setProperty("val", "newVal2");
+
+	// ............................... Assert .................................
+	equals(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "[{},{},null]",
+		'$.unobserve("my.nmspace your.nmspace", object); $.unobserve with whitepace separated namespaces removes handler for each namespace');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+
+	// =============================== Arrange ===============================
+	$.observe("my.nmspace", thing, "val", myListener);
+	$.observe("your.nmspace", thing, "val", myListener);
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(thing).setProperty("val", "newVal");
+	$.unobserve("nmspace", thing);
+	$.observable(thing).setProperty("val", "newVal2");
+
+	// ............................... Assert .................................
+	equals(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
+		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
+		+ "[{},{},null]",
+		'$.observe("my.nmspace",  object, path, cb); $.observe("your.nmspace",  object, path, cb); $.unobserve("nmspace", object); removes all handlers for "nmspace" no matter what other namespaces where use ("my", "your", for example');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$.unobserve(thing);
+	thing.val = "initVal"; // reset Prop
+	reset();
+
+	// =============================== Arrange ===============================
+	var person = {
+		name: "Pete",
+		address: {
+			street: "1st Ave",
+		},
+		phones: [{number: "111 111 1111"}, {number:"222 222 2222"}] 
+	};
+
+	// ................................ Act ..................................
+	$.observe("ns", person, "name", myListener);
+	$.unobserve("ns", person, "name", myListener);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve using namespaces, with path and handler works");
+
+	// ................................ Act ..................................
+	$.observe("ns", person, "name", myListener);
+	$.unobserve("ns", person);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve using namespaces, without path and handler works");
+
+	// ................................ Act ..................................
+	$.observe("ns", person, "name", "address^street", "phones", myListener);
+	$.unobserve("ns", person, "name", "address^street", "phones", myListener);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]),"[{},null,null,null]",
+		"unobserve using namespaces, with multiple paths and handler works");
+
+	// ................................ Act ..................................
+	$.observe("ns", person.phones, myListener);
+	$.unobserve("ns", person.phones);
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]),"[{},null]",
+		"unobserve using namespaces, for array works");
+
+	// ................................ Act ..................................
+	$.observe("ns", person, "name", "address^street", "phones", myListener);
+	$.unobserve("ns", person, "*", person.address, "*");
+
+	// ............................... Assert .................................
+	equals(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+		"unobserve using namespaces, with deep paths using '*' works");
 
 });
 
@@ -5225,7 +5793,7 @@ function testTemplate(message, template) {
 	testTemplate("li",
 	"<ul>{^{for items}}"
 		+ "<li>{{:name}}</li>"
-		+ "<li><ul>{^{for ~getItems(expanded) ~row=row}}"
+		+ "<li><ul>{^{for ~getItems(expanded) ~row=row ~item=#data}}"
 			+ "<li></li>"
 			+ "<li class='groupdata'>{{:~row}}{{:#data}}</li>"
 		+ "{{/for}}</ul></li>"
@@ -5818,13 +6386,13 @@ test("observeAll", function() {
 	$.observable(model.things).insert({thing: "bush"});
 	$.observable(model.things).refresh([model.things[1],model.things[0],model.things[1]]);
 	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
-var test = result;
+
 	// ............................... Assert .................................
 	equal(result, "change: set|path: address|value: [object Object]|oldValue: [object Object]|change: set|path: street|value: upper St|oldValue: 1st|change: set|path: ZIP|value: 33333|oldValue: 00000|change: set|path: things|value: [object Object]|oldValue: |change: insert|index: 1|items: [object Object]|change: refresh|oldItems: [object Object],[object Object]|change: set|path: thing|value: bush+|oldValue: bush|",
 		"observeAll raises correct change events");
 
 	// ............................... Assert .................................
-		listeners = $._data(model).events.propertyChange.length + " "
+	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length + " "
@@ -5838,7 +6406,7 @@ var test = result;
 	$.observable(model).observeAll(changeHandler);
 
 	// ............................... Assert .................................
-		listeners = $._data(model).events.propertyChange.length + " "
+	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length + " "
@@ -5854,7 +6422,7 @@ var test = result;
 	$.observable(model).observeAll(cb2);
 
 	// ............................... Assert .................................
-		listeners = $._data(model).events.propertyChange.length + " "
+	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length + " "
@@ -5868,7 +6436,7 @@ var test = result;
 	$.observable(model).unobserveAll(changeHandler);
 
 	// ............................... Assert .................................
-		listeners = $._data(model).events.propertyChange.length + " "
+	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length + " "
@@ -5884,7 +6452,7 @@ var test = result;
 	$.observable(model.things).unobserveAll(changeHandler);
 
 	// ............................... Assert .................................
-		listeners = $._data(model).events.propertyChange.length + " "
+	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length + " "
@@ -5912,7 +6480,7 @@ var test = result;
 	$.observable(model.things).observeAll(changeHandler);
 
 	// ............................... Assert .................................
-		listeners = $._data(model.things).events.arrayChange.length + " "
+	listeners = $._data(model.things).events.arrayChange.length + " "
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
@@ -5920,13 +6488,232 @@ var test = result;
 
 	$.observable(model.things).unobserveAll(changeHandler);
 
+	// ................................ Reset ..................................
+	model = {
+		person1: person1,
+		person2: person2,
+		things: []
+	};
+	person1.street = "StreetOne";
+	person1.ZIP = "222";
 });
 
+test("observeAll/unobserveAll using namespaces", function() {
+	reset();
+
+	// =============================== Arrange ===============================
+	function changeHandler(ev, eventArgs) {
+		for (var key in eventArgs) {
+			result += key + ": " + eventArgs[key] + "|";
+		}
+	}
+
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({
+		"person1.home.address": {
+			street: "1st",
+			ZIP: "00000"
+		},
+		"person1.home.address.street": "upper St",
+		"person1.home.address.ZIP": "33333",
+		things: [{thing: "tree"}]
+	});
+	$.observable(model.things).insert({thing: "bush"});
+	$.observable(model.things).refresh([model.things[1],model.things[0],model.things[1]]);
+	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+
+	// ............................... Assert .................................
+	equal(result, "change: set|path: address|value: [object Object]|oldValue: [object Object]|change: set|path: street|value: upper St|oldValue: 1st|change: set|path: ZIP|value: 33333|oldValue: 00000|change: set|path: things|value: [object Object]|oldValue: |change: insert|index: 1|items: [object Object]|change: refresh|oldItems: [object Object],[object Object]|change: set|path: thing|value: bush+|oldValue: bush|",
+		"observeAll with namespace raises correct change events");
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", 'observeAll with namespace maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll with namespace more than once does not add extra event bindings');
+
+	// ................................ Act ..................................
+	function cb2(ev, eventArgs) {}
+
+	$.observable(model).observeAll("my.nmspace", cb2);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with namespace with a different callback adds one binding for the new callback on each object or array');
+
+	// ................................ Act ..................................
+	$.observable(model).unobserveAll("my.nmspace");
+
+	// ............................... Assert .................................
+	equal(!$._data(model).events + " "
+		+ !$._data(model.person1).events + " "
+		+ !$._data(model.person1.home).events + " "
+		+ !$._data(model.person1.home.address).events + " "
+		+ !$._data(model.things).events + " "
+		+ !$._data(model.things[0]).events + " "
+		+ !$._data(model.things[1]).events,
+		"true true true true true true true",
+		'Calling unobserveAll("my.nmspace") removes all bindings with that namespace');
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+	$.observable(model).observeAll("our.nmspace", changeHandler);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with different namespaces adds one binding for each namespace for each object or array');
+
+	// ................................ Act ..................................
+	$.observable(model).unobserveAll("my.nmspace");
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", 'Calling unobserveAll("my.nmspace") removes all bindings with that namespace');
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace our.nmspace", changeHandler);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with whitespace-separated namespaces adds one binding for each namespace (if not already bound) for each object or array');
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+
+	$.observable(model.things).unobserveAll("my.nmspace", changeHandler);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 1 1 1", 'Calling $.observable(objectOrArrayInTree).unobserveAll("my.nmspace", myCallback) removes just my callback bindings in the subtree only');
+
+	// ................................ Act ..................................
+	$.observable(model).unobserveAll();
+
+	// ............................... Assert .................................
+	equal(!$._data(model).events + " "
+		+ !$._data(model.person1).events + " "
+		+ !$._data(model.person1.home).events + " "
+		+ !$._data(model.person1.home.address).events + " "
+		+ !$._data(model.things).events + " "
+		+ !$._data(model.things[0]).events + " "
+		+ !$._data(model.things[1]).events,
+		"true true true true true true true",
+	'unobserveAll() with no callback and no namespace removes all bindings from the tree');
+
+	// ................................ Act ..................................
+	$.observable(model.things).observeAll("my.nmspace", changeHandler);
+
+	// ............................... Assert .................................
+	listeners = $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1", '$.observable("my.nmspace", someArray).observeAll(changeHandler) works correctly');
+
+	$.observable(model.things).unobserveAll(changeHandler);
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+	$.observable(model).observeAll("our.nmspace", cb2);
+	$.observable(model).unobserveAll("my.nmspace our.nmspace");
+
+	// ............................... Assert .................................
+	equal(!$._data(model).events + " "
+		+ !$._data(model.person1).events + " "
+		+ !$._data(model.person1.home).events + " "
+		+ !$._data(model.person1.home.address).events + " "
+		+ !$._data(model.things).events + " "
+		+ !$._data(model.things[0]).events + " "
+		+ !$._data(model.things[1]).events,
+		"true true true true true true true",
+	'unobserveAll("my.nmspace our.nmspace") removes all bindings for each namespace in whitespace-separated list');
+
+	// ................................ Act ..................................
+	$.observable(model).observeAll("my.nmspace", changeHandler);
+	$.observable(model).observeAll("our.nmspace", cb2);
+	$.observable(model).unobserveAll("nmspace");
+
+	// ............................... Assert .................................
+	equal(!$._data(model).events + " "
+		+ !$._data(model.person1).events + " "
+		+ !$._data(model.person1.home).events + " "
+		+ !$._data(model.person1.home.address).events + " "
+		+ !$._data(model.things).events + " "
+		+ !$._data(model.things[0]).events + " "
+		+ !$._data(model.things[1]).events,
+		"true true true true true true true",
+	'unobserveAll("nmspace") removes all bindings for all namespaces that include that namespace component');
+
+	// ................................ Reset ..................................
+	model = {
+		person1: person1,
+		person2: person2,
+		things: []
+	};
+	person1.street = "StreetOne";
+	person1.ZIP = "222";
+});
 module("API - Settings");
 
 test("delimiters", 1, function() {
 	$.views.settings.delimiters("@%","%@");
-	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
+	result = $.templates("A_@%if true%@yes@%/if%@_B").render();
 	$.views.settings.delimiters("{{","}}");
 	equal(result, "A_yes_B", "Custom delimiters");
 });
