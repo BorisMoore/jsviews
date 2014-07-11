@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 53 (Beta Candidate) */
+informal pre V1.0 commit counter: 54 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -20,16 +20,15 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 
 	var versionNumber = "v1.0.0-alpha",
 		requiresStr = "JsViews requires ",
-		LinkedView, activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, noDomLevel0,
-		propsTag, $viewsLinkAttr, linkViewsSel, wrapMap,
+		activeBody, $view, rTag, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, noDomLevel0, error,
+		propsTag, $viewsLinkAttr, linkViewsSel, wrapMap, topView, viewStore,
 
 		document = global.document,
 		$views = $.views,
 		$viewsSub = $views.sub,
 		$viewsSettings = $views.settings,
 		$extend = $viewsSub.extend,
-		topView = $viewsSub.View(undefined, "top"), // Top-level view
-		$isFunction = $viewsSub.isFn,
+		$isFunction = $.isFunction,
 		$templates = $views.templates,
 		$converters = $views.converters,
 		$observable = $.observable,
@@ -62,7 +61,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		isCleanCall = 0,
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
-		error = $viewsSub.err,
 		syntaxError = $viewsSub.syntaxErr,
 		rFirstElem = /<(?!script)(\w+)(?:[^>]*(on\w+)\s*=)?[^>]*>/,
 		rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
@@ -78,7 +76,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		voidElems = {br: 1, img: 1, input: 1, hr: 1, area: 1, base: 1, col: 1, link: 1, meta: 1,
 			command: 1, embed: 1, keygen: 1, param: 1, source: 1, track: 1, wbr: 1},
 		displayStyles = {},
-		viewStore = { 0: topView },
 		bindingStore = {},
 		bindingKey = 1,
 		rViewPath = /^#(view\.?)?/,
@@ -116,11 +113,11 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		if (linkedElem) {
 			elemChangeHandler({
 				target: linkedElem[0]
-			}, value);
+			}, undefined, value);
 		}
 	}
 
-	function elemChangeHandler(ev, sourceValue) {
+	function elemChangeHandler(ev, params, sourceValue) {
 		var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, bindings, l, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs,
 			source = ev.target,
 			bindings = source._jsvBnd,
@@ -198,7 +195,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	}
 
 	function propertyChangeHandler(ev, eventArgs, linkFn) {
-		var attr, sourceValue, tag,
+		var attr, sourceValue, tag, noUpdate,
 			linkCtx = this,
 			source = linkCtx.data,
 			target = linkCtx.elem,
@@ -223,19 +220,26 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 			if (eventArgs || linkCtx._initVal) {
 				delete linkCtx._initVal;
 				sourceValue = linkFn.call(view.tmpl, source, view, $views);
-				// Compiled link expression for linkTag: return value (in case of {{: ...}} with no cvt or cvtBk), or tagCtx or tagCtxs
+				// Compiled link expression for linkTag: return value for data-link="{:xxx}" with no cvt or cvtBk, otherwise tagCtx or tagCtxs
 
-				attr = getTargetVal(sourceValue, linkCtx, tag,
+				attr = getTargetVal(sourceValue, linkCtx, tag = linkCtx.tag,
 						linkCtx.attr || defaultAttr(target, true, cvt !== undefined)
 					);
-				if (tag = linkCtx.tag) {
+				if (sourceValue && sourceValue.error !== undefined) {
+					// tagCtxs for tag with onError=... and error was thrown. We will update with the fallback value from onError
+					sourceValue = sourceValue.error
+				}
+				else if (tag) {
 					// Existing tag instance
-					if (eventArgs && tag.onUpdate && tag.onUpdate(ev, eventArgs, sourceValue = sourceValue[0] ? sourceValue : [sourceValue]) === false || attr === "none") {
+					sourceValue = sourceValue[0] ? sourceValue : [sourceValue];
+					noUpdate = eventArgs && tag.onUpdate && tag.onUpdate(ev, eventArgs, sourceValue) === false;
+
+					mergeCtxs(tag, sourceValue);
+
+					if (noUpdate || attr === "none") {
 						// onUpdate returned false, or attr === "none", or this is an update coming from the tag's own change event
-						// - so don't refresh the tag: we just set the new tagCtxs from the sourceValue,
+						// - so don't refresh the tag: we just use the new tagCtxs merged from the sourceValue,
 						// (which may optionally have been modifed in onUpdate()...) and then bind, and we are done
-						tag.tagCtxs = sourceValue;
-						tag.tagCtx = sourceValue[0];
 						if (attr === htmlStr) {
 							tag.onBeforeLink && tag.onBeforeLink();
 						}
@@ -249,16 +253,16 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					}
 
 					sourceValue = tag.tagName.slice(-1) === ":" // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
-						? $views._cnvt(tag.tagName.slice(0, -1), view, sourceValue)
+						? $views._cnvt(tag.tagName.slice(0, -1), view, sourceValue[0])
 						: $views._tag(tag, view, view.tmpl, sourceValue, true);
-				} else if (linkFn._ctxs) {
+				} else if (linkFn._tag) {
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
 					cvt = cvt === "" ? "true" : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue) // convertVal
-						: $views._tag(linkFn._ctxs, view, view.tmpl, sourceValue, true); // renderTag
+						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true); // renderTag
 					tag = view._.tag; // In both convertVal and renderTag we have instantiated a tag
 					attr = linkCtx.attr || attr; // linkCtx.attr may have been set to tag.attr during tag instantiation in renderTag
 				}
@@ -274,7 +278,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 				tag.contents = getContents;
 				tag.nodes = getNodes;
 				tag.childTags = getChildTags;
-				tag.currentCtxs = getCurrentCtxs;
 				tag.update = updateTag;
 				tag.refresh = refreshTag;
 				callAfterLink(tag, tag.tagCtx);
@@ -306,7 +309,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					// Optimization for perf on integer values - e.g. css-width{:width+'px'}
 					currentValue = parseInt(currentValue);
 				}
-				currentValue = $.style(target, css);
 			} else if (attr !== "link") { // attr === "link" is for tag controls which do data binding but have no rendered output or target
 				if (attr === "value") {
 					if (target.type === CHECKBOX) {
@@ -704,7 +706,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		}
 		// Example: "#23^TheValue/23^"
 		return "#" + id + end
-			+ (value === undefined ? "" : value) // For {^{:name}} this gives the equivalent semantics to compiled
+			+ (value != undefined ? value : "") // For {^{:name}} this gives the equivalent semantics to compiled
 												 // (v=data.name)!=u?v:""; used in {{:name}} or data-link="name"
 			+ "/" + id + end;
 	}
@@ -951,8 +953,10 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 				//}
 				if (!$viewsSettings.noValidate) {
 					if (selfClose || selfClose2) {
-						if (!voidElems[parentTag]) {
-							errorMsg = "'<" + parentTag + ".../"; // self-closed tag such as <div/>. We don't throw for this - it gets treated as if self-closed by the browser.
+						if (!voidElems[parentTag] && !/;svg;|;math;/.test(";" + tagStack.join(";")+ ";")) {
+							// Only self-closing elements must be legitimate void elements, such as <br/>, per HTML schema,
+							// or under svg or math foreign namespace elements.
+							errorMsg = "'<" + parentTag + ".../";
 						}
 					} else if (voidElems[closeTag]) {
 						errorMsg = "'</" + closeTag; // closing tag such as </input>
@@ -1071,7 +1075,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					// token belongs to. Set elem to null (the special script element), and remove it from the DOM.
 					targetParent = elem.previousSibling;
 					elem.parentNode.removeChild(elem);
-					elem = null;
+					elem = undefined;
 				}
 				len = vwInfos.length;
 				while (len--) {
@@ -1116,10 +1120,9 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 							}
 						} else if (view = viewStore[id = vwInfo.id]) {
 							// The view may have been deleted, for example in a different handler to an array collectionChange event
-							if (!view.link) {
+							if (!view.parentElem) {
 								// If view is not already extended for JsViews, extend and initialize the view object created in JsRender, as a JsViews view
 								view.parentElem = targetParent || elem && elem.parentNode || parentNode;
-								$extend(view, LinkedView);
 								view._.onRender = addBindingMarkers;
 								view._.onArrayChange = arrayChangeHandler;
 								setArrayChangeLink(view);
@@ -1301,7 +1304,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 								tag.contents = getContents;
 								tag.nodes = getNodes;
 								tag.childTags = getChildTags;
-								tag.currentCtxs = getCurrentCtxs;
 								tag.update = updateTag;
 								tag.refresh = refreshTag;
 								delete tag._.linking;
@@ -1372,7 +1374,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		prevNode = prevNode && markPrevOrNextNode(prevNode, elCnt);
 		nextNode = nextNode && markPrevOrNextNode(nextNode, elCnt) || null;
 
-		if (html !== undefined) {
+		if (html != undefined) {
 			//================ Insert html into DOM using documentFragments (and wrapping HTML appropriately). ================
 			// Also convert markers to DOM annotations, based on content model.
 			// Corresponds to nextNode ? $(nextNode).before(html) : $(parentNode).html(html);
@@ -1535,13 +1537,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					linkCtx.expr = attr + tagExpr;
 					linkFn = tmpl.links[tagExpr];
 					if (!linkFn) {
-						//TODO Optimize along the lines of:
-						//var paths = [];
-						//tmpl.links[tagExpr] = linkFn = $viewsSub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, tmpl, true, convertBack, paths);
-						//linkFn.paths = paths
-
-						tmpl.links[tagExpr] = linkFn = $viewsSub.tmplFn(delimOpenChar0 + tagExpr + delimCloseChar1, tmpl, true, convertBack);
-						$viewsSub.parse(params, linkFn.paths = [], tmpl); // TODO optimize - since parse(params) was already called within tmplFn()
+						tmpl.links[tagExpr] = linkFn = $viewsSub.tmplFn(tagExpr, tmpl, true, convertBack);
 					}
 					linkCtx.fn = linkFn;
 					if (!attr && convertBack !== undefined) {
@@ -1737,11 +1733,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		return tags;
 	}
 
-	function getCurrentCtxs() {
-		var view = this.tagCtx.view;
-		return this._.bnd.call(view.tmpl, view.data, view, $views);
-	}
-
 	function callAfterLink(tag, tagCtx) {
 		var cvt, linkedElem, elem, radioButtons, val, bindings, binding, i, l, linkedTag,
 			view = tagCtx.view,
@@ -1835,6 +1826,28 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		}
 	}
 
+	function mergeCtxs(tag, newCtxs) { // Merge updated tagCtxs into tag.tagCtxs
+		var tagCtx, newTagCtx,
+			view = tag.tagCtx.view,
+			tagCtxs = tag.tagCtxs || [tag.tagCtx],
+			l = tagCtxs.length,
+			refresh = !newCtxs;
+
+		newCtxs = newCtxs || tag._.bnd.call(view.tmpl, view.data, view, $views);
+
+		while (l--) {
+			tagCtx = tagCtxs[l];
+			newTagCtx = newCtxs[l];
+			$.observable(tagCtx.props).setProperty(newTagCtx.props);
+			$extend(tagCtx.ctx, newTagCtx.ctx); // We don't support propagating ctx variables, ~foo, observably, to nested views. So extend, not setProperty...
+			tagCtx.args = newTagCtx.args;
+			if (refresh) {
+				tagCtx.tmpl = newTagCtx.tmpl;
+			}
+		}
+		return tagCtxs;
+	}
+
 	function refreshTag(sourceValue) {
 		var promise, attr,
 			tag = this,
@@ -1843,7 +1856,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 
 		if (tag.disposed) { error("Removed tag"); }
 		if (sourceValue === undefined) {
-			sourceValue = $views._tag(tag, view, view.tmpl, tag.currentCtxs ? tag.currentCtxs() : tag.tagCtxs, true); // Get rendered HTML for tag, based on refreshed tagCtxs
+			sourceValue = $views._tag(tag, view, view.tmpl, mergeCtxs(tag), true); // Get rendered HTML for tag, based on refreshed tagCtxs
 		}
 		if (sourceValue + "" === sourceValue) {
 			// If no rendered content, sourceValue will not be a string (can be 0 or undefined)
@@ -2019,12 +2032,12 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 						}
 						items.unshift(object);
 					}
-					return object ? items: [];
+					return object ? items : [];
 				}
 				if (path.charAt(0) === "#") {
 					// We return new items to insert into the sequence, replacing the "#a.b.c" string: [view, "a.b.c" currentDataItem]
 					// so currentDataItem becomes the object for subsequent paths. The 'true' flag makes the paths bind only to leaf changes.
-					return path === "#data" ? [] :[view, path.replace(rViewPath, ""), object];
+					return path === "#data" ? [] : [view, path.replace(rViewPath, ""), object];
 				}
 			}
 		};
@@ -2164,7 +2177,11 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		}
 	}
 
-	LinkedView = {
+	//====================================
+	// Add linked view methods to view prototype
+	//====================================
+
+	$extend($viewsSub.View.prototype, {
 		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
 		addViews: function(index, dataItems, tmpl) {
 			// if view is not an array view, do nothing
@@ -2304,7 +2321,10 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		contents: getContents,
 		childTags: getChildTags,
 		link: viewLink
-	};
+	});
+
+	topView = new $viewsSub.View(undefined, "top"); // Top-level view
+	viewStore = { 0: topView };
 
 	//========================
 	// JsViews-specific converters
@@ -2343,19 +2363,24 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 				elem = $(linkCtx.elem),
 				args = tagCtx.args,
 				data = tagCtx.props.data,
+				view = tagCtx.view,
 				handler = args.pop(),
 				selector = args[1] || null,
 				contextOb = tagCtx.props.context;
 
 			data = data !== undefined ? data : null;
+
+			if (!contextOb) {
+				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
+				// to return that context object, and run compiled function against data
+				contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-1)[0]);
+				contextOb = contextOb && $viewsSub.tmplFn("{:" + contextOb[1] + "}", view.tmpl, true)(linkCtx.data, view);
+			}
 			if (handler && handler.call) {
 				elem.on(args[0] || "click", selector, data, function(ev) {
-					handler.call(contextOb || self.leaf, ev, {change: ev.type, view: linkCtx.view, linkCtx: linkCtx});
+					handler.call(contextOb || linkCtx.data, ev, {change: ev.type, view: view, linkCtx: linkCtx});
 				});
 			}
-	},
-		onAfterBind: function(binding) {
-			this.leaf = binding.leaf;
 		},
 		flow: true
 	});
@@ -2435,7 +2460,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	});
 
 	function observeProps(source, target, ev, eventArgs) {
-		// this pointer is theMap - which has tagCtx.props too
 		switch (eventArgs.change) {
 			case "set":
 				var l = target.length;
@@ -2448,8 +2472,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					if (eventArgs.path) {
 						$.observable(target).insert({ key: eventArgs.path, prop: eventArgs.value });
 					}
-				} else if (eventArgs.value === null) {
-					delete source[eventArgs.path];
+				} else if (eventArgs.remove) {
 					$.observable(target).remove(l);
 				} else {
 					$.observable(target[l]).setProperty("prop", eventArgs.value);
@@ -2458,7 +2481,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	}
 
 	function observeMappedProps(source, target, ev, eventArgs) {
-		// this pointer is theMap - which has tagCtx.props too
 		var item;
 		switch (eventArgs.change) {
 			case "set":
@@ -2472,7 +2494,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 				break;
 			case "remove":
 				item = eventArgs.items[0];
-				$.observable(source).setProperty(item.key, null);
+				$.observable(source).removeProperty(item.key);
 				delete source[item.key];
 				break;
 			case "insert":
@@ -2623,9 +2645,9 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	//==============================================================================
 
 	$.each([htmlStr, "replaceWith", "empty", "remove"], function(i, name) {
-		var result,
-			oldFn = $.fn[name];
+		var oldFn = $.fn[name];
 		$.fn[name] = function() {
+			var result;
 			isCleanCall = 1; // Make sure cleanData does disposal only when coming from these calls.
 			try {
 				result = oldFn.apply(this, arguments);
@@ -2642,7 +2664,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	//===============
 
 	$extend(topView, {tmpl: {links: {}, tags: {}}});
-	$extend(topView, LinkedView);
 	topView._.onRender = addBindingMarkers;
 	//=========================
 	// Extend $.views.settings
@@ -2675,11 +2696,11 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 				to: "label"
 			}
 		},
-		jsrDbgMode: $viewsSettings.debugMode,
-		debugMode: function(debugMode) {
+		jsrDbgMode: $viewsSettings.debugMode, // debugMode for JsRender
+		debugMode: function(debugMode) { // debugMode for JsViews
 			$viewsSettings.jsrDbgMode(debugMode);
 			if (debugMode) {
-				global._jsv = { // In debug mode create global -jsv, for accessing views, etc
+				global._jsv = { // In debug mode create global _jsv, for accessing views, etc
 					views: viewStore,
 					bindings: bindingStore
 				};
@@ -2690,6 +2711,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		jsv: function() {
 			$viewsSettings.debugMode($viewsSettings._dbgMode);
 			$viewsLinkAttr = $viewsSettings.linkAttr;
+			error = $views._err;
 			linkViewsSel = bindElsSel + ",[" + $viewsLinkAttr + "]";
 			noDomLevel0 = $viewsSettings.noDomLevel0;
 			wrapMap.optgroup = wrapMap.option;
@@ -2699,7 +2721,6 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	});
 
 //TODO
-// add tests for "on" binding.
 // Tests for different attr settings on tags
 	// tests of onAfterBind extensibility
 	// tests for DataMap
@@ -2709,7 +2730,16 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 	// tests for sorted table, using map=sort or {{sort}} with props for setting sort parameters
 	// tests for setting()
 	// tests for settings.debugMode()
- // tests for debug mode, noDomLevel0, noValidate
- // linkTo docs and tests. Future structured paths
-//Using jsobservable without jsviews - settings??
+	// tests for {on data=...}
+	// tests for {on } binding when doing top-level data-linking
+// tests for debug mode, noDomLevel0, noValidate
+// linkTo docs and tests.
+// Additional tests and examples for structured params - tagCtx.params
+// Using jsobservable without jsviews - settings??
+// Examples for:
+	// overriding error messages
+	// Binding to tag properties and contextual properties
+	// Fallback strings or onError handlers for any tag instance
+	// $.observable(object).removeProperty(path)
+	// data-link="{on ... myHandler}" (See unit tests. Examples to follow)
 })(this, this.jQuery);

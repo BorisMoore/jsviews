@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 53 (Beta Candidate) */
+informal pre V1.0 commit counter: 54 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -37,10 +37,11 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
 		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
 		observeStr = propertyChangeStr + ".observe",
-		$isFunction = $viewsSub.isFn,
+		$isFunction = $.isFunction,
 		observeObjKey = 1,
 		observeCbKey = 1,
-		$hasData = $.hasData;
+		$hasData = $.hasData,
+		remove = {}; // flag for removeProperty
 
 	//========================== Top-level functions ==========================
 
@@ -364,7 +365,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 						depth = parts[0].split(".").length;
 						path = parts.join(".");
 						depth = path.split(".").length - depth;
-							// if more than one ^ in the path, the first one determines depth
+						// if more than one ^ in the path, the first one determines depth
 					}
 					if (contextCb && (items = contextCb(path, root))) {
 						// If contextCb returns an array of objects and paths, we will insert them
@@ -379,10 +380,11 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 						if (path._jsvOb) {
 							// Currently this will only occur if !unobserve
 							// This is a compiled function for binding to an object returned by a helper/data function.
-							path._cb = innerCb = onUpdatedExpression(path, paths.slice(i+1));
-							innerCb.noArray = allowArray === false;
+							innerCb = onUpdatedExpression(path, paths.slice(i+1));
+							innerCb.noArray = !allowArray;
 							innerCb._cId = callback._cId; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
-							observe_apply(allowArray, [origRoot], paths.slice(0, i), path._cb, contextCb);
+							observe_apply(allowArray, [origRoot], paths.slice(0, i), innerCb, contextCb);
+							innerCb = undefined;
 							path = path._ob;
 						}
 						object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
@@ -409,7 +411,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 											if (data.prop === prop || data.prop === "*") {
 												if (p = parts.join(".")) {
 													data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
-													// need to keep bindings rest of path, ready for if the object gets swapped.
+													// need to keep bindings for rest of path, ready for if the object gets swapped.
 												}
 												skip++;
 											}
@@ -465,7 +467,7 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 		}
 
 		// Return the cbBindings to the top-level caller, along with the cbId
-		return { cbId: cbId, bnd: cbBindings, leaf: object };
+		return { cbId: cbId, bnd: cbBindings };
 	}
 
 	function $unobserve() {
@@ -683,14 +685,19 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					while (object && parts.length > 1) {
 						object = object[parts.shift()];
 					}
-					self._setProperty(object, parts.join("."), value, nonStrict);
+					object && self._setProperty(object, parts[0], value, nonStrict);
 				}
 			}
 			return self;
 		},
 
+		removeProperty: function(path) {
+			this.setProperty(path, remove)
+			return this;
+		},
+
 		_setProperty: function(leaf, path, value, nonStrict) {
-			var setter, getter,
+			var setter, getter, removeProp,
 				property = path ? leaf[path] : leaf;
 
 			if ($isFunction(property)) {
@@ -708,10 +715,13 @@ informal pre V1.0 commit counter: 53 (Beta Candidate) */
 					if (setter) {
 						setter.call(leaf, value);	//set
 						value = getter.call(leaf);	//get updated value
+					} else if (removeProp = value === remove) {
+						delete leaf[path];
+						value = undefined;
 					} else if (path) {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property});
+					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
 				}
 			}
 		},
