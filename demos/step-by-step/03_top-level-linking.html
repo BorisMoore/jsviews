@@ -30,15 +30,15 @@
 	</p>
 
 	<p>
-		<input data-link="{:firstName:}" />
-		<input data-link="{:lastName:} title{:~infoSummary(firstName, lastName, address.city, cars.quantity)}" />
-		<input data-link="address.city" />
-		<input data-link="{upper:roleColor:}" />
+		<input data-link="firstName trigger=true" />
+		<input data-link="{:lastName trigger=true:} title{:~infoSummary(firstName, lastName, address.city, cars.quantity)}" />
+		<input data-link="address.city trigger=true" />
+		<input data-link="{upper:roleColor trigger=true:}" />
 	</p>
 
 	<p>Cars:
-		<em>Quantity</em> <input data-link="cars.quantity" />
-		<em>Price</em> <input data-link="cars.price" />
+		<em>Quantity</em> <input data-link="cars.quantity trigger=true" />
+		<em>Price</em> <input data-link="cars.price trigger=true" />
 		<em>Total Value:</em> <span data-link="cars.quantity * cars.price"></span>
 	</p>
 

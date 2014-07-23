@@ -48,10 +48,10 @@
 		{^{for movies[selectedIndex]}}
 			<div>
 				<div class="title">Title:</div>
-				<div><input data-link="title" /></div>
+				<div><input data-link="title trigger=true" /></div>
 				<div class="title">Languages: <span class="addLanguage">Add</span></div>
 				{^{for languages}}
-					<input data-link="name" /><img class="removeLanguage" src="../resources/close.png" />
+					<input data-link="name trigger=true" /><img class="removeLanguage" src="../resources/close.png" />
 				{{/for}}
 			</div>
 		{{/for}}

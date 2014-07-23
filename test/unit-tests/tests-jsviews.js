@@ -18,7 +18,7 @@
 				return "lastName";
 			}
 		];
-	}
+	};
 
 	fullName.set = function(val) {
 		val = val.split(" ");
@@ -43,7 +43,7 @@
 
 	personProto.firstName.set = function(val) {
 		this._firstName = val;
-	}
+	};
 
 	Person.prototype = personProto;
 
@@ -105,7 +105,7 @@
 
 	updown.depends = function() {
 		return [person1, "firstName", "~settings.width"];
-	}
+	};
 
 // =============== RESOURCES ===============
 	$.views
@@ -597,7 +597,7 @@ module("data-link scenarios");
 test("jQuery cleanData integration", function() {
 
 	// =============================== Arrange ===============================
-	$("#result").html('<span id="inner"></span>')
+	$("#result").html('<span id="inner"></span>');
 	$.link("lastName", "#inner", person1);
 	$("#inner").on("click", function() {});
 
@@ -620,7 +620,7 @@ test("jQuery cleanData integration", function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	$("#result").html('<span id="inner"></span>')
+	$("#result").html('<span id="inner"></span>');
 	$.link("lastName", "#inner", person1);
 
 	// ................................ Act ..................................
@@ -642,7 +642,7 @@ test("jQuery cleanData integration", function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	$("#result").html('<span id="inner"></span>')
+	$("#result").html('<span id="inner"></span>');
 	$.link("lastName", "#inner", person1);
 
 	// ................................ Act ..................................
@@ -699,7 +699,7 @@ test("link(expression, container, data)", function() {
 
 	// =============================== Arrange ===============================
 
-	$("#result").html('<span id="inner"></span>')
+	$("#result").html('<span id="inner"></span>');
 	$.link("person1.lastName + ' ' + person1.home.address^street", "#inner", model);
 
 	// ................................ Act ..................................
@@ -751,7 +751,7 @@ test("link(expression, container, data)", function() {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{for #data}}{^{:lastName}}{{/for}}");
+	tmpl = $.templates("{^{for #data}}{^{:lastName}}{{/for}}");
 	$.link(tmpl, "#result", person1);
 
 	// ................................ Act ..................................
@@ -787,14 +787,14 @@ test("top-level linking", function() {
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
 
-	$("#result").html("<div data-link='name'></div>")
+	$("#result").html("<div data-link='name'></div>");
 
-	$.link(true, "#result", {name: "Jo"})
+	$.link(true, "#result", {name: "Jo"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "Jo", 'Passing in data to top-level linking');
 
-	$("#result").empty()
+	$("#result").empty();
 });
 
 test("helper overriding", 12, function() {
@@ -808,43 +808,43 @@ test("helper overriding", 12, function() {
 		}
 	});
 
-	tmpl.link("#result", {}, {c:"optionHelper"})
+	tmpl.link("#result", {}, {c:"optionHelper"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates({
+	tmpl = $.templates({
 		markup: "{{:~a}}",
 		helpers: {
 			a: "templateHelper"
 		}
 	});
 
-	tmpl.link("#result", {})
+	tmpl.link("#result", {});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "templateHelper", 'template helper overrides global helper');
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates({
+	tmpl = $.templates({
 		markup: "{{:~a}}"
 	});
 
-	tmpl.link("#result", {}, {a: "optionHelper"})
+	tmpl.link("#result", {}, {a: "optionHelper"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates({
+	tmpl = $.templates({
 		markup: "{{:~b}}",
 		helpers: {
 			b: "templateHelper"
 		}
 	});
 
-	tmpl.link("#result", {}, {b: "optionHelper"})
+	tmpl.link("#result", {}, {b: "optionHelper"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
@@ -852,9 +852,9 @@ test("helper overriding", 12, function() {
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
 
-	$("#result").html("<div data-link='~a + ~b'></div>")
+	$("#result").html("<div data-link='~a + ~b'></div>");
 
-	$.link(true, "#result", {}, {b:"optionHelper"})
+	$.link(true, "#result", {}, {b:"optionHelper"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
@@ -862,9 +862,9 @@ test("helper overriding", 12, function() {
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
 
-	$("#result").html("<div data-link='~a'></div>")
+	$("#result").html("<div data-link='~a'></div>");
 
-	$.link(true, "#result", {}, {a:"optionHelper"})
+	$.link(true, "#result", {}, {a:"optionHelper"});
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
@@ -883,11 +883,11 @@ test("helper overriding", 12, function() {
 	});
 	result = '';
 
-	var pson = {name: "Jo"},
+	var pson = {name: "Jo"};
 
-		tmpl = $.templates({
-			markup: "<input data-link='name'/> {^{:name}}"
-		});
+	tmpl = $.templates({
+		markup: "<input data-link='name'/> {^{:name}}"
+	});
 
 	tmpl.link("#result", pson);
 
@@ -985,7 +985,7 @@ test("helper overriding", 12, function() {
 		onAfterChange: null,
 		onAfterCreate: null
 	});
-	$("#result").empty()
+	$("#result").empty();
 });
 
 test('data-link="expression"', function() {
@@ -1840,7 +1840,7 @@ test('data-link="{tag...}"', function() {
 	$.views.tags({
 		norendernotemplate: {},
 		voidrender: function() {},
-		emptyrender: function() {return ""},
+		emptyrender: function() {return "";},
 		emptytemplate: {
 			template: ""
 		},
@@ -2054,16 +2054,17 @@ test('data-link="{tag...}"', function() {
 test("computed observables in two-way binding", function() {
 (function() {
 	// =============================== Arrange ===============================
-	var person = {
-		firstName: "Jeff",
-		lastName: "Smith",
-		fullName: fullName
-	};
 	function fullName(reversed) {
 		return reversed
 			? this.lastName + " " + this.firstName
 			: this.firstName + " " + this.lastName;
 	}
+
+	var person = {
+		firstName: "Jeff",
+		lastName: "Smith",
+		fullName: fullName
+	};
 
 	fullName.depends = [person, "*"];
 
@@ -2225,7 +2226,6 @@ test("computed observables in two-way binding", function() {
 	$("#result").empty();
 })();
 });
-
 
 module("API - data-bound tags");
 
@@ -2817,6 +2817,59 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
+	model.things = [{thing: "box"}]; // reset Prop
+	$.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'box|treebox',
+	'{^{for things}}{{else}}{{/for}} binds to array changes on leaf array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).remove(0, 2);
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'treebox|None',
+	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'trianglecircle',
+	'{^{for things}}{{else}}{{/for}} binds to property change on path');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things:{thing: "square"}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'square',
+	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
+
+	// ................................ Act ..................................
+	$.observable(model).removeProperty("things");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'None',
+	'{^{for things}}{{else}}{{/for}} binds to removeProperty change on path - and renders {{else}} block');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	// ................................ Act ..................................
 	$.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}')
 	$.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
@@ -2844,7 +2897,6 @@ test("{^{for}}", function() {
 	result += " " + (after === $("#result").text());
 	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].views[0].refresh();
 	result += " " + (after === $("#result").text());
-
 
 	// ............................... Assert .................................
 	equal(result, 'true true true true true true',
@@ -2884,7 +2936,6 @@ test("{^{for}}", function() {
 	result += " " + (after === $("#result").text());
 	$.view("#result", true).views["_2"].views[0].views["_2"].views["_2"].views[0].refresh();
 	result += " " + (after === $("#result").text());
-
 
 	// ............................... Assert .................................
 	equal(result, 'true true true true true true',
@@ -3476,7 +3527,7 @@ test("{^{props}}..{{else}} ...", function() {
 		"{^{props}}  DataMap bindings all removed when tag disposed (content removed from DOM)");
 });
 
-test('data-link="{on...', function() {
+test('data-link="{on ...', function() {
 
 	// =============================== Arrange ===============================
 
@@ -3670,8 +3721,231 @@ test('data-link="{on...', function() {
 	thing.type = "shape";
 	delete thing.check;
 
-});
+	// =============================== Arrange ===============================
+	var res = "1: ";
+	$.templates(
+		"<div id=\"divForOn\" data-link=\"{on 'keyup keydown' '.inputA' unbind} {on 'mousedown' '#inputB' refresh} {on 'keyup' '#inputB' unbind} {on 'mouseup' 'input' test}\">"
+			+ "<input class='inputA'/>"
+			+ "<input id='inputB' />"
+		+ "</div>")
+		.link("#result", {
+			unbind:  function(ev, eventArgs) {
+				res += "unbind ";
+				eventArgs.linkCtx.tag.onDispose();
+			},
+			refresh:  function(ev, eventArgs) {
+				res += "refresh ";
+				eventArgs.linkCtx.tag.refresh();
+			},
+			test: function() {
+				res += "test ";
+			}
+		 });
 
+	// ................................ Act ..................................
+	var events = $._data($("#divForOn")[0]).events,
+		eventBindings = "before: " + events.keydown.length + events.keyup.length + events.mouseup.length + events.mousedown.length;
+
+	$("#divForOn #inputB").mouseup();
+
+	res += "2: ";
+	$("#divForOn .inputA").mouseup();
+
+	res += "3: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "4: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "5: ";
+	$("#divForOn .inputA").keydown();
+
+	res += "6: ";
+	$("#divForOn .inputA").keyup();
+
+	res += "7: ";
+	$("#divForOn #inputB").mouseup();
+
+	res += "8: ";
+	$("#divForOn #inputB").mousedown();
+
+	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
+	"multiple {on events selector method} bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"before: 1211 | after: undefinedundefined11",
+	"onDispose removes specific delegated events");
+
+	// ................................ Act ..................................
+	res = "1: ";
+	$("#divForOn").html("<input id='newlyAdded' />");
+
+	$("#divForOn #newlyAdded").mouseup();
+
+	res += "2: ";
+	$("#divForOn #newlyAdded").keyup();
+
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: ",
+	"delegated {on events selector method} binding allows additional elements added to content to bind correctly");
+
+	// ................................ Act ..................................
+	$("#result").empty();
+	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"undefinedundefinedundefined[{},{}]",
+	"Removing the element removes all associated  attached {on } handlers");
+
+	// =============================== Arrange ===============================
+	var res = "1: ";
+	$("#result").html("<div id=\"divForOn\" data-link=\"{on 'keyup keydown' '.inputA' unbind} {on 'mousedown' '#inputB' refresh} {on 'keyup' '#inputB' unbind} {on 'mouseup' 'input' test}\">"
+			+ "<input class='inputA'/>"
+			+ "<input id='inputB' />"
+		+ "</div>");
+
+	$.link(true, "#result", {
+			unbind:  function(ev, eventArgs) {
+				res += "unbind ";
+				eventArgs.linkCtx.tag.onDispose();
+			},
+			refresh:  function(ev, eventArgs) {
+				res += "refresh ";
+				eventArgs.linkCtx.tag.refresh();
+			},
+			test: function() {
+				res += "test ";
+			}
+		 });
+
+	// ................................ Act ..................................
+	var events = $._data($("#divForOn")[0]).events,
+		eventBindings = "before: " + events.keydown.length + events.keyup.length + events.mouseup.length + events.mousedown.length;
+
+	$("#divForOn #inputB").mouseup();
+
+	res += "2: ";
+	$("#divForOn .inputA").mouseup();
+
+	res += "3: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "4: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "5: ";
+	$("#divForOn .inputA").keydown();
+
+	res += "6: ";
+	$("#divForOn .inputA").keyup();
+
+	res += "7: ";
+	$("#divForOn #inputB").mouseup();
+
+	res += "8: ";
+	$("#divForOn #inputB").mousedown();
+
+	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
+	"Top-level {on }: multiple {on events selector method} top-level bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"before: 1211 | after: undefinedundefined11",
+	"Top-level {on }: onDispose removes specific delegated events");
+
+	// ................................ Act ..................................
+	res = "1: ";
+	$("#divForOn").html("<input id='newlyAdded' />");
+
+	$("#divForOn #newlyAdded").mouseup();
+
+	res += "2: ";
+	$("#divForOn #newlyAdded").keyup();
+
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: ",
+	"Top-level {on }: delegated {on events selector method} binding allows additional elements added to content to bind correctly");
+
+	// ................................ Act ..................................
+	$("#result").empty();
+	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"undefinedundefinedundefined[{},{}]",
+	"Top-level {on }: Removing the element removes all associated  attached {on } handlers");
+
+	// =============================== Arrange ===============================
+	var res = "1: ",
+		data = {
+			unbind:  function(ev, eventArgs) {
+				res += "unbind ";
+				eventArgs.linkCtx.tag.onDispose();
+			},
+			refresh:  function(ev, eventArgs) {
+				res += "refresh ";
+				eventArgs.linkCtx.tag.refresh();
+			},
+			test: function() {
+				res += "test ";
+			}
+		 };
+	$("#result").html("<div id=\"linkTgt\" data-link=\"{:name} {on 'click' refresh} {on 'mousedown mouseup' test}\" >oldcontent</div>");
+
+	$.link(true, "#linkTgt", data);
+
+	events = $._data($("#linkTgt")[0]).events,
+
+	// ................................ Act ..................................
+	$("#linkTgt").mousedown();
+
+	res += "2: ";
+	$("#linkTgt").mouseup();
+
+	res += "3: ";
+	$("#linkTgt").click();
+
+	res += "4: ";
+	$("#linkTgt").mousedown();
+
+	res += "5: ";
+	$("#linkTgt").mouseup();
+
+	res += "6: ";
+	$("#linkTgt").click();
+
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: test 3: refresh 4: test 5: test 6: refresh ",
+	'$.link(true, "#linkTgt", data): top-level linking to element (not container) links correctly, including \'{on }\' bindings');
+
+	// ............................... Assert .................................
+	eventBindings = "" + events.mouseup.length + events.mousedown.length + events.click.length;
+
+	equal(eventBindings,
+	"111",
+	'$.link(true, "#linkTgt", data): top-level linking to element (not container) adds {on } binding handlers correctly - including calling refresh() on {on } tag');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#linkTgt");
+
+	// ............................... Assert .................................
+	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+
+	equal(eventBindings,
+	"undefinedundefinedundefined[{},{}]",
+	'$.unlink(true, "#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
+});
 
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
@@ -3788,7 +4062,6 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	"$(container).unlink(true) removes the views and current listeners from that content");
 	// -----------------------------------------------------------------------
-
 
 	// =============================== Arrange ===============================
 
@@ -6268,7 +6541,6 @@ function testTemplate(message, template) {
 	//$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
 	//ret += "|" + $("#result").text();
 
-
 	// TODO allow the following to work by declaring getPeople as depending on collection change of app.alt ? people2 : people;
 	//$.observable(people2).insert(1, {address:{street: "99 new street"}})
 	//ret += "|" + $("#result").text();
@@ -7045,7 +7317,7 @@ test("observeAll/unobserveAll using namespaces", function() {
 });
 module("API - Settings");
 
-test("settings, error handlers, onerror", function() {
+test("settings, error handlers, onError", function() {
 	// ................................ Act ..................................
 	$.views.settings.delimiters("@%","%@");
 	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
@@ -7107,14 +7379,14 @@ test("settings, error handlers, onerror", function() {
 	equal(result, '<<Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\n{{if}}>>: override thrown error', "Override thrown error - with link()");
 
 	// ................................ Act ..................................
-	$.templates('{{:a.b onerror=onerr}} {^{if a.b onerror=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="a.b onerror=onerr + \' (in data-link)\'"></span>').link("#result", app);
+	$.templates('{{:a.b onError=onerr}} {^{if a.b onError=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="a.b onError=onerr + \' (in data-link)\'"></span>').link("#result", app);
 	result = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Fallback: <<invalid'Jo'>> Fallback: <<invalid'Jo' (in if tag)>>Fallback: <<invalid'Jo' (in data-link)>>", "onerror fallback in tags and in data-link expression, with override onError()");
+	equal(result, "Fallback: <<invalid'Jo'>> Fallback: <<invalid'Jo' (in if tag)>>Fallback: <<invalid'Jo' (in data-link)>>", "onError fallback in tags and in data-link expression, with override onError()");
 
 	// ................................ Act ..................................
-	$.templates('{{:a.b onerror=~myErrFn}} {^{if a.b onerror=~myErrFn}}inside{{/if}}<span data-link="a.b onerror=~myErrFn"></span>').link("#result", app, {
+	$.templates('{{:a.b onError=~myErrFn}} {^{if a.b onError=~myErrFn}}inside{{/if}}<span data-link="a.b onError=~myErrFn"></span>').link("#result", app, {
 		myErrFn: function(e, view) {
 			return "myErrFn for <" + view.data.name + ">";
 		}
@@ -7122,7 +7394,7 @@ test("settings, error handlers, onerror", function() {
 	result = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "myErrFn for <Jo> myErrFn for <Jo>myErrFn for <Jo>", "onerror handler in tags and in data-link expression, with override onError()");
+	equal(result, "myErrFn for <Jo> myErrFn for <Jo>myErrFn for <Jo>", "onError handler in tags and in data-link expression, with override onError()");
 
 	// ................................ Reset ..................................
 	$.views.settings({
@@ -7344,7 +7616,6 @@ test("$.view() in element-only content", function() {
 	// ............................... Assert .................................
 	ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "myTagName") gets the first (depth first) nested view of that type');
 });
-
 
 test("view.get() and view.getIndex() in element-only content", function() {
 
@@ -8212,6 +8483,384 @@ test('two-way bound tag controls', function() {
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
+
+	// =============================== Arrange ===============================
+	var res = "";
+
+	$.templates({
+		markup: '{^{twoWayTag name trigger="keydown mouseup"/}}',
+	}).link("#result", person);
+
+	var linkedElem = $("#result input")[0],
+		events = $._data(linkedElem).events,
+		handlers = "|" + events.mouseup.length + events.keydown.length;
+
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
+
+	$.observable(person).setProperty({name: "FirstName"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name + "|" + tag.value;
+
+	tag.linkedElem[0].value = "SecondName";
+
+	tag.linkedElem.keydown();
+
+	res += " 2: " + person.name + "|" + tag.value;
+
+	tag.linkedElem[0].value = "ThirdName";
+
+	tag.linkedElem.mouseup();
+
+	res += " 3: " + person.name + "|" + tag.value;
+
+	tag.linkedElem[0].value = "FourthName";
+
+	tag.linkedElem.change();
+
+	res += " 4: " + person.name + "|" + tag.value;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: FirstName|FirstName 2: SecondName|SecondName 3: ThirdName|ThirdName 4: FourthName|FourthName",
+	'Data link using: {^{twoWayTag name trigger="event1 event2"/}} triggers on specified events');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|11|11|11",
+	'Data link using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Data link using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(true, container)');
+
+	// =============================== Arrange ===============================
+	res = "";
+
+	$.templates({
+		markup: '<input data-link=\'name trigger="keydown mouseup"\' />',
+	}).link("#result", person);
+
+	linkedElem = $("#result input")[0];
+
+	events = $._data(linkedElem).events;
+	handlers = "|" + events.mouseup.length + events.keydown.length;
+
+	$.observable(person).setProperty({name: "FirstName"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keydown();
+
+	res += " 2: " + person.name;
+
+	linkedElem.value = "ThirdName";
+
+	$(linkedElem).mouseup();
+
+	res += " 3: " + person.name;
+
+	linkedElem.value = "FourthName";
+
+	$(linkedElem).change();
+
+	res += " 4: " + person.name;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
+	'Data link using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|11|11|11",
+	'Data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
+
+	// =============================== Arrange ===============================
+	res = "";
+
+	$.templates({
+		markup: '<div contenteditable="true" data-link=\'name trigger="keydown mouseup"\'>some content</div>',
+	}).link("#result", person);
+
+	linkedElem = $("#result div")[0];
+
+	events = $._data(linkedElem).events;
+	handlers = "|" + events.mouseup.length + events.keydown.length;
+
+	$.observable(person).setProperty({name: "First <b>Name</b>"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.innerHTML = "Second  <b>Name2</b>";
+
+	$(linkedElem).keydown();
+
+	res += " 2: " + person.name;
+
+	linkedElem.innerHTML = "Third <b>Name3</b>";
+
+	$(linkedElem).mouseup();
+
+	res += " 3: " + person.name;
+
+	linkedElem.innerHTML = "Fourth <b>Name4</b>";
+
+	$(linkedElem).change();
+
+	res += " 4: " + person.name;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: First <b>Name</b> 2: Second  <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
+	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> triggers on specified events');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|11|11|11",
+	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(true, container)');
+
+	// =============================== Arrange ===============================
+	res = "";
+
+	$.templates({
+		markup: '{^{contentEditable name trigger="keydown mouseup"}}some content{{/contentEditable}}',
+		tags: {
+			contentEditable: {
+				template: "<div contenteditable=true>{{include tmpl=#content/}}</div>",
+				//render: function(val) { // This is equivalent to using template above...
+				//	return "<div contenteditable=true>" + this.tagCtx.render(val) + "</div>";
+				//},
+				onAfterLink: function() {
+				  this.linkedElem = this.linkedElem || this.contents("div");
+				},
+				onUpdate: function() {
+					return false;
+				}
+			}
+		}
+	}).link("#result", person);
+
+	linkedElem = $("#result div")[0];
+
+	events = $._data(linkedElem).events;
+	handlers = "|" + events.mouseup.length + events.keydown.length;
+
+	$.observable(person).setProperty({name: "First <b>Name</b>"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.innerHTML = "Second  <b>Name2</b>";
+
+	$(linkedElem).keydown();
+
+	res += " 2: " + person.name;
+
+	linkedElem.innerHTML = "Third <b>Name3</b>";
+
+	$(linkedElem).mouseup();
+
+	res += " 3: " + person.name;
+
+	linkedElem.innerHTML = "Fourth <b>Name4</b>";
+
+	$(linkedElem).change();
+
+	res += " 4: " + person.name;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: First <b>Name</b> 2: Second  <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
+	'Data link using: {^{contentEditable name trigger="keydown mouseup"}} triggers on specified events');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|11|11|11",
+	'Data link using: {^{contentEditable name trigger="keydown mouseup"}} has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Data link using: {^{contentEditable name trigger="keydown mouseup"}}: handlers are removed by $.unlink(true, container)');
+
+	// =============================== Arrange ===============================
+	res = "";
+
+	$.templates({
+		markup: '<input data-link="name trigger=true" />',
+	}).link("#result", person);
+
+	linkedElem = $("#result input")[0];
+
+	events = $._data(linkedElem).events;
+	handlers = "|" + events.keyup.length;
+
+	$.observable(person).setProperty({name: "FirstName"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.keyup.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keyup();
+
+	res += " 2: " + person.name;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.keyup.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: FirstName 2: SecondName",
+	'Data link using: <input data-link="name trigger=true" /> triggers on keyup');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|1|1|1",
+	'Data link using: <input data-link=\'name trigger=true\' /> has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(true, container)');
+
+	// =============================== Arrange ===============================
+	$.templates({
+		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower trigger=true/}}',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
+
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ................................ Act ..................................
+	tag.linkedElem[0].value = "ChangeTheName";
+	tag.linkedElem.keyup();
+
+	// ............................... Assert .................................
+	equal(person.name + "|" + tag.value,
+	"changethename|changethename",
+	'Data link using: {^{twoWayTag name convertBack=~lower trigger=true/}} - triggers on keyup, converts the data, and sets on data');
+
+	// =============================== Arrange ===============================
+	res = "";
+	$("#result").html('<input data-link=\'name trigger="keydown mouseup"\' />');
+
+	linkedElem = $("#result input")[0];
+
+	$.link(true, "#result", person);
+
+	events = $._data(linkedElem).events;
+	handlers = "|" + events.mouseup.length + events.keydown.length;
+
+	$.observable(person).setProperty({name: "FirstName"});
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keydown();
+
+	res += " 2: " + person.name;
+
+	linkedElem.value = "ThirdName";
+
+	$(linkedElem).mouseup();
+
+	res += " 3: " + person.name;
+
+	linkedElem.value = "FourthName";
+
+	$(linkedElem).change();
+
+	res += " 4: " + person.name;
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.mouseup.length + events.keydown.length;
+
+	// ............................... Assert .................................
+	equal(res,
+	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
+	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
+
+	// ............................... Assert .................................
+	equal(handlers,
+	"|11|11|11",
+	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
+
+	// ................................ Act ..................................
+	$.unlink(true, "#result");
+
+	// ............................... Assert .................................
+	ok($._data(linkedElem).events === undefined,
+	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
+
 });
 
 test('linkTo for {:source linkTo=target:} or {twoWayBoundTag source linkTo=target}', function() {

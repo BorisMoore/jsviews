@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 54 (Beta Candidate) */
+informal pre V1.0 commit counter: 55 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -23,19 +23,18 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 	var versionNumber = "v1.0.0-alpha",
 
 		$eventSpecial = $.event.special,
-		$viewsSub = $.views
+		$sub = $.views
 			? $.views.sub // jsrender was loaded before jquery.observable
 			: ($observable.sub = {}), // jsrender not loaded so store sub on $observable, and merge back in to $.views.sub in jsrender if loaded afterwards
-		cbBindingKey = 1,
 		splice = [].splice,
 		$isArray = $.isArray,
 		$expando = $.expando,
 		OBJECT = "object",
 		PARSEINT = parseInt,
 		rNotWhite = /\S+/g,
-		propertyChangeStr = $viewsSub.propChng = $viewsSub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
-		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
-		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
+		propertyChangeStr = $sub.propChng = $sub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
+		arrayChangeStr = $sub.arrChng = $sub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
+		cbBindingsStore = $sub._cbBnds = $sub._cbBnds || {},
 		observeStr = propertyChangeStr + ".observe",
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
@@ -45,7 +44,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 
 	//========================== Top-level functions ==========================
 
-	$viewsSub.getDeps = function() {
+	$sub.getDeps = function() {
 		var args = arguments;
 		return function() {
 			var arg, dep,
@@ -59,8 +58,8 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 				}
 			}
 			return deps;
-		}
-	}
+		};
+	};
 
 	function $observable(data) {
 		return $isArray(data)
@@ -222,7 +221,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 						},
 						filter: filter,
 						ns: initialNs
-					}
+					};
 				}
 				$(boundObOrArr).on(namespace, null, evData, onObservableChange);
 				if (cbBindings) {
@@ -255,7 +254,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 					}
 				}
 				callback(ev, eventArgs);
-			}
+			};
 		}
 
 		function bindArray(arr, unbind, isArray, relPath) {
@@ -280,7 +279,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 			}
 		}
 
-		var i, p, skip, parts, prop, path, isArray, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
+		var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
 			allPath, filter, initialNs, initNsArr, initNsArrLen,
 			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
@@ -534,7 +533,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 					}
 				}
 			}
-		}
+		};
 	}
 
 	//========================== Initialize ==========================
@@ -591,7 +590,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 			parentObs = oldParentObs;
 		}
 
-		var l, prop, isObject, newAllPath, newObject;
+		var l, isObject, newAllPath, newObject;
 
 		if (typeof object === OBJECT) {
 			isObject = $isArray(object) ? "" : "*";
@@ -628,7 +627,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 		}
 	}
 
-	$viewsSub.DataMap = DataMap;
+	$sub.DataMap = DataMap;
 	$.observable = $observable;
 	$observable._fltr = function(key, object, allPath, filter) {
 		var prop = (filter && $isFunction(filter)
@@ -641,7 +640,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 				: prop;
 		}
 		return typeof prop === OBJECT && prop;
-	}
+	};
 
 	$observable.Object = ObjectObservable;
 	$observable.Array = ArrayObservable;
@@ -660,7 +659,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 		},
 
 		setProperty: function(path, value, nonStrict) {
-			var leaf, key, pair, parts,
+			var key, pair, parts,
 				self = this,
 				object = self._data;
 
@@ -672,7 +671,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 					key = path.length;
 					while (key--) {
 						pair = path[key];
-						self.setProperty(pair.name, pair.value, nonStrict === undefined || nonStrict) //If nonStrict not specified, default to true;
+						self.setProperty(pair.name, pair.value, nonStrict === undefined || nonStrict); //If nonStrict not specified, default to true;
 					}
 				} else if ("" + path !== path) {
 					// Object representation where property name is path and property value is value.
@@ -692,7 +691,7 @@ informal pre V1.0 commit counter: 54 (Beta Candidate) */
 		},
 
 		removeProperty: function(path) {
-			this.setProperty(path, remove)
+			this.setProperty(path, remove);
 			return this;
 		},
 

@@ -23,7 +23,7 @@
 	<tr>
 		<td data-link="firstName"></td>
 		<td>
-			<input data-link="firstName" />
+			<input data-link="firstName trigger=true" />
 		</td>
 	</tr>
 </script>
@@ -48,8 +48,6 @@ var template = $.templates( "#personTmpl" );
 template.link( "#details", people );
 
 // Alternative syntax:
-//    $("#details").link(template, people);
-// or:
 //    $.link(template, "#details", people);
 </script>
 
@@ -77,8 +75,6 @@ var template = $.templates( "#personTmpl" );
 template.link( "#details", people );
 
 // Alternative syntax:
-//    $("#details").link(template, people);
-// or:
 //    $.link(template, "#details", people);
 </pre>
 

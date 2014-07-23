@@ -31,11 +31,11 @@
 
 		{^{if selectedMovie!=='none'}}
 			<div class="subhead" data-link="{:name ? 'Name:' : 'Type your name here:'}"></div>
-			<div><input data-link="name" placeholder="Enter your name..."/></div>
+			<div><input data-link="name trigger=true" placeholder="Enter your name..."/></div>
 
 			{^{if name}}
 				<div class="subhead" data-link="{:request ? 'Special requests:' : 'Type special requests here:'}"></div>
-				<div><textarea data-link="request" rows="4" cols="25"  placeholder="Enter any special requests..."></textarea></div>
+				<div><textarea data-link="request trigger=true" rows="4" cols="25"  placeholder="Enter any special requests..."></textarea></div>
 			{{/if}}
 		{{/if}}
 	</div>
