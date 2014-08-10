@@ -653,7 +653,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			settings = jsvStores[storeName];
 			if ((compile = settings.compile) && (resources = parentTmpl[storeName + "s"])) {
 				for (resourceName in resources) {
-					// compile child resource declarations (templates, tags, tags.for or helpers)
+					// compile child resource declarations (templates, tags, tags['for'] or helpers)
 					resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl, storeName, settings);
 					if (onStore = $sub.onStoreItem) {
 						// e.g. JsViews integration
@@ -1656,7 +1656,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	}
 
 	$tags({
-		props: $extend($extend({}, $tags.for),
+		props: $extend($extend({}, $tags['for']),
 			DataMap(getTargetProps)
 		)
 	});
@@ -4973,7 +4973,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		flow: true
 	});
 
-	$extend($tags.for, {
+	$extend($tags['for'], {
 		//onUpdate: function(ev, eventArgs, tagCtxs) {
 			//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 			//var i, l, tci, prevArg;
@@ -5047,8 +5047,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	});
 
-	$extend($tags.for, linkMethods);
-	$extend($tags.if, linkMethods);
+	$extend($tags['for'], linkMethods);
+	$extend($tags['if'], linkMethods);
 	$extend($tags.include, linkMethods);
 
 	function observeProps(source, target, ev, eventArgs) {
@@ -5103,7 +5103,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	}
 
 	$tags({
-		props: $.extend({}, $tags.for, $sub.DataMap($tags.props.getTgt, observeProps, observeMappedProps, undefined, shallowArrayFilter))
+		props: $.extend({}, $tags['for'], $sub.DataMap($tags.props.getTgt, observeProps, observeMappedProps, undefined, shallowArrayFilter))
 	});
 
 	//========================
