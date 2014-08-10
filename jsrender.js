@@ -653,7 +653,7 @@ informal pre V1.0 commit counter: 55 */
 			settings = jsvStores[storeName];
 			if ((compile = settings.compile) && (resources = parentTmpl[storeName + "s"])) {
 				for (resourceName in resources) {
-					// compile child resource declarations (templates, tags, tags.for or helpers)
+					// compile child resource declarations (templates, tags, tags['for'] or helpers)
 					resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl, storeName, settings);
 					if (onStore = $sub.onStoreItem) {
 						// e.g. JsViews integration
@@ -1656,7 +1656,7 @@ informal pre V1.0 commit counter: 55 */
 	}
 
 	$tags({
-		props: $extend($extend({}, $tags.for),
+		props: $extend($extend({}, $tags['for']),
 			DataMap(getTargetProps)
 		)
 	});
