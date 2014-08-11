@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 55 (Beta Candidate) */
+informal pre V1.0 commit counter: 56 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -46,6 +46,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		CHECKED = "checked",
 		CHECKBOX = "checkbox",
 		RADIO = "radio",
+		NONE = "none",
+		sTRUE = "true",
 		closeScript = '"></script>',
 		openScript = '<script type="jsv',
 		bindElsSel = "script,[" + jsvAttrStr + "]",
@@ -83,7 +85,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		rOpenMarkers = /(#)()(\d+)([_^])/g,
 		rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
 		rOpenTagMarkers = /(#)()(\d+)(\^)/g,
-		rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
+		rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g,
+		getComputedStyle = global.getComputedStyle;
 
 	if (!$) {
 		// jQuery is not loaded.
@@ -183,14 +186,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				}
 			}
 		}
-		return false;
-	}
-
-	function elemChangeNoValidateHandler(ev) {
-		var noVal = $viewsSettings.noValidate;
-		$viewsSettings.noValidate = true;
-		elemChangeHandler(ev);
-		$viewsSettings.noValidate = noVal;
 	}
 
 	function propertyChangeHandler(ev, eventArgs, linkFn) {
@@ -232,7 +227,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 					mergeCtxs(tag, sourceValue);
 
-					if (noUpdate || attr === "none") {
+					if (noUpdate || attr === NONE) {
 						// onUpdate returned false, or attr === "none", or this is an update coming from the tag's own change event
 						// - so don't refresh the tag: we just use the new tagCtxs merged from the sourceValue,
 						// (which may optionally have been modifed in onUpdate()...) and then bind, and we are done
@@ -255,7 +250,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
-					cvt = cvt === "" ? "true" : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
+					cvt = cvt === "" ? sTRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue) // convertVal
 						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true); // renderTag
@@ -329,7 +324,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// When called for a tag, either in tag.refresh() or propertyChangeHandler(), returns a promise (and supports async)
 		// When called (in propertyChangeHandler) for target HTML returns true
 		// When called (in propertyChangeHandler) for other targets returns boolean for "changed"
-		var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex,
+		var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle,
 			renders = sourceValue !== undefined,
 			source = linkCtx.data,
 			target = tag && tag.parentElem || linkCtx.elem,
@@ -356,10 +351,34 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 		if (/^css-/.test(attr)) {
 			if (linkCtx.attr === "visible") {
-				sourceValue = sourceValue
-				// Make sure we set the correct display style for showing this particular element ("block", "inline" etc.)
-					? getElementDefaultDisplay(target)
-					: "none";
+				// Get the current display style
+				cStyle = (target.currentStyle || getComputedStyle.call(global, target, "")).display;
+
+				if (sourceValue) {
+					// We are showing the element.
+					// Get the cached 'visible' display value from the -jsvd expando
+					sourceValue = target._jsvd
+						// Or, if not yet cached, get the current display value
+						|| cStyle;
+					if (sourceValue === NONE && !(sourceValue = displayStyles[nodeName = target.nodeName])) {
+						// Currently display value is 'none', and the 'visible' style has not been cached.
+						// We create an element to find the correct 'visible' display style for this nodeName
+						testElem = document.createElement(nodeName);
+						document.body.appendChild(testElem);
+
+						// Get the default style for this HTML tag to use as 'visible' style
+						sourceValue
+							// and cache it as a hash against nodeName
+							= displayStyles[nodeName]
+							= (testElem.currentStyle || getComputedStyle.call(global, testElem, "")).display;
+						document.body.removeChild(testElem);
+					}
+				} else {
+					// We are hiding the element.
+					// Cache the current display value as 'visible' style, on _jsvd expando, for when we show the element again
+					target._jsvd = cStyle;
+					sourceValue = NONE; // Hide the element
+				}
 			}
 			if (change = change || targetVal !== sourceValue) {
 				$.style(target, attr.slice(4), sourceValue);
@@ -514,25 +533,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	// Utilities for event handlers
 	//=============================
 
-	function getElementDefaultDisplay(elem) {
-		// Get the 'visible' display style for the element
-		var testElem, nodeName,
-			getComputedStyle = global.getComputedStyle,
-			cStyle = (elem.currentStyle || getComputedStyle.call(global, elem, "")).display;
-
-		if (cStyle === "none" && !(cStyle = displayStyles[nodeName = elem.nodeName])) {
-			// Currently display: none, and the 'visible' style has not been cached.
-			// We create an element to find the correct visible display style for this nodeName
-			testElem = document.createElement(nodeName);
-			document.body.appendChild(testElem);
-			cStyle = (getComputedStyle ? getComputedStyle.call(global, testElem, "") : testElem.currentStyle).display;
-			// Cache the result as a hash against nodeName
-			displayStyles[nodeName] = cStyle;
-			document.body.removeChild(testElem);
-		}
-		return cStyle;
-	}
-
 	function setArrayChangeLink(view) {
 		// Add/remove arrayChange handler on view
 		var handler, arrayBinding,
@@ -575,7 +575,9 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// to: true - default attribute for setting data value on HTML element; false: default attribute for getting value from HTML element
 		// Merge in the default attribute bindings for this target element
 		var nodeName = elem.nodeName.toLowerCase(),
-			attr = $viewsSettings.merge[nodeName] || elem.contentEditable === "true" && {to: htmlStr, from: htmlStr};
+			attr =
+				$viewsSettings.merge[nodeName] // get attr settings for input textarea select or optgroup
+				|| elem.contentEditable === sTRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
 		return attr
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -807,7 +809,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				activeBody = document.body;
 				$(activeBody)
 					.on(elementChangeStr, elemChangeHandler)
-					.on('blur', '[contenteditable]', elemChangeNoValidateHandler);
+					.on('blur', '[contenteditable]', elemChangeHandler);
 			}
 
 			var i, k, html, vwInfos, view, placeholderParent, targetEl, oldCtx,
@@ -938,7 +940,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				//	parentTag = "table";
 				//	tagStack.shift();
 				//}
-				if (!$viewsSettings.noValidate) {
+				if (validate) {
 					if (selfClose || selfClose2) {
 						if (!voidElems[parentTag] && !/;svg;|;math;/.test(";" + tagStack.join(";")+ ";")) {
 							// Only self-closing elements must be legitimate void elements, such as <br/>, per HTML schema,
@@ -1308,7 +1310,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 		//==== /end of nested functions ====
 
-		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx,
+		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx, validate,
 			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, isVoid, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, lazyLink,
 			self = this,
 			thisId = self._.id + "_",
@@ -1351,6 +1353,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			: (self.parentElem      // view.link()
 				|| document.body);  // link(null, data) to link the whole document
 
+		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== sTRUE;
 		parentTag = parentNode.tagName.toLowerCase();
 		elCnt = !!elContent[parentTag];
 
@@ -1403,7 +1406,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 //			if (!!oldElCnt !== !!elCnt) {
 //				error("Parse: " + html); // Parse error. Content not well-formed?
 //			}
-			if (!$viewsSettings.noValidate && tagStack.length) {
+			if (validate && tagStack.length) {
 				syntaxError("Mismatched '<" + parentTag + "...>' in:\n" + html); // Unmatched tag
 			}
 			if (validateOnly) {
@@ -1747,7 +1750,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	};
 
 	function callAfterLink(tag, tagCtx) {
-		var linkedElem, elem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
+		var $linkedElem, linkedElem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
 			view = tagCtx.view,
 			linkCtx = tag.linkCtx = tag.linkCtx || {
 				tag: tag,
@@ -1759,25 +1762,25 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		if (tag.onAfterLink) {
 			tag.onAfterLink(tagCtx, linkCtx);
 		}
-		linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
-		if (elem = linkedElem && linkedElem[0]) {
+		$linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
+		if (linkedElem = $linkedElem && $linkedElem[0]) {
 			if (radioButtons = tag._.radio) {
-				linkedElem = linkedElem.children("input[type=radio]");
+				$linkedElem = $linkedElem.children("input[type=radio]");
 			}
 			if (radioButtons || !tag._.chging) {
 				val = $sub.cvt(tag, tag.convert)[0];
 
-				if (radioButtons || elem !== linkCtx.elem) {
-					l = linkedElem.length;
+				if (radioButtons || linkedElem !== linkCtx.elem) {
+					l = $linkedElem.length;
 					while (l--) {
-						elem = linkedElem[l];
-						linkedTag = elem._jsvLnkdEl;
+						linkedElem = $linkedElem[l];
+						linkedTag = linkedElem._jsvLnkdEl;
 						if (tag._.inline && (!linkedTag || linkedTag !== tag && linkedTag.targetTag !== tag)) {
-							elem._jsvLnkdEl = tag;
+							linkedElem._jsvLnkdEl = tag;
 							// For data-linked tags, identify the linkedElem with the tag, for "to" binding
 							// (For data-linked elements, if not yet bound, we identify later when the linkCtx.elem is bound)
 							bindings = linkCtx.elem ? linkCtx.elem._jsvBnd : tag._prv._jsvBnd;
-							elem._jsvBnd = bindings + "+";
+							linkedElem._jsvBnd = bindings + "+";
 							// Add a "+" for cloned binding - so removing elems with cloned bindings will not remove the 'parent' binding from the bindingStore.
 
 							bindings = bindings.slice(1).split("&");
@@ -1788,32 +1791,44 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 						}
 						if (radioButtons) {
 							// For radio button, set to if val === value. For others set val() to val, below
-							elem[CHECKED] = val === elem.value;
+							linkedElem[CHECKED] = val === linkedElem.value;
 						}
 					}
 					linkCtx._val = val;
 				}
-				if (!radioButtons && elem.value !== undefined && val !== undefined) {
-					if (elem.type === CHECKBOX) {
-						elem[CHECKED] = val && val !== "false";
-					} else {
-						linkedElem.val(val);
+				if (val !== undefined) {
+					if (!radioButtons && linkedElem.value !== undefined) {
+						if (linkedElem.type === CHECKBOX) {
+							linkedElem[CHECKED] = val && val !== "false";
+						} else {
+							$linkedElem.val(val);
+						}
+					} else if (linkedElem.contentEditable === sTRUE) {
+						linkedElem.innerHTML = val;
 					}
 				}
 			}
 		}
-		if (elem = elem || tag.tagName === ":" && linkCtx.elem) {
-			oldTrig = elem._jsvTr;
+		if (linkedElem = linkedElem || tag.tagName === ":" && linkCtx.elem) {
+			oldTrig = linkedElem._jsvTr;
 			newTrig = tagCtx.props.trigger;
-			newTrig = newTrig === true ? 'keyup' : newTrig;
 			if (oldTrig !== newTrig) {
-				elem._jsvTr = newTrig
-				elem = $(elem);
-
-				oldTrig && elem.off(oldTrig, elemChangeHandler);
-				newTrig && elem.on(newTrig, elemChangeHandler);
+				linkedElem._jsvTr = newTrig;
+				$linkedElem = $linkedElem || $(linkedElem);
+				bindElChange($linkedElem, oldTrig, "off");
+				bindElChange($linkedElem, newTrig, "on");
 			}
 		}
+	}
+
+	function asyncElemChangeHandler(ev) {
+		setTimeout(function() {
+			elemChangeHandler(ev);
+		}, 0);
+	}
+
+	function bindElChange($elem, trig, onoff) {
+		trig && $elem[onoff](trig === true? "keydown" : trig, trig === true ? asyncElemChangeHandler : elemChangeHandler);
 	}
 
 	function bindTo(binding, cvtBk) {
@@ -1912,7 +1927,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 	function removeViewBinding(bindId, linkedElemTag, elem) {
 		// Unbind
-		var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, linkedElem, trigger,
+		var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, $linkedElem, linkedElem, trigger,
 			binding = bindingStore[bindId];
 
 		if (linkedElemTag) {
@@ -1943,11 +1958,11 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 							}
 						}
 					}
-					linkedElem = tag.linkedElem;
-					linkedElem = linkedElem && linkedElem[0] || linkCtx.elem;
+					$linkedElem = tag.linkedElem;
+					linkedElem = $linkedElem && $linkedElem[0] || linkCtx.elem;
 
 					if (trigger = linkedElem && linkedElem._jsvTr) {
-						$(linkedElem).off(trigger, elemChangeHandler);
+						bindElChange($linkedElem || $(linkedElem), trigger, "off");
 						linkedElem._jsvTr = undefined;
 					}
 
@@ -1972,7 +1987,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			if (activeBody) {
 				$(activeBody)
 					.off(elementChangeStr, elemChangeHandler)
-					.off('blur', '[contenteditable]', elemChangeNoValidateHandler);
+					.off('blur', '[contenteditable]', elemChangeHandler);
 				activeBody = undefined;
 			}
 			tmplOrLinkTag = true;
@@ -2080,32 +2095,28 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	// JsRender integration
 	//=====================
 
-	$extend($sub, {
-		onStoreItem: function(storeName, name, item) {
-			if (item) {
-				if (storeName === "template") {
-					item.link = tmplLink;
-					item.unlink = tmplUnlink;
-					if (name) {
-						$.link[name] = function() {
-							return tmplLink.apply(item, arguments);
-						};
-						$.unlink[name] = function() {
-							return tmplUnlink.apply(item, arguments);
-						};
-					}
-				} else if (storeName === "tag") {
-					$sub._lnk(item);
-				}
-			}
-		},
+	$sub.onStore.template = function(name, item) {
+		item.link = tmplLink;
+		item.unlink = tmplUnlink;
+		if (name) {
+			$.link[name] = function() {
+				return tmplLink.apply(item, arguments);
+			};
+			$.unlink[name] = function() {
+				return tmplUnlink.apply(item, arguments);
+			};
+		}
+	};
 
-		_lnk: function(item) {
-			return $extend(item, linkMethods);
-		},
+	$sub.onStore.tag = function(name, item) {
+		$sub._lnk(item);
+	};
 
-		viewInfos: viewInfos // Expose viewInfos() as public helper method
-	});
+	$sub._lnk = function(item) {
+		return $extend(item, linkMethods);
+	};
+
+	$sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 
 	// Initialize default delimiters
 	($viewsSettings.delimiters = function() {
@@ -2273,7 +2284,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 						}
 						if (!viewToRemove._elCnt) {
 							try {
-								prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper)
+								prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
 								nextNode.parentNode.removeChild(nextNode);
 							} catch (e) {}
 						}
@@ -2388,22 +2399,28 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	//========================
 
 	$tags("on", {
-		attr: "none",
+		attr: NONE,
 		onAfterLink: function(tagCtx, linkCtx) {
-			var self = this,
+			var handler, params,
+				self = this,
+				i = 0,
 				args = tagCtx.args, // [events,] [selector,] handler
 				data = tagCtx.props.data,
 				view = tagCtx.view,
-				handler = args.pop(),
 				contextOb = tagCtx.props.context; // Context ('this' pointer) for attached handler
+
+			while (!$isFunction(handler = args[i++])) {} // Handler is first arg of type function
+
+			params = args.slice(i); // Subsequent args are params
+			args = args.slice(0, i-1); // Preceding args (if any) are events and selector 
 
 			if (!contextOb) {
 				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
 				// to return that context object, and run compiled function against data
-				contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-1)[0]);
+				contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length -1)[0]);
 				contextOb = contextOb && $sub.tmplFn("{:" + contextOb[1] + "}", view.tmpl, true)(linkCtx.data, view);
 			}
-			if (handler && handler.call) {
+			if (handler) {
 				if (self._evs) {
 					self.onDispose();
 				}
@@ -2412,8 +2429,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					self._sel = args[1],
 					data == undefined ? null : data,
 					self._hlr = function(ev) {
-						handler.call(contextOb || linkCtx.data, ev, {change: ev.type, view: view, linkCtx: linkCtx});
-						return false;
+						return handler.apply(contextOb || linkCtx.data, [].concat(params, ev, {change: ev.type, view: view, linkCtx: linkCtx}));
 					}
 				);
 			}
@@ -2424,7 +2440,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		flow: true
 	});
 
-	$extend($tags.for, {
+	$extend($tags["for"], {
 		//onUpdate: function(ev, eventArgs, tagCtxs) {
 			//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 			//var i, l, tci, prevArg;
@@ -2498,14 +2514,15 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	});
 
-	$extend($tags.for, linkMethods);
-	$extend($tags.if, linkMethods);
+	$extend($tags["for"], linkMethods);
+	$extend($tags["if"], linkMethods);
 	$extend($tags.include, linkMethods);
 
-	function observeProps(source, target, ev, eventArgs) {
+	function observeProps(map, ev, eventArgs) {
 		switch (eventArgs.change) {
 			case "set":
-				var l = target.length;
+				var target = map.tgt,
+					l = target.length;
 				while (l--) {
 					if (target[l].key === eventArgs.path) {
 						break;
@@ -2523,8 +2540,10 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	}
 
-	function observeMappedProps(source, target, ev, eventArgs) {
-		var item;
+	function observeMappedProps(map, ev, eventArgs) {
+		var item,
+			source= map.src;
+
 		switch (eventArgs.change) {
 			case "set":
 				if (eventArgs.path === "prop") {
@@ -2553,8 +2572,14 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return (allPath.indexOf(".") < 0) && object[key];
 	}
 
-	$tags({
-		props: $.extend({}, $tags.for, $sub.DataMap($tags.props.getTgt, observeProps, observeMappedProps, undefined, shallowArrayFilter))
+	$tags("props", {
+		baseTag: $tags["for"],
+		dataMap: $views.map({
+			getTgt: $tags.props.dataMap.getTgt,
+			obsSrc: observeProps,
+			obsTgt: observeMappedProps,
+			tgtFlt: shallowArrayFilter
+		})
 	});
 
 	//========================
@@ -2766,10 +2791,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 //TODO
 // Tests for different attr settings on tags
 	// tests of onAfterBind extensibility
-	// tests for DataMap
-	// tests for map=...
-	// Allow for registering DataMaps
-	// tests for programmatic DataMap scenarios
+	// tests for maps...
+	// tests for programmatic map scenarios
 	// tests for sorted table, using map=sort or {{sort}} with props for setting sort parameters
 	// tests for setting()
 	// tests for settings.debugMode()

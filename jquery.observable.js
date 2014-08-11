@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 55 (Beta Candidate) */
+informal pre V1.0 commit counter: 56 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -21,11 +21,14 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	//========================== Top-level vars ==========================
 
 	var versionNumber = "v1.0.0-alpha",
-
+		$views = $.views =
+			$.views // jsrender was loaded before jquery.observable
+			|| { // jsrender not loaded so set up $.views and $.views.sub here, and merge back in jsrender if loaded afterwards
+				jsviews: versionNumber,
+				sub: {}
+			},
+		$sub = $views.sub,
 		$eventSpecial = $.event.special,
-		$sub = $.views
-			? $.views.sub // jsrender was loaded before jquery.observable
-			: ($observable.sub = {}), // jsrender not loaded so store sub on $observable, and merge back in to $.views.sub in jsrender if loaded afterwards
 		splice = [].splice,
 		$isArray = $.isArray,
 		$expando = $.expando,
@@ -199,7 +202,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					: {
 						fullPath: path,
 						paths: pathStr ? [pathStr] : [],
-						prop: prop,
+						prop: prop
 					};
 				evData.ns = initialNs;
 				evData.cb = callback;
@@ -480,62 +483,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return $observe.apply(args.shift(), args);
 	}
 
-	function shallowFilter(key, object, allPath) {
-		return (allPath.indexOf(".") < 0) && (allPath.indexOf("[") < 0) && object[key];
-	}
-
-	function DataMap(getTarget, observeSource, observeTarget, srcPathFilter, tgtPathFilter) {
-		srcPathFilter = srcPathFilter || shallowFilter; // default to shallowFilter
-		tgtPathFilter = tgtPathFilter || shallowFilter;
-		return {
-			getTgt: getTarget,
-			obsSrc: observeSource,
-			obsTgt: observeTarget,
-			map: function(source) {
-				var theMap = this; // Instance of DataMap
-				if (theMap.src !== source) {
-					if (theMap.src) {
-						theMap.unmap();
-					}
-					if (typeof source === OBJECT) {
-						var changing,
-						target = getTarget.apply(theMap, arguments);
-
-						if ($.observable) { // If JsObservable is loaded
-							$.observable(source).observeAll(theMap.obs = function(ev, eventArgs) {
-								if (!changing && observeSource) {
-									changing = true;
-									observeSource.call(theMap, source, target, ev, eventArgs);
-									changing = false;
-								}
-							}, srcPathFilter);
-							$.observable(target).observeAll(theMap.obt = function(ev, eventArgs) {
-								if (!changing && observeTarget) {
-									changing = true;
-									observeTarget.call(theMap, source, target, ev, eventArgs);
-									changing = false;
-								}
-							}, tgtPathFilter);
-						}
-						theMap.src = source;
-						theMap.tgt = target;
-					}
-				}
-				return theMap;
-			},
-			unmap: function() {
-				if ($.observable) { // If JsObservable is loaded
-					var theMap = this;
-					if (theMap.src) {
-						$.observable(theMap.src).unobserveAll(theMap.obs, srcPathFilter);
-						$.observable(theMap.tgt).unobserveAll(theMap.obt, tgtPathFilter);
-						theMap.src = theMap.tgt = undefined;
-					}
-				}
-			}
-		};
-	}
-
 	//========================== Initialize ==========================
 
 	function $observeAll(namespace, cb, filter, unobserve) {
@@ -627,7 +574,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	}
 
-	$sub.DataMap = DataMap;
 	$.observable = $observable;
 	$observable._fltr = function(key, object, allPath, filter) {
 		var prop = (filter && $isFunction(filter)
@@ -867,6 +813,76 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				}
 			}
 		}
+	};
+
+	function shallowFilter(key, object, allPath) {
+		return (allPath.indexOf(".") < 0) && (allPath.indexOf("[") < 0) && object[key];
+	}
+
+	$views.map = function(mapDef) {
+		function newMap(source, options, target) {
+			var changing,
+				map = this;
+			if (this.src) {
+				this.unmap(); // We are re-mapping a new source
+			}
+			if (typeof source === "object") {
+				map.src = source;
+				map.tgt = target || map.tgt || [];
+				map.options = options || map.options;
+				map.update();
+
+				mapDef.obsSrc && $observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
+					if (!changing) {
+						changing = 1;
+						mapDef.obsSrc(map, ev, eventArgs);
+						changing = 0;
+					}
+				}, map.srcFlt);
+				mapDef.obsTgt && $observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
+					if (!changing) {
+						changing = 1;
+						mapDef.obsTgt(map, ev, eventArgs);
+						changing = 0;
+					}
+				}, map.tgtFlt);
+			}
+		}
+
+		(newMap.prototype = {
+			srcFlt: mapDef.srcFlt || shallowFilter, // default to shallowFilter
+			tgtFlt: mapDef.tgtFlt || shallowFilter,
+			update: function(options) {
+				var map = this;
+				$.observable(map.tgt).refresh(mapDef.getTgt(map.src, map.options = options || map.options));
+			},
+			unmap: function() {
+				var map = this;
+				if (map.src) {
+					map.obs && $.observable(map.src).unobserveAll(map.obs, map.srcFlt);
+					map.obt && $.observable(map.tgt).unobserveAll(map.obt, map.tgtFlt);
+					map.src = undefined;
+				}
+			},
+			map: newMap,
+			_def: mapDef
+		}).constructor = newMap;
+
+		if ($isFunction(mapDef)) {
+			// Simple map declared as function
+			mapDef = {
+				getTgt: mapDef,
+			};
+		}
+
+		if (mapDef.baseMap) {
+			mapDef = $.extend({}, mapDef.baseMap, mapDef);
+		}
+
+		mapDef.map = function(source, options, target) {
+			return new newMap(source, options, target);
+		};
+		return mapDef;
 	};
 
 })(this, this.jQuery);

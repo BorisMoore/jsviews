@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 55 (Beta Candidate) */
+informal pre V1.0 commit counter: 56 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -12,10 +12,9 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	// global is the this object, which is window when running in the usual browser environment.
 	"use strict";
 
-	if (jQuery && jQuery.views || global.jsviews) { return; } // JsRender is already loaded
+	if (jQuery && jQuery.render || global.jsviews) { return; } // JsRender is already loaded
 
 	//========================== Top-level vars ==========================
-	//onInit versus init? inherit/base/deriveFrom/extend/basetag
 
 	var versionNumber = "v1.0.0-beta",
 
@@ -85,9 +84,11 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				parse: parseParams,
 				extend: $extend,
 				syntaxErr: syntaxError,
-				DataMap: DataMap,
+				onStore: {},
 				_lnk: retVal
 			},
+//			map: $views.dataMap || dataMap, // If jsObservable loaded first, use that definition of dataMap
+			map: dataMap, // If jsObservable loaded first, use that definition of dataMap
 			_cnvt: convertVal,
 			_tag: renderTag,
 			_err: error
@@ -108,26 +109,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		$tags("dbg", $helpers.dbg = $converters.dbg = debugMode ? dbgBreak : retVal); // If in debug mode, register {{dbg/}}, {{dbg:...}} and ~dbg() to insert break points for debugging.
 	}
 
-	function DataMap(getTarget) {
-		return {
-			getTgt: getTarget,
-			map: function(source) {
-				var target,
-					theMap = this; // Instance of DataMap
-				if (theMap.src !== source) {
-					if (theMap.src) {
-						theMap.unmap();
-					}
-					if (typeof source === "object") {
-						target = getTarget.apply(theMap, arguments);
-						theMap.src = source;
-						theMap.tgt = target;
-					}
-				}
-			}
-		};
-	}
-
 	function JsViewsError(message) {
 		// Error exception type for JsViews/JsRender
 		// Override of $.views.sub.Error is possible
@@ -137,7 +118,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 	function $extend(target, source) {
 		var name;
-		target = target || {};
 		for (name in source) {
 			target[name] = source[name];
 		}
@@ -357,7 +337,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			? (view.getRsc("converters", converter) || error("Unknown converter: '"+ converter + "'"))
 			: converter);
 
-		args = !args.length && !tagCtx.index && tag.autoBind // On the opening tag with no args, if autoBind is true, bind the the current data context
+		args = !args.length && !tagCtx.index // On the opening tag with no args, bind the the current data context
 			? [view.data]
 			: converter
 				? args.slice() // If there is a converter, use a copy of the tagCtx.args array for rendering, and replace the args[0] in
@@ -393,7 +373,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// Returns the rendered tag
 
 		var render, tag, tags, attr, parentTag, i, l, itemRet, tagCtx, tagCtxCtx, content, boundTagFn, tagDef,
-			callInit, map, thisMap, args, prop, props, initialTmpl,
+			callInit, mapDef, thisMap, args, prop, props, initialTmpl,
 			ret = "",
 			boundTagKey = +tagCtxs === tagCtxs && tagCtxs, // if tagCtxs is an integer, then it is the boundTagKey
 			linkCtx = parentView.linkCtx || 0,
@@ -421,6 +401,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			}
 			tagCtx = tagCtxs[i];
 			if (!linkCtx.tag) {
+				// We are initializing tag, so for block tags, tagCtx.tmpl is an integer > 0
 				content = tagCtx.tmpl;
 				content = tagCtx.content = content && parentTmpl.tmpls[content - 1];
 
@@ -505,7 +486,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				}
 			}
 			tagCtx.tag = tag;
-			if (tag.map && tag.tagCtxs) {
+			if (tag.dataMap && tag.tagCtxs) {
 				tagCtx.map = tag.tagCtxs[i].map; // Copy over the compiled map instance from the previous tagCtxs to the refreshed ones
 			}
 			if (!tag.flow) {
@@ -527,14 +508,14 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			props = tagCtx.props;
 			args = convertArgs(tag, tag.convert);
 
-			if ((map = props.map || tag).map) {
-				if (args.length || props.map) {
-					thisMap = tagCtx.map = $extend(tagCtx.map || { unmap: map.unmap }, props); // Compiled map instance
-					if (thisMap.src !== args[0]) {
-						if (thisMap.src) {
-							thisMap.unmap();
+			if (mapDef = props.dataMap || tag.dataMap) {
+				if (args.length || props.dataMap) {
+					thisMap = tagCtx.map;
+					if (!thisMap || thisMap.src !== args[0] || isUpdate) {
+						if (thisMap && thisMap.src) {
+							thisMap.unmap(); // only called if observable map - not when only used in JsRender, e.g. by {{props}}
 						}
-						map.map.apply(thisMap, args);
+						thisMap = tagCtx.map = mapDef.map(args[0], props);
 					}
 					args = [thisMap.tgt];
 				}
@@ -604,8 +585,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		self.parent = parentView;
 		self.type = type;
 		// If the data is an array, this is an 'array view' with a views array for each child 'item view'
-		// If the data is not an array, this is an 'item view' with a views 'map' object for any child nested views
-		// ._.useKey is non zero if is not an 'array view' (owning a data array). Uuse this as next key for adding to child views map
+		// If the data is not an array, this is an 'item view' with a views 'hash' object for any child nested views
+		// ._.useKey is non zero if is not an 'array view' (owning a data array). Use this as next key for adding to child views hash
 		self._ = self_;
 		self.linked = !!onRender;
 		if (parentView) {
@@ -613,7 +594,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			parentView_ = parentView._;
 			if (parentView_.useKey) {
 				// Parent is an 'item view'. Add this view to its views object
-				// self._key = is the key in the parent view map
+				// self._key = is the key in the parent view hash
 				views[self_.key = "_" + parentView_.useKey++] = self;
 				self.index = indexStr;
 				self.getIndex = getNestedIndex;
@@ -648,16 +629,16 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	//=============
 
 	function compileChildResources(parentTmpl) {
-		var storeName, resources, resourceName, settings, compile, onStore;
+		var storeName, resources, resourceName, resource, settings, compile, onStore;
 		for (storeName in jsvStores) {
 			settings = jsvStores[storeName];
 			if ((compile = settings.compile) && (resources = parentTmpl[storeName + "s"])) {
 				for (resourceName in resources) {
-					// compile child resource declarations (templates, tags, tags.for or helpers)
-					resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl, storeName, settings);
-					if (onStore = $sub.onStoreItem) {
+					// compile child resource declarations (templates, tags, tags["for"] or helpers)
+					resource = resources[resourceName] = compile(resourceName, resources[resourceName], parentTmpl);
+					if (resource && (onStore = $sub.onStore[storeName])) {
 						// e.g. JsViews integration
-						onStore(storeName, resourceName, resources[resourceName], compile);
+						onStore(resourceName, resource, compile);
 					}
 				}
 			}
@@ -673,6 +654,10 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				render: tagDef
 			};
 		} else {
+			if (tagDef.baseTag) {
+				tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
+				tagDef = $extend($extend({}, tagDef.baseTag), tagDef);
+			}
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
 			if ((tmpl = tagDef.template) !== undefined) {
 				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
@@ -690,7 +675,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return tagDef;
 	}
 
-	function compileTmpl(name, tmpl, parentTmpl, storeName, storeSettings, options) {
+	function compileTmpl(name, tmpl, parentTmpl, options) {
 		// tmpl is either a template object, a selector for a template script block, the name of a compiled template, or a template object
 
 		//==== nested functions ====
@@ -723,7 +708,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 						name = name || "_" + autoTmplName++;
 						elem.setAttribute(tmplAttr, name);
 						// Use tmpl as options
-						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, storeName, storeSettings, options);
+						value = $templates[name] = compileTmpl(name, elem.innerHTML, parentTmpl, options);
 					}
 					elem = undefined;
 				}
@@ -779,6 +764,29 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			return tmpl;
 		}
 	}
+
+	function dataMap(mapDef) {
+		function newMap(source, options) {
+			this.tgt = mapDef.getTgt(source, options);
+		}
+
+		if ($isFunction(mapDef)) {
+			// Simple map declared as function
+			mapDef = {
+				getTgt: mapDef,
+			};
+		}
+
+		if (mapDef.baseMap) {
+			mapDef = $extend($extend({}, mapDef.baseMap), mapDef);
+		}
+
+		mapDef.map = function(source, options) {
+			return new newMap(source, options);
+		};
+		return mapDef;
+	}
+
 	//==== /end of function compile ====
 
 	function TmplObject(markup, options) {
@@ -824,11 +832,11 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 			var onStore, compile, itemName, thisStore;
 
-			if (name && "" + name !== name && !name.nodeType && !name.markup) {
+			if (name && typeof name === "object" && !name.nodeType && !name.markup && !name.getTgt) {
 				// Call to $.views.things(items[, parentTmpl]),
 
 				// Adding items to the store
-				// If name is a map, then item is parentTmpl. Iterate over map and call store for key.
+				// If name is a hash, then item is parentTmpl. Iterate over hash and call store for key.
 				for (itemName in name) {
 					theStore(itemName, name[itemName], item);
 				}
@@ -846,20 +854,19 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			}
 			thisStore = parentTmpl ? parentTmpl[storeNames] = parentTmpl[storeNames] || {} : theStore;
 			compile = storeSettings.compile;
-			if (!name) {
-				item = compile(undefined, item);
-			} else if (item === null) {
+			if (item === null) {
 				// If item is null, delete this entry
-				delete thisStore[name];
+				name && delete thisStore[name];
 			} else {
-				thisStore[name] = compile ? (item = compile(name, item, parentTmpl, storeName, storeSettings)) : item;
+				item = compile ? (item = compile(name, item, parentTmpl)) : item;
+				name && (thisStore[name] = item);
 			}
 			if (compile && item) {
 				item._is = storeName; // Only do this for compiled objects (tags, templates...)
 			}
-			if (onStore = $sub.onStoreItem) {
+			if (item && (onStore = $sub.onStore[storeName])) {
 				// e.g. JsViews integration
-				onStore(storeName, name, item, compile);
+				onStore(name, item, compile);
 			}
 			return item;
 		}
@@ -1507,8 +1514,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		registerStore(jsvStoreName, jsvStores[jsvStoreName]);
 	}
 
-	var $observable,
-		$templates = $views.templates,
+	var $templates = $views.templates,
 		$converters = $views.converters,
 		$helpers = $views.helpers,
 		$tags = $views.tags,
@@ -1520,9 +1526,9 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// jQuery is loaded, so make $ the jQuery object
 		$ = jQuery;
 		$.fn.render = $fastRender;
-		if ($observable = $.observable) {
-			$extend($sub, $observable.sub); // jquery.observable.js was loaded before jsrender.js
-			delete $observable.sub;
+		if ($.observable) {
+			$extend($sub, $.views.sub); // jquery.observable.js was loaded before jsrender.js
+			$views.map = $.views.map;
 		}
 	} else {
 		////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1556,7 +1562,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					: $isFunction(fallback)
 						? fallback(e, view) : fallback;
 			}
-			return e;
+			return e == undefined ? "" : e;
 		},
 		_dbgMode: true
 	});
@@ -1622,12 +1628,10 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				}
 				return result;
 			},
-			flow: true,
-			autoBind: true
+			flow: true
 		},
 		include: {
-			flow: true,
-			autoBind: true
+			flow: true
 		},
 		"*": {
 			// {{* code... }} - Ignored if template.allowCode is false. Otherwise include code in compiled template
@@ -1647,7 +1651,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
 					if (!$isFunction(prop)) {
-						props.push({ key: key, prop: source[key] });
+						props.push({ key: key, prop: prop });
 					}
 				}
 			}
@@ -1655,13 +1659,10 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return props;
 	}
 
-	$tags({
-		props: $extend($extend({}, $tags.for),
-			DataMap(getTargetProps)
-		)
+	$tags("props", {
+		baseTag: $tags["for"],
+		dataMap: dataMap(getTargetProps)
 	});
-
-	$tags.props.autoBind = true;
 
 	//========================== Register converters ==========================
 
@@ -1703,11 +1704,14 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	//========================== Top-level vars ==========================
 
 	var versionNumber = "v1.0.0-alpha",
-
+		$views = $.views =
+			$.views // jsrender was loaded before jquery.observable
+			|| { // jsrender not loaded so set up $.views and $.views.sub here, and merge back in jsrender if loaded afterwards
+				jsviews: versionNumber,
+				sub: {}
+			},
+		$sub = $views.sub,
 		$eventSpecial = $.event.special,
-		$sub = $.views
-			? $.views.sub // jsrender was loaded before jquery.observable
-			: ($observable.sub = {}), // jsrender not loaded so store sub on $observable, and merge back in to $.views.sub in jsrender if loaded afterwards
 		splice = [].splice,
 		$isArray = $.isArray,
 		$expando = $.expando,
@@ -1881,7 +1885,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					: {
 						fullPath: path,
 						paths: pathStr ? [pathStr] : [],
-						prop: prop,
+						prop: prop
 					};
 				evData.ns = initialNs;
 				evData.cb = callback;
@@ -2162,62 +2166,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return $observe.apply(args.shift(), args);
 	}
 
-	function shallowFilter(key, object, allPath) {
-		return (allPath.indexOf(".") < 0) && (allPath.indexOf("[") < 0) && object[key];
-	}
-
-	function DataMap(getTarget, observeSource, observeTarget, srcPathFilter, tgtPathFilter) {
-		srcPathFilter = srcPathFilter || shallowFilter; // default to shallowFilter
-		tgtPathFilter = tgtPathFilter || shallowFilter;
-		return {
-			getTgt: getTarget,
-			obsSrc: observeSource,
-			obsTgt: observeTarget,
-			map: function(source) {
-				var theMap = this; // Instance of DataMap
-				if (theMap.src !== source) {
-					if (theMap.src) {
-						theMap.unmap();
-					}
-					if (typeof source === OBJECT) {
-						var changing,
-						target = getTarget.apply(theMap, arguments);
-
-						if ($.observable) { // If JsObservable is loaded
-							$.observable(source).observeAll(theMap.obs = function(ev, eventArgs) {
-								if (!changing && observeSource) {
-									changing = true;
-									observeSource.call(theMap, source, target, ev, eventArgs);
-									changing = false;
-								}
-							}, srcPathFilter);
-							$.observable(target).observeAll(theMap.obt = function(ev, eventArgs) {
-								if (!changing && observeTarget) {
-									changing = true;
-									observeTarget.call(theMap, source, target, ev, eventArgs);
-									changing = false;
-								}
-							}, tgtPathFilter);
-						}
-						theMap.src = source;
-						theMap.tgt = target;
-					}
-				}
-				return theMap;
-			},
-			unmap: function() {
-				if ($.observable) { // If JsObservable is loaded
-					var theMap = this;
-					if (theMap.src) {
-						$.observable(theMap.src).unobserveAll(theMap.obs, srcPathFilter);
-						$.observable(theMap.tgt).unobserveAll(theMap.obt, tgtPathFilter);
-						theMap.src = theMap.tgt = undefined;
-					}
-				}
-			}
-		};
-	}
-
 	//========================== Initialize ==========================
 
 	function $observeAll(namespace, cb, filter, unobserve) {
@@ -2309,7 +2257,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	}
 
-	$sub.DataMap = DataMap;
 	$.observable = $observable;
 	$observable._fltr = function(key, object, allPath, filter) {
 		var prop = (filter && $isFunction(filter)
@@ -2551,6 +2498,76 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	};
 
+	function shallowFilter(key, object, allPath) {
+		return (allPath.indexOf(".") < 0) && (allPath.indexOf("[") < 0) && object[key];
+	}
+
+	$views.map = function(mapDef) {
+		function newMap(source, options, target) {
+			var changing,
+				map = this;
+			if (this.src) {
+				this.unmap(); // We are re-mapping a new source
+			}
+			if (typeof source === "object") {
+				map.src = source;
+				map.tgt = target || map.tgt || [];
+				map.options = options || map.options;
+				map.update();
+
+				mapDef.obsSrc && $observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
+					if (!changing) {
+						changing = 1;
+						mapDef.obsSrc(map, ev, eventArgs);
+						changing = 0;
+					}
+				}, map.srcFlt);
+				mapDef.obsTgt && $observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
+					if (!changing) {
+						changing = 1;
+						mapDef.obsTgt(map, ev, eventArgs);
+						changing = 0;
+					}
+				}, map.tgtFlt);
+			}
+		}
+
+		(newMap.prototype = {
+			srcFlt: mapDef.srcFlt || shallowFilter, // default to shallowFilter
+			tgtFlt: mapDef.tgtFlt || shallowFilter,
+			update: function(options) {
+				var map = this;
+				$.observable(map.tgt).refresh(mapDef.getTgt(map.src, map.options = options || map.options));
+			},
+			unmap: function() {
+				var map = this;
+				if (map.src) {
+					map.obs && $.observable(map.src).unobserveAll(map.obs, map.srcFlt);
+					map.obt && $.observable(map.tgt).unobserveAll(map.obt, map.tgtFlt);
+					map.src = undefined;
+				}
+			},
+			map: newMap,
+			_def: mapDef
+		}).constructor = newMap;
+
+		if ($isFunction(mapDef)) {
+			// Simple map declared as function
+			mapDef = {
+				getTgt: mapDef,
+			};
+		}
+
+		if (mapDef.baseMap) {
+			mapDef = $.extend({}, mapDef.baseMap, mapDef);
+		}
+
+		mapDef.map = function(source, options, target) {
+			return new newMap(source, options, target);
+		};
+		return mapDef;
+	};
+
 })(this, this.jQuery);
 
 /* JsViews:
@@ -2595,6 +2612,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		CHECKED = "checked",
 		CHECKBOX = "checkbox",
 		RADIO = "radio",
+		NONE = "none",
+		sTRUE = "true",
 		closeScript = '"></script>',
 		openScript = '<script type="jsv',
 		bindElsSel = "script,[" + jsvAttrStr + "]",
@@ -2632,7 +2651,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		rOpenMarkers = /(#)()(\d+)([_^])/g,
 		rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
 		rOpenTagMarkers = /(#)()(\d+)(\^)/g,
-		rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
+		rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g,
+		getComputedStyle = global.getComputedStyle;
 
 	if (!$) {
 		// jQuery is not loaded.
@@ -2732,14 +2752,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				}
 			}
 		}
-		return false;
-	}
-
-	function elemChangeNoValidateHandler(ev) {
-		var noVal = $viewsSettings.noValidate;
-		$viewsSettings.noValidate = true;
-		elemChangeHandler(ev);
-		$viewsSettings.noValidate = noVal;
 	}
 
 	function propertyChangeHandler(ev, eventArgs, linkFn) {
@@ -2781,7 +2793,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 					mergeCtxs(tag, sourceValue);
 
-					if (noUpdate || attr === "none") {
+					if (noUpdate || attr === NONE) {
 						// onUpdate returned false, or attr === "none", or this is an update coming from the tag's own change event
 						// - so don't refresh the tag: we just use the new tagCtxs merged from the sourceValue,
 						// (which may optionally have been modifed in onUpdate()...) and then bind, and we are done
@@ -2804,7 +2816,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
-					cvt = cvt === "" ? "true" : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
+					cvt = cvt === "" ? sTRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue) // convertVal
 						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true); // renderTag
@@ -2878,7 +2890,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// When called for a tag, either in tag.refresh() or propertyChangeHandler(), returns a promise (and supports async)
 		// When called (in propertyChangeHandler) for target HTML returns true
 		// When called (in propertyChangeHandler) for other targets returns boolean for "changed"
-		var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex,
+		var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle,
 			renders = sourceValue !== undefined,
 			source = linkCtx.data,
 			target = tag && tag.parentElem || linkCtx.elem,
@@ -2905,10 +2917,34 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 		if (/^css-/.test(attr)) {
 			if (linkCtx.attr === "visible") {
-				sourceValue = sourceValue
-				// Make sure we set the correct display style for showing this particular element ("block", "inline" etc.)
-					? getElementDefaultDisplay(target)
-					: "none";
+				// Get the current display style
+				cStyle = (target.currentStyle || getComputedStyle.call(global, target, "")).display;
+
+				if (sourceValue) {
+					// We are showing the element.
+					// Get the cached 'visible' display value from the -jsvd expando
+					sourceValue = target._jsvd
+						// Or, if not yet cached, get the current display value
+						|| cStyle;
+					if (sourceValue === NONE && !(sourceValue = displayStyles[nodeName = target.nodeName])) {
+						// Currently display value is 'none', and the 'visible' style has not been cached.
+						// We create an element to find the correct 'visible' display style for this nodeName
+						testElem = document.createElement(nodeName);
+						document.body.appendChild(testElem);
+
+						// Get the default style for this HTML tag to use as 'visible' style
+						sourceValue
+							// and cache it as a hash against nodeName
+							= displayStyles[nodeName]
+							= (testElem.currentStyle || getComputedStyle.call(global, testElem, "")).display;
+						document.body.removeChild(testElem);
+					}
+				} else {
+					// We are hiding the element.
+					// Cache the current display value as 'visible' style, on _jsvd expando, for when we show the element again
+					target._jsvd = cStyle;
+					sourceValue = NONE; // Hide the element
+				}
 			}
 			if (change = change || targetVal !== sourceValue) {
 				$.style(target, attr.slice(4), sourceValue);
@@ -3063,25 +3099,6 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	// Utilities for event handlers
 	//=============================
 
-	function getElementDefaultDisplay(elem) {
-		// Get the 'visible' display style for the element
-		var testElem, nodeName,
-			getComputedStyle = global.getComputedStyle,
-			cStyle = (elem.currentStyle || getComputedStyle.call(global, elem, "")).display;
-
-		if (cStyle === "none" && !(cStyle = displayStyles[nodeName = elem.nodeName])) {
-			// Currently display: none, and the 'visible' style has not been cached.
-			// We create an element to find the correct visible display style for this nodeName
-			testElem = document.createElement(nodeName);
-			document.body.appendChild(testElem);
-			cStyle = (getComputedStyle ? getComputedStyle.call(global, testElem, "") : testElem.currentStyle).display;
-			// Cache the result as a hash against nodeName
-			displayStyles[nodeName] = cStyle;
-			document.body.removeChild(testElem);
-		}
-		return cStyle;
-	}
-
 	function setArrayChangeLink(view) {
 		// Add/remove arrayChange handler on view
 		var handler, arrayBinding,
@@ -3124,7 +3141,9 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		// to: true - default attribute for setting data value on HTML element; false: default attribute for getting value from HTML element
 		// Merge in the default attribute bindings for this target element
 		var nodeName = elem.nodeName.toLowerCase(),
-			attr = $viewsSettings.merge[nodeName] || elem.contentEditable === "true" && {to: htmlStr, from: htmlStr};
+			attr =
+				$viewsSettings.merge[nodeName] // get attr settings for input textarea select or optgroup
+				|| elem.contentEditable === sTRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
 		return attr
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -3356,7 +3375,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				activeBody = document.body;
 				$(activeBody)
 					.on(elementChangeStr, elemChangeHandler)
-					.on('blur', '[contenteditable]', elemChangeNoValidateHandler);
+					.on('blur', '[contenteditable]', elemChangeHandler);
 			}
 
 			var i, k, html, vwInfos, view, placeholderParent, targetEl, oldCtx,
@@ -3487,7 +3506,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 				//	parentTag = "table";
 				//	tagStack.shift();
 				//}
-				if (!$viewsSettings.noValidate) {
+				if (validate) {
 					if (selfClose || selfClose2) {
 						if (!voidElems[parentTag] && !/;svg;|;math;/.test(";" + tagStack.join(";")+ ";")) {
 							// Only self-closing elements must be legitimate void elements, such as <br/>, per HTML schema,
@@ -3857,7 +3876,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 		//==== /end of nested functions ====
 
-		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx,
+		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx, validate,
 			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, isVoid, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, lazyLink,
 			self = this,
 			thisId = self._.id + "_",
@@ -3900,6 +3919,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			: (self.parentElem      // view.link()
 				|| document.body);  // link(null, data) to link the whole document
 
+		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== sTRUE;
 		parentTag = parentNode.tagName.toLowerCase();
 		elCnt = !!elContent[parentTag];
 
@@ -3952,7 +3972,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 //			if (!!oldElCnt !== !!elCnt) {
 //				error("Parse: " + html); // Parse error. Content not well-formed?
 //			}
-			if (!$viewsSettings.noValidate && tagStack.length) {
+			if (validate && tagStack.length) {
 				syntaxError("Mismatched '<" + parentTag + "...>' in:\n" + html); // Unmatched tag
 			}
 			if (validateOnly) {
@@ -4296,7 +4316,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	};
 
 	function callAfterLink(tag, tagCtx) {
-		var linkedElem, elem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
+		var $linkedElem, linkedElem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
 			view = tagCtx.view,
 			linkCtx = tag.linkCtx = tag.linkCtx || {
 				tag: tag,
@@ -4308,25 +4328,25 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		if (tag.onAfterLink) {
 			tag.onAfterLink(tagCtx, linkCtx);
 		}
-		linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
-		if (elem = linkedElem && linkedElem[0]) {
+		$linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
+		if (linkedElem = $linkedElem && $linkedElem[0]) {
 			if (radioButtons = tag._.radio) {
-				linkedElem = linkedElem.children("input[type=radio]");
+				$linkedElem = $linkedElem.children("input[type=radio]");
 			}
 			if (radioButtons || !tag._.chging) {
 				val = $sub.cvt(tag, tag.convert)[0];
 
-				if (radioButtons || elem !== linkCtx.elem) {
-					l = linkedElem.length;
+				if (radioButtons || linkedElem !== linkCtx.elem) {
+					l = $linkedElem.length;
 					while (l--) {
-						elem = linkedElem[l];
-						linkedTag = elem._jsvLnkdEl;
+						linkedElem = $linkedElem[l];
+						linkedTag = linkedElem._jsvLnkdEl;
 						if (tag._.inline && (!linkedTag || linkedTag !== tag && linkedTag.targetTag !== tag)) {
-							elem._jsvLnkdEl = tag;
+							linkedElem._jsvLnkdEl = tag;
 							// For data-linked tags, identify the linkedElem with the tag, for "to" binding
 							// (For data-linked elements, if not yet bound, we identify later when the linkCtx.elem is bound)
 							bindings = linkCtx.elem ? linkCtx.elem._jsvBnd : tag._prv._jsvBnd;
-							elem._jsvBnd = bindings + "+";
+							linkedElem._jsvBnd = bindings + "+";
 							// Add a "+" for cloned binding - so removing elems with cloned bindings will not remove the 'parent' binding from the bindingStore.
 
 							bindings = bindings.slice(1).split("&");
@@ -4337,32 +4357,44 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 						}
 						if (radioButtons) {
 							// For radio button, set to if val === value. For others set val() to val, below
-							elem[CHECKED] = val === elem.value;
+							linkedElem[CHECKED] = val === linkedElem.value;
 						}
 					}
 					linkCtx._val = val;
 				}
-				if (!radioButtons && elem.value !== undefined && val !== undefined) {
-					if (elem.type === CHECKBOX) {
-						elem[CHECKED] = val && val !== "false";
-					} else {
-						linkedElem.val(val);
+				if (val !== undefined) {
+					if (!radioButtons && linkedElem.value !== undefined) {
+						if (linkedElem.type === CHECKBOX) {
+							linkedElem[CHECKED] = val && val !== "false";
+						} else {
+							$linkedElem.val(val);
+						}
+					} else if (linkedElem.contentEditable === sTRUE) {
+						linkedElem.innerHTML = val;
 					}
 				}
 			}
 		}
-		if (elem = elem || tag.tagName === ":" && linkCtx.elem) {
-			oldTrig = elem._jsvTr;
+		if (linkedElem = linkedElem || tag.tagName === ":" && linkCtx.elem) {
+			oldTrig = linkedElem._jsvTr;
 			newTrig = tagCtx.props.trigger;
-			newTrig = newTrig === true ? 'keyup' : newTrig;
 			if (oldTrig !== newTrig) {
-				elem._jsvTr = newTrig
-				elem = $(elem);
-
-				oldTrig && elem.off(oldTrig, elemChangeHandler);
-				newTrig && elem.on(newTrig, elemChangeHandler);
+				linkedElem._jsvTr = newTrig;
+				$linkedElem = $linkedElem || $(linkedElem);
+				bindElChange($linkedElem, oldTrig, "off");
+				bindElChange($linkedElem, newTrig, "on");
 			}
 		}
+	}
+
+	function asyncElemChangeHandler(ev) {
+		setTimeout(function() {
+			elemChangeHandler(ev);
+		}, 0);
+	}
+
+	function bindElChange($elem, trig, onoff) {
+		trig && $elem[onoff](trig === true? "keydown" : trig, trig === true ? asyncElemChangeHandler : elemChangeHandler);
 	}
 
 	function bindTo(binding, cvtBk) {
@@ -4461,7 +4493,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 
 	function removeViewBinding(bindId, linkedElemTag, elem) {
 		// Unbind
-		var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, linkedElem, trigger,
+		var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, $linkedElem, linkedElem, trigger,
 			binding = bindingStore[bindId];
 
 		if (linkedElemTag) {
@@ -4492,11 +4524,11 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 							}
 						}
 					}
-					linkedElem = tag.linkedElem;
-					linkedElem = linkedElem && linkedElem[0] || linkCtx.elem;
+					$linkedElem = tag.linkedElem;
+					linkedElem = $linkedElem && $linkedElem[0] || linkCtx.elem;
 
 					if (trigger = linkedElem && linkedElem._jsvTr) {
-						$(linkedElem).off(trigger, elemChangeHandler);
+						bindElChange($linkedElem || $(linkedElem), trigger, "off");
 						linkedElem._jsvTr = undefined;
 					}
 
@@ -4521,7 +4553,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 			if (activeBody) {
 				$(activeBody)
 					.off(elementChangeStr, elemChangeHandler)
-					.off('blur', '[contenteditable]', elemChangeNoValidateHandler);
+					.off('blur', '[contenteditable]', elemChangeHandler);
 				activeBody = undefined;
 			}
 			tmplOrLinkTag = true;
@@ -4629,32 +4661,28 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	// JsRender integration
 	//=====================
 
-	$extend($sub, {
-		onStoreItem: function(storeName, name, item) {
-			if (item) {
-				if (storeName === "template") {
-					item.link = tmplLink;
-					item.unlink = tmplUnlink;
-					if (name) {
-						$.link[name] = function() {
-							return tmplLink.apply(item, arguments);
-						};
-						$.unlink[name] = function() {
-							return tmplUnlink.apply(item, arguments);
-						};
-					}
-				} else if (storeName === "tag") {
-					$sub._lnk(item);
-				}
-			}
-		},
+	$sub.onStore.template = function(name, item) {
+		item.link = tmplLink;
+		item.unlink = tmplUnlink;
+		if (name) {
+			$.link[name] = function() {
+				return tmplLink.apply(item, arguments);
+			};
+			$.unlink[name] = function() {
+				return tmplUnlink.apply(item, arguments);
+			};
+		}
+	};
 
-		_lnk: function(item) {
-			return $extend(item, linkMethods);
-		},
+	$sub.onStore.tag = function(name, item) {
+		$sub._lnk(item);
+	};
 
-		viewInfos: viewInfos // Expose viewInfos() as public helper method
-	});
+	$sub._lnk = function(item) {
+		return $extend(item, linkMethods);
+	};
+
+	$sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 
 	// Initialize default delimiters
 	($viewsSettings.delimiters = function() {
@@ -4822,7 +4850,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 						}
 						if (!viewToRemove._elCnt) {
 							try {
-								prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper)
+								prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
 								nextNode.parentNode.removeChild(nextNode);
 							} catch (e) {}
 						}
@@ -4937,22 +4965,28 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 	//========================
 
 	$tags("on", {
-		attr: "none",
+		attr: NONE,
 		onAfterLink: function(tagCtx, linkCtx) {
-			var self = this,
+			var handler, params,
+				self = this,
+				i = 0,
 				args = tagCtx.args, // [events,] [selector,] handler
 				data = tagCtx.props.data,
 				view = tagCtx.view,
-				handler = args.pop(),
 				contextOb = tagCtx.props.context; // Context ('this' pointer) for attached handler
+
+			while (!$isFunction(handler = args[i++])) {} // Handler is first arg of type function
+
+			params = args.slice(i); // Subsequent args are params
+			args = args.slice(0, i-1); // Preceding args (if any) are events and selector 
 
 			if (!contextOb) {
 				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
 				// to return that context object, and run compiled function against data
-				contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-1)[0]);
+				contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length -1)[0]);
 				contextOb = contextOb && $sub.tmplFn("{:" + contextOb[1] + "}", view.tmpl, true)(linkCtx.data, view);
 			}
-			if (handler && handler.call) {
+			if (handler) {
 				if (self._evs) {
 					self.onDispose();
 				}
@@ -4961,8 +4995,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 					self._sel = args[1],
 					data == undefined ? null : data,
 					self._hlr = function(ev) {
-						handler.call(contextOb || linkCtx.data, ev, {change: ev.type, view: view, linkCtx: linkCtx});
-						return false;
+						return handler.apply(contextOb || linkCtx.data, [].concat(params, ev, {change: ev.type, view: view, linkCtx: linkCtx}));
 					}
 				);
 			}
@@ -4973,7 +5006,7 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		flow: true
 	});
 
-	$extend($tags.for, {
+	$extend($tags["for"], {
 		//onUpdate: function(ev, eventArgs, tagCtxs) {
 			//Consider adding filtering for perf optimization. However the below prevents update on some scenarios which _should_ update - namely when there is another array on which for also depends.
 			//var i, l, tci, prevArg;
@@ -5047,14 +5080,15 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	});
 
-	$extend($tags.for, linkMethods);
-	$extend($tags.if, linkMethods);
+	$extend($tags["for"], linkMethods);
+	$extend($tags["if"], linkMethods);
 	$extend($tags.include, linkMethods);
 
-	function observeProps(source, target, ev, eventArgs) {
+	function observeProps(map, ev, eventArgs) {
 		switch (eventArgs.change) {
 			case "set":
-				var l = target.length;
+				var target = map.tgt,
+					l = target.length;
 				while (l--) {
 					if (target[l].key === eventArgs.path) {
 						break;
@@ -5072,8 +5106,10 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		}
 	}
 
-	function observeMappedProps(source, target, ev, eventArgs) {
-		var item;
+	function observeMappedProps(map, ev, eventArgs) {
+		var item,
+			source= map.src;
+
 		switch (eventArgs.change) {
 			case "set":
 				if (eventArgs.path === "prop") {
@@ -5102,8 +5138,14 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 		return (allPath.indexOf(".") < 0) && object[key];
 	}
 
-	$tags({
-		props: $.extend({}, $tags.for, $sub.DataMap($tags.props.getTgt, observeProps, observeMappedProps, undefined, shallowArrayFilter))
+	$tags("props", {
+		baseTag: $tags["for"],
+		dataMap: $views.map({
+			getTgt: $tags.props.dataMap.getTgt,
+			obsSrc: observeProps,
+			obsTgt: observeMappedProps,
+			tgtFlt: shallowArrayFilter
+		})
 	});
 
 	//========================
@@ -5315,10 +5357,8 @@ informal pre V1.0 commit counter: 55 (Beta Candidate) */
 //TODO
 // Tests for different attr settings on tags
 	// tests of onAfterBind extensibility
-	// tests for DataMap
-	// tests for map=...
-	// Allow for registering DataMaps
-	// tests for programmatic DataMap scenarios
+	// tests for maps...
+	// tests for programmatic map scenarios
 	// tests for sorted table, using map=sort or {{sort}} with props for setting sort parameters
 	// tests for setting()
 	// tests for settings.debugMode()

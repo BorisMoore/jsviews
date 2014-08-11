@@ -19,9 +19,11 @@
 		this.jsviews = this.oldJsviews;
 	</script>
 	<script src="unit-tests/tests-jsrender-with-jquery.js" type="text/javascript"></script>
+	<script src="unit-tests/tests-jsobservable.js" type="text/javascript"></script>
 	<script src="unit-tests/tests-jsviews.js" type="text/javascript"></script>
 	<script id="myTmpl" type="text/x-jsrender">A_{{:name}}_B</script>
-	<script id="myTmpl2" type="text/x-jsrender">' " \ \' \"</script>
+	<script id="my_tmpl" type="text/x-jsrender">A_{{:name}}_B</script>
+	<script id="my_tmpl2" type="text/x-jsrender">' " \ \' \"</script>
 </head>
 <body>
 	<div id="result" style="display:none"></div>
