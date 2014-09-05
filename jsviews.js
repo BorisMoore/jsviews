@@ -773,7 +773,7 @@ informal pre V1.0 commit counter: 56 (Beta Candidate) */
 		if ($isFunction(mapDef)) {
 			// Simple map declared as function
 			mapDef = {
-				getTgt: mapDef,
+				getTgt: mapDef
 			};
 		}
 
@@ -2554,7 +2554,7 @@ informal pre V1.0 commit counter: 56 (Beta Candidate) */
 		if ($isFunction(mapDef)) {
 			// Simple map declared as function
 			mapDef = {
-				getTgt: mapDef,
+				getTgt: mapDef
 			};
 		}
 
