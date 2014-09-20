@@ -2397,6 +2397,157 @@ test('data-link="attr{:expression}"', function() {
 	$("#result").empty();
 	person1.lastName = "One"; // reset Prop
 
+	// =============================== Arrange ===============================
+
+	$.views.converters({
+		not: function (val) {
+			return !val;
+		}
+	})
+
+	$.templates('prop: <span data-link="visible{not:lastName}">No name</span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", "");
+	after = $("#result span")[0].style.display;
+	$.observable(person1).setProperty("lastName", "One");
+	reset = $("#result span")[0].style.display;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after + "|" + reset, "none|inline|none",
+	'Data link using: <span data-link="visible{not:lastName}"></span>, and toggling lastName - sets display to "inline" if lastName is ""');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+
+	// =============================== Arrange ===============================
+
+	$.views.tags({
+		chooseAttr: {
+			init: function(tagCtx, linkCtx, ctx) {
+				if (this.tagCtx.props.tagAttr) {
+					this.attr = this.tagCtx.props.tagAttr;
+				}
+				if (this.tagCtx.props.linkCtxAttr) {
+					linkCtx.attr = this.tagCtx.props.linkCtxAttr;
+				}
+			},
+			render: function (val) {
+				return val.name ? val.name + "<br/>" : "";
+			},
+			attr: "text",
+			depends: "name"
+		}
+	});
+
+	var thing = { name: "box" };
+
+	function divProps() {
+		var div = $("#result div")[0];
+		return "title: " + div.title + " - innerHTML: " + div.innerHTML + " - display: " + div.style.display;
+	}
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="{chooseAttr}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: box&lt;br/&gt; - display: ",
+		"{chooseAttr} has target 'text'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="{chooseAttr tagAttr=\'title\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+		"{chooseAttr tagAttr=\'title\'} overrides tag.attr, and has target 'title'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="{chooseAttr tagAttr=\'html\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+		"{chooseAttr tagAttr=\'html\'} overrides tag.attr, and has target 'html'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+		"{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'} overrides linkCtx.attr, and has target 'title'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="html{chooseAttr}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+		"html{chooseAttr} has target 'html'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="html{chooseAttr tagAttr=\'title\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+		"html{chooseAttr tagAttr =\'title\'} overrides tag.attr, but still has target 'html'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="html{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+		"html{chooseAttr tagAttr =\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="visible{chooseAttr}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: xx - display: block",
+		"visible{chooseAttr} has display 'block'");
+
+	// ................................ Act ..................................
+	$.observable(thing).removeProperty("name");
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: xx - display: none",
+		"visible{chooseAttr} has display 'none' if {chooseAttr} returns ''");
+
+	// ................................ Act ..................................
+	thing.name = "box";
+	$.templates('<div data-link="visible{chooseAttr tagAttr=\'title\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: xx - display: block",
+		"visible{chooseAttr tagAttr=\'title\'} overrides tag.attr, but still has target 'visible' and has display 'block'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+		"visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'} overrides tag.attr and linkCtx.attr, and has target 'html'");
+
+	// ................................ Act ..................................
+	$.templates('<div data-link="visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
+		.link("#result", thing);
+
+	// ............................... Assert .................................
+	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+		"visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
+
 });
 
 test('data-link="{cvt:expression:cvtBack}"', function() {

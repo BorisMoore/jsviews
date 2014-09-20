@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 57 (Beta Candidate) */
+informal pre V1.0 commit counter: 58 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -334,7 +334,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			args = tagCtx.args;
 
 		converter = converter && ("" + converter === converter
-			? (view.getRsc("converters", converter) || error("Unknown converter: '"+ converter + "'"))
+			? (view.getRsc("converters", converter) || error("Unknown converter: '" + converter + "'"))
 			: converter);
 
 		args = !args.length && !tagCtx.index // On the opening tag with no args, bind to the current data context
@@ -397,7 +397,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		l = tagCtxs.length;
 		for (i = 0; i < l; i++) {
 			if (!i && (!tmpl || !tag)) {
-				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{"+ tagName + "}}");
+				tagDef = parentView.getRsc("tags", tagName) || error("Unknown tag: {{" + tagName + "}}");
 			}
 			tagCtx = tagCtxs[i];
 			if (!linkCtx.tag) {
@@ -442,10 +442,6 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 					// From child/descendant tags, can access using ~tag.parent, or ~parentTags.tagName
 					tag = new tagDef._ctr();
 					callInit = !!tag.init;
-
-					// Set attr on linkCtx to ensure outputting to the correct target attribute.
-					tag.attr = tag.attr || tagDef.attr || undefined;
-					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
 				} else {
 					// This is a simple tag declared as a function, or with init set to false. We won't instantiate a specific tag constructor - just a standard instance object.
 					$sub._lnk(tag = {
@@ -457,8 +453,6 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 					inline: !linkCtx
 				};
 				if (linkCtx) {
-					// Set attr on linkCtx to ensure outputting to the correct target attribute.
-					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
 				}
@@ -529,6 +523,11 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 				if (tag.template !== initialTmpl) {
 					tag._.tmpl = tag.template; // This will override the tag.template and also tagCtx.props.tmpl for all tagCtxs
 				}
+				if (linkCtx) {
+					// Set attr on linkCtx to ensure outputting to the correct target attribute.
+					// Setting either linkCtx.attr or this.attr in the init() allows per-instance choice of target attrib.
+					linkCtx.attr = tag.attr = linkCtx.attr || tag.attr;
+				}
 			}
 
 			itemRet = undefined;
@@ -547,7 +546,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		delete tag.rendering;
 
 		tag.tagCtx = tag.tagCtxs[0];
-		tag.ctx= tag.tagCtx.ctx;
+		tag.ctx = tag.tagCtx.ctx;
 
 		if (tag._.inline && (attr = tag.attr) && attr !== htmlStr) {
 			// inline tag with attr set to "text" will insert HTML-encoded content - as if it was element-based innerText
@@ -1189,7 +1188,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		return result;
 	}
 
-	function setPaths (fn, paths) {
+	function setPaths(fn, paths) {
 		fn.deps = [];
 		for (var key in paths) {
 			if (key !== "_jsvto" && paths[key].length) {
@@ -1200,7 +1199,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 	}
 
 	function parsedParam(args, props, ctx) {
-		 return [args.slice(0, -1), props.slice(0, -1), ctx.slice(0, -1)];
+		return [args.slice(0, -1), props.slice(0, -1), ctx.slice(0, -1)];
 	}
 
 	function paramStructure(parts, type) {
@@ -1485,7 +1484,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			+ "\nvar v"
 			+ (hasTag ? ",t=j._tag" : "")                // has tag
 			+ (hasCnvt ? ",c=j._cnvt" : "")              // converter
-			+ (hasEncoder ? ",h=j.converters.html":"") // html converter
+			+ (hasEncoder ? ",h=j.converters.html" : "") // html converter
 			+ (isLinkExpr ? ";\n" : ',ret=""\n')
 			+ (tmplOptions.debug ? "debugger;" : "")
 			+ code
@@ -1751,7 +1750,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		return function() {
 			var arg, dep,
 				deps = [],
-				l=args.length;
+				l = args.length;
 			while (l--) {
 				arg = args[l--],
 				dep = args[l];
@@ -2031,7 +2030,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		}
 		// Use a unique namespace (e.g. obs7) associated with each observe() callback to allow unobserve to remove handlers
 		ns += unobserve
-			? (callback ? ".obs" + callback._cId: "")
+			? (callback ? ".obs" + callback._cId : "")
 			: ".obs" + (cbId = callback._cId = callback._cId || observeCbKey++);
 
 		if (!unobserve) {
@@ -2645,7 +2644,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			html: htmlStr,
 			text: "text"
 		},
-		valueBinding = { from: "value", to: "value"},
+		valueBinding = {from: "value", to: "value"},
 		isCleanCall = 0,
 		oldCleanData = $.cleanData,
 		oldJsvDelimiters = $viewsSettings.delimiters,
@@ -2875,9 +2874,6 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 				error(linkCtx.expr + ": missing parens");
 			}
 
-			if (attr === "visible") {
-				attr = "css-display";
-			}
 			if (css = /^css-/.test(attr) && attr.slice(4)) {
 				currentValue = $.style(target, css);
 				if (+sourceValue === sourceValue) {
@@ -2935,6 +2931,9 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			return;
 		}
 
+		if (attr === "visible") {
+			attr = "css-display";
+		}
 		if (/^css-/.test(attr)) {
 			if (linkCtx.attr === "visible") {
 				// Get the current display style
@@ -3265,7 +3264,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 						bnd: tmplBindingKey
 					},
 					tagCtx: {
-						view:view
+						view: view
 					},
 					flow: true
 				};
@@ -3529,7 +3528,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 				//}
 				if (validate) {
 					if (selfClose || selfClose2) {
-						if (!voidElems[parentTag] && !/;svg;|;math;/.test(";" + tagStack.join(";")+ ";")) {
+						if (!voidElems[parentTag] && !/;svg;|;math;/.test(";" + tagStack.join(";") + ";")) {
 							// Only self-closing elements must be legitimate void elements, such as <br/>, per HTML schema,
 							// or under svg or math foreign namespace elements.
 							errorMsg = "'<" + parentTag + ".../";
@@ -4425,7 +4424,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 	}
 
 	function bindElChange($elem, trig, onoff) {
-		trig && $elem[onoff](trig === true? "keydown" : trig, trig === true ? asyncElemChangeHandler : elemChangeHandler);
+		trig && $elem[onoff](trig === true ? "keydown" : trig, trig === true ? asyncElemChangeHandler : elemChangeHandler);
 	}
 
 	function bindTo(binding, cvtBk) {

@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 57 (Beta Candidate) */
+informal pre V1.0 commit counter: 58 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -8,7 +8,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
  * Released under the MIT License.
  */
 
-(function (global, $, undefined) {
+(function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
 	// $ is the global var jQuery or jsviews
 	"use strict";
@@ -47,9 +47,9 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 
 	//========================== Top-level functions ==========================
 
-	$sub.getDeps = function () {
+	$sub.getDeps = function() {
 		var args = arguments;
-		return function () {
+		return function() {
 			var arg, dep,
 				deps = [],
 				l = args.length;
@@ -211,16 +211,16 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 				if (allPath) {
 					evData.observeAll = {
 						_path: allPath,
-						path: function () { // Step through path and parentObs parent chain, replacing '[]' by '[n]' based on current index of objects in parent arrays.
+						path: function() { // Step through path and parentObs parent chain, replacing '[]' by '[n]' based on current index of objects in parent arrays.
 							j = parentObs.length;
-							return allPath.replace(/[[.]/g, function (all) {
+							return allPath.replace(/[[.]/g, function(all) {
 								j--;
 								return all === "["
 									? "[" + $.inArray(parentObs[j - 1], parentObs[j])
 									: ".";
 							});
 						},
-						parents: function () {
+						parents: function() {
 							return parentObs; // The chain of parents between the modified object and the root object used in the observeAll() call
 						},
 						filter: filter,
@@ -240,7 +240,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			// If it is an array, register array binding
 			exprOb._ob = contextCb(exprOb, origRoot);
 			var origRt = origRoot;
-			return function (ev, eventArgs) {
+			return function(ev, eventArgs) {
 				var obj = exprOb._ob,
 					len = paths.length;
 				if (typeof obj === OBJECT) {
@@ -557,7 +557,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 					// For array properties lower in the tree, with no filter, filter is set to 0 in filterAndObserveAll, so no arrayChange binding here,
 					// since they get arrayChange binding added during regular $.observe(array ...) binding.
 					wrappedCb._cId = cb._cId = cb._cId || observeCbKey++; // Identify wrapped callback with unwrapped callback, so unobserveAll will
-					// remove previous observeAll wrapped callback, if inner callback was the same;
+																		  // remove previous observeAll wrapped callback, if inner callback was the same;
 					$observe(namespace, object, isObject, wrappedCb, unobserve, filter, parentObs, allPath);
 				}
 			} else {
@@ -580,7 +580,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 	}
 
 	$.observable = $observable;
-	$observable._fltr = function (allPath, object, parentObs, filter) {
+	$observable._fltr = function(allPath, object, parentObs, filter) {
 		if (filter && $isFunction(filter)
 			? filter(allPath, object, parentObs)
 			: true // TODO Consider supporting filter being a string or strings to do RegEx filtering based on key and/or allPath
@@ -604,11 +604,11 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		observeAll: $observeAll,
 		unobserveAll: $unobserveAll,
 
-		data: function () {
+		data: function() {
 			return this._data;
 		},
 
-		setProperty: function (path, value, nonStrict) {
+		setProperty: function(path, value, nonStrict) {
 			var key, pair, parts,
 				self = this,
 				object = self._data;
@@ -640,12 +640,12 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			return self;
 		},
 
-		removeProperty: function (path) {
+		removeProperty: function(path) {
 			this.setProperty(path, remove);
 			return this;
 		},
 
-		_setProperty: function (leaf, path, value, nonStrict) {
+		_setProperty: function(leaf, path, value, nonStrict) {
 			var setter, getter, removeProp,
 				property = path ? leaf[path] : leaf;
 
@@ -670,12 +670,12 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 					} else if (path) {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, { change: "set", path: path, value: value, oldValue: property, remove: removeProp });
+					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
 				}
 			}
 		},
 
-		_trigger: function (target, eventArgs) {
+		_trigger: function(target, eventArgs) {
 			$(target).triggerHandler(propertyChangeStr, eventArgs);
 		}
 	};
@@ -686,11 +686,11 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		observeAll: $observeAll,
 		unobserveAll: $unobserveAll,
 
-		data: function () {
+		data: function() {
 			return this._data;
 		},
 
-		insert: function (index, data) {
+		insert: function(index, data) {
 			var _data = this._data;
 			if (arguments.length === 1) {
 				data = index;
@@ -709,14 +709,14 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			return this;
 		},
 
-		_insert: function (index, data) {
+		_insert: function(index, data) {
 			var _data = this._data,
 				oldLength = _data.length;
 			splice.apply(_data, [index, 0].concat(data));
-			this._trigger({ change: "insert", index: index, items: data }, oldLength);
+			this._trigger({change: "insert", index: index, items: data}, oldLength);
 		},
 
-		remove: function (index, numToRemove) {
+		remove: function(index, numToRemove) {
 			var items,
 				_data = this._data;
 
@@ -736,15 +736,15 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			return this;
 		},
 
-		_remove: function (index, numToRemove, items) {
+		_remove: function(index, numToRemove, items) {
 			var _data = this._data,
 				oldLength = _data.length;
 
 			_data.splice(index, numToRemove);
-			this._trigger({ change: "remove", index: index, items: items }, oldLength);
+			this._trigger({change: "remove", index: index, items: items}, oldLength);
 		},
 
-		move: function (oldIndex, newIndex, numToMove) {
+		move: function(oldIndex, newIndex, numToMove) {
 			numToMove = numToMove ? PARSEINT(numToMove) : numToMove === 0 ? 0 : 1; // if null or undefined: move 1
 			oldIndex = PARSEINT(oldIndex);
 			newIndex = PARSEINT(newIndex);
@@ -759,36 +759,36 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			return this;
 		},
 
-		_move: function (oldIndex, newIndex, numToMove, items) {
+		_move: function(oldIndex, newIndex, numToMove, items) {
 			var _data = this._data,
 				oldLength = _data.length;
 			_data.splice(oldIndex, numToMove);
 			_data.splice.apply(_data, [newIndex, 0].concat(items));
-			this._trigger({ change: "move", oldIndex: oldIndex, index: newIndex, items: items }, oldLength);
+			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
-		refresh: function (newItems) {
+		refresh: function(newItems) {
 			var oldItems = this._data.slice();
 			this._refresh(oldItems, newItems);
 			return this;
 		},
 
-		_refresh: function (oldItems, newItems) {
+		_refresh: function(oldItems, newItems) {
 			var _data = this._data,
 				oldLength = _data.length;
 
 			splice.apply(_data, [0, _data.length].concat(newItems));
-			this._trigger({ change: "refresh", oldItems: oldItems }, oldLength);
+			this._trigger({change: "refresh", oldItems: oldItems}, oldLength);
 		},
 
-		_trigger: function (eventArgs, oldLength) {
+		_trigger: function(eventArgs, oldLength) {
 			var _data = this._data,
 				length = _data.length,
 				$data = $([_data]);
 
 			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
-				$data.triggerHandler(propertyChangeStr, { change: "set", path: "length", value: length, oldValue: oldLength });
+				$data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
 		}
 	};
@@ -823,7 +823,7 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 		return allPath.indexOf(".") < 0 && allPath.indexOf("[") < 0;
 	}
 
-	$views.map = function (mapDef) {
+	$views.map = function(mapDef) {
 		function newMap(source, options, target) {
 			var changing,
 				map = this;
@@ -836,14 +836,14 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 				map.options = options || map.options;
 				map.update();
 
-				mapDef.obsSrc && $observable(map.src).observeAll(map.obs = function (ev, eventArgs) {
+				mapDef.obsSrc && $observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
 					if (!changing) {
 						changing = true;
 						mapDef.obsSrc(map, ev, eventArgs);
 						changing = undefined;
 					}
 				}, map.srcFlt);
-				mapDef.obsTgt && $observable(map.tgt).observeAll(map.obt = function (ev, eventArgs) {
+				mapDef.obsTgt && $observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
 					if (!changing) {
 						changing = true;
 						mapDef.obsTgt(map, ev, eventArgs);
@@ -864,18 +864,18 @@ informal pre V1.0 commit counter: 57 (Beta Candidate) */
 			mapDef = $.extend({}, mapDef.baseMap, mapDef);
 		}
 
-		mapDef.map = function (source, options, target) {
+		mapDef.map = function(source, options, target) {
 			return new newMap(source, options, target);
 		};
 
 		(newMap.prototype = {
 			srcFlt: mapDef.srcFlt || shallowFilter, // default to shallowFilter
 			tgtFlt: mapDef.tgtFlt || shallowFilter,
-			update: function (options) {
+			update: function(options) {
 				var map = this;
 				$observable(map.tgt).refresh(mapDef.getTgt(map.src, map.options = options || map.options));
 			},
-			unmap: function () {
+			unmap: function() {
 				var map = this;
 				if (map.src) {
 					map.obs && $observable(map.src).unobserveAll(map.obs, map.srcFlt);
