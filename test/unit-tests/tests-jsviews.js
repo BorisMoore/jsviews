@@ -57,7 +57,6 @@
 		var ret = "";
 		if (this.tagCtx.props.reverse) {
 			// Render in reverse order
-			var test = this.tagCtx.view.getRsc("helpers", "foo");
 			if (arguments.length > 1) {
 				for (i = arguments.length; i; i--) {
 					ret += sort.call(this, arguments[ i - 1 ]);
@@ -371,7 +370,7 @@
 
 // =============== INIT APP ===============
 
-var viewContent, before, after, tmpl, lastEvData, lastEventArgs, listeners, result1, handlersCount, elems,
+var viewContent, before, after, lastEvData, lastEventArgs, listeners, result1, handlersCount, elems,
 	result = "",
 	calls = 0;
 
@@ -390,8 +389,16 @@ function myListener(ev, eventArgs) {
 			var oldValue = eventArgs.oldValue,
 				value = eventArgs.value;
 
-			oldValue = (typeof oldValue === "function") ? (oldValue = "" + oldValue, oldValue.slice(0, oldValue.indexOf("{"))) : oldValue;
-			value = (typeof value === "function") ? (value = "" + value, value.slice(0, value.indexOf("{"))) : value;
+			oldValue = (typeof oldValue === "function")
+				? (oldValue = "" + oldValue, oldValue.slice(0, oldValue.indexOf("{")))
+				: "" + oldValue === oldValue
+					? oldValue
+					: JSON.stringify(oldValue);
+			value = (typeof value === "function")
+				? (value = "" + value, value.slice(0, value.indexOf("{")))
+				: "" + value === value
+					? value
+					: JSON.stringify(value);
 			result += "calls: " + calls
 				+ ", ev.data: prop: " + ev.data.prop + (ev.data.paths.length ? ", path: " + ev.data.paths.join(", ") : "")
 				+ ", eventArgs: oldValue: " + oldValue + " value: " + value + ", eventArgs.path: " + eventArgs.path + "|";
@@ -825,7 +832,6 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 
 });
 
-
 test("Top-level linking", function() {
 
 	// =============================== Arrange ===============================
@@ -872,7 +878,7 @@ test("Top-level linking", function() {
 	equal($("#result").text(), "JoChanged A B", 'Top-level data-link="{include tmpl=...}" binds correctly within {{include}} template');
 
 	// ............................... Act .................................
-	var data = {name: "Jo2"};
+	data = {name: "Jo2"};
 	$.link(true, "#result", data, {b: " newB"} );
 
 	// ............................... Assert .................................
@@ -945,7 +951,7 @@ test("Top-level linking", function() {
 
 	$("#result").html("<div data-link=\"{for people ~team=#data tmpl='myTmpl'}\"></div>");
 
-	var model = {
+	model = {
 			lead: "Jim",
 			people: [
 				{name: "Bob"},
@@ -1111,7 +1117,7 @@ test("$.link() and $().link() variants", function() {
 
 	$("#result").html('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>'); // multiple targets, same class
 
-	help.options.tmpl = $.templates(" NAME: {^{:lastName}}")
+	help.options.tmpl = $.templates(" NAME: {^{:lastName}}");
 	$.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
 	$.link("title{:person1.lastName} {:person1.lastName:}", "input.inner", model, help);
 
@@ -1120,7 +1126,7 @@ test("$.link() and $().link() variants", function() {
 		var res = "";
 		$(selector).each(function() {
 			res += " " + this.title;
-		})
+		});
 		return res;
 	}
 
@@ -1193,7 +1199,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	help.options.tmpl = $.templates(" NAME: {^{:lastName}}")
+	help.options.tmpl = $.templates(" NAME: {^{:lastName}}");
 
 	// =============================== Arrange ===============================
 
@@ -1413,12 +1419,12 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
-	(isIE8 ? 'NAMEModel2: lastModel2NameNAMEModel2: lastModel2NamelastModel2Name lastModel2Name lastModel2Name lastModel2Name|'
-		+ 'NAMEModel2: lastModel2NameNAMEModel2: lastModel2NamenewLast newLast newLast newLast|'
-		+ 'NAMEModel2:modLastNAMEModel2:modLastmodLast modLast modLast modLast - Model1: modLast- Model2: modLast'
-	: ' NAMEModel2: lastModel2Name  NAMEModel2: lastModel2Name lastModel2Name lastModel2Name lastModel2Name lastModel2Name|'
-	+ ' NAMEModel2: lastModel2Name  NAMEModel2: lastModel2Name newLast newLast newLast newLast|'
-	+ ' NAMEModel2: modLast  NAMEModel2: modLast modLast modLast modLast modLast - Model1: modLast- Model2: modLast'),
+	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
+	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast - Model1: modLast- Model2: lastModel2Name'
+	: ' NAME: One  NAME: One One One One One|'
+	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast - Model1: modLast- Model2: lastModel2Name'),
 	'$.link(true, selector, data, helpers) links correctly to within a linked rendered template - leading to dual two-way binding to both models and contexts');
 
 	// ................................ Act ..................................
@@ -1431,12 +1437,12 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	(isIE8 ? 'NAMEModel2:newModel2LastNAMEModel2:newModel2LastnewModel2Last newModel2Last newModel2Last newModel2Last|'
-		+ 'NAMEModel2:newModel2LastNAMEModel2:newModel2Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
-		+ 'NAMEModel2:newModel2LastNAME_ORIGMOD_NewTmpl: new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'
-	: ' NAMEModel2: newModel2Last  NAMEModel2: newModel2Last newModel2Last newModel2Last newModel2Last newModel2Last|'
-	+ ' NAMEModel2: newModel2Last  NAMEModel2: newModel2Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
-	+ ' NAMEModel2: newModel2Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'),
+	(isIE8 ? 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
+	+ 'NAME:new_ORIGMOD_LastNAME:new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
+	+ 'NAME:new_ORIGMOD_LastNAME_ORIGMOD_NewTmpl: new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'
+	: ' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
+	+ ' NAME: new_ORIGMOD_Last  NAME: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
+	+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'),
 	'Continue: $.link(true, selector, data, helpers) links correctly to within a linked rendered template - leading to dual two-way binding to both models and contexts');
 	// -----------------------------------------------------------------------
 
@@ -2403,7 +2409,7 @@ test('data-link="attr{:expression}"', function() {
 		not: function (val) {
 			return !val;
 		}
-	})
+	});
 
 	$.templates('prop: <span data-link="visible{not:lastName}">No name</span>')
 		.link("#result", person1);
@@ -2423,7 +2429,6 @@ test('data-link="attr{:expression}"', function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 	person1.lastName = "One"; // reset Prop
-
 
 	// =============================== Arrange ===============================
 
@@ -3259,7 +3264,7 @@ test("{^{:expression}}", function() {
 	  }
 	});
 
-	var tmpl = $.templates(
+	tmpl = $.templates(
 	'<input data-link="a().other last trigger=true convert=~upper convertBack=~lower" />'
 	+ '<input data-link=" convert=~upper convertBack=~lower last a().other trigger=true" />'
 
@@ -3326,7 +3331,7 @@ test("{^{:expression}}", function() {
 
 	// =============================== Arrange ===============================
 
-	var ob = { text: "aBc" };
+	ob = { text: "aBc" };
 	$.views.helpers({
 		upper: function(val) {return val.toUpperCase();},
 		lower: function(val) {return val.toLowerCase();},
@@ -3350,7 +3355,7 @@ test("{^{:expression}}", function() {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{:~upper(~ob.text)}}{^{:~lower(~ob.text)}}");
+	tmpl = $.templates("{^{:~upper(~ob.text)}}{^{:~lower(~ob.text)}}");
 	$.views.helpers.ob = ob = { text: "aBc" };
 	$.link(tmpl, "#result");
 
@@ -3953,9 +3958,9 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	var things1 = [{ thing: "box" }],
-		things2 = [{ thing: "triangle" }, { thing: "circle" }],
-		square = { thing: "square" };
+	things1 = [{ thing: "box" }],
+	things2 = [{ thing: "triangle" }, { thing: "circle" }];
+	square = { thing: "square" };
 
 	model.things = things1; // reset Prop
 
@@ -4429,10 +4434,10 @@ test("{^{for}}", function() {
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
-	var data = {
-		list:[],
-		q:true
-	};
+	data = {
+			list: [],
+			q: true
+		};
 
 	$.templates('<ul class="list">{^{if q}}{^{for list}}<li>{{:#data}}</li>{{/for}}{{/if}}</ul>')
 		.link("#result", data);
@@ -4443,7 +4448,6 @@ test("{^{for}}", function() {
 	$.observable(data.list).insert("added");
 
 	// ............................... Assert .................................
-	var test = $("#result ul").text();
 	ok(viewsAndBindings().split(" ").length === 9 // We removed view inside div, but still have the view for the outer template.
 		&& $._data(data.list).events.arrayChange.length === 1
 		&& $("#result ul").text() === "added",
@@ -4693,8 +4697,7 @@ test("{^{props}} modifying content, through arrayChange/propertyChange on target
 			},
 			change: function(ev, eventArgs) {
 				var view = eventArgs.view,
-					item = view.data,
-					index = view.index;
+					item = view.data;
 				$.observable(item).setProperty({ key: "changed", prop: "changedValue" });
 			}
 		});
@@ -5208,7 +5211,7 @@ test('data-link="{on ...', function() {
 			<span data-link='res'></span>\
 		</div>");
 
-	var data = {
+	data = {
 			name: "Jo",
 			role: "Advisor",
 			option: {
@@ -5239,7 +5242,7 @@ test('data-link="{on ...', function() {
 
 	// =============================== Arrange ===============================
 	res = "1: ";
-	var data = {
+	data = {
 			unbind: function(ev, eventArgs) {
 				res += "unbind ";
 				eventArgs.linkCtx.tag.onDispose();
@@ -5479,6 +5482,101 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 // TODO ADDITIONAL TESTS:
 // 1: link(null, data) to link whole document
+});
+
+test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function() {
+	// =============================== Arrange ===============================
+
+	$.views.tags({
+		myTag1: function(val) { return val + " from my tag1"; },
+		myTag2: {
+			template: "{{:}} from my tag2" 
+		}
+	}).converters({
+		upper: function(val) {
+			return val.toUpperCase(); 
+		}
+	});
+
+	var initial = {a: { b: null }},
+		updated = {c: { val: 'leaf' }};
+
+	$.templates(
+		"{^{:a.b^c.val onError=~error + 'A '}} "
+		+ "{^{upper:a.b^c.val onError=~error + 'B '}} "
+		+ "{^{>a.b^c.val onError=~error + 'C '}} "
+		+ "{^{if a.b^c onError=~error + 'D '}}<i>{{:a.b.c.val}}</i>{{/if}} "
+		+ "{^{for a.b^c onError=~error + 'E '}}<b>{{:val}}</b>{{/for}} "
+		+ "{^{myTag1 a.b^c.val onError=~error + 'F '/}} "
+		+ "{^{myTag2 a.b^c.val onError=~error + 'G '/}} "
+		+ "<span data-link=\"a.b^c.val onError=~error + 'H '\"></span> "
+		+ "<span data-link=\"{myTag1 a.b^c.val onError=~error + 'I '}\"></span> "
+		+ "<span data-link=\"{upper:a.b^c.val onError=~error + 'J '}\"></span> "
+		+ "<span data-link=\"{:a.b^c.val convert='upper' onError=~error + 'K '}\"></span> ")
+			.link("#result", initial, {error: "err:"});
+	// ................................ Act ..................................
+
+	before = $._data(initial.a).events.propertyChange.length + !$._data(updated).events + !$._data(updated.c).events + "|"
+		+ $("#result").text() + "|";
+	$.observable(initial.a).setProperty('b', updated);
+	after = $("#result").text() + "|";
+	$.observable(initial.a.b.c).setProperty('val', "leaf2");
+	after += $("#result").text() + "|";
+	$.observable(initial.a.b).setProperty('c', {val: "leaf3"});
+	after += $("#result").text() + "|";
+	$.observable(initial.a).setProperty('b', {c: {val: "leaf4"}});
+	after += $("#result").text() + "|";
+	after += $._data(initial.a).events.propertyChange.length + $._data(initial.a.b).events.propertyChange.length + $._data(initial.a.b.c).events.propertyChange.length
+		+ !$._data(updated).events + !$._data(updated.c).events + "|"
+		+ $("#result").text() + "|";
+
+	var prevB = initial.a.b;
+
+	$.observable(initial.a).setProperty('b', null);
+	after += $._data(initial.a).events.propertyChange.length + !$._data(prevB).events + !$._data(prevB.c).events + "|"
+		+ $("#result").text() + "|"; 
+
+	$.observable(initial.a).setProperty('b', updated);
+
+	after += $("#result").text() + "|";
+
+	equal(before + after,
+		isIE8
+		? "13|"
+			+ "err:A ERR:B err:C err:D err:E err:F err:G err:H err:I ERR:J err:K |"
+			+ "leafLEAFleafleafleafleaf from my tag1leaf from my tag2 leafleaf from my tag1LEAFLEAF|"
+			+ "leaf2LEAF2leaf2leafleafleaf2 from my tag1leaf2 from my tag2 leaf2leaf2 from my tag1LEAF2LEAF2|"
+			+ "leaf3LEAF3leaf3leafleaf3leaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
+			+ "leaf4LEAF4leaf4leafleaf4leaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
+			+ "33|"
+			+ "leaf4LEAF4leaf4leafleaf4leaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
+			+ "13|"
+			+ "err:A ERR:B err:C err:D err:E err:F err:G  err:H err:I ERR:J ERR:K |"
+			+ "leaf3LEAF3leaf3leaf3leaf3leaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
+		:
+		"13|"
+		+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  err:K  |"
+		+ "leaf LEAF leaf leaf leaf leaf from my tag1 leaf from my tag2 leaf leaf from my tag1 LEAF LEAF |"
+		+ "leaf2 LEAF2 leaf2 leaf leaf leaf2 from my tag1 leaf2 from my tag2 leaf2 leaf2 from my tag1 LEAF2 LEAF2 |"
+		+ "leaf3 LEAF3 leaf3 leaf leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |"
+		+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
+		+ "33|"
+		+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
+		+ "13|"
+		+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  ERR:K  |"
+		+ "leaf3 LEAF3 leaf3 leaf3 leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |",
+
+	"deep linking in templates, using onError - correctly re-link to data when missing objects are dynamically replaced");
+
+	// ................................ Act ..................................
+	$.unlink();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(initial.a).events,
+	'$.unlink() removes all views and listeners from the page');
+	// -----------------------------------------------------------------------
+
 });
 
 test('Bound tag properties and contextual properties', function() {
@@ -6870,7 +6968,8 @@ test("paths", function() {
 	$.observable(person1).setProperty({home: home2}); // Swap object higher in path
 
 	// ............................... Assert .................................
-	equal("" + (lastEventArgs.oldValue === home1) + (lastEventArgs.value === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address.street, eventArgs: oldValue: [object Object] value: [object Object], eventArgs.path: home|",
+	equal("" + (lastEventArgs.oldValue === home1) + (lastEventArgs.value === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
+		+ " eventArgs: oldValue: {\"address\":{\"street\":\"newValue\",\"ZIP\":\"newZip\"}} value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"222\"}}, eventArgs.path: home|",
 	"$.observe(object, some.deep.path, object2, path, cb) is listening to root");
 	// -----------------------------------------------------------------------
 
@@ -6886,9 +6985,7 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	address1.street = "StreetOne"; // reset Prop
-	address1.ZIP = "111"; // reset Prop
-//	person1.home = home1; // reset Prop
+	$.observable(address1).setProperty({street: "Street1", ZIP: "111"}); // reset Prop
 	reset();
 
 	// ................................ Act ..................................
@@ -6909,9 +7006,24 @@ test("paths", function() {
 
 	// ............................... Assert .................................
 
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue3, eventArgs.path: street|"
+	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: Street1 value: newValue3, eventArgs.path: street|"
 		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip3, eventArgs.path: ZIP|",
 	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after setting object to null, higher up on deep path, then setting to new object, is no longer listening to that path on original descendant objects but is now listening to the path on new descendant objects");
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	reset();
+
+	// ................................ Act ..................................
+	$.observable(person1).setProperty("home", home2); // Set object higher up to different object
+	$.observable(home1).setProperty("address", {street: "ignoreThisStreet", ZIP: "ignoreZip"});
+	$.observable(home2).setProperty("address", {street: "address3Street", ZIP: "address3Zip"});
+
+	// ............................... Assert .................................
+	equal(result,
+		  "calls: 1, ev.data: prop: home, path: address^street, eventArgs: oldValue: {\"address\":{\"street\":\"newValue3\",\"ZIP\":\"newZip3\"}} value: {\"address\":{\"street\":\"newValue2\",\"ZIP\":\"newZip2\"}}, eventArgs.path: home|"
+		+ "calls: 2, ev.data: prop: address, path: street, eventArgs: oldValue: {\"street\":\"newValue2\",\"ZIP\":\"newZip2\"} value: {\"street\":\"address3Street\",\"ZIP\":\"address3Zip\"}, eventArgs.path: address|",
+	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is listening to intermediate paths on new object - 'i.e. 'address'");
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -6981,16 +7093,19 @@ test("paths", function() {
 
 	// ............................... Assert .................................
 
-	equal(result, "calls: 1, ev.data: prop: *, eventArgs: oldValue: newValue3 value: newValue4, eventArgs.path: street|"
-							+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: newZip3 value: newZip4, eventArgs.path: ZIP|",
+	equal(result, "calls: 1, ev.data: prop: *, eventArgs: oldValue: address3Street value: newValue4, eventArgs.path: street|"
+							+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: address3Zip value: newZip4, eventArgs.path: ZIP|",
 	'listen to both "*" and specific prop. Note: Eliminates duplicates for specific props when there is also a "*"');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
+	$.unobserve(person1.home.address, "*");
+	person1.home = home1;
 	address1.street = "StreetOne"; // reset Prop
 	address1.ZIP = "111"; // reset Prop
 	address2.street = "StreetTwo"; // reset Prop
 	address1.ZIP = "222"; // reset Prop
+	home2 = { address: address2 },
 	reset();
 
 	// =============================== Arrange ===============================
@@ -7000,7 +7115,9 @@ test("paths", function() {
 	$.observable(address2).setProperty({street: "newAddress2"});
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: work, path: address.street, eventArgs: oldValue: undefined value: [object Object], eventArgs.path: work|calls: 2, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newAddress2, eventArgs.path: street|",
+	equal(result,
+		  "calls: 1, ev.data: prop: work, path: address^street, eventArgs: oldValue: undefined value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"newZip2\"}}, eventArgs.path: work|"
+		+ "calls: 2, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newAddress2, eventArgs.path: street|",
 	'observing a deep path into missing properties, followed by $.observable(...).setProperty calls which supply the missing object property then modify subobjects deeper down the path lead to the correct callback events');
 	// -----------------------------------------------------------------------
 
@@ -7245,8 +7362,7 @@ test("observe context helper", function() {
 		},
 		obj = {
 			name: "One"
-		},
-		arr = [1,2,3];
+		};
 
 	function observeCtxHelper(val, currentRoot) {
 		if (val) {
@@ -7502,7 +7618,7 @@ var initialArray = [1,2],
 	$.observable(obj).setProperty("name.arr", altArray);
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: 1,2,10 value: 4,3,2,1, eventArgs.path: arr|",
+	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2,10] value: [4,3,2,1], eventArgs.path: arr|",
 	'$.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens to property change for swapping the array property');
 
 	// ............................... Assert .................................
@@ -7564,7 +7680,7 @@ var initialArray = [1,2],
 		"regularCallbackCalls: 1, eventArgs: change: insert|"
 		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: 1st, eventArgs.path: first|"
 		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2nd, eventArgs.path: notThereBefore|"
-		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: 4,3,2,1,11,16,17,18 value: 1,2,10, eventArgs.path: arr|"
+		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,18] value: [1,2,10], eventArgs.path: arr|"
 		+ "regularCallbackCalls: 5, eventArgs: change: insert|1 1 true",
 		'$.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
 
@@ -7603,9 +7719,9 @@ var initialArray = [1,2],
 	equal(result + !$._data(initialArray).events + " " + $._data(obj.name).events.propertyChange.length + " "
 		+ $._data(newArray1).events.arrayChange.length + " " + $._data(newArray2).events.arrayChange.length + " " + $._data(newArray3).events.arrayChange.length,
 		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: 1,1, eventArgs.path: first|"
-		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2,2, eventArgs.path: arrayNotThereBefore|"
-		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: 1,2,10,19,17,18 value: 3,3, eventArgs.path: arr|"
+		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: [1,1], eventArgs.path: first|"
+		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: [2,2], eventArgs.path: arrayNotThereBefore|"
+		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [1,2,10,19,17,18] value: [3,3], eventArgs.path: arr|"
 		+ "regularCallbackCalls: 5, eventArgs: change: insert|"
 		+ "regularCallbackCalls: 6, eventArgs: change: insert|"
 		+ "regularCallbackCalls: 7, eventArgs: change: insert|"
@@ -7638,7 +7754,7 @@ var initialArray = [1,2],
 	$.observable(obj).setProperty("name.arr", [4,3,2,1]);
 
 	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: 1,2 value: 4,3,2,1, eventArgs.path: arr|",
+	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2] value: [4,3,2,1], eventArgs.path: arr|",
 	'$.observe(object, "a.b.myArray", cbWithArrayCallback) listens to property change for swapping the array property');
 
 	// ................................ Act ..................................
@@ -8955,7 +9071,7 @@ test("$.view() in regular content", function() {
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	var itemView = $.view("#result div", true, "item");
+	itemView = $.view("#result div", true, "item");
 
 	// ............................... Assert .................................
 	ok(!itemView,
@@ -9147,7 +9263,7 @@ test("$.view() in element-only content", function() {
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	var itemView = $.view("#result ul", true, "item");
+	itemView = $.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
 	ok(!itemView,
@@ -9636,6 +9752,59 @@ test('two-way bound tag controls', function() {
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on data');
+
+	// ................................ Reset ..................................
+	$("#result").empty();
+	person.name = "Jo";
+	cancelChange = false;
+	noRenderOnUpdate = true;
+	renders = false;
+	eventData = "";
+
+	// =============================== Arrange ===============================
+
+	var lower = function(val) {
+			return val.toLowerCase();
+		},
+		upper = function(val) {
+			return val.toUpperCase();
+		},
+		options = {cvt: upper};
+
+	// ................................ Act ..................................
+	$.templates({
+		markup: '<input id="linkedEl" data-link="{twoWayTag name ^convert=~options.cvt}"/>',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {options: options});
+
+	tag = $("#result").view(true).childTags("twoWayTag")[0];
+	linkedEl = $("#linkedEl")[0];
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"JO|Jo",
+	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - converter specified by data-linked convert property');
+
+	// ................................ Act ..................................
+	$.observable(options).setProperty({cvt: lower});
+	$.observable(person).setProperty({name: "ANewName"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"anewname|ANewName",
+	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from one function to another');
+
+	// ................................ Act ..................................
+	$.observable(options).setProperty({cvt: "myupper"});
+
+	// ............................... Assert .................................
+	equal(linkedEl.value + "|" + tag.value,
+	"ANEWNAME|ANewName",
+	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from function to named converter');
 
 	// ................................ Reset ..................................
 	$("#result").empty();

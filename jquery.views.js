@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 58 (Beta Candidate) */
+informal pre V1.0 commit counter: 59 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -189,8 +189,9 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 	}
 
 	function propertyChangeHandler(ev, eventArgs, linkFn) {
-		var attr, sourceValue, tag, noUpdate,
+		var attr, sourceValue, noUpdate, forceUpdate, hasError, onError,
 			linkCtx = this,
+			tag = linkCtx.tag,
 			source = linkCtx.data,
 			target = linkCtx.elem,
 			cvt = linkCtx.convert,
@@ -211,21 +212,32 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 			}
 			if (eventArgs || linkCtx._initVal) {
 				delete linkCtx._initVal;
-				sourceValue = linkFn.call(view.tmpl, source, view, $views);
+				if (linkFn._er) {
+					// data-link="exprUsingTagOrCvt with onerror=..." - e.g. {tag ... {cvt:... {:... convert='cvt'
+					try {
+						sourceValue = linkFn(source, view);
+					} catch (e) {
+						hasError = linkFn._er;
+						onError = error(e,view,(new Function("data,view", "return " + hasError + ";"))(source, view));
+						sourceValue = [{props: {}, args: [onError]}];
+					}
+				} else {
+					sourceValue = linkFn(source, view, $views);
+				}
 				// Compiled link expression for linkTag: return value for data-link="{:xxx}" with no cvt or cvtBk, otherwise tagCtx or tagCtxs
 
 				attr = getTargetVal(sourceValue, linkCtx, tag = linkCtx.tag,
 						linkCtx.attr || defaultAttr(target, true, cvt !== undefined)
 					);
-				if (sourceValue && sourceValue.error !== undefined) {
-					// tagCtxs for tag with onError=... and error was thrown. We will update with the fallback value from onError
-					sourceValue = sourceValue.error;
-				} else if (tag) {
-					// Existing tag instance
-					sourceValue = sourceValue[0] ? sourceValue : [sourceValue];
-					noUpdate = eventArgs && tag.onUpdate && tag.onUpdate(ev, eventArgs, sourceValue) === false;
 
-					mergeCtxs(tag, sourceValue);
+				if (tag) {
+					// Existing tag instance
+					forceUpdate = hasError || tag._er;
+					// If the new tagCtxs hasError or the previous tagCtxs had error, then force update
+					sourceValue = sourceValue[0] ? sourceValue : [sourceValue];
+					noUpdate = !forceUpdate && eventArgs && tag.onUpdate && tag.onUpdate(ev, eventArgs, sourceValue) === false;
+
+					mergeCtxs(tag, sourceValue, forceUpdate);
 
 					if (noUpdate || attr === NONE) {
 						// onUpdate returned false, or attr === "none", or this is an update coming from the tag's own change event
@@ -245,15 +257,15 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 
 					sourceValue = tag.tagName === ":" // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(tag.cvt, view, sourceValue[0])
-						: $views._tag(tag, view, view.tmpl, sourceValue, true);
+						: $views._tag(tag, view, view.tmpl, sourceValue, true, onError);
 				} else if (linkFn._tag) {
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
 					cvt = cvt === "" ? sTRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
-						? $views._cnvt(cvt, view, sourceValue) // convertVal
-						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true); // renderTag
+						? $views._cnvt(cvt, view, sourceValue[0] || sourceValue) // convertVal
+						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true, onError); // renderTag
 
 					tag = linkCtx.tag; // In both convertVal and renderTag we have instantiated a tag
 					attr = linkCtx.attr || attr; // linkCtx.attr may have been set to tag.attr during tag instantiation in renderTag
@@ -266,6 +278,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 				}
 
 				if (tag) {
+					tag._er = hasError;
 					callAfterLink(tag, tag.tagCtx);
 				}
 			}
@@ -386,9 +399,9 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 			if (attr === CHECKED) {
 				useProp = true;
 				sourceValue = sourceValue && sourceValue !== "false";
-					// The string value "false" can occur with data-link="checked{attr:expr}" - as a result of attr, and hence using convertVal()
-					// We will set the "checked" property
-					// We will compare this with the current value
+				// The string value "false" can occur with data-link="checked{attr:expr}" - as a result of attr, and hence using convertVal()
+				// We will set the "checked" property
+				// We will compare this with the current value
 			} else if (attr === RADIO) {
 				// This is a special binding attribute for radio buttons, which corresponds to the default 'to' binding.
 				// This allows binding both to value (for each input) and to the default checked radio button (for each input in named group,
@@ -671,17 +684,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 		if (tmplBindingKey) {
 			// This is a binding marker for a data-linked tag {^{...}}
 			end = "^`";
-			tag = view._.tag // This is {^{>...}} or {^{tag ...}} or {{cvt:...} - so tag was defined in convertVal or renderTag
-				|| {         // This is {^{:...}} so tag is not yet defined
-					_: {
-						inline: true,
-						bnd: tmplBindingKey
-					},
-					tagCtx: {
-						view: view
-					},
-					flow: true
-				};
+			tag = view._.tag; // This is {^{>...}} or {^{tag ...}}, {{cvt:...} or {^{:...}}, and tag was defined in convertVal or renderTag
 			id = tag._tgId;
 			if (!id) {
 				bindingStore[id = bindingKey++] = tag; // Store the tag temporarily, ready for databinding.
@@ -856,7 +859,8 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 							prevNode = nextNode = undefined; // When linking from a template, prevNode and nextNode parameters are ignored
 							$(targetEl).empty();
 						}
-					} else if (tmplOrLinkTag) {
+					} else if (tmplOrLinkTag === true && parentView === topView) {
+						// $.link(true, selector, data, ctx) - where selector points to elem in top-level content
 						refresh = {lnk: 1};
 					} else {
 						break;
@@ -1067,86 +1071,86 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 				len = vwInfos.length;
 				while (len--) {
 					vwInfo = vwInfos[len];
-					//if (prevIds.indexOf(vwInfo.token) < 0) { // This token is a newly created view or tag binding
-						bindChar = vwInfo.ch;
-						if (deferPath = vwInfo.path) {
-							// We have a 'deferred path'
-							j = deferPath.length - 1;
-							while (deferChar = deferPath.charAt(j--)) {
-								// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
-								if (deferChar === "+") {
-									if (deferPath.charAt(j) === "-") {
-										j--;
-										targetParent = targetParent.previousSibling;
-									} else {
-										targetParent = targetParent.parentNode;
-									}
+//if (prevIds.indexOf(vwInfo.token) < 0) { // This token is a newly created view or tag binding
+					bindChar = vwInfo.ch;
+					if (deferPath = vwInfo.path) {
+						// We have a 'deferred path'
+						j = deferPath.length - 1;
+						while (deferChar = deferPath.charAt(j--)) {
+							// Use the "+" and"-" characters to navigate the path back to the original parent node where the deferred bindings ocurred
+							if (deferChar === "+") {
+								if (deferPath.charAt(j) === "-") {
+									j--;
+									targetParent = targetParent.previousSibling;
 								} else {
-									targetParent = targetParent.lastChild;
-								}
-								// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
-								// since we have removed white space within elCnt. Hence support IE < 9
-							}
-						}
-						if (bindChar === "^") {
-							if (tag = bindingStore[id = vwInfo.id]) {
-								// The binding may have been deleted, for example in a different handler to an array collectionChange event
-								// This is a tag binding
-								deep = targetParent && (!elem || elem.parentNode !== targetParent); // We are stepping back looking for the right targetParent,
-								// or we are linking existing content and this element is in elCnt, not an immediate child of the targetParent.
-								if (!elem || deep) {
-									tag.parentElem = targetParent;
-								}
-								if (vwInfo.elCnt && deep) {
-									// With element only content, if there is no following element, or if the binding is deeper than the following element
-									// then we need to set the open or close token as a deferred binding annotation on the parent
-									targetParent._dfr = (vwInfo.open ? "#" : "/") + id + bindChar + (targetParent._dfr || "");
-								}
-								// This is an open or close marker for a data-linked tag {^{...}}. Add it to bindEls.
-								addedBindEls.push([deep ? null : elem, vwInfo]);
-							}
-						} else if (view = viewStore[id = vwInfo.id]) {
-							// The view may have been deleted, for example in a different handler to an array collectionChange event
-							if (!view.parentElem) {
-								// If view is not already extended for JsViews, extend and initialize the view object created in JsRender, as a JsViews view
-								view.parentElem = targetParent || elem && elem.parentNode || parentNode;
-								view._.onRender = addBindingMarkers;
-								view._.onArrayChange = arrayChangeHandler;
-								setArrayChangeLink(view);
-							}
-							parentElem = view.parentElem;
-							if (vwInfo.open) {
-								// This is an 'open view' node (preceding script marker node,
-								// or if elCnt, the first element in the view, with a data-jsv annotation) for binding
-								view._elCnt = vwInfo.elCnt;
-								if (targetParent && !elem) {
-									targetParent._dfr = "#" + id + bindChar + (targetParent._dfr || "");
-								} else {
-									// No targetParent, so there is a ._nxt elem (and this is processing tokens on the elem)
-									if (!view._prv) {
-										parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id + bindChar);
-									}
-									view._prv = elem;
+									targetParent = targetParent.parentNode;
 								}
 							} else {
-								// This is a 'close view' marker node for binding
-								if (targetParent && (!elem || elem.parentNode !== targetParent)) {
-									// There is no ._nxt so add token to _dfr. It is deferred.
-									targetParent._dfr = "/" + id + bindChar + (targetParent._dfr || "");
-									view._nxt = undefined;
-								} else if (elem) {
-									// This view did not have a ._nxt, but has one now, so token may be in _dfr, and must be removed. (No longer deferred)
-									if (!view._nxt) {
-										parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id + bindChar);
-									}
-									view._nxt = elem;
-								}
-								linkCtx = view.linkCtx;
-								if (onAftCr = view.ctx && view.ctx.onAfterCreate || onAfterCreate) {
-									onAftCr.call(linkCtx, view);
-								}
+								targetParent = targetParent.lastChild;
 							}
-						//}
+							// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
+							// since we have removed white space within elCnt. Hence support IE < 9
+						}
+					}
+					if (bindChar === "^") {
+						if (tag = bindingStore[id = vwInfo.id]) {
+							// The binding may have been deleted, for example in a different handler to an array collectionChange event
+							// This is a tag binding
+							deep = targetParent && (!elem || elem.parentNode !== targetParent); // We are stepping back looking for the right targetParent,
+							// or we are linking existing content and this element is in elCnt, not an immediate child of the targetParent.
+							if (!elem || deep) {
+								tag.parentElem = targetParent;
+							}
+							if (vwInfo.elCnt && deep) {
+								// With element only content, if there is no following element, or if the binding is deeper than the following element
+								// then we need to set the open or close token as a deferred binding annotation on the parent
+								targetParent._dfr = (vwInfo.open ? "#" : "/") + id + bindChar + (targetParent._dfr || "");
+							}
+							// This is an open or close marker for a data-linked tag {^{...}}. Add it to bindEls.
+							addedBindEls.push([deep ? null : elem, vwInfo]);
+						}
+					} else if (view = viewStore[id = vwInfo.id]) {
+						// The view may have been deleted, for example in a different handler to an array collectionChange event
+						if (!view.parentElem) {
+							// If view is not already extended for JsViews, extend and initialize the view object created in JsRender, as a JsViews view
+							view.parentElem = targetParent || elem && elem.parentNode || parentNode;
+							view._.onRender = addBindingMarkers;
+							view._.onArrayChange = arrayChangeHandler;
+							setArrayChangeLink(view);
+						}
+						parentElem = view.parentElem;
+						if (vwInfo.open) {
+							// This is an 'open view' node (preceding script marker node,
+							// or if elCnt, the first element in the view, with a data-jsv annotation) for binding
+							view._elCnt = vwInfo.elCnt;
+							if (targetParent && !elem) {
+								targetParent._dfr = "#" + id + bindChar + (targetParent._dfr || "");
+							} else {
+								// No targetParent, so there is a ._nxt elem (and this is processing tokens on the elem)
+								if (!view._prv) {
+									parentElem._dfr = removeSubStr(parentElem._dfr, "#" + id + bindChar);
+								}
+								view._prv = elem;
+							}
+						} else {
+							// This is a 'close view' marker node for binding
+							if (targetParent && (!elem || elem.parentNode !== targetParent)) {
+								// There is no ._nxt so add token to _dfr. It is deferred.
+								targetParent._dfr = "/" + id + bindChar + (targetParent._dfr || "");
+								view._nxt = undefined;
+							} else if (elem) {
+								// This view did not have a ._nxt, but has one now, so token may be in _dfr, and must be removed. (No longer deferred)
+								if (!view._nxt) {
+									parentElem._dfr = removeSubStr(parentElem._dfr, "/" + id + bindChar);
+								}
+								view._nxt = elem;
+							}
+							linkCtx = view.linkCtx;
+							if (onAftCr = view.ctx && view.ctx.onAfterCreate || onAfterCreate) {
+								onAftCr.call(linkCtx, view);
+							}
+						}
+//}
 					}
 				}
 				len = addedBindEls.length;
@@ -1212,14 +1216,19 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 				} else if (nextNode && elem === nextNode) {
 					// If nextNode is set then break when we get to nextNode
 					break;
-				} else if (elem.parentNode
+				} else if (elem.parentNode) {
 					// elem has not been removed from DOM
-						&& processInfos(viewInfos(elem, undefined, tags && rOpenTagMarkers))
+					if (isLink && (vwInfo = viewInfos(elem, undefined, rViewMarkers)) && (vwInfo = vwInfo[0])) {
+						// If this is a link(trueOrString ...) call we will avoid re-binding to elems that are within template-rendered views 
+						skip = skip ? (vwInfo.id !== skip && skip) : vwInfo.open && vwInfo.id;
+					}
+					if (!skip && processInfos(viewInfos(elem, undefined, tags && rOpenTagMarkers))
 						// If a link() call, processViewInfos() adds bindings to bindEls, and returns true for non-script nodes, for adding data-link bindings
 						// If a childTags() call, getViewInfos returns array of tag bindings.
 							&& !get && elem.getAttribute($viewsLinkAttr)) {
-								bindEls.push([elem]); // A data-linked element so add to bindEls too
-							}
+						bindEls.push([elem]); // A data-linked element so add to bindEls too
+					}
+				}
 			}
 			if (html === undefined && parentNode.getAttribute($viewsLinkAttr)) {
 				bindEls.push([parentNode]); // Support data-linking top-level element directly (not within a data-linked container)
@@ -1244,7 +1253,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 						processViewInfos(viewInfos(defer, true), parentNode);
 					}
 				}
-					processViewInfos(viewInfos(ids, true), parentNode);
+				processViewInfos(viewInfos(ids, true), parentNode);
 				// If there were any tokens on nextNode which have now been associated with inserted HTML tags, remove them from nextNode
 				if (nextNode) {
 					tokens = nextNode.getAttribute(jsvAttrStr);
@@ -1301,17 +1310,17 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 						}
 					}
 				} else {
-					view = $view(elem);
 					// Add data binding for a data-linked element (with data-link attribute)
-					addDataBinding(elem.getAttribute($viewsLinkAttr), elem, view, undefined, isLink, outerData, context); // topView, take outer data and context - else don't
+					addDataBinding(elem.getAttribute($viewsLinkAttr), elem, $view(elem), undefined, isLink, outerData, context);
 				}
 			}
 			lazyLink && lazyLink.resolve();
 		}
 		//==== /end of nested functions ====
 
-		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView, node, tags, deep, tagName, tagCtx, validate,
-			tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag, isVoid, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, lazyLink, isLink,
+		var inTag, linkCtx, tag, i, l, j, len, elems, elem, view, vwInfo, linkInfo, prevNodes, token, prevView, nextView,
+			node, tags, deep, tagName, tagCtx, validate, tagDepth, get, depth, fragment, copiedNode, firstTag, parentTag,
+			isVoid, wrapper, div, tokens, elCnt, prevElCnt, htmlTag, ids, prevIds, found, skip, lazyLink, isLink,
 			self = this,
 			thisId = self._.id + "_",
 			defer = "",
@@ -1466,7 +1475,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 			};
 			bindDataLinkTarget(linkCtx, linkCtx.fn);
 		} else if (linkMarkup && node) {
-			// If isLink is true, this is a .link(expression, target, data, ....) or
+			// If isLink then this is a top-level linking: .link(expression, target, data, ....) or
 			// .link(true, target, data, ....) scenario - and data and context are passed in separately from the view
 			data = isLink ? data : currentView.data;
 
@@ -1480,66 +1489,66 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 //			if (!(linkTags = links[linkMarkup])) {
 			// This is the first time this view template has been linked, so we compile the data-link expressions, and store them on the template.
 
-				linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
-				rTag.lastIndex = 0;
-				while (tokens = rTag.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
-					// Iterate over the data-link expressions, for different target attrs,
-					// e.g. <input data-link="{:firstName:} title{>~description(firstName, lastName)}"
-					// tokens: [all, attr, bindOnly, tagExpr, tagName, converter, colon, html, comment, code, params]
-					rTagIndex = rTag.lastIndex;
-					attr = tokens[1];
-					tagExpr = tokens[3];
-					params = tokens[10];
-					convertBack = undefined;
+			linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
+			rTag.lastIndex = 0;
+			while (tokens = rTag.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
+				// Iterate over the data-link expressions, for different target attrs,
+				// e.g. <input data-link="{:firstName:} title{>~description(firstName, lastName)}"
+				// tokens: [all, attr, bindOnly, tagExpr, tagName, converter, colon, html, comment, code, params]
+				rTagIndex = rTag.lastIndex;
+				attr = tokens[1];
+				tagExpr = tokens[3];
+				params = tokens[10];
+				convertBack = undefined;
 
-					linkCtx = {
-						data: data, // source
-						elem: node, // target
-						view: currentView,
-						ctx: context,
-						attr: attr,
-						isLk: isLink, // topo-level linking?
-						_initVal: !tokens[2]
-					};
+				linkCtx = {
+					data: data, // source
+					elem: node, // target
+					view: currentView,
+					ctx: context,
+					attr: attr,
+					isLk: isLink, // top-level linking?
+					_initVal: !tokens[2]
+				};
 
-					if (tokens[6]) {
-						// TODO include this in the original rTag regex
-						// Only for {:} link"
+				if (tokens[6]) {
+					// TODO include this in the original rTag regex
+					// Only for {:} link"
 
-						if (!attr && (convertBack = /:([\w$]*)$/.exec(params))) {
-							// two-way binding
-							convertBack = convertBack[1];
-							if (convertBack !== undefined) {
-								// There is a convertBack function
-								trimLen = - convertBack.length - 1;
-								tagExpr = tagExpr.slice(0, trimLen - 1) + delimCloseChar0; // Remove the convertBack string from expression.
-							}
+					if (!attr && (convertBack = /:([\w$]*)$/.exec(params))) {
+						// two-way binding
+						convertBack = convertBack[1];
+						if (convertBack !== undefined) {
+							// There is a convertBack function
+							trimLen = - convertBack.length - 1;
+							tagExpr = tagExpr.slice(0, trimLen - 1) + delimCloseChar0; // Remove the convertBack string from expression.
 						}
-						if (convertBack === null) {
-							convertBack = undefined;
-						}
-						linkCtx.convert = tokens[5] || "";
 					}
-					// Compile the linkFn expression which evaluates and binds a data-link expression
-					// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
-					//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
-
-					linkCtx.expr = attr + tagExpr;
-					linkFn = tmpl.links[tagExpr];
-					if (!linkFn) {
-						tmpl.links[tagExpr] = linkFn = $sub.tmplFn(tagExpr, tmpl, true, convertBack);
+					if (convertBack === null) {
+						convertBack = undefined;
 					}
-					linkCtx.fn = linkFn;
-					if (!attr && convertBack !== undefined) {
-						// Default target, so allow 2 way binding
-						linkCtx.convertBack = convertBack;
-					}
-					bindDataLinkTarget(linkCtx, linkFn);
-					// We store rTagIndex in local scope, since this addDataBinding method can sometimes be called recursively,
-					// and each is using the same rTag instance.
-					rTag.lastIndex = rTagIndex;
+					linkCtx.convert = tokens[5] || "";
 				}
-	//		}
+				// Compile the linkFn expression which evaluates and binds a data-link expression
+				// TODO - optimize for the case of simple data path with no conversion, helpers, etc.:
+				//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
+
+				linkCtx.expr = attr + tagExpr;
+				linkFn = tmpl.links[tagExpr];
+				if (!linkFn) {
+					tmpl.links[tagExpr] = linkFn = $sub.tmplFn(tagExpr, tmpl, true, convertBack);
+				}
+				linkCtx.fn = linkFn;
+				if (!attr && convertBack !== undefined) {
+					// Default target, so allow 2 way binding
+					linkCtx.convertBack = convertBack;
+				}
+				bindDataLinkTarget(linkCtx, linkFn);
+				// We store rTagIndex in local scope, since this addDataBinding method can sometimes be called recursively,
+				// and each is using the same rTag instance.
+				rTag.lastIndex = rTagIndex;
+			}
+//		}
 		}
 	}
 
@@ -1655,10 +1664,10 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 		contents: function(deep, select) {
 			// For a view or a tag, return jQuery object with the content nodes,
 			if (deep !== !!deep) {
-					// deep not boolean, so this is getContents(selector)
-					select = deep;
-					deep = undefined;
-				}
+				// deep not boolean, so this is getContents(selector)
+				select = deep;
+				deep = undefined;
+			}
 			var filtered,
 				nodes = $(this.nodes());
 			if (nodes[0]) {
@@ -1846,7 +1855,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 		// We set the binding.to[1] to be the cvtBack, and binding.to[0] to be either the path to the target, or [object, path] where the target is the path on the provided object.
 		// So for a path with an object call: a.b.getObject().d.e, then we set to[0] to be [returnedObject, "d.e"], and we bind to the path on the returned object as target
 		// Otherwise our target is the first path, paths[0], which we will convert with contextCb() for paths like ~a.b.c or #x.y.z
-//TODO add support for two-way binding with bound named props and no bindto expression. <input data-link="{:a ^foo=b:}"
+
 		var bindto, pathIndex, firstPath, lastPath, bindtoOb,
 			linkCtx = binding.linkCtx,
 			source = linkCtx.data,
@@ -1872,7 +1881,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 		}
 	}
 
-	function mergeCtxs(tag, newCtxs) { // Merge updated tagCtxs into tag.tagCtxs
+	function mergeCtxs(tag, newCtxs, replace) { // Merge updated tagCtxs into tag.tagCtxs
 		var tagCtx, newTagCtx,
 			view = tag.tagCtx.view,
 			tagCtxs = tag.tagCtxs || [tag.tagCtx],
@@ -1881,16 +1890,23 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 
 		newCtxs = newCtxs || tag._.bnd.call(view.tmpl, (tag.linkCtx || view).data, view, $views);
 
-		while (l--) {
-			tagCtx = tagCtxs[l];
-			newTagCtx = newCtxs[l];
-			$observable(tagCtx.props).setProperty(newTagCtx.props);
-			$extend(tagCtx.ctx, newTagCtx.ctx); // We don't support propagating ctx variables, ~foo, observably, to nested views. So extend, not setProperty...
-			tagCtx.args = newTagCtx.args;
-			if (refresh) {
-				tagCtx.tmpl = newTagCtx.tmpl;
+		if (replace) {
+			// Replace previous tagCtxs by new ones, rather than merging
+			tagCtxs = tag.tagCtxs = newCtxs;
+			tag.tagCtx = tagCtxs[0];
+		} else {
+			while (l--) {
+				tagCtx = tagCtxs[l];
+				newTagCtx = newCtxs[l];
+				$observable(tagCtx.props).setProperty(newTagCtx.props);
+				$extend(tagCtx.ctx, newTagCtx.ctx); // We don't support propagating ctx variables, ~foo, observably, to nested views. So extend, not setProperty...
+				tagCtx.args = newTagCtx.args;
+				if (refresh) {
+					tagCtx.tmpl = newTagCtx.tmpl;
+				}
 			}
 		}
+		$sub._ths(tag, tagCtxs[0]); // tagHandlersFromProps
 		return tagCtxs;
 	}
 
@@ -2371,7 +2387,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 		}
 	);
 
-	viewStore = { 0: topView = new $sub.View(undefined, "top") }; // Top-level view
+	viewStore = { 0: topView = new $sub.View() }; // Top-level view
 
 	//========================
 	// JsViews-specific converters
@@ -2814,4 +2830,6 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 	// Fallback strings or onError handlers for any tag instance
 	// $.observable(object).removeProperty(path)
 	// data-link="{on ... myHandler}" (See unit tests. Examples to follow)
+// VERIFY link=false support
+// target="replace" scenarios
 })(this, this.jQuery);

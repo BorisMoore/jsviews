@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 58 (Beta Candidate) */
+informal pre V1.0 commit counter: 59 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -444,7 +444,7 @@ informal pre V1.0 commit counter: 58 (Beta Candidate) */
 									}
 									break;
 								} else if (prop) {
-									observeOnOff(ns + "." + prop, parts.join("."));
+									observeOnOff(ns + "." + prop, parts.join("^")); // By using "^" rather than "." we ensure that deep binding will be used on newly insert object graphs
 								}
 							}
 							if (allPath) {
