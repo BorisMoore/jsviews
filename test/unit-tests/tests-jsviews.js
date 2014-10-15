@@ -213,13 +213,16 @@
 		}
 		},
 		myWrap2: {},
+		mySimpleWrap: function(val) {
+			return this.tagCtx.render(val);
+		},
 		myFlow: {
 			flow: true
 		},
 		myWrapElCnt: {
 			attr: "html",
 			render: function(val) {
-				return "<tbody>" + this.tagCtx.render(val) + "</tbody>";
+				return "<tbody data-wrapelct='" + this.tagCtx.view.getIndex() + "'>" + this.tagCtx.render(val) + "</tbody>";
 			},
 			onAfterLink: function() {
 				//debugger;
@@ -328,6 +331,15 @@
 					+ 'bb{^{myWrap val=2/}}'
 					+ 'cc{{myWrap val=3 "this is unbound"/}}'
 				+ '{{/if}}'
+				+ '<div id="b{{:#index+1}}">'
+					+ '{^{mySimpleWrap val=5}}'
+						+ '{^{mySimpleWrap val=6}}'
+							+ '{^{myWrap2 val=7/}}'
+						+ '{{/mySimpleWrap}}'
+					+ '{{/mySimpleWrap}}'
+				+ '<span>'
+					+ '{^{myWrap2 val=8/}}'
+				+ '</span></div>'
 				+ 'www<span id="b{{:#index+1}}"></span>'
 			+ '{{/for}}',
 
@@ -339,7 +351,7 @@
 						+ '<tr id="tr{{:~index+1}}">'
 							+ '{^{myWrap2ElCnt val=11}}'
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
-								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
+								+ '{^{myFlow val=3}}xyz{{/myFlow}}{^{mySimpleWrap val=5/}}'
 							+ '{{/myWrap2ElCnt}}'
 							+ '{^{if true}}'
 								+ '{^{myWrap2ElCnt val=22}}'
@@ -358,7 +370,15 @@
 					+ '{^{myWrapElCnt val=2/}}'
 					+ '{{myWrapElCnt "this is unbound"/}}'
 				+ '{{/if}}'
-				+ '<tbody id="b{{:#index+1}}"></tbody>'
+				+ '<tbody id="b{{:#index+1}}">'
+					+ '{^{mySimpleWrap val=5}}'
+						+ '{^{mySimpleWrap val=6}}'
+							+ '{^{myWrap2 val=7/}}'
+						+ '{{/mySimpleWrap}}'
+					+ '{{/mySimpleWrap}}'
+				+ '<tr></tr><tr>'
+					+ '{^{myWrap2ElCnt val=8/}}'
+				+ '</tr></tbody>'
 			+ '{{/for}}</table>',
 
 		boundTmplHierarchyElCntWithDataLink: '<table data-link="{myWrapElCnt val=1 tmpl=\'wrapCnt\'} class{:lastName}"></table>',
@@ -4387,7 +4407,7 @@ test("{^{for}}", function() {
 	// ................................ Act ..................................
 	before = $("#result ul").text(); // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
 	$.observable(data).setProperty("items", []);
-	var deferredString = $("#result ul li")[0]._dfr || "";
+	var deferredString = $("#result ul li")[0]._df || "";
 	$.observable(data.items).insert("X");
 	after = $("#result ul").text();
 
@@ -4395,7 +4415,7 @@ test("{^{for}}", function() {
 	equal(before + "|" + deferredString + "|" + after,
 	(isIE8 ? 'next||insertBeforenext'
 	: ' next||insertBefore next'),
-	'Inserting content before a next sibling element in element-only context does not set ._dfr, and subsequent insertion is correctly placed before the next sibling.');
+	'Inserting content before a next sibling element in element-only context does not set ._df, and subsequent insertion is correctly placed before the next sibling.');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -4430,7 +4450,7 @@ test("{^{for}}", function() {
 
 	ok(viewsAndBindings().split(" ").length === 3 // We removed view inside div, but still have the view for the outer template.
 		&& !$._data(model.things).events,
-		'$(container).empty removes listeners for empty tags in element-only content (_dfr="#n_/n_")');
+		'$(container).empty removes listeners for empty tags in element-only content (_df="#n_/n_")');
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
@@ -4451,7 +4471,7 @@ test("{^{for}}", function() {
 	ok(viewsAndBindings().split(" ").length === 9 // We removed view inside div, but still have the view for the outer template.
 		&& $._data(data.list).events.arrayChange.length === 1
 		&& $("#result ul").text() === "added",
-		'In element-only content, updateContent calls disposeTokens on _dfr inner bindings');
+		'In element-only content, updateContent calls disposeTokens on _df inner bindings');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -4522,7 +4542,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// ............................... Assert .................................
 	after = $("#result").text();
-	var deferredString = $("#result tr")[0]._dfr; // "/226_/322^"
+	var deferredString = $("#result tr")[0]._df; // "/226_/322^"
 	// With deep version, the tokens for the {^{if}} binding had to be deferred - we test the format:
 	deferredString = /\/\d+\_\/\d+\^/.test(deferredString);
 
@@ -4534,14 +4554,14 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// ............................... Assert .................................
 	after = $("#result").text();
-	deferredString = $("#result tr")[0]._dfr; // "#322^/322^"
+	deferredString = $("#result tr")[0]._df; // "#322^/322^"
 	// With deep version, the tokens for the {^{if}} binding had to be deferred - we test the format:
 	deferredString = /#(\d+\^)\/\1/.test(deferredString);
 
 	equal(deferredString && after, 'afterDeep',
 	'With deep bound {^{if}} tag, there is deferred binding and binding behaves correctly after further remove');
 
- // =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 	var shallowIfTmpl = $.templates(
 			'<table><tbody>'
 			+ '{^{if expanded}}'
@@ -4550,7 +4570,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 			+ '<tr><td>afterShallow</td></tr>'
 		+ '</tbody></table>');
 
- // ................................ Act ..................................
+	// ................................ Act ..................................
 	shallowIfTmpl.link("#result", data);
 
 	$.observable(data).setProperty("expanded", false);
@@ -4558,7 +4578,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// ............................... Assert .................................
 	after = $("#result").text();
-	deferredString = $("#result tr")[0]._dfr; // ""
+	deferredString = $("#result tr")[0]._df; // ""
 	// With shallow version, no deferred binding
 	equal(!deferredString && after, 'ShallowContentafterShallow',
 	'With shallow bound {^{if}} tag, there is no deferred binding, and binding behaves correctly after removing and inserting');
@@ -4568,7 +4588,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// ............................... Assert .................................
 	after = $("#result").text();
-	deferredString = $("#result tr")[0]._dfr; // ""
+	deferredString = $("#result tr")[0]._df; // ""
 	// With shallow version, no deferred binding
 
 	equal(!deferredString && after, 'afterShallow',
@@ -5490,11 +5510,11 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	$.views.tags({
 		myTag1: function(val) { return val + " from my tag1"; },
 		myTag2: {
-			template: "{{:}} from my tag2" 
+			template: "{{:}} from my tag2"
 		}
 	}).converters({
 		upper: function(val) {
-			return val.toUpperCase(); 
+			return val.toUpperCase();
 		}
 	});
 
@@ -5516,7 +5536,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 			.link("#result", initial, {error: "err:"});
 	// ................................ Act ..................................
 
-	before = $._data(initial.a).events.propertyChange.length + !$._data(updated).events + !$._data(updated.c).events + "|"
+	before = "" + $._data(initial.a).events.propertyChange.length + " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
 		+ $("#result").text() + "|";
 	$.observable(initial.a).setProperty('b', updated);
 	after = $("#result").text() + "|";
@@ -5526,15 +5546,15 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	after += $("#result").text() + "|";
 	$.observable(initial.a).setProperty('b', {c: {val: "leaf4"}});
 	after += $("#result").text() + "|";
-	after += $._data(initial.a).events.propertyChange.length + $._data(initial.a.b).events.propertyChange.length + $._data(initial.a.b.c).events.propertyChange.length
-		+ !$._data(updated).events + !$._data(updated.c).events + "|"
+	after += "" + $._data(initial.a).events.propertyChange.length + " " + $._data(initial.a.b).events.propertyChange.length + " " + $._data(initial.a.b.c).events.propertyChange.length
+		+ " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
 		+ $("#result").text() + "|";
 
 	var prevB = initial.a.b;
 
 	$.observable(initial.a).setProperty('b', null);
-	after += $._data(initial.a).events.propertyChange.length + !$._data(prevB).events + !$._data(prevB.c).events + "|"
-		+ $("#result").text() + "|"; 
+	after += "" + $._data(initial.a).events.propertyChange.length + " " + !$._data(prevB).events + " " + !$._data(prevB.c).events + "|"
+		+ $("#result").text() + "|";
 
 	$.observable(initial.a).setProperty('b', updated);
 
@@ -5542,29 +5562,29 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	equal(before + after,
 		isIE8
-		? "13|"
+		? "11 true true|"
 			+ "err:A ERR:B err:C err:D err:E err:F err:G err:H err:I ERR:J err:K |"
 			+ "leafLEAFleafleafleafleaf from my tag1leaf from my tag2 leafleaf from my tag1LEAFLEAF|"
 			+ "leaf2LEAF2leaf2leafleafleaf2 from my tag1leaf2 from my tag2 leaf2leaf2 from my tag1LEAF2LEAF2|"
 			+ "leaf3LEAF3leaf3leafleaf3leaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
 			+ "leaf4LEAF4leaf4leafleaf4leaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
-			+ "33|"
+			+ "11 11 9 true true|"
 			+ "leaf4LEAF4leaf4leafleaf4leaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
-			+ "13|"
+			+ "11 true true|"
 			+ "err:A ERR:B err:C err:D err:E err:F err:G  err:H err:I ERR:J ERR:K |"
 			+ "leaf3LEAF3leaf3leaf3leaf3leaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
 		:
-		"13|"
-		+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  err:K  |"
-		+ "leaf LEAF leaf leaf leaf leaf from my tag1 leaf from my tag2 leaf leaf from my tag1 LEAF LEAF |"
-		+ "leaf2 LEAF2 leaf2 leaf leaf leaf2 from my tag1 leaf2 from my tag2 leaf2 leaf2 from my tag1 LEAF2 LEAF2 |"
-		+ "leaf3 LEAF3 leaf3 leaf leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |"
-		+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
-		+ "33|"
-		+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
-		+ "13|"
-		+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  ERR:K  |"
-		+ "leaf3 LEAF3 leaf3 leaf3 leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |",
+		"11 true true|"
+			+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  err:K  |"
+			+ "leaf LEAF leaf leaf leaf leaf from my tag1 leaf from my tag2 leaf leaf from my tag1 LEAF LEAF |"
+			+ "leaf2 LEAF2 leaf2 leaf leaf leaf2 from my tag1 leaf2 from my tag2 leaf2 leaf2 from my tag1 LEAF2 LEAF2 |"
+			+ "leaf3 LEAF3 leaf3 leaf leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |"
+			+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
+			+ "11 11 9 true true|"
+			+ "leaf4 LEAF4 leaf4 leaf leaf4 leaf4 from my tag1 leaf4 from my tag2 leaf4 leaf4 from my tag1 LEAF4 LEAF4 |"
+			+ "11 true true|"
+			+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  ERR:K  |"
+			+ "leaf3 LEAF3 leaf3 leaf3 leaf3 leaf3 from my tag1 leaf3 from my tag2 leaf3 leaf3 from my tag1 LEAF3 LEAF3 |",
 
 	"deep linking in templates, using onError - correctly re-link to data when missing objects are dynamically replaced");
 
@@ -5573,10 +5593,74 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(initial.a).events,
+	ok(!viewsAndBindings() && !$._data(initial.a).events && !$._data(initial.a.b).events,
 	'$.unlink() removes all views and listeners from the page');
 	// -----------------------------------------------------------------------
 
+	// =============================== Arrange ===============================
+
+	function Item(value, title) {
+		this.title = title;
+		this._value = value;
+		this.value = function(val) {
+			if (!arguments.length) {
+				return this._value;
+			} else {
+				this._value = val;
+			}
+		};
+		this.value.set = true;
+	}
+
+	initial = new Item("string1", "A");
+
+	$.templates(
+		"{^{:value() onError='error1'}} {^{:title}} "
+		+ "{^{:value().value() onError='error2'}} {^{:value().title onError='error2b'}} "
+		+ "{^{:value().value().value() onError='error3'}} {^{:value().value().title onError='error3b'}} "
+		+ "{^{:value().value().value().value() onError='error4'}} {^{:value().value().value().title onError='error4b'}} "
+		).link("#result", initial);
+	// ................................ Act ..................................
+var B,C,D,a,b,c,d,e;
+
+	before = $("#result").text() + "|";
+	$.observable(initial).setProperty('value', B = new Item("string2", "B"));
+	after = $("#result").text() + "|";
+	$.observable(initial.value()).setProperty('value', C = new Item("string3", "C"));
+	after += $("#result").text() + "|";
+	$.observable(initial.value().value()).setProperty('value', D = new Item("string4", "D"));
+	after += $("#result").text() + "|";
+	$.observable(initial).removeProperty('value');
+	after += $("#result").text() + "|";
+	$.observable(initial).setProperty('value', a = new Item( b = new Item( c = new Item( d = new Item( e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
+	after += $("#result").text() + "|";
+
+	equal(before + after,
+		isIE8
+		? "string1 A error2 error3 error3b error4 error4b |"
+			+ "[object Object] Astring2Berror3error4error4b |"
+			+ "[object Object] A[object Object]Bstring3Cerror4 |"
+			+ "[object Object] A[object Object]B[object Object]Cstring4D |"
+			+ "[object Object] Aerror2error3error3berror4error4b |"
+			+ "[object Object] A[object Object]a[object Object]b[object Object]c |"
+		:
+		"string1 A error2  error3 error3b error4 error4b |"
+			+ "[object Object] A string2 B error3  error4 error4b |"
+			+ "[object Object] A [object Object] B string3 C error4  |"
+			+ "[object Object] A [object Object] B [object Object] C string4 D |"
+			+ "[object Object] A error2  error3 error3b error4 error4b |"
+			+ "[object Object] A [object Object] a [object Object] b [object Object] c |",
+
+	"deep linking in templates, using onError - correctly re-link to data when missing objects are dynamically replaced");
+
+	// ................................ Act ..................................
+	$.unlink();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(initial.value()).events && !$._data(initial.value().value()).events,
+	'$.unlink() removes all views and listeners from the page');
+	// -----------------------------------------------------------------------
 });
 
 test('Bound tag properties and contextual properties', function() {
@@ -8334,7 +8418,7 @@ test("MVVM", function() {
 		+ eventsCountAfterUnobserveAll
 		+ eventsAfterUnobserveAddress
 		+ eventsAfterEmptyTemplateContainer,
-		"--newAddressChgStreetAfterUnobserve/newAddressChgStreetAfterUnobserve2 2|3 3|3 3|2 2|2 truetrue false|",
+		"--newAddressChgStreetAfterUnobserve/newAddressChgStreetAfterUnobserve2 2|3 3|3 3|2 2|2 truetrue true|",
 		"Paths with computed/getters: address().street() - unobserveAll is successful");
 
 	// =============================== Arrange ===============================
@@ -9339,14 +9423,27 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags();
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0 && tags[1].tagName === "myWrap" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4
+		&& tags[0].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0 &&
+		tags[1].tagName === "myWrap" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0,
+		tags[2].tagName === "mySimpleWrap",
+		tags[3].tagName === "myWrap2",
 		'view.childTags() returns top-level bound tags within the view, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 4 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap2" && tags[2].tagName === "myWrap2" && tags[3].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 8
+		&& tags[0].tagName === "myWrap"
+		&& tags[1].tagName === "myWrap2"
+		&& tags[2].tagName === "myWrap2"
+		&& tags[3].tagName === "myWrap"
+		&& tags[4].tagName === "mySimpleWrap"
+		&& tags[5].tagName === "mySimpleWrap"
+		&& tags[6].tagName === "myWrap2"
+		&& tags[7].tagName === "myWrap2"
+		&& tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
@@ -9360,14 +9457,21 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags(true, "myWrap2");
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4
+		&& tags[0].tagName === "myWrap2"
+		&& tags[1].tagName === "myWrap2"
+		&& tags[2].tagName === "myWrap2"
+		&& tags[3].tagName === "myWrap2"
+		&& tags[0].tagCtx.view.getIndex() === 0,
 		'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2");
 
 	// ............................... Assert .................................
-	ok(tags.length === 0, 'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+	ok(tags.length === 1
+		&& tags[0].tagName === "myWrap2",
+		'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrap").childTags(); // Get first myWrap view and look for its top-level child tags
@@ -9411,14 +9515,26 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags();
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0 && tags[1].tagName === "myWrapElCnt" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0
+		&& tags[1].tagName === "myWrapElCnt" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0
+		&& tags[2].tagName === "mySimpleWrap" && tags[2].tagCtx.props.val === 5 && tags[2].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags() returns top-level bound tags within the view, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[2].tagName === "myWrap2ElCnt" && tags[3].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 9
+		&& tags[0].tagName === "myWrapElCnt"
+		&& tags[1].tagName === "myWrap2ElCnt"
+		&& tags[2].tagName === "mySimpleWrap"
+		&& tags[3].tagName === "myWrap2ElCnt"
+		&& tags[4].tagName === "myWrapElCnt"
+		&& tags[5].tagName === "mySimpleWrap"
+		&& tags[6].tagName === "mySimpleWrap"
+		&& tags[7].tagName === "myWrap2"
+		&& tags[8].tagName === "myWrap2ElCnt"
+		&& tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
@@ -9432,42 +9548,77 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true, "myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[0].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 3
+		&& tags[0].tagName === "myWrap2ElCnt"
+		&& tags[1].tagName === "myWrap2ElCnt"
+		&& tags[1].tagName === "myWrap2ElCnt"
+		&& tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 0, 'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+	ok(tags.length === 1, 'In element-only content, view.childTags("myTagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
-	tags = view1.get(true, "myWrapElCnt").childTags(); // Get first myWrap view and look for its top-level child tags
+	tags = view1.get(true, "myWrapElCnt").childTags(); // Get first myWrapElCnt view and look for its top-level child tags
+
+	// ............................... Assert .................................
+	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
+		'view.childTags() returns top-level bound child tags, and skips any unbound tags');
+
+	// ................................ Act ..................................
+	tags = view1.get(true, "myWrapElCnt").childTags(true); // Get first myWrapElCnt view and look for descendant tags
+
+	// ............................... Assert .................................
+	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
+		'view.childTags(true) returns descendant tags, and skips any unbound tags');
+
+	// ................................ Act ..................................
+	tags = view1.childTags("myWrapElCnt")[0].childTags(); // Get first myWrapElCnt tag and look for its top-level child tags
 
 	// ............................... Assert .................................
 	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
-	tags = view1.get(true, "myWrapElCnt").childTags(true); // Get first myWrap view and look for descendant tags
+	tags = view1.childTags("myWrapElCnt")[0].childTags(true); // Get first myWrapElCnt tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt",
-		'tag.childTags() returns descendant tags, and skips any unbound tags');
+	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
+		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
-	tags = view1.childTags("myWrapElCnt")[0].childTags(); // Get first myWrap tag and look for its top-level child tags
+	tags = view1.childTags("mySimpleWrap")[0].childTags(); // Get first mySimpleWrap tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
+	ok(tags.length === 1 && tags[0].tagName === "mySimpleWrap",
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
-	tags = view1.childTags("myWrapElCnt")[0].childTags(true); // Get first myWrap tag and look for descendant tags
+	tags = view1.childTags("mySimpleWrap")[0].childTags(true); // Get first mySimpleWrap tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt",
-		'tag.childTags() returns descendant tags, and skips any unbound tags');
+	ok(tags.length === 2 && tags[0].tagName === "mySimpleWrap" && tags[1].tagName === "myWrap2",
+		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
+
+	// ................................ Act ..................................
+	tags = view1.childTags("mySimpleWrap")[0].childTags(true, "myWrap2"); // Get first mySimpleWrap tag and look for descendant tags of type "myWrap2"
+
+	// ............................... Assert .................................
+	ok(tags.length === 1 && tags[0].tagName === "myWrap2",
+		'tag.childTags(true, "myTagName") returns descendant tags of chosen name, and skips any unbound tags');
+
+	// =============================== Arrange ===============================
+	$.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", {row: {}});
+
+	// ................................ Act ..................................
+	var tag = $("#result tr").view().childTags()[0];
+
+		// ............................... Assert .................................
+	ok(tag.tagName === "mySimpleWrap",
+		'childTags() correctly finds tag which has no output and renders within element contet, inside another tag also in element content');
 
 });
 

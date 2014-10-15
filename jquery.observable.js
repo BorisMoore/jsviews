@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 59 (Beta Candidate) */
+informal pre V1.0 commit counter: 60 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -230,7 +230,9 @@ informal pre V1.0 commit counter: 59 (Beta Candidate) */
 				$(boundObOrArr).on(namespace, null, evData, onObservableChange);
 				if (cbBindings) {
 					// Add object to cbBindings, and add the counter to the jQuery data on the object
-					cbBindings[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
+					(cbBindingsStore[callback._cId] = cbBindings) // In some scenarios cbBindings was empty and removed
+						//from store - so defensively add back to store, to ensure correct disposal e.g. when views are removed
+						[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
 				}
 			}
 		}
