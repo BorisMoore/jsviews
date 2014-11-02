@@ -577,7 +577,9 @@ informal pre V1.0 commit counter: 60 */
 			};
 
 		self.data = data;
-		self.tmpl = template,
+		self.tmpl = template && $extend({}, template);
+		if (template && template.links)
+			self.tmpl.links = {};
 		self.content = contentTmpl;
 		self.views = isArray ? [] : {};
 		self.parent = parentView;
@@ -989,6 +991,7 @@ informal pre V1.0 commit counter: 60 */
 					newView = swapContent
 						? parentView :
 						(key !== undefined && parentView) || new View(context, "array", parentView, data, tmpl, key, contentTmpl, onRender);
+					tmpl = newView.tmpl;
 					for (i = 0, l = data.length; i < l; i++) {
 						// Create a view for each data item.
 						dataItem = data[i];
@@ -1001,6 +1004,7 @@ informal pre V1.0 commit counter: 60 */
 					// "item", "array" and "data" views. A "data" view is from programmatic render(object) against a 'singleton'.
 					if (parentView || !tmpl.fn._nvw) {
 						newView = swapContent ? parentView : new View(context, tmplName || "data", parentView, data, tmpl, key, contentTmpl, onRender);
+						tmpl = newView.tmpl;
 						if (tag_ && !self.flow) {
 							newView.tag = self;
 						}
