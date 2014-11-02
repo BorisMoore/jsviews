@@ -3183,6 +3183,74 @@ test("computed observables in two-way binding", function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 })();
+
+(function() {
+	// =============================== Arrange ===============================
+	function Root(a){
+	    this._a = a;
+	    this.a = function() {
+	        if (!arguments.length)
+	            return this._a;
+	        else
+	            this._a = arguments[0];
+	    };
+	    this.a.set = true;
+	}
+
+	function A(b){
+	    this._b = b;
+	    this.b = function() {
+	        if (!arguments.length)
+	            return this._b;
+	        else
+	            this._b = arguments[0];
+	    };
+	    this.b.set = true;
+	}
+
+	var o1 = new Root(new A('one')),
+		o2 = new Root(new A('two'));
+
+	$.templates('field', '<input data-link="{:a().b() :}"><span data-link="{:a().b()}"></span>');
+
+	$("#result").html("<div id='one'></div><div id='two'><div>");
+
+	$.templates.field.link('#one', o1);
+	$.templates.field.link('#two', o2);
+
+	// ................................ Act ..................................
+	var res = $("#one input").val() + $("#one span").text();
+	res += "|" + $("#two input").val() + $("#two span").text();
+
+	$("#one input").val('onechange').change();
+
+	res += "|" + $("#one input").val() + $("#one span").text();
+	res += "|" + $("#two input").val() + $("#two span").text();
+
+	$("#two input").val('twochange').change();
+
+	res += "|" + $("#one input").val() + $("#one span").text();
+	res += "|" + $("#two input").val() + $("#two span").text();
+
+	$.observable(o1.a()).setProperty('b', 'oneupdate');
+
+	res += "|" + $("#one input").val() + $("#one span").text();
+	res += "|" + $("#two input").val() + $("#two span").text();
+
+	$.observable(o2.a()).setProperty('b', 'twoupdate');
+
+	res += "|" + $("#one input").val() + $("#one span").text();
+	res += "|" + $("#two input").val() + $("#two span").text();
+
+
+	// ............................... Assert .................................
+	equal(res,
+	"oneone|twotwo|onechangeonechange|twotwo|onechangeonechange|twochangetwochange|oneupdateoneupdate|twochangetwochange|oneupdateoneupdate|twoupdatetwoupdate",
+	'Single template linked to independent elements with same path using complex computed observables remain independent');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+})();
 });
 
 module("API - data-bound tags");
