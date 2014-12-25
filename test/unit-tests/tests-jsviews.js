@@ -3,390 +3,391 @@
 "use strict";
 (function() {
 /* Setup */
-	var isIE8 = window.attachEvent && !window.addEventListener;
+var isIE8 = window.attachEvent && !window.addEventListener;
 
 // =============== Model ===============
-	function fullName(reverse, upper) {
-		var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
-		return upper ? name.toUpperCase() : name;
-	}
+function fullName(reverse, upper) {
+	var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
+	return upper ? name.toUpperCase() : name;
+}
 
-	fullName.depends = function(object) { // object is also the this pointer, so we could write function(this) below
-		return [
-			"firstName",
-			function(object) {
-				return "lastName";
-			}
-		];
-	};
-
-	fullName.set = function(val) {
-		val = val.split(" ");
-		$.observable(this).setProperty({
-			lastName: val.pop(),
-			firstName: val.join(" ")
-		});
-	};
-
-	var Person = function(first, last, home) {
-			this._firstName = first;
-			this.lastName = last;
-			this.home = home;
-		},
-
-		personProto = {
-			firstName: function() {
-				return settings.title + " " + this._firstName;
-			},
-			fullName: fullName
-		};
-
-	personProto.firstName.set = function(val) {
-		this._firstName = val;
-	};
-
-	Person.prototype = personProto;
-
-	function updown(val, lower) {
-		lower = this.tagCtx.props.lower !== undefined ? this.tagCtx.props.lower : lower;
-		val = person1.firstName() + (val||"");
-		return (lower === true ? val.toLowerCase() : val.toUpperCase()) + settings.width + this.tagCtx.props.added;
-	}
-
-	function sort(array) {
-		var ret = "";
-		if (this.tagCtx.props.reverse) {
-			// Render in reverse order
-			if (arguments.length > 1) {
-				for (i = arguments.length; i; i--) {
-					ret += sort.call(this, arguments[ i - 1 ]);
-				}
-			} else for (var i = array.length; i; i--) {
-				ret += this.tagCtx.render(array[ i - 1 ]);
-			}
-		} else {
-			// Render in original order
-			ret += this.tagCtx.render(array);
+fullName.depends = function(object) { // object is also the this pointer, so we could write function(this) below
+	return [
+		"firstName",
+		function(object) {
+			return "lastName";
 		}
-		return ret;
+	];
+};
+
+fullName.set = function(val) {
+	val = val.split(" ");
+	$.observable(this).setProperty({
+		lastName: val.pop(),
+		firstName: val.join(" ")
+	});
+};
+
+var Person = function(first, last, home) {
+	this._firstName = first;
+	this.lastName = last;
+	this.home = home;
+},
+
+	personProto = {
+		firstName: function() {
+			return settings.title + " " + this._firstName;
+		},
+		fullName: fullName
+	};
+
+personProto.firstName.set = function(val) {
+	this._firstName = val;
+};
+
+Person.prototype = personProto;
+
+function updown(val, lower) {
+	lower = this.tagCtx.props.lower !== undefined ? this.tagCtx.props.lower : lower;
+	val = person1.firstName() + (val || "");
+	return (lower === true ? val.toLowerCase() : val.toUpperCase()) + settings.width + this.tagCtx.props.added;
+}
+
+function sort(array) {
+	var ret = "";
+	if (this.tagCtx.props.reverse) {
+		// Render in reverse order
+		if (arguments.length > 1) {
+			for (i = arguments.length; i; i--) {
+				ret += sort.call(this, arguments[i - 1]);
+			}
+		} else for (var i = array.length; i; i--) {
+			ret += this.tagCtx.render(array[i - 1]);
+		}
+	} else {
+		// Render in original order
+		ret += this.tagCtx.render(array);
 	}
+	return ret;
+}
 
 // =============== DATA ===============
 
-	function onFoo1() { return; }
+function onFoo1() { return; }
 
-	var address1 = { street: "StreetOne", ZIP: "111" },
-		address2 = { street: "StreetTwo", ZIP: "222" },
-		home1 = { address: address1 },
-		home2 = { address: address2 },
-		homeOfOwner = { address: {street: "OwnerStreet"} },
-		person1 = new Person("Jo", "One", home1),
-		person2 = new Person("Xavier", "Two", home2),
+var address1 = { street: "StreetOne", ZIP: "111" },
+	address2 = { street: "StreetTwo", ZIP: "222" },
+	home1 = { address: address1 },
+	home2 = { address: address2 },
+	homeOfOwner = { address: { street: "OwnerStreet" } },
+	person1 = new Person("Jo", "One", home1),
+	person2 = new Person("Xavier", "Two", home2),
 
-		settings = {
-			owner: new Person("Mr", "Owner", homeOfOwner),
-			width: 30,
-			reverse: true,
-			upper: updown,
-			title: "Mr",
-			onFoo: onFoo1
-		},
+	settings = {
+		owner: new Person("Mr", "Owner", homeOfOwner),
+		width: 30,
+		reverse: true,
+		upper: updown,
+		title: "Mr",
+		onFoo: onFoo1
+	},
 
-		model = {
-			person1: person1,
-			person2: person2,
-			things: []
-		},
+	model = {
+		person1: person1,
+		person2: person2,
+		things: []
+	},
 
-		people = [person1, person2];
+	people = [person1, person2];
 
-	personProto.firstName.depends = [settings, "title"];
+personProto.firstName.depends = [settings, "title"];
 
-	updown.depends = function() {
-		return [person1, "firstName", "~settings.width"];
-	};
+updown.depends = function() {
+	return [person1, "firstName", "~settings.width"];
+};
 
 // =============== RESOURCES ===============
 
-	var	cancelChange = false,
-		noRenderOnUpdate = true,
-		renders = false,
-		eventData = "";
+var cancelChange = false,
+	noRenderOnUpdate = true,
+	renders = false,
+	eventData = "";
 
-	$.views
-		.converters({
-			upper: updown,
-			cvtBack: function(val){
-				return val;
-			}
-		})
-		.helpers({
-			settings: settings,
-			upper: updown
-		})
-		.tags({
-			tmplTag: {
-				template: "Name: {{:firstName()}}. Width: {{:~settings.width}}",
-				depends: ["firstName", "~settings.width"]
+$.views
+	.converters({
+		upper: updown,
+		cvtBack: function(val) {
+			return val;
+		}
+	})
+	.helpers({
+		settings: settings,
+		upper: updown
+	})
+	.tags({
+		tmplTag: {
+			template: "Name: {{:firstName()}}. Width: {{:~settings.width}}",
+			depends: ["firstName", "~settings.width"]
+		},
+		fnTag: {
+			render: function() {
+				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width;
 			},
-			fnTag: {
-				render: function() {
-					return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width;
-				},
-				depends: ["firstName", "~settings.width"]
-			},
-			fnTagElNoInit: function() {
+			depends: ["firstName", "~settings.width"]
+		},
+		fnTagElNoInit: function() {
+			return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</span>";
+		},
+		tmplTagEl: {
+			template: "<span>Name: {{:firstName()}}. Width: {{:~settings.width}}</span>",
+			depends: ["firstName", "~settings.width"]
+		},
+		fnTagEl: {
+			render: function() {
 				return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</span>";
 			},
-			tmplTagEl: {
-				template: "<span>Name: {{:firstName()}}. Width: {{:~settings.width}}</span>",
-				depends: ["firstName", "~settings.width"]
-			},
-			fnTagEl: {
-				render: function() {
-					return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</span>";
-				},
-				depends: ["firstName", "~settings.width"]
-			},
-			fnTagElCnt: {
-				render: function() {
-					return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</li>";
-				},
-				depends: ["firstName", "~settings.width"]
-			},
-			fnTagElCntNoInit: function() {
+			depends: ["firstName", "~settings.width"]
+		},
+		fnTagElCnt: {
+			render: function() {
 				return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</li>";
 			},
-			fnTagWithProps: {
-				render: function(data, val) {
-					return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + ". Value: " + val
-						+ ". Prop theTitle: " + this.tagCtx.props.theTitle + ". Prop ~street: " + this.ctx.street;
-				},
-				depends: ["firstName", "~settings.width"]
+			depends: ["firstName", "~settings.width"]
+		},
+		fnTagElCntNoInit: function() {
+			return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</li>";
+		},
+		fnTagWithProps: {
+			render: function(data, val) {
+				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + ". Value: " + val
+					+ ". Prop theTitle: " + this.tagCtx.props.theTitle + ". Prop ~street: " + this.ctx.street;
 			},
-			tmplTagWithProps: {
-				render: function(val) {
-					this.ctx.theTitle = this.tagCtx.props.theTitle;
-				},
-				template: "Name: {{:firstName()}}. Width: {{:~settings.width}}. Value: {{:~settings.reverse}}. "
-					+ "Prop theTitle: {{:~theTitle}}. Prop ~street: {{:~street}}",
-				depends: ["firstName", "~settings.width"]
+			depends: ["firstName", "~settings.width"]
+		},
+		tmplTagWithProps: {
+			render: function(val) {
+				this.ctx.theTitle = this.tagCtx.props.theTitle;
 			},
-			twoWayTag: {
-				init: function(tagCtx, linkCtx) {
-					eventData += "init ";
-					if (this._.inline && !tagCtx.content) {
-						this.template = "<input/>";
-					}
-				},
-				render: function(val) {
-					eventData += "render ";
-					return renders ? (val + ' <input id="linkedEl"/> rendered') : undefined;
-				},
-				onBeforeLink: function(tagCtx, linkCtx) {
-					eventData += "onBeforeLink ";
-					//return false;
-				},
-				onAfterLink: function(tagCtx, linkCtx) {
-					eventData += "onAfterLink ";
-					this.value = tagCtx.args[0];
-					this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
-				},
-				onUpdate: function(ev, eventArgs, tagCtxs) {
-					eventData += "onUpdate ";
-					return !noRenderOnUpdate;
-				},
-				onBeforeChange: function(ev, eventArgs) {
-					eventData += "onBeforeChange ";
-					return !cancelChange;
-				},
-				onDispose: function() {
-					eventData += "onDispose ";
+			template: "Name: {{:firstName()}}. Width: {{:~settings.width}}. Value: {{:~settings.reverse}}. "
+				+ "Prop theTitle: {{:~theTitle}}. Prop ~street: {{:~street}}",
+			depends: ["firstName", "~settings.width"]
+		},
+		twoWayTag: {
+			init: function(tagCtx, linkCtx) {
+				eventData += "init ";
+				if (this._.inline && !tagCtx.content) {
+					this.template = "<input/>";
 				}
-			}
-		});
-
-	var topData = {people: people};
-	$.views.tags({
-		myWrap: {init: function(tc) {
-			var test = tc.props.val;
-		}
-		},
-		myWrap2: {},
-		mySimpleWrap: function(val) {
-			return this.tagCtx.render(val);
-		},
-		myFlow: {
-			flow: true
-		},
-		myWrapElCnt: {
-			attr: "html",
-			render: function(val) {
-				return "<tbody data-wrapelct='" + this.tagCtx.view.getIndex() + "'>" + this.tagCtx.render(val) + "</tbody>";
 			},
-			onAfterLink: function() {
-				//debugger;
-			}
-		},
-		myWrap2ElCnt: {
-			attr: "html",
 			render: function(val) {
-				return "<td>" + this.tagCtx.render(val) + "</td>";
+				eventData += "render ";
+				return renders ? (val + ' <input id="linkedEl"/> rendered') : undefined;
 			},
-			onAfterLink: function() {
-				//debugger;
-			}
-		},
-		myFlowElCnt: {
-			attr: "html",
-			flow: true,
-			render: function(val) {
-				return "<td>" + this.tagCtx.render(val) + "</td>";
+			onBeforeLink: function(tagCtx, linkCtx) {
+				eventData += "onBeforeLink ";
+				//return false;
+			},
+			onAfterLink: function(tagCtx, linkCtx) {
+				eventData += "onAfterLink ";
+				this.value = tagCtx.args[0];
+				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+			},
+			onUpdate: function(ev, eventArgs, tagCtxs) {
+				eventData += "onUpdate ";
+				return !noRenderOnUpdate;
+			},
+			onBeforeChange: function(ev, eventArgs) {
+				eventData += "onBeforeChange ";
+				return !cancelChange;
+			},
+			onDispose: function() {
+				eventData += "onDispose ";
 			}
 		}
 	});
 
-	$.templates({
+var topData = { people: people };
+$.views.tags({
+	myWrap: {
+		init: function(tc) {
+			var test = tc.props.val;
+		}
+	},
+	myWrap2: {},
+	mySimpleWrap: function(val) {
+		return this.tagCtx.render(val);
+	},
+	myFlow: {
+		flow: true
+	},
+	myWrapElCnt: {
+		attr: "html",
+		render: function(val) {
+			return "<tbody data-wrapelct='" + this.tagCtx.view.getIndex() + "'>" + this.tagCtx.render(val) + "</tbody>";
+		},
+		onAfterLink: function() {
+			//debugger;
+		}
+	},
+	myWrap2ElCnt: {
+		attr: "html",
+		render: function(val) {
+			return "<td>" + this.tagCtx.render(val) + "</td>";
+		},
+		onAfterLink: function() {
+			//debugger;
+		}
+	},
+	myFlowElCnt: {
+		attr: "html",
+		flow: true,
+		render: function(val) {
+			return "<td>" + this.tagCtx.render(val) + "</td>";
+		}
+	}
+});
 
-		tmplHierarchy:
+$.templates({
 
-			'{{for people ~val=1}}'
-				+ '{{if true ~index=#index}}'
-					+ '{{myWrap val=1}}'
-						+ '<span id="{{:~index+1}}">'
-							+ '<em>a</em>'
+	tmplHierarchy:
+
+		'{{for people ~val=1}}'
+			+ '{{if true ~index=#index}}'
+				+ '{{myWrap val=1}}'
+					+ '<span id="{{:~index+1}}">'
+						+ '<em>a</em>'
+						+ '{{myWrap2}}'
+							+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
+						+ '{{/myWrap2}}'
+						+ '{{if true}}'
 							+ '{{myWrap2}}'
 								+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
 							+ '{{/myWrap2}}'
-							+ '{{if true}}'
-								+ '{{myWrap2}}'
-									+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
-								+ '{{/myWrap2}}'
-							+ '{{/if}}'
-							+ '{{if true}}'
-								+ '<span>yy</span>'
-							+ '{{/if}}'
-							+ '{{myFlow}}'
-								+ '<span>zz</span>'
-							+ '{{/myFlow}}'
-						+ '</span>'
-					+ '{{/myWrap}}'
-					+ '{{myWrap val=2/}}'
-				+ '{{/if}}'
-				+ 'www<span id="b{{:#index+1}}"></span>'
-			+ '{{/for}}',
+						+ '{{/if}}'
+						+ '{{if true}}'
+							+ '<span>yy</span>'
+						+ '{{/if}}'
+						+ '{{myFlow}}'
+							+ '<span>zz</span>'
+						+ '{{/myFlow}}'
+					+ '</span>'
+				+ '{{/myWrap}}'
+				+ '{{myWrap val=2/}}'
+			+ '{{/if}}'
+			+ 'www<span id="b{{:#index+1}}"></span>'
+		+ '{{/for}}',
 
-		tmplHierarchyElCnt:
+	tmplHierarchyElCnt:
 
-			'<table>{{for people ~val=1}}'
-				+ '{{if true ~index=#index}}'
-					+ '{{myWrapElCnt val=1}}'
-						+ '<tr id="tr{{:~index+1}}">'
+		'<table>{{for people ~val=1}}'
+			+ '{{if true ~index=#index}}'
+				+ '{{myWrapElCnt val=1}}'
+					+ '<tr id="tr{{:~index+1}}">'
+						+ '{{myWrap2ElCnt}}'
+							+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
+						+ '{{/myWrap2ElCnt}}'
+						+ '{{if true}}'
 							+ '{{myWrap2ElCnt}}'
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
 							+ '{{/myWrap2ElCnt}}'
-							+ '{{if true}}'
-								+ '{{myWrap2ElCnt}}'
-									+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
-								+ '{{/myWrap2ElCnt}}'
-							+ '{{/if}}'
-							+ '{{if true}}'
-								+ '<td id="td{{:~index+1}}">yy</td>'
-							+ '{{/if}}'
-							+ '{{myFlowElCnt}}'
-								+ 'xx<span id="spInFlow{{:#getIndex()+1}}"></span>'
-							+ '{{/myFlowElCnt}}'
-						+ '</tr>'
-					+ '{{/myWrapElCnt}}'
-					+ '{{myWrapElCnt val=2/}}'
-					+ '<tbody>33</tbody>'
-				+ '{{/if}}'
-			+ '{{/for}}</table>',
+						+ '{{/if}}'
+						+ '{{if true}}'
+							+ '<td id="td{{:~index+1}}">yy</td>'
+						+ '{{/if}}'
+						+ '{{myFlowElCnt}}'
+							+ 'xx<span id="spInFlow{{:#getIndex()+1}}"></span>'
+						+ '{{/myFlowElCnt}}'
+					+ '</tr>'
+				+ '{{/myWrapElCnt}}'
+				+ '{{myWrapElCnt val=2/}}'
+				+ '<tbody>33</tbody>'
+			+ '{{/if}}'
+		+ '{{/for}}</table>',
 
-		boundTmplHierarchy:
+	boundTmplHierarchy:
 
-			'{{for people ~val=1}}'
-				+ '{{if true ~index=#index}}'
-					+ 'aa{^{myWrap val=1}}inside'
-						+ '<span id="{{:~index+1}}">'
-							+ '<em>a</em>'
+		'{{for people ~val=1}}'
+			+ '{{if true ~index=#index}}'
+				+ 'aa{^{myWrap val=1}}inside'
+					+ '<span id="{{:~index+1}}">'
+						+ '<em>a</em>'
+						+ '{^{myWrap2}}'
+							+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
+							+ '{^{myFlow val=3}}xyz{{/myFlow}}'
+						+ '{{/myWrap2}}'
+						+ '{^{if true}}'
 							+ '{^{myWrap2}}'
 								+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
 								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 							+ '{{/myWrap2}}'
-							+ '{^{if true}}'
-								+ '{^{myWrap2}}'
-									+ '{{if true}}xx<span id="sp{{:#getIndex()}}"></span>{{/if}}'
-									+ '{^{myFlow val=3}}xyz{{/myFlow}}'
-								+ '{{/myWrap2}}'
-							+ '{{/if}}'
-							+ '{{if true}}'
-								+ '<td>yy</td>'
-							+ '{{/if}}'
-							+ '{^{myFlow val=4}}'
-								+ '<span>zz</span>'
-							+ '{{/myFlow}}'
-						+ '</span>'
-					+ '{{/myWrap}}'
-					+ 'bb{^{myWrap val=2/}}'
-					+ 'cc{{myWrap val=3 "this is unbound"/}}'
-				+ '{{/if}}'
-				+ '<div id="b{{:#index+1}}">'
-					+ '{^{mySimpleWrap val=5}}'
-						+ '{^{mySimpleWrap val=6}}'
-							+ '{^{myWrap2 val=7/}}'
-						+ '{{/mySimpleWrap}}'
+						+ '{{/if}}'
+						+ '{{if true}}'
+							+ '<td>yy</td>'
+						+ '{{/if}}'
+						+ '{^{myFlow val=4}}'
+							+ '<span>zz</span>'
+						+ '{{/myFlow}}'
+					+ '</span>'
+				+ '{{/myWrap}}'
+				+ 'bb{^{myWrap val=2/}}'
+				+ 'cc{{myWrap val=3 "this is unbound"/}}'
+			+ '{{/if}}'
+			+ '<div id="b{{:#index+1}}">'
+				+ '{^{mySimpleWrap val=5}}'
+					+ '{^{mySimpleWrap val=6}}'
+						+ '{^{myWrap2 val=7/}}'
 					+ '{{/mySimpleWrap}}'
-				+ '<span>'
-					+ '{^{myWrap2 val=8/}}'
-				+ '</span></div>'
-				+ 'www<span id="b{{:#index+1}}"></span>'
-			+ '{{/for}}',
+				+ '{{/mySimpleWrap}}'
+			+ '<span>'
+				+ '{^{myWrap2 val=8/}}'
+			+ '</span></div>'
+			+ 'www<span id="b{{:#index+1}}"></span>'
+		+ '{{/for}}',
 
-		boundTmplHierarchyElCnt:
+	boundTmplHierarchyElCnt:
 
-			'<table>{{for people ~val=1}}'
-				+ '{{if true ~index=#index}}'
-					+ '{^{myWrapElCnt val=1}}'
-						+ '<tr id="tr{{:~index+1}}">'
-							+ '{^{myWrap2ElCnt val=11}}'
+		'<table>{{for people ~val=1}}'
+			+ '{{if true ~index=#index}}'
+				+ '{^{myWrapElCnt val=1}}'
+					+ '<tr id="tr{{:~index+1}}">'
+						+ '{^{myWrap2ElCnt val=11}}'
+							+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
+							+ '{^{myFlow val=3}}xyz{{/myFlow}}{^{mySimpleWrap val=5/}}'
+						+ '{{/myWrap2ElCnt}}'
+						+ '{^{if true}}'
+							+ '{^{myWrap2ElCnt val=22}}'
 								+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
-								+ '{^{myFlow val=3}}xyz{{/myFlow}}{^{mySimpleWrap val=5/}}'
+								+ '{^{myFlow val=3}}xyz{{/myFlow}}'
 							+ '{{/myWrap2ElCnt}}'
-							+ '{^{if true}}'
-								+ '{^{myWrap2ElCnt val=22}}'
-									+ 'xx<span id="sp{{:#getIndex()+1}}"></span>'
-									+ '{^{myFlow val=3}}xyz{{/myFlow}}'
-								+ '{{/myWrap2ElCnt}}'
-							+ '{{/if}}'
-							+ '{{if true}}'
-								+ '<td id="td{{:~index+1}}">yy</td>'
-							+ '{{/if}}'
-							+ '{^{myFlowElCnt val=4}}'
-								+ 'xx<span id="spInFlow{{:#getIndex()+1}}"></span>'
-							+ '{{/myFlowElCnt}}'
-						+ '</tr>'
-					+ '{{/myWrapElCnt}}'
-					+ '{^{myWrapElCnt val=2/}}'
-					+ '{{myWrapElCnt "this is unbound"/}}'
-				+ '{{/if}}'
-				+ '<tbody id="b{{:#index+1}}">'
-					+ '{^{mySimpleWrap val=5}}'
-						+ '{^{mySimpleWrap val=6}}'
-							+ '{^{myWrap2 val=7/}}'
-						+ '{{/mySimpleWrap}}'
+						+ '{{/if}}'
+						+ '{{if true}}'
+							+ '<td id="td{{:~index+1}}">yy</td>'
+						+ '{{/if}}'
+						+ '{^{myFlowElCnt val=4}}'
+							+ 'xx<span id="spInFlow{{:#getIndex()+1}}"></span>'
+						+ '{{/myFlowElCnt}}'
+					+ '</tr>'
+				+ '{{/myWrapElCnt}}'
+				+ '{^{myWrapElCnt val=2/}}'
+				+ '{{myWrapElCnt "this is unbound"/}}'
+			+ '{{/if}}'
+			+ '<tbody id="b{{:#index+1}}">'
+				+ '{^{mySimpleWrap val=5}}'
+					+ '{^{mySimpleWrap val=6}}'
+						+ '{^{myWrap2 val=7/}}'
 					+ '{{/mySimpleWrap}}'
-				+ '<tr></tr><tr>'
-					+ '{^{myWrap2ElCnt val=8/}}'
-				+ '</tr></tbody>'
-			+ '{{/for}}</table>',
+				+ '{{/mySimpleWrap}}'
+			+ '<tr></tr><tr>'
+				+ '{^{myWrap2ElCnt val=8/}}'
+			+ '</tr></tbody>'
+		+ '{{/for}}</table>',
 
-		boundTmplHierarchyElCntWithDataLink: '<table data-link="{myWrapElCnt val=1 tmpl=\'wrapCnt\'} class{:lastName}"></table>',
+	boundTmplHierarchyElCntWithDataLink: '<table data-link="{myWrapElCnt val=1 tmpl=\'wrapCnt\'} class{:lastName}"></table>',
 
-		wrapCnt: '<tr id="tr{{:~index+1}}" data-link="{myWrap2ElCnt val=2 tmpl=\'innerWrap\'}"></tr>',
+	wrapCnt: '<tr id="tr{{:~index+1}}" data-link="{myWrap2ElCnt val=2 tmpl=\'innerWrap\'}"></tr>',
 
-		innerWrap: 'xx<span id="sp{{:#getIndex()+1}}"></span>'
-	});
+	innerWrap: 'xx<span id="sp{{:#getIndex()+1}}"></span>'
+});
 
 // =============== INIT APP ===============
 
@@ -450,7 +451,7 @@ test("Template validation", function() {
 		$.templates('<svg height="210" width="400"><path data-link="d{:path}" /></svg>'
 			+ '<math><mi>x</mi><mspace data-link="width{:width}"/><mi>y</mi></math>'
 			+ '<div><span><svg><path d="M150 0 L75 200 L225 200 Z" /></svg><math><mi>x</mi><mspace width="3em"/><mi>y</mi></math></span>{{:thing}}</div>')
-		.link("#result", {width: "3em", path:"M250 0 L75 200 L225 200 Z", thing: "egg"});
+		.link("#result", { width: "3em", path: "M250 0 L75 200 L225 200 Z", thing: "egg" });
 		result = $("#result").text();
 	} catch (e) {
 		result = e.message;
@@ -463,7 +464,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>')
-		.link("#result", {things: [{thing: "Orig"}]});
+		.link("#result", { things: [{ thing: "Orig" }] });
 	} catch (e) {
 		result = e.message;
 	}
@@ -475,7 +476,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div>{{:thing}}<span></div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -487,7 +488,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div>{{:Thing}}</span></div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -499,7 +500,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<span>{{:Thing}}</span></span>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -511,7 +512,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<span>{{:Thing}}</span></div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -523,7 +524,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div>{{:Thing}}<span/></div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -535,7 +536,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div>{{:Thing}}')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -547,7 +548,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('</div>{{:Thing}}')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -559,7 +560,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div/>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -571,7 +572,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div>{{:Thing}}<input></input></div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -597,7 +598,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<span {{if true}}id="last"{{/if}}>a</span>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -609,7 +610,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<input {{if true}}id="last\"{{/if}} data-link="lastName">')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -621,7 +622,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<input {{if true}}id="last\"/> {{else}}/>{{/if}}')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -633,7 +634,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<div {^{:true}}>a</div>')
-		.link("#result", {thing: "Orig"});
+		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
@@ -670,7 +671,7 @@ test("jQuery cleanData integration", function() {
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
 	$.link("lastName", "#inner", person1);
-	$("#inner").on("click", function() {});
+	$("#inner").on("click", function() { });
 
 	// ................................ Act ..................................
 	result = $("#inner").html();
@@ -732,7 +733,7 @@ test("jQuery cleanData integration", function() {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	$("#result").empty();
+	$.unlink();
 });
 
 module("API - data-link");
@@ -849,7 +850,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-
+	$.unlink();
 });
 
 test("Top-level linking", function() {
@@ -860,13 +861,13 @@ test("Top-level linking", function() {
 	$("#result").html("<div data-link='name + ~a + ~b'></div>");
 
 	// ............................... Act .................................
-	$.link(true, "#result", {name: "Jo"}, {b: " B"});
+	$.link(true, "#result", { name: "Jo" }, { b: " B" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "Jo A B", 'Passing in data to top-level linking');
 
 	// ............................... Act .................................
-	$.link(true, "#result div", {name: "Jo2"}, {b: " newB"} );
+	$.link(true, "#result div", { name: "Jo2" }, { b: " newB" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "Jo2 A newB", 'Top-level linking directly to the linked element');
@@ -885,8 +886,8 @@ test("Top-level linking", function() {
 	$("#result").html("<div data-link='{include tmpl=\"inner\"}'></div>");
 
 	// ............................... Act .................................
-	var data = {name: "Jo"};
-	$.link(true, "#result", data, {b: " B"});
+	var data = { name: "Jo" };
+	$.link(true, "#result", data, { b: " B" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "Jo A B", 'top-level data-link="{include tmpl=...}" passes in model and context');
@@ -898,8 +899,8 @@ test("Top-level linking", function() {
 	equal($("#result").text(), "JoChanged A B", 'Top-level data-link="{include tmpl=...}" binds correctly within {{include}} template');
 
 	// ............................... Act .................................
-	data = {name: "Jo2"};
-	$.link(true, "#result", data, {b: " newB"} );
+	data = { name: "Jo2" };
+	$.link(true, "#result", data, { b: " newB" });
 
 	// ............................... Assert .................................
 	equal($("#result div").text(), "Jo2 A newB", 'Top-level linking directly to the linked element with data-link="{include... ');
@@ -932,8 +933,8 @@ test("Top-level linking", function() {
 		model = {
 			selected: "Jim",
 			people: [
-				{name: "Bob"},
-				{name: "Jim"}
+				{ name: "Bob" },
+				{ name: "Jim" }
 			]
 		};
 
@@ -945,8 +946,8 @@ test("Top-level linking", function() {
 	var newName = "new" + count++;
 
 	$.observable(model.people).insert({
-			name: newName
-		});
+		name: newName
+	});
 
 	$.observable(model).setProperty("selected", newName);
 
@@ -972,12 +973,12 @@ test("Top-level linking", function() {
 	$("#result").html("<div data-link=\"{for people ~team=#data tmpl='myTmpl'}\"></div>");
 
 	model = {
-			lead: "Jim",
-			people: [
-				{name: "Bob"},
-				{name: "Jim"}
-			]
-		};
+		lead: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
 
 	// ............................... Act .................................
 	$("#result").link(true, model);
@@ -985,8 +986,8 @@ test("Top-level linking", function() {
 	result = $("#result").text();
 
 	$.observable(model.people).insert({
-			name: "newName"
-		});
+		name: "newName"
+	});
 
 	$.observable(model).setProperty("lead", "newName");
 
@@ -994,7 +995,7 @@ test("Top-level linking", function() {
 
 	// ............................... Assert .................................
 	equal(result, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
-						 : "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
+							: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"Top level bindings allow passing in new contextual variables to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
@@ -1006,12 +1007,13 @@ test("Top-level linking", function() {
 });
 
 test("$.link() and $().link() variants", function() {
+
 	// =============================== Arrange ===============================
 
 	$("#result").html('<span id="inner"></span>');
 	var help = {
-			options: {bar: "BarA"}
-		};
+		options: { bar: "BarA" }
+	};
 
 	$.link("person1.lastName + ' ' + person1.home.address^street + ' ' + ~options.bar", "#inner", model, help);
 
@@ -1094,7 +1096,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1126,7 +1128,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1172,7 +1174,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1181,7 +1183,7 @@ test("$.link() and $().link() variants", function() {
 
 	// =============================== Arrange ===============================
 
-		$("#result").html('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>'); // multiple targets, same class
+	$("#result").html('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>'); // multiple targets, same class
 
 	$("div.inner, span.inner").link("title{:person1.lastName} {include person1 ^tmpl=~options.tmpl}", model, help);
 	$("input.inner").link("title{:person1.lastName} {:person1.lastName:}", model, help);
@@ -1213,7 +1215,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1252,7 +1254,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1279,7 +1281,7 @@ test("$.link() and $().link() variants", function() {
 	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
 		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
-	:' NAME: One  NAME: One One One One One|'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$(".inner").link(true, data, helpers) links multiple targets on multiple target elements, including two-way bindings');
@@ -1290,7 +1292,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1328,7 +1330,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1366,7 +1368,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1404,7 +1406,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1418,10 +1420,11 @@ test("$.link() and $().link() variants", function() {
 		+ ' <input data-link="title{:person1.lastName} {:person1.lastName:}" />').link("#result", model, help);
 	// Rendered and linked by template: multiple targets
 
-	var model2 =  {
+	var model2 = {
 		person1: {
 			lastName: "lastModel2Name"
-		}},
+		}
+	},
 		help2 = {
 			options: {
 				tmpl: $.templates(" NAMEModel2: {^{:lastName}}")
@@ -1471,7 +1474,7 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events ,
+	ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 	// -----------------------------------------------------------------------
 
@@ -1482,7 +1485,8 @@ test("$.link() and $().link() variants", function() {
 
 module("template.link()");
 
-test("helper overriding", 12, function() {
+test("Helper overriding", 12, function() {
+
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
 
@@ -1493,7 +1497,7 @@ test("helper overriding", 12, function() {
 		}
 	});
 
-	tmpl.link("#result", {}, {c:"optionHelper"});
+	tmpl.link("#result", {}, { c: "optionHelper" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
@@ -1516,7 +1520,7 @@ test("helper overriding", 12, function() {
 		markup: "{{:~a}}"
 	});
 
-	tmpl.link("#result", {}, {a: "optionHelper"});
+	tmpl.link("#result", {}, { a: "optionHelper" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
@@ -1529,7 +1533,7 @@ test("helper overriding", 12, function() {
 		}
 	});
 
-	tmpl.link("#result", {}, {b: "optionHelper"});
+	tmpl.link("#result", {}, { b: "optionHelper" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
@@ -1539,7 +1543,7 @@ test("helper overriding", 12, function() {
 
 	$("#result").html("<div data-link='~a + ~b'></div>");
 
-	$.link(true, "#result", {}, {b:"optionHelper"});
+	$.link(true, "#result", {}, { b: "optionHelper" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
@@ -1549,7 +1553,7 @@ test("helper overriding", 12, function() {
 
 	$("#result").html("<div data-link='~a'></div>");
 
-	$.link(true, "#result", {}, {a:"optionHelper"});
+	$.link(true, "#result", {}, { a: "optionHelper" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
@@ -1557,18 +1561,18 @@ test("helper overriding", 12, function() {
 	// =============================== Arrange ===============================
 	$.views.helpers({
 		onBeforeChange: function(ev, eventArgs) {
-			result+= "globalBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			result += "globalBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 		},
 		onAfterChange: function(ev, eventArgs) {
-			result+= "globalAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			result += "globalAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 		},
 		onAfterCreate: function(ev, eventArgs) {
-			result+= "globalAfterCreate ";
+			result += "globalAfterCreate ";
 		}
 	});
 	result = '';
 
-	var pson = {name: "Jo"};
+	var pson = { name: "Jo" };
 
 	tmpl = $.templates({
 		markup: "<input data-link='name'/> {^{:name}}"
@@ -1586,7 +1590,7 @@ test("helper overriding", 12, function() {
 
 	$("#result input").val("editedName").change();
 
-		// ............................... Assert .................................
+	// ............................... Assert .................................
 	equal(result, "globalBeforeChange|change|INPUT globalBeforeChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: globalAfterChange|change|INPUT ",
 		'Global onAfterCreate, onBeforeChange, onAfterChange - elemChange');
 
@@ -1594,16 +1598,16 @@ test("helper overriding", 12, function() {
 
 	// =============================== Arrange ===============================
 	tmpl.link("#result", pson, {
-			onBeforeChange: function(ev, eventArgs) {
-				result+= "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
-			},
-			onAfterChange: function(ev, eventArgs) {
-				result+= "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
-			},
-			onAfterCreate: function(ev, eventArgs) {
-				result+= "optionsAfterCreate ";
-			}
-		});
+		onBeforeChange: function(ev, eventArgs) {
+			result += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterChange: function(ev, eventArgs) {
+			result += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterCreate: function(ev, eventArgs) {
+			result += "optionsAfterCreate ";
+		}
+	});
 
 	$.observable(pson).setProperty("name", "name2");
 
@@ -1615,7 +1619,7 @@ test("helper overriding", 12, function() {
 
 	$("#result input").val("editedName").change();
 
-		// ............................... Assert .................................
+	// ............................... Assert .................................
 	equal(result, "optionsBeforeChange|change|INPUT optionsBeforeChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: optionsAfterChange|change|INPUT ",
 		'options helper overrides global helper');
 
@@ -1626,28 +1630,28 @@ test("helper overriding", 12, function() {
 		markup: "<input data-link='name'/> {^{:name}}",
 		helpers: {
 			onBeforeChange: function(ev, eventArgs) {
-				result+= "templateBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+				result += "templateBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 			},
 			onAfterChange: function(ev, eventArgs) {
-				result+= "templateAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+				result += "templateAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 			},
 			onAfterCreate: function(ev, eventArgs) {
-				result+= "templateAfterCreate ";
+				result += "templateAfterCreate ";
 			}
 		}
 	});
 
 	tmpl.link("#result", pson, {
-			onBeforeChange: function(ev, eventArgs) {
-				result+= "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
-			},
-			onAfterChange: function(ev, eventArgs) {
-				result+= "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
-			},
-			onAfterCreate: function(ev, eventArgs) {
-				result+= "optionsAfterCreate ";
-			}
-		});
+		onBeforeChange: function(ev, eventArgs) {
+			result += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterChange: function(ev, eventArgs) {
+			result += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+		},
+		onAfterCreate: function(ev, eventArgs) {
+			result += "optionsAfterCreate ";
+		}
+	});
 
 	$.observable(pson).setProperty("name", "name4");
 
@@ -1659,7 +1663,7 @@ test("helper overriding", 12, function() {
 
 	$("#result input").val("editedName").change();
 
-		// ............................... Assert .................................
+	// ............................... Assert .................................
 	equal(result, "templateBeforeChange|change|INPUT templateBeforeChange|set|INPUT"
 		+ " templateBeforeChange|set|: templateAfterChange|set|: templateAfterChange|change|INPUT ",
 		'template helper overrides options helper');
@@ -1761,7 +1765,7 @@ test('data-link="expression"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
 	$.observable(settings).setProperty("title", "Sir");
 	after = $("#result span").html();
 
@@ -1779,9 +1783,9 @@ test('data-link="expression"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="foo(\'x\\x\').b"></span>')
-		.link("#result",{
-			foo: function(val){
-				return {b:val};
+		.link("#result", {
+			foo: function(val) {
+				return { b: val };
 			}
 		});
 
@@ -1825,7 +1829,7 @@ test('data-link="expression"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="~model.person1.home^address.street"></span>')
-		.link("#result", 1, {model: model});
+		.link("#result", 1, { model: model });
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
@@ -1847,18 +1851,18 @@ test('data-link="expression"', function() {
 
 	// =============================== Arrange ===============================
 
-	var util1 = {getVal: function(val) {return "getVal1 = " + val;}};
-	var util2 = {getVal: function(val) {return "getVal2 = " + val;}};
-	var appHelpers = {util: util1};
+	var util1 = { getVal: function(val) { return "getVal1 = " + val; } };
+	var util2 = { getVal: function(val) { return "getVal2 = " + val; } };
+	var appHelpers = { util: util1 };
 
 	$.templates('<span data-link="~app.util^getVal(#data)"></span>')
-		.link("#result", 22, {app: appHelpers});
+		.link("#result", 22, { app: appHelpers });
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
 	$.observable(appHelpers).setProperty("util", util2);
 	after = $("#result span").html();
-	$.observable(util2).setProperty("getVal", function(val) {return "getNewVal = " + val;});
+	$.observable(util2).setProperty("getVal", function(val) { return "getNewVal = " + val; });
 	after += "|" + $("#result span").html();
 
 	// ............................... Assert .................................
@@ -1871,13 +1875,13 @@ test('data-link="expression"', function() {
 
 	// =============================== Arrange ===============================
 	var foobar = {
-		foo : {
-			bar : "initial "
+		foo: {
+			bar: "initial "
 		}
 	};
 
 	$.views.converters({
-		noop : function(val) {
+		noop: function(val) {
 			return val;
 		}
 	});
@@ -1890,9 +1894,9 @@ test('data-link="expression"', function() {
 		.link("#result", foobar);
 
 	// ................................ Act ..................................
-	$.observable(foobar).setProperty("foo", { bar : "new " } );
+	$.observable(foobar).setProperty("foo", { bar: "new " });
 	result = $("#result").text();
-	$("input.linked").each(function(i, el) {result+= el.value; });
+	$("input.linked").each(function(i, el) { result += el.value; });
 
 	// ............................... Assert .................................
 	equal(result,
@@ -1904,7 +1908,7 @@ test('data-link="expression"', function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var data = { name: "Jo"};
+	var data = { name: "Jo" };
 	result = "";
 
 	// ................................ Act ..................................
@@ -1920,7 +1924,7 @@ test('data-link="expression"', function() {
 	// ................................ Act ..................................
 	result =
 		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
-		.render({items: ["aa", 22, 0, false, "", true]});
+		.render({ items: ["aa", 22, 0, false, "", true] });
 
 	// ............................... Assert .................................
 	equal(result,
@@ -1941,7 +1945,7 @@ test('data-link="expression"', function() {
 	// ................................ Act ..................................
 	result =
 		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
-		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
+		.link("#result", { items: ["aa", 22, 0, false, "", true] }).text();
 
 	// ............................... Assert .................................
 	equal(result,
@@ -1962,7 +1966,7 @@ test('data-link="expression"', function() {
 	// ................................ Act ..................................
 	result =
 		$.templates('{^{for items}}{{:#index}} {^{:#data}} {{/for}}')
-		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
+		.link("#result", { items: ["aa", 22, 0, false, "", true] }).text();
 
 	// ............................... Assert .................................
 	equal(result,
@@ -1971,7 +1975,7 @@ test('data-link="expression"', function() {
 	'with link, {^{:#data}} within {^{for}} is correct for different data types');
 
 	// ................................ Act ..................................
-	data = { name: "Jo"};
+	data = { name: "Jo" };
 	result = "";
 
 	$.templates(
@@ -2015,7 +2019,7 @@ test('data-link="expression"', function() {
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	data = { name: "Jo"};
+	data = { name: "Jo" };
 	result = "";
 
 	$.templates(
@@ -2426,7 +2430,7 @@ test('data-link="attr{:expression}"', function() {
 	// =============================== Arrange ===============================
 
 	$.views.converters({
-		not: function (val) {
+		not: function(val) {
 			return !val;
 		}
 	});
@@ -2462,7 +2466,7 @@ test('data-link="attr{:expression}"', function() {
 					linkCtx.attr = this.tagCtx.props.linkCtxAttr;
 				}
 			},
-			render: function (val) {
+			render: function(val) {
 				return val.name ? val.name + "<br/>" : "";
 			},
 			attr: "text",
@@ -2573,6 +2577,9 @@ test('data-link="attr{:expression}"', function() {
 	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
 		"visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
 
+	// ................................ Reset ................................
+	$("#result").empty();
+	result = "";
 });
 
 test('data-link="{cvt:expression:cvtBack}"', function() {
@@ -2584,9 +2591,9 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty({firstName: "newOneFirst", lastName: "newOneLast"});
-	$.observable(person2).setProperty({firstName: "newTwoFirst", lastName: "newTwoLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
+	$.observable(person1).setProperty({ firstName: "newOneFirst", lastName: "newOneLast" });
+	$.observable(person2).setProperty({ firstName: "newTwoFirst", lastName: "newTwoLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2610,7 +2617,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 			from: function(val) {
 				return val + "from" + this.tagCtx.props.frst;
 			},
-			to: function(val){
+			to: function(val) {
 				return val + "to" + this.tagCtx.props.frst;
 			}
 		});
@@ -2663,7 +2670,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 			from: function(val) {
 				return val + "from" + this.tagCtx.props.frst;
 			},
-			to: function(val){
+			to: function(val) {
 				return val + "to" + this.tagCtx.props.frst;
 			}
 		}, tmpl);
@@ -2700,7 +2707,7 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 test('data-link="{for...}"', function() {
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{ thing: "box" }]; // reset Prop
 
 	// ................................ Arrange ..................................
 	var tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}"></span>');
@@ -2710,7 +2717,7 @@ test('data-link="{for...}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -2718,7 +2725,7 @@ test('data-link="{for...}"', function() {
 	'data-link="{for things}" binds to array changes on leaf array. (But note that data-link="title{for things}" is NOT supported)');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
+	$.observable(model).setProperty({ things: [{ thing: "triangle" }, { thing: "circle" }] });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -2726,7 +2733,7 @@ test('data-link="{for...}"', function() {
 	'data-link="{for things} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things:{thing: "square"}});
+	$.observable(model).setProperty({ things: { thing: "square" } });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -2736,14 +2743,14 @@ test('data-link="{for...}"', function() {
 
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{ thing: "box" }]; // reset Prop
 
 	// ................................ Arrange ..................................
 	var countItems = 0;
 	tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}"></span>');
 
 	$.templates("inner", "{{test:thing}}", tmpl);
-	$. views.converters("test", function(val) {
+	$.views.converters("test", function(val) {
 		return val + countItems++;
 	}, tmpl);
 
@@ -2751,7 +2758,7 @@ test('data-link="{for...}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert([{thing: "addedA"},{thing: "addedB"}]);
+	$.observable(model.things).insert([{ thing: "addedA" }, { thing: "addedB" }]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -2759,13 +2766,13 @@ test('data-link="{for...}"', function() {
 	'data-link="{for things}" binds to array changes and the changes are rendered incrementally');
 
 	// ................................ Arrange ..................................
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{ thing: "box" }]; // reset Prop
 	countItems = 0;
 
 	tmpl = $.templates('<ul data-link="{for things tmpl=\'inner\'}"></ul>');
 
 	$.templates("inner", "<li>{{test:thing}}</li>", tmpl);
-	$. views.converters("test", function(val) {
+	$.views.converters("test", function(val) {
 		return val + countItems++;
 	}, tmpl);
 
@@ -2773,7 +2780,7 @@ test('data-link="{for...}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert([{thing: "addedA"},{thing: "addedB"}]);
+	$.observable(model.things).insert([{ thing: "addedA" }, { thing: "addedB" }]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -2789,8 +2796,8 @@ test('data-link="{tag...}"', function() {
 
 	$.views.tags({
 		norendernotemplate: {},
-		voidrender: function() {},
-		emptyrender: function() {return "";},
+		voidrender: function() { },
+		emptyrender: function() { return ""; },
 		emptytemplate: {
 			template: ""
 		},
@@ -2823,13 +2830,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="{tmplTag}"></span>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -2848,13 +2855,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="{fnTag}"></span>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -2873,13 +2880,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{fnTagEl}"></div>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result div").html();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
@@ -2898,13 +2905,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<ul data-link="{fnTagElCnt}"></ul>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be "<li data-jsv=\"#25_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -2923,13 +2930,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<ul data-link="{fnTagElCntNoInit firstName ~settings.width}"></ul>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be "<li data-jsv=\"#25_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -2948,13 +2955,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -2976,13 +2983,13 @@ test('data-link="{tag...}"', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -3003,186 +3010,3101 @@ test('data-link="{tag...}"', function() {
 
 });
 
-test("computed observables in two-way binding", function() {
-(function() {
+test("Computed observables in paths", function() {
+
 	// =============================== Arrange ===============================
-	function fullName(reversed) {
-		return reversed
-			? this.lastName + " " + this.firstName
-			: this.firstName + " " + this.lastName;
+	var app = {
+		items: [
+			{
+				name: "one",
+				row: "1",
+				expanded: false
+			},
+			{
+				name: "two",
+				row: "2",
+				expanded: false
+			},
+			{
+				name: "three",
+				row: "3",
+				expanded: false
+			}
+		]
+	};
+
+	function testTemplate(message, template) {
+		$.templates(template)
+		.link("#result", app, {
+			getItems: function(exp) {
+				return exp ? ["a", "b"] : [];
+			}
+		});
+
+		// ................................ Act ..................................
+		var ret = $("#result").text() + "|";
+		$.view("#result .groupdata").refresh();
+
+		$.observable(app.items[0]).setProperty("expanded", true);
+		ret += $("#result").text() + "|";
+
+		$.observable(app.items[0]).setProperty("expanded", false);
+		ret += $("#result").text() + "|";
+
+		$.observable(app.items[1]).setProperty("expanded", true);
+		ret += $("#result").text() + "|";
+
+		$.observable(app.items[1]).setProperty("expanded", false);
+		ret += $("#result").text() + "|";
+
+		$.observable(app.items).insert(0, {
+			name: "added",
+			row: "+",
+			expanded: false
+		});
+		ret += $("#result").text() + "|";
+		$.observable(app.items).remove(0);
+		ret += $("#result").text() + "|";
+		$("#result").empty();
+
+		// ............................... Assert .................................
+		equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|"
+		, "Interplay of view and tag refresh in deep content: " + message);
 	}
 
-	var person = {
-		firstName: "Jeff",
-		lastName: "Smith",
-		fullName: fullName
-	};
-
-	fullName.depends = [person, "*"];
-
-	fullName.set = function(val) {
-		val = val.split(" ");
-		$.observable(this).setProperty({
-			lastName: val.pop(),
-			firstName: val.join(" ")
-		});
-	};
-
-	$.templates('{^{:firstName}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
-		.link("#result", person);
-
-	// ................................ Act ..................................
-	var res = $("#result").text() + $("#full").val();
-
-	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
-
-	res += "|" + $("#result").text() + $("#full").val();
-
-	$.observable(person).setProperty({fullName: "compFirst compLast"});
-
-	res += "|" + $("#result").text() + $("#full").val();
-
-	$("#full").val("2wayFirst 2wayLast").change();
-
-	res += "|" + $("#result").text() + $("#full").val();
+	// ............................... Assert .................................
+	testTemplate("div",
+	"{^{for items}}"
+		+ "{{:name}}"
+		+ "{^{for ~getItems(expanded) ~row=row}}"
+			+ "<div class='groupdata'>{{:~row}}{{:#data}}</div>"
+		+ "{{/for}}"
+	+ "{{/for}}");
 
 	// ............................... Assert .................................
-	equal(res,
-	isIE8
-	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
-		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
-	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
-		+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
-	'Two-way binding to a computed observable data property correctly calls the setter');
+	testTemplate("deep div",
+	"{^{for items}}"
+		+ "<span>{{:name}}</span>"
+		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
+			+ "<span></span>"
+			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
+		+ "{{/for}}</div></div>"
+	+ "{{/for}}");
+
+	// ............................... Assert .................................
+	testTemplate("deep div2",
+	"{^{for items}}"
+		+ "<span>{{:name}}</span>"
+		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
+			+ "<span></span>"
+			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
+		+ "{{/for}}<div></div></div></div>"
+	+ "{{/for}}");
+
+	// ............................... Assert .................................
+	testTemplate("li",
+	"<ul>{^{for items}}"
+		+ "<li>{{:name}}</li>"
+		+ "<li><ul>{^{for ~getItems(expanded) ~row=row ~item=#data}}"
+			+ "<li></li>"
+			+ "<li class='groupdata'>{{:~row}}{{:#data}}</li>"
+		+ "{{/for}}</ul></li>"
+	+ "{{/for}}</ul>");
+
+	// ............................... Assert .................................
+	testTemplate("table",
+	"<table>{^{for items}}"
+		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
+		+ "{^{for ~getItems(expanded) ~row=row}}"
+			+ "<tbody class='groupdata'><tr>"
+				+ "<td>{{:~row}}{{:#data}}</td>"
+			+ "</tr></tbody>"
+		+ "{{/for}}"
+	+ " {{/for}}</table>");
+
+	// ............................... Assert .................................
+	testTemplate("deep table",
+	"<table>{^{for items}}"
+		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
+		+ "<tbody class='groupdata'>"
+			+ "{^{for ~getItems(expanded) ~row=row}}"
+				+ "<tr>"
+					+ "<td>{{:~row}}{{:#data}}</td>"
+				+ "</tr>"
+			+ "{{/for}}"
+		+ "</tbody>"
+	+ " {{/for}}</table>");
+
+	// =============================== Arrange ===============================
+	var ret = "",
+		people1 = [{ address: { street: "1 first street" } }],
+		people2 = [{ address: { street: "1 second street" } }, { address: { street: "2 second street" } }],
+		data1 = { value: "data1", people: people1 },
+		data2 = { value: "data2", people: people2 };
+	app = {
+		alt: false,
+		index: 1,
+		getPeople: getPeople,
+		getData: getData,
+		options: {
+			getWidth: function() {
+				return "33";
+			}
+		}
+	};
+
+	function getPeople(type) {
+		return this.alt ? people2 : people1;
+	}
+
+	getPeople.depends = function() {
+		return [app, "alt"];
+	};
+
+	function getData(type) {
+		return this.alt ? data2 : data1;
+	}
+
+	getData.depends = function() {
+		return [app, "alt"];
+	};
+
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
+
+	ret = "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("index", 0);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0].address).setProperty("street", "1 first streetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0]).setProperty("address", { street: "1 first swappedstreet" });
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("index", 1);
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people2[1]).setProperty("address", { street: "2 second swappedstreet" });
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Assert ..................................
+	equal(ret, "||1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new array");
+	$("#result").empty();
+
+	app.alt = false;
+	app.index = 0;
+	people1 = [{ address: { street: "1 first street" } }, { address: { street: "2 first street" } }];
+	people2 = [{ address: { street: "1 second street" } }, { address: { street: "2 second street" } }];
+	data1 = { value: "data1", people: people1 };
+	data2 = { value: "data2", people: people2 };
+
+	// ................................ Act ..................................
+	$.templates("{^{:(getData()^people[index]).address^street}}").link("#result", app);
+
+	ret = $("#result").text();
+
+	$.observable(app).setProperty("index", 1);
+	ret += "|" + $("#result").text();
+
+	$.observable(app).setProperty("index", 0);
+	ret += "|" + $("#result").text();
+
+	$.observable(people1[0].address).setProperty("street", "1 first streetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(people1[0]).setProperty("address", { street: "1 first swappedstreet" });
+	ret += "|" + $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret += "|" + $("#result").text();
+
+	$.observable(app).setProperty("index", 1);
+	ret += "|" + $("#result").text();
+
+	$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	ret += "|" + $("#result").text();
+
+	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	ret += "|" + $("#result").text();
+
+	// ................................ Assert ..................................
+	equal(ret, "1 first street|2 first street|1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new object");
 
 	// ................................ Reset ................................
 	$("#result").empty();
-})();
 
-(function() {
+	//TODO allow the following to work by declaring getPeople as depending on collection change of app.alt ? people2 : people;
+	//$.observable(people2).insert(1, {address:{street: "99 new street"}})
+	//ret += "|" + $("#result").text();
+
 	// =============================== Arrange ===============================
-	// Constructor
-	var Person = function(first, last) {
+	function getValue(a) {
+		return this.value + a;
+	}
+	function switchAlt() {
+		$.observable(app).setProperty("alt", !app.alt);
+	}
+
+	app.alt = false;
+	app.index = 0;
+	people1 = [{ address: { street: "1 first street" } }];
+	people2 = [{ address: { street: "1 second street" } }, { address: { street: "2 second street" } }];
+	data1 = { value: "val1", people: people1, getValue: getValue },
+	data2 = { value: "val2", people: people2, getValue: getValue },
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData()^getValue(22)}}").link("#result", app);
+
+	// ................................ Act ..................................
+	$.observable(app).setProperty("alt", true);
+	ret = "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:(getData()^getValue(22))}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData()^getValue((getData()^getValue(22)))}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData(getPeople(getData(alt || 2)^getValue())^length)^value}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:(((getData())^people[0])^address.street)}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:'b'+((getData()^value) + ('a'+getData()^value)) + getData()^getValue(55)}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Act ..................................
+	$.templates("{^{:'a' + getData()^value}}").link("#result", app);
+	ret += "|" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$("#result").empty();
+
+	// ................................ Assert ..................................
+	equal(ret, "|val222--val122|1 first street--1 second street2 second street|1 second street2 second street--1 first street"
+		+ "|val122--val222|val2val222--val1val122|val1--val2|1 second street--1 first street"
+		+ "|1 first street--1 second street|bval2aval2val255--bval1aval1val155|aval1--aval2",
+		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
+});
+
+test("Computed observables in $.link() expressions", function() {
+
+	(function() {
+		return;
+		// =============================== Arrange ===============================
+		var result = "";
+
+		$("#result").html('<span id="inner"></span>');
+
+		function ob(alt) {
+			return alt ? this._obB : this._obA;
+		}
+
+		//	ob.depends = "~helpers.alt";
+
+		function address() {
+			return this._address;
+		}
+
+		function setAddress(val) {
+			this._address = val;
+		}
+
+		address.set = setAddress;
+
+		var helpers = { alt: false };
+
+		var person = {
+			changeAlt: changeAlt,
+			changeHome: changeHome,
+			changeObtype: changeObtype,
+			changeAddress: changeAddress,
+			changeStreet: changeStreet,
+			ob: ob,
+			_obA: {
+				home: {
+					_address: {
+						street: "A"
+					},
+					address: address
+				},
+				obtype: "a"
+			},
+			_obB: {
+				home: {
+					_address: {
+						street: "B"
+					},
+					address: address
+				},
+				obtype: "b"
+			},
+		};
+
+		function changeHome(label) {
+			$.observable(person.ob()).setProperty("home", {
+				_address: {
+					street: person.ob().home.address().street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAlt(label) {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeObtype(label) {
+			$.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeAddress(label) {
+			$.observable(person.ob().home).setProperty("address", { street: person.ob().home.address().street + "+" });
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeStreet(label) {
+			$.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		$.link("ob(~helpers.alt)^obtype", "#inner", person, { helpers: helpers });
+
+		// ................................ Act ..................................
+
+		changeAlt(1);
+		changeObtype(2);
+		changeAlt(3);
+		changeObtype(4);
+		changeAlt(6);
+
+		// ............................... Assert .................................
+		equal(result, "", "complex");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		var result = "";
+
+		$("#result").html('<span id="inner"></span>');
+
+		function ob(alt) {
+			return alt ? this._obB : this._obA;
+		}
+
+		function address() {
+			return this._address;
+		}
+
+		function setAddress(val) {
+			this._address = val;
+		}
+
+		address.set = setAddress;
+
+		var helpers = { alt: false };
+
+		var person = {
+			changeAlt: changeAlt,
+			changeHome: changeHome,
+			changeObtype: changeObtype,
+			changeAddress: changeAddress,
+			changeStreet: changeStreet,
+			ob: ob,
+			_obA: {
+				home: {
+					_address: {
+						street: "A"
+					},
+					address: address
+				},
+				obtype: "a"
+			},
+			_obB: {
+				home: {
+					_address: {
+						street: "B"
+					},
+					address: address
+				},
+				obtype: "b"
+			},
+		};
+
+		function changeHome(label) {
+			$.observable(person.ob(helpers.alt)).setProperty("home", {
+				_address: {
+					street: person.ob(helpers.alt).home.address().street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAlt(label) {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeObtype(label) {
+			$.observable(person.ob(helpers.alt)).setProperty("obtype", person.ob(helpers.alt).obtype + "@");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeAddress(label) {
+			$.observable(person.ob(helpers.alt).home).setProperty("address", { street: person.ob(helpers.alt).home.address().street + "+" });
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeStreet(label) {
+			$.observable(person.ob(helpers.alt).home.address()).setProperty("street", person.ob(helpers.alt).home.address().street + ">");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		$.link("ob(~helpers.alt)^home.address().street", "#inner", person, { helpers: helpers });
+
+		// ................................ Act ..................................
+
+		changeAddress(1);
+		changeStreet(2);
+		changeAddress(3);
+		changeStreet(4);
+		changeAlt(5);
+		changeAddress(6);
+		changeStreet(7);
+		changeAddress(8);
+		changeStreet(9);
+		changeAlt(10);
+		changeStreet(11);
+		changeAddress(12);
+		changeStreet(13);
+		changeAddress(14);
+		changeAlt(15);
+
+		// ............................... Assert .................................
+		equal(result, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B |6: B+ |7: B+> |8: B+>+ |9: B+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B+>+>", "complex");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		var result = "";
+
+		$("#result").html('<span id="inner"></span>');
+
+		function ob() {
+			return helpers.alt ? this._obB : this._obA;
+		}
+		ob.depends = "~helpers.alt";
+
+		function address(val) {
+			if (!arguments.length) {
+				return helpers.alt ? this._address2 : this._address;
+			}
+			if (helpers.alt) {
+				this._address2 = val;
+			} else {
+				this._address = val;
+			}
+		}
+		address.set = true;
+
+		address.depends = "~helpers.alt"
+
+		var helpers = { alt: false };
+
+		var person = {
+			changeAlt: changeAlt,
+			changeHome: changeHome,
+			changeObtype: changeObtype,
+			changeAddress: changeAddress,
+			changeStreet: changeStreet,
+			ob: ob,
+			_obA: {
+				home: {
+					_address: {
+						street: "A"
+					},
+					_address2: {
+						street: "A2"
+					},
+					address: address
+				},
+				obtype: "a"
+			},
+			_obB: {
+				home: {
+					_address: {
+						street: "B"
+					},
+					_address2: {
+						street: "B2"
+					},
+					address: address
+				},
+				obtype: "b"
+			},
+		};
+
+		function changeHome(label) {
+			$.observable(person.ob()).setProperty("home", {
+				_address: {
+					street: person.ob().home.address().street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAlt(label) {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeObtype(label) {
+			$.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeAddress(label) {
+			$.observable(person.ob().home).setProperty("address", { street: person.ob().home.address().street + "+" });
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		function changeStreet(label) {
+			$.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
+			result += " |" + label + ": " + $("#inner").text();
+		}
+
+		$.link("ob()^home.address().street", "#inner", person, { helpers: helpers });
+
+		// ................................ Act ..................................
+
+		changeAddress(1);
+		changeStreet(2);
+		changeAddress(3);
+		changeStreet(4);
+		changeAlt(5);
+		changeAddress(6);
+		changeStreet(7);
+		changeAddress(8);
+		changeStreet(9);
+		changeAlt(10);
+		changeStreet(11);
+		changeAddress(12);
+		changeStreet(13);
+		changeAddress(14);
+		changeAlt(15);
+
+		// ............................... Assert .................................
+		equal(result, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B2 |6: B2+ |7: B2+> |8: B2+>+ |9: B2+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B2+>+>", "complex");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+});
+
+test("Computed observables in two-way binding", function() {
+
+	(function() {
+		// =============================== Arrange ===============================
+		function fullName(reversed) {
+			return reversed
+				? this.lastName + " " + this.firstName
+				: this.firstName + " " + this.lastName;
+		}
+
+		var person = {
+			firstName: "Jeff",
+			lastName: "Smith",
+			fullName: fullName
+		};
+
+		fullName.depends = [person, "*"];
+
+		fullName.set = function(val) {
+			val = val.split(" ");
+			$.observable(this).setProperty({
+				lastName: val.pop(),
+				firstName: val.join(" ")
+			});
+		};
+
+		$.templates('{^{:firstName}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+			.link("#result", person);
+
+		// ................................ Act ..................................
+		var res = $("#result").text() + $("#full").val();
+
+		$.observable(person).setProperty({ firstName: "newFirst", lastName: "newLast" });
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		$.observable(person).setProperty({ fullName: "compFirst compLast" });
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		$("#full").val("2wayFirst 2wayLast").change();
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		// ............................... Assert .................................
+		equal(res,
+		isIE8
+		? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
+			+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+		: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
+			+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+		'Two-way binding to a computed observable data property correctly calls the setter');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		// Constructor
+		var Person = function(first, last) {
 			this._firstName = first;
 			this.lastName = last;
 		},
 
-		// Prototype
-		personProto = {
-			// Computed firstName
-			firstName: function() {
-				return this._firstName;
-			},
-			// Computed fullName
-			fullName: fullName
-		};
+			// Prototype
+			personProto = {
+				// Computed firstName
+				firstName: function() {
+					return this._firstName;
+				},
+				// Computed fullName
+				fullName: fullName
+			};
 
 		personProto.firstName.set = function(val) {
 			this._firstName = val;
 		};
 
-	Person.prototype = personProto;
+		Person.prototype = personProto;
 
-	var person = new Person("Jeff", "Smith");
+		var person = new Person("Jeff", "Smith");
 
-	function fullName(reversed) {
-		return reversed
-			? this.lastName + " " + this.firstName()
-			: this.firstName() + " " + this.lastName;
-	}
+		function fullName(reversed) {
+			return reversed
+				? this.lastName + " " + this.firstName()
+				: this.firstName() + " " + this.lastName;
+		}
 
-	fullName.depends = ["firstName", "lastName"];
+		fullName.depends = ["firstName", "lastName"];
 
-	fullName.set = function(val) {
-		val = val.split(" ");
-		$.observable(this).setProperty({
-			lastName: val.pop(),
-			firstName: val.join(" ")
+		fullName.set = function(val) {
+			val = val.split(" ");
+			$.observable(this).setProperty({
+				lastName: val.pop(),
+				firstName: val.join(" ")
+			});
+		};
+
+		$.templates('{^{:firstName()}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+			.link("#result", person);
+
+		// ................................ Act ..................................
+		var res = $("#result").text() + $("#full").val();
+
+		$.observable(person).setProperty({ firstName: "newFirst", lastName: "newLast" });
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		$.observable(person).setProperty({ fullName: "compFirst compLast" });
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		$("#full").val("2wayFirst 2wayLast").change();
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		// ............................... Assert .................................
+		equal(res,
+		isIE8
+		? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
+			+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+		: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
+			+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+		'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		var person = {
+			firstName: "Jeff",
+			lastName: "Friedman"
+		};
+
+		function fullName(reverse) {
+			return reverse
+				? person.lastName + " " + person.firstName
+				: person.firstName + " " + person.lastName;
+		}
+
+		fullName.depends = function() {
+			return [this, "firstName", "lastName"];
+		};
+
+		fullName.set = function(val) {
+			val = val.split(" ");
+			$.observable(person).setProperty({
+				lastName: val.pop(),
+				firstName: val.join(" ")
+			});
+		};
+
+		$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full" data-link="~fullName()"/>')
+			.link("#result", person, { fullName: fullName });
+
+		// ................................ Act ..................................
+		var res = $("#result").text() + $("#full").val();
+
+		$.observable(person).setProperty({ firstName: "newFirst", lastName: "newLast" });
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		$("#full").val("2wayFirst 2wayLast").change();
+
+		res += "|" + $("#result").text() + $("#full").val();
+
+		// ............................... Assert .................................
+		equal(res,
+		isIE8
+		? "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|"
+			+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+		: "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|"
+			+ "2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+		'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// See https://github.com/BorisMoore/jsviews/issues/287
+		// From Paul Martin pull request: https://github.com/Paul-Martin/jsviews.com/commit/10d716ccd0d6478dea042faeeca64bf44e4642ed
+
+		// =============================== Arrange ===============================
+		function getsetA(val) {
+			if (!arguments.length) {
+				return this._a;
+			}
+			this._a = val;
+		}
+		getsetA.set = true;
+
+		function getsetB(val) {
+			if (!arguments.length) {
+				return this._b;
+			}
+			this._b = val;
+		}
+		getsetB.set = true;
+
+		function Root(a) {
+			this._a = a;
+			this.a = getsetA;
+		}
+
+		function A(b) {
+			this._b = b;
+			this.b = getsetB;
+		}
+
+		var o1 = new Root(new A('one')),
+			o2 = new Root(new A('two')),
+
+			tmpl = $.templates('<input data-link="a().b()"><span data-link="a().b()"></span>');
+
+		$("#result").html("<div id='one'></div><div id='two'><div>");
+
+		tmpl.link('#one', o1);
+		tmpl.link('#two', o2);
+
+		// ................................ Act ..................................
+		var res = "",
+			input1 = $("#one input"),
+			input2 = $("#two input"),
+			span1 = $("#one span"),
+			span2 = $("#two span");
+
+		function getResult() {
+			res += input1.val() + " " + span1.text() + " " + input2.val() + " " + span2.text() + "|";
+		}
+
+		getResult();
+
+		input1.val('onechange').change();
+
+		getResult();
+
+		input2.val('twochange').change();
+
+		getResult();
+
+		$.observable(o1.a()).setProperty('b', 'oneupdate');
+
+		getResult();
+
+		$.observable(o2.a()).setProperty('b', 'twoupdate');
+
+		getResult();
+
+		// ............................... Assert .................................
+		equal(res,
+			"one one two two|"
+		+ "onechange onechange two two|"
+		+ "onechange onechange twochange twochange|"
+		+ "oneupdate oneupdate twochange twochange|"
+		+ "oneupdate oneupdate twoupdate twoupdate|",
+		'Two-way bindings with chained computed observables remain independent when same template links to multiple target elements');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		var people = [
+			{
+				name: "n0",
+				_address: {
+					street: "s0"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			},
+			{
+				name: "n1",
+				_address: {
+					street: "s1"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			}
+		];
+
+		var tmpl = $.templates(
+			"<div class='person{{:#index}}'>"
+				+ "<input class='name' data-link='ob().name' /> <span class='name'>{^{:ob().name}}</span>"
+				+ "<input class='street' data-link='ob().address().street'/> <span class='street'>{^{:ob().address().street}}</span>"
+			+ "</div>");
+
+		tmpl.link("#result", people);
+
+		// ................................ Act ..................................
+		var res = "",
+			nameInput0 = $("#result .person0 input.name"),
+			nameSpan0 = $("#result .person0 span.name"),
+			streetInput0 = $("#result .person0 input.street"),
+			streetSpan0 = $("#result .person0 span.street"),
+			nameInput1 = $("#result .person1 input.name"),
+			nameSpan1 = $("#result .person1 span.name"),
+			streetInput1 = $("#result .person1 input.street"),
+			streetSpan1 = $("#result .person1 span.street");
+
+		function getResult() {
+			res += nameInput0.val() + " " + nameSpan0.text() + " " + streetInput0.val() + " " + streetSpan0.text() + " " + nameInput1.val() + " " + nameSpan1.text() + " " + streetInput1.val() + " " + streetSpan1.text() + "|";
+		}
+
+		getResult();
+
+		nameInput0.val('n0new').change();
+
+		getResult();
+
+		nameInput1.val('n1new').change();
+
+		getResult();
+
+		streetInput0.val('s0new').change();
+
+		getResult();
+
+		streetInput1.val('s1new').change();
+
+		getResult();
+
+		$.observable(people[0]).setProperty('name', 'n0update');
+
+		getResult();
+
+		$.observable(people[0].address()).setProperty('street', 's0update');
+
+		getResult();
+
+		$.observable(people[1]).setProperty('name', 'n1update');
+
+		getResult();
+
+		$.observable(people[1].address()).setProperty('street', 's1update');
+
+		getResult();
+
+		$.observable(people).remove(1);
+
+		$.observable(people).insert({
+			name: "n1inserted",
+			_address: {
+				street: "s1inserted",
+				address: function() {
+					return this;
+				}
+			},
+			ob: function() { return this; },
+			address: function() {
+				return this._address;
+			}
 		});
-	};
 
-	$.templates('{^{:firstName()}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
-		.link("#result", person);
+		nameInput1 = $("#result .person1 input.name");
+		nameSpan1 = $("#result .person1 span.name");
+		streetInput1 = $("#result .person1 input.street");
+		streetSpan1 = $("#result .person1 span.street");
 
-	// ................................ Act ..................................
-	var res = $("#result").text() + $("#full").val();
+		getResult();
 
-	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+		// ............................... Assert .................................
+		equal(res,
+		"n0 n0 s0 s0 n1 n1 s1 s1|"
+		+ "n0new n0new s0 s0 n1 n1 s1 s1|"
+		+ "n0new n0new s0 s0 n1new n1new s1 s1|"
+		+ "n0new n0new s0new s0new n1new n1new s1 s1|"
+		+ "n0new n0new s0new s0new n1new n1new s1new s1new|"
+		+ "n0update n0update s0new s0new n1new n1new s1new s1new|"
+		+ "n0update n0update s0update s0update n1new n1new s1new s1new|"
+		+ "n0update n0update s0update s0update n1update n1update s1new s1new|"
+		+ "n0update n0update s0update s0update n1update n1update s1update s1update|"
+		+ "n0update n0update s0update s0update n1inserted n1inserted s1inserted s1inserted|",
+		'Two-way bindings with chained computed observables remain independent when same template links different elements of an array');
 
-	res += "|" + $("#result").text() + $("#full").val();
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
 
-	$.observable(person).setProperty({fullName: "compFirst compLast"});
+	(function() {
+		// =============================== Arrange ===============================
+		var people = [
+			{
+				name: "n0",
+				_address: {
+					street: "s0"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			},
+			{
+				name: "n1",
+				_address: {
+					street: "s1"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			}
+		];
 
-	res += "|" + $("#result").text() + $("#full").val();
+		var tmpl = $.templates(
+			"{^{for people}}<div class='person{{:#index}}'>"
+				+ "<input class='name' data-link='ob().name' /> <span class='name'>{^{:ob().name}}</span>"
+				+ "<input class='street' data-link='ob().address().street'/> <span class='street'>{^{:ob().address().street}}</span>"
+			+ "</div>{{/for}}");
 
-	$("#full").val("2wayFirst 2wayLast").change();
+		tmpl.link("#result", { people: people });
 
-	res += "|" + $("#result").text() + $("#full").val();
+		// ................................ Act ..................................
+		var res = "",
+			nameInput0 = $("#result .person0 input.name"),
+			nameSpan0 = $("#result .person0 span.name"),
+			streetInput0 = $("#result .person0 input.street"),
+			streetSpan0 = $("#result .person0 span.street"),
+			nameInput1 = $("#result .person1 input.name"),
+			nameSpan1 = $("#result .person1 span.name"),
+			streetInput1 = $("#result .person1 input.street"),
+			streetSpan1 = $("#result .person1 span.street");
 
-	// ............................... Assert .................................
-	equal(res,
-	isIE8
-	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
-		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
-	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
-		+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
-	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+		function getResult() {
+			res += nameInput0.val() + " " + nameSpan0.text() + " " + streetInput0.val() + " " + streetSpan0.text() + " " + nameInput1.val() + " " + nameSpan1.text() + " " + streetInput1.val() + " " + streetSpan1.text() + "|";
+		}
 
-	// ................................ Reset ................................
-	$("#result").empty();
-})();
+		getResult();
 
-(function() {
-	// =============================== Arrange ===============================
-	var person = {
-		firstName: "Jeff",
-		lastName: "Friedman"
-	};
+		nameInput0.val('n0new').change();
 
-	function fullName(reverse) {
-		return reverse
-			? person.lastName + " " + person.firstName
-			: person.firstName + " " + person.lastName;
-	}
+		getResult();
 
-	fullName.depends = function() {
-		return [this, "firstName", "lastName"];
-	};
+		nameInput1.val('n1new').change();
 
-	fullName.set = function(val) {
-		val = val.split(" ");
-		$.observable(person).setProperty({
-			lastName: val.pop(),
-			firstName: val.join(" ")
+		getResult();
+
+		streetInput0.val('s0new').change();
+
+		getResult();
+
+		streetInput1.val('s1new').change();
+
+		getResult();
+
+		$.observable(people[0]).setProperty('name', 'n0update');
+
+		getResult();
+
+		$.observable(people[0].address()).setProperty('street', 's0update');
+
+		getResult();
+
+		$.observable(people[1]).setProperty('name', 'n1update');
+
+		getResult();
+
+		$.observable(people[1].address()).setProperty('street', 's1update');
+
+		getResult();
+
+		$.observable(people).remove(1);
+
+		$.observable(people).insert({
+			name: "n1inserted",
+			_address: {
+				street: "s1inserted"
+			},
+			ob: function() { return this; },
+			address: function() {
+				return this._address;
+			}
 		});
-	};
 
-	$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full" data-link="~fullName()"/>')
-		.link("#result", person, {fullName: fullName});
+		nameInput1 = $("#result .person1 input.name");
+		nameSpan1 = $("#result .person1 span.name");
+		streetInput1 = $("#result .person1 input.street");
+		streetSpan1 = $("#result .person1 span.street");
 
-	// ................................ Act ..................................
-	var res = $("#result").text() + $("#full").val();
+		getResult();
 
-	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+		// ............................... Assert .................................
+		equal(res,
+		"n0 n0 s0 s0 n1 n1 s1 s1|"
+		+ "n0new n0new s0 s0 n1 n1 s1 s1|"
+		+ "n0new n0new s0 s0 n1new n1new s1 s1|"
+		+ "n0new n0new s0new s0new n1new n1new s1 s1|"
+		+ "n0new n0new s0new s0new n1new n1new s1new s1new|"
+		+ "n0update n0update s0new s0new n1new n1new s1new s1new|"
+		+ "n0update n0update s0update s0update n1new n1new s1new s1new|"
+		+ "n0update n0update s0update s0update n1update n1update s1new s1new|"
+		+ "n0update n0update s0update s0update n1update n1update s1update s1update|"
+		+ "n0update n0update s0update s0update n1inserted n1inserted s1inserted s1inserted|",
+		'Two-way bindings with chained computed observables remain independent when same {{for}} block links different elements of an array');
 
-	res += "|" + $("#result").text() + $("#full").val();
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
 
-	$("#full").val("2wayFirst 2wayLast").change();
+	(function() {
+		// =============================== Arrange ===============================
+		var people = [
+			{
+				name: "n0",
+				_address: {
+					street: "s0"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			},
+			{
+				name: "n1",
+				_address: {
+					street: "s1"
+				},
+				ob: function() { return this; },
+				address: function() {
+					return this._address;
+				}
+			}
+		];
 
-	res += "|" + $("#result").text() + $("#full").val();
+		var tmpl = $.templates(
+			"<div class='person{{:#index}}'>"
+				+ "<input class='name' data-link='ob().name linkTo=ob().address().street' /> <span class='name'>{^{:ob().name}}</span>"
+				+ "<input class='street' data-link='ob().address().street linkTo=ob().name'/> <span class='street'>{^{:ob().address().street}}</span>"
+			+ "</div>");
 
-	// ............................... Assert .................................
-	equal(res,
-	isIE8
-	? "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|"
-		+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
-	: "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|"
-		+ "2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
-	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
+		tmpl.link("#result", people);
 
-	// ................................ Reset ................................
-	$("#result").empty();
-})();
+		// ................................ Act ..................................
+		var res = "",
+			nameInput0 = $("#result .person0 input.name"),
+			nameSpan0 = $("#result .person0 span.name"),
+			streetInput0 = $("#result .person0 input.street"),
+			streetSpan0 = $("#result .person0 span.street"),
+			nameInput1 = $("#result .person1 input.name"),
+			nameSpan1 = $("#result .person1 span.name"),
+			streetInput1 = $("#result .person1 input.street"),
+			streetSpan1 = $("#result .person1 span.street");
+
+		function getResult() {
+			res += nameInput0.val() + " " + nameSpan0.text() + " " + streetInput0.val() + " " + streetSpan0.text() + " " + nameInput1.val() + " " + nameSpan1.text() + " " + streetInput1.val() + " " + streetSpan1.text() + "|";
+		}
+
+		getResult();
+
+		nameInput0.val('n0new').change();
+
+		getResult();
+
+		nameInput1.val('n1new').change();
+
+		getResult();
+
+		streetInput0.val('s0new').change();
+
+		getResult();
+
+		streetInput1.val('s1new').change();
+
+		getResult();
+
+		// ............................... Assert .................................
+		equal(res,
+		"n0 n0 s0 s0 n1 n1 s1 s1|"
+		+ "n0new n0 n0new n0new n1 n1 s1 s1|"
+		+ "n0new n0 n0new n0new n1new n1 n1new n1new|"
+		+ "s0new s0new s0new n0new n1new n1 n1new n1new|"
+		+ "s0new s0new s0new n0new s1new s1new s1new n1new|"
+	,
+		'Two-way bindings with chained computed observables using linkTo remain independent when same template links different elements of an array');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob() {
+			return this.alt ? this._obB : this._obA;
+		}
+		ob.depends = "alt";
+
+		function change() {
+			$.observable(this._address).setProperty("street", this._address.street + "+");
+		}
+
+		function switchAlt() {
+			$.observable(this).setProperty("alt", !this.alt);
+		}
+
+		var people = [
+			{
+				alt: false,
+				ob: ob,
+				switchAlt: switchAlt,
+				_obA: {
+					change: change,
+					_address: {
+						street: "A0"
+					},
+					address: function() {
+						return this._address;
+					}
+				},
+				_obB: {
+					change: change,
+					_address: {
+						street: "B0"
+					},
+					address: function() {
+						return this._address;
+					}
+				}
+			},
+			{
+				alt: false,
+				ob: ob,
+				switchAlt: switchAlt,
+				_obA: {
+					change: change,
+					_address: {
+						street: "A1"
+					},
+					address: function() {
+						return this._address;
+					}
+				},
+				_obB: {
+					change: change,
+					_address: {
+						street: "B1"
+					},
+					address: function() {
+						return this._address;
+					}
+				}
+			}
+		];
+
+		var tmpl = $.templates(
+			"<div class='person{{:#index}}'>"
+			+ "<input class='toStreet1' data-link='\"\" linkTo=ob()^address().street'/>"
+			+ "<input class='toStreet2' data-link='\"\" linkTo=ob()^address().street'/>"
+			+ "<input class='toStreetA' data-link='\"\" linkTo=_obA^address().street'/>"
+			+ "<input class='toStreetB' data-link='\"\" linkTo=_obB^address().street'/>"
+			+ "<span class='street1' data-link='ob()^address().street'></span> "
+			+ "<span class='street2' data-link='ob()^address().street'></span> "
+			+ "<input class='street1' data-link='ob()^address().street'/>"
+			+ "<input class='street2' data-link='ob()^address().street'/>"
+			+ "<input class='streetA' data-link='_obA^address().street'/>"
+			+ "<input class='streetB' data-link='_obB^address().street'/></div>");
+
+		tmpl.link("#result", people);
+
+		// ................................ Act ..................................
+		var res = "",
+			toStreet1_0 = $("#result .person0 input.toStreet1"),
+			toStreet2_0 = $("#result .person0 input.toStreet2"),
+			toStreetA_0 = $("#result .person0 input.toStreetA"),
+			toStreetB_0 = $("#result .person0 input.toStreetB"),
+			spanStreet1_0 = $("#result .person0 span.street1"),
+			spanStreet2_0 = $("#result .person0 span.street2"),
+			street1_0 = $("#result .person0 input.street1"),
+			street2_0 = $("#result .person0 input.street2"),
+			streetA_0 = $("#result .person0 input.streetA"),
+			streetB_0 = $("#result .person0 input.streetB"),
+
+			toStreet1_1 = $("#result .person1 input.toStreet1"),
+			toStreet2_1 = $("#result .person1 input.toStreet2"),
+			toStreetA_1 = $("#result .person1 input.toStreetA"),
+			toStreetB_1 = $("#result .person1 input.toStreetB"),
+			spanStreet1_1 = $("#result .person1 span.street1"),
+			spanStreet2_1 = $("#result .person1 span.street2"),
+			street1_1 = $("#result .person1 input.street1"),
+			street2_1 = $("#result .person1 input.street2"),
+			streetA_1 = $("#result .person1 input.streetA"),
+			streetB_1 = $("#result .person1 input.streetB");
+
+		function getResult(name) {
+			res += name + ":" + spanStreet1_0.text() + " " + spanStreet2_0.text() + " " + street1_0.val() + " " + street2_0.val() + " " + streetA_0.val() + " " + streetB_0.val()
+			+ " " + spanStreet1_1.text() + " " + spanStreet2_1.text() + " " + street1_1.val() + " " + street2_1.val() + " " + streetA_1.val() + " " + streetB_1.val() + "|";
+		}
+
+		getResult(1);
+
+		people[0]._obA.change();
+		people[0]._obB.change();
+		getResult(2);
+
+		people[0].switchAlt();
+		getResult(3);
+
+		people[0]._obA.change();
+		people[0]._obB.change();
+		getResult(4);
+
+		people[0].switchAlt();
+		getResult(5);
+
+		people[1].ob().change();
+		getResult(6);
+
+		people[1].switchAlt();
+		getResult(7);
+
+		people[1].ob().change();
+		getResult(8);
+
+		toStreet1_0.val("new1").change();
+		getResult(9);
+
+		toStreet2_0.val("new2").change();
+		getResult(10);
+
+		toStreetA_0.val("new3").change();
+		getResult(11);
+
+		toStreetB_0.val("new4").change();
+		getResult(12);
+
+		toStreet1_1.val("new5").change();
+		getResult(13);
+
+		toStreet2_1.val("new6").change();
+		getResult(14);
+
+		toStreetA_1.val("new7").change();
+		getResult(15);
+
+		toStreetB_1.val("new8").change();
+		getResult(16);
+
+		// ............................... Assert .................................
+		equal(res,
+			"1:A0 A0 A0 A0 A0 B0 A1 A1 A1 A1 A1 B1|"
+		+ "2:A0+ A0+ A0+ A0+ A0+ B0+ A1 A1 A1 A1 A1 B1|"
+		+ "3:B0+ B0+ B0+ B0+ A0+ B0+ A1 A1 A1 A1 A1 B1|"
+		+ "4:B0++ B0++ B0++ B0++ A0++ B0++ A1 A1 A1 A1 A1 B1|"
+		+ "5:A0++ A0++ A0++ A0++ A0++ B0++ A1 A1 A1 A1 A1 B1|"
+		+ "6:A0++ A0++ A0++ A0++ A0++ B0++ A1+ A1+ A1+ A1+ A1+ B1|"
+		+ "7:A0++ A0++ A0++ A0++ A0++ B0++ B1 B1 B1 B1 A1+ B1|"
+		+ "8:A0++ A0++ A0++ A0++ A0++ B0++ B1+ B1+ B1+ B1+ A1+ B1+|"
+		+ "9:new1 new1 new1 new1 new1 B0++ B1+ B1+ B1+ B1+ A1+ B1+|"
+		+ "10:new2 new2 new2 new2 new2 B0++ B1+ B1+ B1+ B1+ A1+ B1+|"
+		+ "11:new3 new3 new3 new3 new3 B0++ B1+ B1+ B1+ B1+ A1+ B1+|"
+		+ "12:new3 new3 new3 new3 new3 new4 B1+ B1+ B1+ B1+ A1+ B1+|"
+		+ "13:new3 new3 new3 new3 new3 new4 new5 new5 new5 new5 A1+ new5|"
+		+ "14:new3 new3 new3 new3 new3 new4 new6 new6 new6 new6 A1+ new6|"
+		+ "15:new3 new3 new3 new3 new3 new4 new6 new6 new6 new6 new7 new6|"
+		+ "16:new3 new3 new3 new3 new3 new4 new8 new8 new8 new8 new7 new8|",
+		'Two-way bindings with chained computed observables with or without linkTo remain independent when multiple bindings in same tag block use same path expression');
+
+		// ................................ Reset ................................
+		$("#result").empty();
+	})();
+
+});
+
+test("Chained computed observables in template expressions", function() {
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob() {
+			return helpers.alt ? this._obB : this._obA;
+		}
+
+		ob.depends = "~helpers.alt";
+
+		ob.set = function(val) {
+			if (helpers.alt) {
+				this._obB = val;
+			} else {
+				this._obA = val;
+			}
+		}
+
+		function address() {
+			return this._address;
+		}
+
+		function setAddress(val) {
+			this._address = val;
+		}
+
+		address.set = setAddress;
+
+		var res, resCount, helpers, ch, person, person2, data;
+
+		function setData() {
+			res = "";
+			resCount = 1;
+			ch = 0;
+
+			helpers = {alt: false};
+
+			person = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "A"
+						},
+						_address2: {
+							street: "A2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "B"
+						},
+						_address2: {
+							street: "B2"
+						},
+						address: address
+					}
+				}
+			};
+			person2 = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "xA"
+						},
+						_address2: {
+							street: "xA2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "xB"
+						},
+						_address2: {
+							street: "xB2"
+						},
+						address: address
+					}
+				}
+			};
+			data = {person: person};
+		}
+
+		function swapPerson() {
+			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+		}
+
+		function changeAlt() {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+		}
+
+		function changeOb() {
+			$.observable(data.person).setProperty("ob", {
+				home: {
+					_address: {
+						street: data.person.ob().home._address.street + ch++
+					},
+					_address2: {
+						street: data.person.ob().home._address2.street + ch
+					},
+					address: address
+				}
+			});
+		}
+
+		function changeHome() {
+			$.observable(data.person.ob()).setProperty("home", {
+				_address: {
+					street: data.person.ob().home._address.street + "$"
+				},
+				_address2: {
+					street: data.person.ob().home._address2.street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAddress() {
+			$.observable(data.person.ob().home).setProperty("address", {street: data.person.ob().home.address().street + "+"});
+		}
+
+		function changeStreet() {
+			$.observable(data.person.ob().home.address()).setProperty("street", data.person.ob().home.address().street + ">");
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var tmpl = $.templates("<span data-link='person^ob().home.address().street'></span>");
+
+		setData();
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeOb();
+		getResult("Ob");
+
+		changeAlt();
+		getResult("Alt");
+
+		changeHome();
+		getResult("Home");
+
+		changeAddress();
+		getResult("Address");
+
+		changeStreet();
+		getResult("Street");
+
+		swapPerson();
+		getResult("Person");
+
+		changeHome();
+		getResult("Home");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeOb();
+		getResult("Ob");
+
+		changeHome();
+		getResult("Home");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		// ............................... Assert .................................
+		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: xB |"
+			+ "Home: xB$ |Street: xB$> |Address: xB$>+ |Ob: xB$>+1 |Home: xB$>+1$ |Street: xB$>+1$> |Address: xB$>+1$>+ |",
+		"Deep path with chained observables, binding to full depth: person^ob().home.address().street");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+		setData();
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates("<span data-link='person.ob()^home.address().street'></span>");
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeOb();
+		getResult("Ob");
+
+		changeAlt();
+		getResult("Alt");
+
+		changeHome();
+		getResult("Home");
+
+		changeAddress();
+		getResult("Address");
+
+		changeStreet();
+		getResult("Street");
+
+		swapPerson();
+		getResult("Person");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeOb();
+		getResult("Ob");
+
+		changeAlt();
+		getResult("Alt");
+
+		// ............................... Assert .................................
+		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: B$+> |Street: B$+> |Address: B$+> |Home: B$+> |Ob: B$+> |Alt: xA |",
+		"Deep path with chained observables, binding to full depth - 1: person.ob()^home.address().street");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+		setData();
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates("<span data-link='person.ob().home^address().street'></span>");
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeOb();
+		getResult("Ob");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeAlt();
+		getResult("Alt");
+
+		// ............................... Assert .................................
+		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$ |Street: A>+$ |Address: A>+$ |Home: A>+$ |Alt: A>+$ |",
+		"Deep path with chained observables, binding to leaf depth + 2: person.ob().home^address().street");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+		setData();
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates("<span data-link='person.ob().home.address()^street'></span>");
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeAlt();
+		getResult("Alt");
+
+		// ............................... Assert .................................
+		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+ |Street: A>+ |Address: A>+ |Alt: A>+ |",
+		"Deep path with chained observables, binding to leaf depth plus 1: person.ob().home.address()^street");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+		setData();
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates("<span data-link='person.ob().home.address().street'></span>");
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAlt();
+		getResult("Alt");
+
+		// ............................... Assert .................................
+		equal(res, "None: A |Street: A> |Address: A> |Street: A> |Alt: A> |",
+		"Deep path with chained observables, binding to leaf only: person.ob().home.address().street");
+
+	})();
+
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob() {
+			return this._ob;
+		}
+
+		ob.set = function(val) {
+			this._ob = val;
+		}
+
+		var res, resCount, helpers, ch, person, person2, data;
+
+		function setData() {
+			res = "";
+			resCount = 1;
+			ch = 0;
+
+			person = {
+				ob: {
+					street: "A",
+					type: "T"
+				}
+			};
+			person2 = {
+				ob: {
+					street: "A2",
+					type: "T2"
+				}
+			};
+			data = {person: person};
+		}
+
+		function swapPerson() {
+			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+		}
+
+		function changeStreet() {
+			$.observable(data.person.ob).setProperty("street", data.person.ob.street + ">");
+		}
+
+		function changeType() {
+			$.observable(data.person.ob).setProperty("type", data.person.ob.type + "$");
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var tmpl = $.templates("<span data-link='person^ob.type + person^ob.street'></span>");
+
+		setData();
+
+		tmpl.link("#result", data);
+
+		// ................................ Act ..................................
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeType();
+		getResult("Type");
+
+		swapPerson();
+		getResult("Person");
+
+		changeType();
+		getResult("Type");
+
+		changeStreet();
+		getResult("Street");
+
+
+		// ............................... Assert .................................
+		equal(res, "None: TA |Street: TA> |Type: T$A> |Person: T2A2 |Type: T2$A2 |Street: T2$A2> |",
+		"Adjacent deep paths in expression: person^ob.type + person^ob.street");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob() {
+			return this._ob;
+		}
+
+		ob.set = function(val) {
+			this._ob = val;
+		}
+
+		var res, resCount, helpers, ch, person, person2, data;
+
+		function setData() {
+			res = "";
+			resCount = 1;
+			ch = 0;
+
+			person = {
+				ob: ob,
+				_ob: {
+					street: "A",
+					type: "T"
+				}
+			};
+			person2 = {
+				ob: ob,
+				_ob: {
+					street: "A2",
+					type: "T2"
+				}
+			};
+			data = {person: person};
+		}
+
+		function swapPerson() {
+			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+		}
+
+		function changeOb() {
+			$.observable(data.person).setProperty("ob", {
+				street: data.person._ob.street + "+",
+				type:  data.person._ob.type + "+"
+			});
+		}
+
+		function changeStreet() {
+			$.observable(data.person.ob()).setProperty("street", data.person.ob().street + ">");
+		}
+
+		function changeType() {
+			$.observable(data.person.ob()).setProperty("type", data.person.ob().type + "$");
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var tmpl = $.templates("<span data-link='person^ob().street + person^ob().type'></span>");
+
+		setData();
+
+		tmpl.link("#result", data);
+
+		// ................................ Act ..................................
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeType();
+		getResult("Type");
+
+		changeOb();
+		getResult("Ob");
+
+		changeType();
+		getResult("Type");
+
+		changeStreet();
+		getResult("Street");
+
+
+		// ............................... Assert .................................
+		equal(res, "None: AT |Street: A>T |Type: A>T$ |Ob: A>+T$+ |Type: A>+T$+$ |Street: A>+>T$+$ |",
+		"Adjacent terms in expression with paths with observables: person^ob().street + person^ob().type");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob(alt, a, b) {
+			var ob =  alt ? this._obB : this._obA;
+			if (a) {
+				ob.t = [a,b,a+b+2];
+			}
+			return ob;
+		}
+
+		ob.set = function(val) {
+			if (helpers.alt) {
+				this._obB = val;
+			} else {
+				this._obA = val;
+			}
+		}
+
+		function address(c, d) {
+			if (c) {
+				this._address.t = c + d;
+			}
+			return this._address;
+		}
+
+		function setAddress(val) {
+			this._address = val;
+		}
+
+		address.set = setAddress;
+
+		var res, resCount, helpers, ch, person, person2, data;
+
+		function setData() {
+			res = "";
+			resCount = 1;
+			ch = 0;
+
+			helpers = {
+				index: 1,
+				a: 2,
+				b: 1,
+				c: 3,
+				d: 4,
+				alt: false
+			};
+
+			person = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "A"
+						},
+						_address2: {
+							street: "A2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "B"
+						},
+						_address2: {
+							street: "B2"
+						},
+						address: address
+					}
+				}
+			};
+			person2 = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "xA"
+						},
+						_address2: {
+							street: "xA2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "xB"
+						},
+						_address2: {
+							street: "xB2"
+						},
+						address: address
+					}
+				}
+			};
+			data = {person: person};
+		}
+
+		function swapPerson() {
+			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+		}
+
+		function changeAlt() {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+		}
+
+		function changeA() {
+			$.observable(helpers).setProperty("a", helpers.a + 1);
+		}
+
+		function changeD() {
+			$.observable(helpers).setProperty("d", helpers.d + 1);
+		}
+
+		function changeIndex(val) {
+			$.observable(helpers).setProperty("index", val);
+		}
+
+		function changeOb() {
+			$.observable(data.person).setProperty("ob", {
+				home: {
+					_address: {
+						street: data.person.ob(helpers.alt).home._address.street + ch++
+					},
+					_address2: {
+						street: data.person.ob(helpers.alt).home._address2.street + ch
+					},
+					address: address
+				}
+			});
+		}
+
+		function changeHome() {
+			$.observable(data.person.ob(helpers.alt)).setProperty("home", {
+				_address: {
+					street: data.person.ob(helpers.alt).home._address.street + "$"
+				},
+				_address2: {
+					street: data.person.ob(helpers.alt).home._address2.street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAddress() {
+			$.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
+		}
+
+		function changeStreet() {
+			$.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var tmpl = $.templates("<span data-link='((person^ob(~helpers.alt).home.address(~helpers.c, ~helpers.d).t*3) + person^ob(~helpers.alt, ~helpers.a, ~helpers.b).t[(~helpers.index + 1) - 2])*2 + person^ob(~helpers.alt).home.address().street'></span>");
+
+		setData();
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeD();
+		getResult("D");
+
+		changeIndex(3);
+		getResult("Index3");
+
+		changeA();
+		getResult("A");
+
+		changeIndex(2);
+		getResult("Index2");
+
+		changeOb();
+		getResult("Ob");
+
+		changeAlt();
+		getResult("Alt");
+
+		changeHome();
+		getResult("Home");
+
+		changeAddress();
+		getResult("Address");
+
+		changeStreet();
+		getResult("Street");
+
+		swapPerson();
+		getResult("Person");
+
+		changeHome();
+		getResult("Home");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeOb();
+		getResult("Ob");
+
+		changeHome();
+		getResult("Home");
+
+		changeIndex(1);
+		getResult("Index1");
+
+		changeA();
+		getResult("A");
+
+		changeD();
+		getResult("D");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		// ............................... Assert .................................
+		equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
+		"Complex expression with multiple adjacent paths, with nested () and [] paren expressions, chained observables, arithmetic expressions etc.");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var res = "",
+			data = {
+				type: 't',
+				sectionTypes: {
+					t: {
+						types: [22, 33]
+					},
+					n: {
+						types: [66, 77]
+					}
+				}
+			},
+			helpers = {
+				mode: "m"
+			},
+			tmpl = $.templates({
+				markup: "{^{section 'A' ~mode ~sectionTypes=~root.sectionTypes[type].types/}}",
+				tags: {
+					section: function(setting, mode) {
+						return setting + mode + this.tagCtx.ctx.sectionTypes[0];
+					}
+				}
+			});
+
+		// ................................ Act ..................................
+		tmpl.link("#result", data, helpers);
+
+		getResult("None");
+
+		$.observable(data).setProperty("type", "n")
+
+		getResult("type");
+
+		// ............................... Assert .................................
+		equal(res, "None: Am22 |type: Am22 |",
+		"Complex unbound expression with [] paren expressions etc.");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+
+		var res = "",
+			data = {
+				type: 't',
+				sectionTypes: {
+					t: {
+						types: [22, 33]
+					},
+					n: {
+						types: [66, 77]
+					}
+				}
+			},
+			helpers = {
+				mode: "m"
+			},
+
+			tmpl = $.templates({
+				markup: "{^{section 'A' ~mode ^~sectionTypes=~root.sectionTypes[type].types/}}",
+				tags: {
+					section: function(setting, mode) {
+						return setting + mode + this.tagCtx.ctx.sectionTypes[0];
+					}
+				}
+			});
+
+		// ................................ Act ..................................
+		tmpl.link("#result", data, helpers);
+
+		getResult("None");
+
+		$.observable(data).setProperty("type", "n")
+
+		getResult("type");
+
+		// ............................... Assert .................................
+		equal(res, "None: Am22 |type: Am66 |",
+		"Complex bound expression with [] paren expressions etc.");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function ob(alt, a, b) {
+			var ob =  alt ? this._obB : this._obA;
+			if (a) {
+				ob.t = [a,b,a+b+2];
+			}
+			return ob;
+		}
+
+		ob.set = function(val) {
+			if (helpers.alt) {
+				this._obB = val;
+			} else {
+				this._obA = val;
+			}
+		}
+
+		function address(c, d) {
+			if (c) {
+				this._address.t = c + d;
+			}
+			return this._address;
+		}
+
+		function setAddress(val) {
+			this._address = val;
+		}
+
+		address.set = setAddress;
+
+		var res, resCount, helpers, ch, person, person2, data;
+
+		function setData() {
+			res = "";
+			resCount = 1;
+			ch = 0;
+
+			helpers = {
+				index: 1,
+				a: 2,
+				b: 1,
+				c: 3,
+				d: 4,
+				alt: false
+			};
+
+			person = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "A"
+						},
+						_address2: {
+							street: "A2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "B"
+						},
+						_address2: {
+							street: "B2"
+						},
+						address: address
+					}
+				}
+			};
+			person2 = {
+				ob: ob,
+				_obA: {
+					home: {
+						_address: {
+							street: "xA"
+						},
+						_address2: {
+							street: "xA2"
+						},
+						address: address
+					}
+				},
+				_obB: {
+					home: {
+						_address: {
+							street: "xB"
+						},
+						_address2: {
+							street: "xB2"
+						},
+						address: address
+					}
+				}
+			};
+			data = {person: person};
+		}
+
+		function swapPerson() {
+			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+		}
+
+		function changeAlt() {
+			$.observable(helpers).setProperty("alt", !helpers.alt);
+		}
+
+		function changeA() {
+			$.observable(helpers).setProperty("a", helpers.a + 1);
+		}
+
+		function changeD() {
+			$.observable(helpers).setProperty("d", helpers.d + 1);
+		}
+
+		function changeIndex(val) {
+			$.observable(helpers).setProperty("index", val);
+		}
+
+		function changeOb() {
+			$.observable(data.person).setProperty("ob", {
+				home: {
+					_address: {
+						street: data.person.ob(helpers.alt).home._address.street + ch++
+					},
+					_address2: {
+						street: data.person.ob(helpers.alt).home._address2.street + ch
+					},
+					address: address
+				}
+			});
+		}
+
+		function changeHome() {
+			$.observable(data.person.ob(helpers.alt)).setProperty("home", {
+				_address: {
+					street: data.person.ob(helpers.alt).home._address.street + "$"
+				},
+				_address2: {
+					street: data.person.ob(helpers.alt).home._address2.street + "$"
+				},
+				address: address
+			});
+		}
+
+		function changeAddress() {
+			$.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
+		}
+
+		function changeStreet() {
+			$.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var tmpl = $.templates({
+				markup: "{^{mytag ^myprop=((person^ob(~helpers.alt).home.address(~helpers.c, ~helpers.d).t*3) + person^ob(~helpers.alt, ~helpers.a, ~helpers.b).t[(~helpers.index + 1) - 2])*2 + person^ob(~helpers.alt).home.address().street}}{{/mytag}}",
+				tags: {
+					mytag: function() {
+						return this.tagCtx.props.myprop;
+					}
+				}
+			});
+
+		setData();
+
+		tmpl.link("#result", data, {helpers: helpers});
+
+		// ................................ Act ..................................
+		getResult("None");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeHome();
+		getResult("Home");
+
+		changeD();
+		getResult("D");
+
+		changeIndex(3);
+		getResult("Index3");
+
+		changeA();
+		getResult("A");
+
+		changeIndex(2);
+		getResult("Index2");
+
+		changeOb();
+		getResult("Ob");
+
+		changeAlt();
+		getResult("Alt");
+
+		changeHome();
+		getResult("Home");
+
+		changeAddress();
+		getResult("Address");
+
+		changeStreet();
+		getResult("Street");
+
+		swapPerson();
+		getResult("Person");
+
+		changeHome();
+		getResult("Home");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		changeOb();
+		getResult("Ob");
+
+		changeHome();
+		getResult("Home");
+
+		changeIndex(1);
+		getResult("Index1");
+
+		changeA();
+		getResult("A");
+
+		changeD();
+		getResult("D");
+
+		changeStreet();
+		getResult("Street");
+
+		changeAddress();
+		getResult("Address");
+
+		// ............................... Assert .................................
+		equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
+		"Complex expression on bound tag property, with multiple adjacent paths, with nested () and [] paren expressions, chained observables, arithmetic expressions etc.");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
+
+	(function() {
+		// =============================== Arrange ===============================
+		function setData() {
+			res = "",
+
+			theB = {
+				a: "a"
+			};
+
+			theC = {
+				_b: theB,
+				b: function() {
+					return this._b;
+				}
+			};
+
+			theD = {
+				_c: theC,
+				c: function() {
+					return this._c;
+				}
+			};
+
+			theE = {
+				_d: theD,
+				d: function() {
+					return this._d;
+				}
+			};
+
+			theF = {
+				_e: theE,
+				e: function() {
+					return this._e;
+				}
+			};
+
+			theC.b.set = function(val) {
+				this._b = val;
+			};
+
+			theD.c.set = function(val) {
+				this._c = val;
+			};
+
+			theE.d.set = function(val) {
+				this._d = val;
+			};
+
+			theF.e.set = function(val) {
+				this._e = val;
+			};
+
+			data = {
+				f: theF,
+				e: theE,
+				d: theD,
+				c: theC,
+				b: theB
+			}
+		}
+
+		function getResult(name) {
+			res += (name||resCount++) + ": " + $("#result").text() + " |";
+		}
+
+		var theB, theC, theD, theE, theF, data, res,
+			tmpl = $.templates('{^{:f.e().d().c().b().a /}} {^{:f.e().d().c().b()^a /}} {^{:f.e().d().c()^b().a /}} {^{:f.e().d()^c().b().a /}} {^{:f.e()^d().c().b().a /}} {^{:f^e().d().c().b().a /}}');
+
+		setData();
+
+		tmpl.link("#result", data);
+
+		getResult("None");
+
+		// ................................ Act ..................................
+		$.observable(theB).setProperty("a", "A");
+
+		getResult("Change a");
+
+		$.observable(theC).setProperty("b", {a: "B"});
+
+		getResult("Change b");
+
+		$.observable(theD).setProperty("c", {
+			_b: {a: "C"},
+			b: function() {
+				return this._b;
+			}
+		});
+
+		getResult("Change c");
+
+		$.observable(theE).setProperty("d", {
+			_c: {
+				_b: {a: "D"},
+				b: function() {
+					return this._b;
+				}
+			},
+			c: function() {
+				return this._c;
+			}
+		});
+
+		getResult("Change d");
+
+		$.observable(theF).setProperty("e", {
+			_d: {
+				_c: {
+					_b: {a: "E"},
+					b: function() {
+						return this._b;
+					}
+				},
+				c: function() {
+					return this._c;
+				}
+			},
+			d: function() {
+				return this._d;
+			}
+		});
+
+		getResult("Change e");
+
+		// ............................... Assert .................................
+		equal(res, isIE8
+			? "None: a a a a a a |Change a: AAAAAA |Change b: ABBBBB |Change c: ABCCCC |Change d: ABCDDD |Change e: ABCDEE |"
+			: "None: a a a a a a |Change a: A A A A A A |Change b: A B B B B B |Change c: A B C C C C |Change d: A B C D D D |Change e: A B C D E E |",
+		"{{: ...}} expressions with deeply chained computed observables");
+		// =============================== Arrange ===============================
+
+		function setData2() {
+			res = "",
+
+			theB = {
+				a1: {
+					a: "a"
+				}
+			};
+
+			theC = {
+				b1: {
+					_b: theB,
+					b: function() {
+						return this._b;
+					}
+				}
+			};
+
+			theD = {
+				c1: {
+					_c: theC,
+					c: function() {
+						return this._c;
+					}
+				}
+			};
+
+			theE = {
+				d1: {
+					_d: theD,
+					d: function() {
+						return this._d;
+					}
+				}
+			};
+
+			theF = {
+				e1: {
+					_e: theE,
+					e: function() {
+						return this._e;
+					}
+				}
+			};
+
+			theC.b1.b.set = function(val) {
+				this._b = val;
+			};
+
+			theD.c1.c.set = function(val) {
+				this._c = val;
+			};
+
+			theE.d1.d.set = function(val) {
+				this._d = val;
+			};
+
+			theF.e1.e.set = function(val) {
+				this._e = val;
+			};
+		}
+
+		tmpl = $.templates('{^{:e1.e().d1.d().c1.c().b1.b().a1.a}} {^{:e1.e().d1.d().c1.c().b1.b().a1^a}} {^{:e1.e().d1.d().c1.c().b1.b()^a1.a}} {^{:e1.e().d1.d().c1.c().b1^b().a1.a}} {^{:e1.e().d1.d().c1.c()^b1.b().a1.a}} {^{:e1.e().d1.d().c1^c().b1.b().a1.a}} {^{:e1.e().d1.d()^c1.c().b1.b().a1.a}} {^{:e1.e().d1^d().c1.c().b1.b().a1.a}} {^{:e1.e()^d1.d().c1.c().b1.b().a1.a}} {^{:e1^e().d1.d().c1.c().b1.b().a1.a}}');
+
+		setData2();
+
+		tmpl.link("#result", theF);
+
+		getResult("None");
+
+		// ................................ Act ..................................
+
+		$.observable(theB.a1).setProperty("a", "A");
+
+		getResult("Change a");
+
+		$.observable(theB).setProperty("a1", {
+			a: "A1"
+		});
+
+		getResult("Change a1");
+
+		$.observable(theC.b1).setProperty("b", {
+			a1: {
+				a: "B"
+			}
+		});
+
+		getResult("Change b");
+
+		$.observable(theC).setProperty("b1", {
+			_b: {
+				a1: {
+					a: "B1"
+				}
+			},
+			b: function() {
+				return this._b;
+			}
+		});
+
+		getResult("Change b1");
+
+		$.observable(theD.c1).setProperty("c", {
+			b1: {
+				_b: {
+					a1: {
+						a: "C"
+					}
+				},
+				b: function() {
+					return this._b;
+				}
+			}
+		});
+
+		getResult("Change c");
+
+		$.observable(theD).setProperty("c1", {
+			_c: {
+				b1: {
+					_b: {
+						a1: {
+							a: "C1"
+						}
+					},
+					b: function() {
+						return this._b;
+					}
+				}
+			},
+			c: function() {
+				return this._c;
+			}
+		});
+
+		getResult("Change c1");
+
+		$.observable(theE.d1).setProperty("d", {
+			c1: {
+				_c: {
+					b1: {
+						_b: {
+							a1: {
+								a: "D"
+							}
+						},
+						b: function() {
+							return this._b;
+						}
+					}
+				},
+				c: function() {
+					return this._c;
+				}
+			}
+		});
+
+		getResult("Change d");
+
+		$.observable(theE).setProperty("d1", {
+			_d: {
+				c1: {
+					_c: {
+						b1: {
+							_b: {
+								a1: {
+									a: "D1"
+								}
+							},
+							b: function() {
+								return this._b;
+							}
+						}
+					},
+					c: function() {
+						return this._c;
+					}
+				}
+			},
+			d: function() {
+				return this._d;
+			}
+		});
+
+		getResult("Change d1");
+
+		$.observable(theF.e1).setProperty("e", {
+			d1: {
+				_d: {
+					c1: {
+						_c: {
+							b1: {
+								_b: {
+									a1: {
+										a: "E"
+									}
+								},
+								b: function() {
+									return this._b;
+								}
+							}
+						},
+						c: function() {
+							return this._c;
+						}
+					}
+				},
+				d: function() {
+					return this._d;
+				}
+			}
+		});
+
+		getResult("Change e");
+
+		$.observable(theF).setProperty("e1", {
+			_e: {
+				d1: {
+					_d: {
+						c1: {
+							_c: {
+								b1: {
+									_b: {
+										a1: {
+											a: "E1"
+										}
+									},
+									b: function() {
+										return this._b;
+									}
+								}
+							},
+							c: function() {
+								return this._c;
+							}
+						}
+					},
+					d: function() {
+						return this._d;
+					}
+				}
+			},
+			e: function() {
+				return this._e;
+			}
+		});
+
+		getResult("Change e1");
+
+		// ............................... Assert .................................
+		equal(res, isIE8
+			? "None: a a a a a a a a a a |Change a: AAAAAAAAAA |Change a1: AA1A1A1A1A1A1A1A1A1 |Change b: AA1BBBBBBBB |Change b1: AA1BB1B1B1B1B1B1B1 |Change c: AA1BB1CCCCCC |Change c1: AA1BB1CC1C1C1C1C1 |Change d: AA1BB1CC1DDDD |Change d1: AA1BB1CC1DD1D1D1 |Change e: AA1BB1CC1DD1EE |Change e1: AA1BB1CC1DD1EE1 |"
+			: "None: a a a a a a a a a a |Change a: A A A A A A A A A A |Change a1: A A1 A1 A1 A1 A1 A1 A1 A1 A1 |Change b: A A1 B B B B B B B B |Change b1: A A1 B B1 B1 B1 B1 B1 B1 B1 |Change c: A A1 B B1 C C C C C C |Change c1: A A1 B B1 C C1 C1 C1 C1 C1 |Change d: A A1 B B1 C C1 D D D D |Change d1: A A1 B B1 C C1 D D1 D1 D1 |Change e: A A1 B B1 C C1 D D1 E E |Change e1: A A1 B B1 C C1 D D1 E E1 |",
+		"{{: ...}} expressions with deeply chained computed observables (variant)");
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates('{^{for f.e().d().c().b()}}{^{:a}}{{/for}} {^{for f.e().d().c()^b()}}{^{:a}}{{/for}} {^{for f.e().d()^c().b()}}{^{:a}}{{/for}} {^{for f.e()^d().c().b()}}{^{:a}}{{/for}} {^{for f^e().d().c().b()}}{^{:a}}{{/for}}');
+
+		setData();
+
+		tmpl.link("#result", data);
+
+		getResult("None");
+
+		// ................................ Act ..................................
+
+		$.observable(theB).setProperty("a", "A");
+
+		getResult("Change a");
+
+		$.observable(theC).setProperty("b", {a: "B"});
+
+		getResult("Change b");
+
+		$.observable(theD).setProperty("c", {
+			_b: {a: "C"},
+			b: function() {
+				return this._b;
+			}
+		});
+
+		getResult("Change c");
+
+		$.observable(theE).setProperty("d", {
+			_c: {
+				_b: {a: "D"},
+				b: function() {
+					return this._b;
+				}
+			},
+			c: function() {
+				return this._c;
+			}
+		});
+
+		getResult("Change d");
+
+		$.observable(theF).setProperty("e", {
+			_d: {
+				_c: {
+					_b: {a: "E"},
+					b: function() {
+						return this._b;
+					}
+				},
+				c: function() {
+					return this._c;
+				}
+			},
+			d: function() {
+				return this._d;
+			}
+		});
+
+		getResult("Change e");
+
+		// ............................... Assert .................................
+		equal(res, isIE8
+			? "None: a a a a a |Change a: AAAAA |Change b: BBBBB |Change c: BCCCC |Change d: BCDDD |Change e: BCDEE |"
+			: "None: a a a a a |Change a: A A A A A |Change b: B B B B B |Change c: B C C C C |Change d: B C D D D |Change e: B C D E E |",
+		"{{for ...}} expressions with deeply chained computed observables");
+
+		// =============================== Arrange ===============================
+		tmpl = $.templates('{^{:f.e().d().c().b().a + " " + e.d().c().b().a + " " + d.c().b().a + " " + c.b().a + " " + b.a}} | {^{:f.e()^d().c().b().a + " " + e.d()^c().b().a + " " + d.c()^b().a + " " + c.b()^a + " " + b.a}}');
+
+		setData();
+
+		tmpl.link("#result", data);
+
+		getResult("None");
+
+		// ................................ Act ..................................
+
+		$.observable(theB).setProperty("a", "A");
+
+		getResult("Change a");
+
+		$.observable(theC).setProperty("b", {a: "B"});
+
+		getResult("Change b");
+
+		$.observable(theD).setProperty("c", {
+			_b: {a: "C"},
+			b: function() {
+				return this._b;
+			}
+		});
+
+		getResult("Change c");
+
+		$.observable(theE).setProperty("d", {
+			_c: {
+				_b: {a: "D"},
+				b: function() {
+					return this._b;
+				}
+			},
+			c: function() {
+				return this._c;
+			}
+		});
+
+		getResult("Change d");
+
+		$.observable(theF).setProperty("e", {
+			_d: {
+				_c: {
+					_b: {a: "E"},
+					b: function() {
+						return this._b;
+					}
+				},
+				c: function() {
+					return this._c;
+				}
+			},
+			d: function() {
+				return this._d;
+			}
+		});
+
+		getResult("Change e");
+
+		// ............................... Assert .................................
+		equal(res, isIE8
+			? "None: a a a a a | a a a a a |Change a: A A A A A |A A A A A |Change b: A A A A A |B B B B A |Change c: A A A A A |C C C B A |Change d: A A A A A |D D C B A |Change e: A A A A A |E D C B A |"
+			: "None: a a a a a | a a a a a |Change a: A A A A A | A A A A A |Change b: A A A A A | B B B B A |Change c: A A A A A | C C C B A |Change d: A A A A A | D D C B A |Change e: A A A A A | E D C B A |",
+		"Sibling {{: ...}} expressions with deeply chained computed observables");
+
+		// ................................ Reset ................................
+		$("#result").empty();
+
+	})();
 });
 
 module("API - data-bound tags");
@@ -3265,23 +6187,23 @@ test("{^{:expression}}", function() {
 
 	var count = 0,
 		data = {
-		last: "Smith",
-		other: "Other",
-		a: function() {return this;}
-	};
+			last: "Smith",
+			other: "Other",
+			a: function() { return this; }
+		};
 
 	$.views.tags({
-	  textbox: {
-		onAfterLink: function() {
-		  // Find input in contents, if not already found
-		  this.linkedElem = this.linkedElem || this.contents("input");
-		},
-		onUpdate: function() {
-		  // No need to re-render whole tag, when content updates.
-		  return false;
-		},
-		template: "<b>{^{:~tag.tagCtx.props.label}}</b><input/><br/>"
-	  }
+		textbox: {
+			onAfterLink: function() {
+				// Find input in contents, if not already found
+				this.linkedElem = this.linkedElem || this.contents("input");
+			},
+			onUpdate: function() {
+				// No need to re-render whole tag, when content updates.
+				return false;
+			},
+			template: "<b>{^{:~tag.tagCtx.props.label}}</b><input/><br/>"
+		}
 	});
 
 	tmpl = $.templates(
@@ -3298,8 +6220,8 @@ test("{^{:expression}}", function() {
 	+ '{^{textbox convert=~upper convertBack=~lower last a().other trigger=true/}}');
 
 	$.link(tmpl, "#result", data, {
-		upper: function(val) {return val.toUpperCase();},
-		lower: function(val) {return val.toLowerCase();}
+		upper: function(val) { return val.toUpperCase(); },
+		lower: function(val) { return val.toLowerCase(); }
 	});
 
 	// ................................ Act ..................................
@@ -3330,8 +6252,8 @@ test("{^{:expression}}", function() {
 
 	var ob = { text: "aBc" };
 	$.link("~upper(~ob.text) + ~lower(~ob.text)", "#result", undefined, {
-		upper: function(val) {return val.toUpperCase();},
-		lower: function(val) {return val.toLowerCase();},
+		upper: function(val) { return val.toUpperCase(); },
+		lower: function(val) { return val.toLowerCase(); },
 		ob: ob
 	});
 
@@ -3353,8 +6275,8 @@ test("{^{:expression}}", function() {
 
 	ob = { text: "aBc" };
 	$.views.helpers({
-		upper: function(val) {return val.toUpperCase();},
-		lower: function(val) {return val.toLowerCase();},
+		upper: function(val) { return val.toUpperCase(); },
+		lower: function(val) { return val.toLowerCase(); },
 		ob: ob
 	});
 	$.link("~upper(~ob.text) + ~lower(~ob.text)", "#result");
@@ -3510,8 +6432,8 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 	$.views.tags({
 		norendernotemplate: {},
-		voidrender: function() {},
-		emptyrender: function() {return "";},
+		voidrender: function() { },
+		emptyrender: function() { return ""; },
 		emptytemplate: {
 			template: ""
 		},
@@ -3544,13 +6466,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{^{tmplTag/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3568,13 +6490,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{{tmplTag/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3592,13 +6514,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{^{fnTag/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3616,13 +6538,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{{fnTag/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3640,13 +6562,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div>{^{fnTagEl/}}</div>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result div *")[1].outerHTML; // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result div *")[1].outerHTML;
 	// ............................... Assert .................................
 	equal(before + "|" + after,
@@ -3663,13 +6585,13 @@ test("{^{tag}}", function() {
 
 	// =============================== Arrange ===============================
 	$.templates('<div>{^{fnTagElNoInit firstName ~settings.width/}}</div>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result div span").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result div span").html();
 
 	// ............................... Assert .................................
@@ -3688,13 +6610,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<ul>{^{fnTagElCnt/}}</ul>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -3713,13 +6635,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<ul>{^{fnTagElCntNoInit firstName ~settings.width/}}</ul>')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -3738,13 +6660,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{^{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3764,13 +6686,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3790,13 +6712,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{^{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3816,13 +6738,13 @@ test("{^{tag}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates('{{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40, reverse: false });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -3850,7 +6772,7 @@ test("{^{tag}}", function() {
 	$.templates("{^{myTag foo(\"w\\x\'y\").b/}} <div data-link=\"{myTag foo('w\\x').b}\" ></div>")
 		.link("#result", {
 			foo: function(val) {
-				return {b: val};
+				return { b: val };
 			}
 		});
 
@@ -3859,6 +6781,10 @@ test("{^{tag}}", function() {
 	"{^{myTag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 	equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
 	"<div data-link=\"{myTag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	result = "";
 });
 
 test("{^{for}}", function() {
@@ -4037,14 +6963,14 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
+	model.things = [{ thing: "box" }, { thing: "table" }]; // reset Prop
 
 	$.templates('{^{:length}} {^{for #data}}{{:thing}}{{/for}}')
 		.link("#result", model.things, null, true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4057,14 +6983,14 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
+	model.things = [{ thing: "box" }, { thing: "table" }]; // reset Prop
 
 	$.templates('{^{:length}} {^{for}}{{:thing}}{{/for}}')
 		.link("#result", model.things, null, true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4077,14 +7003,14 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
+	model.things = [{ thing: "box" }, { thing: "table" }]; // reset Prop
 
 	$.templates('{{include things}}{^{:length}} {^{for}}{{:thing}}{{/for}}{{/include}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4097,13 +7023,13 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{ thing: "box" }]; // reset Prop
 	$.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4120,7 +7046,7 @@ test("{^{for}}", function() {
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things:[{thing: "triangle"}, {thing: "circle"}]});
+	$.observable(model).setProperty({ things: [{ thing: "triangle" }, { thing: "circle" }] });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4128,7 +7054,7 @@ test("{^{for}}", function() {
 	'{^{for things}}{{else}}{{/for}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things:{thing: "square"}});
+	$.observable(model).setProperty({ things: { thing: "square" } });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4156,7 +7082,7 @@ test("{^{for}}", function() {
 		.link("#result", model);
 
 	before = $("#result td").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4195,7 +7121,7 @@ test("{^{for}}", function() {
 		.link("#result", model);
 
 	before = $("#result div").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4231,7 +7157,7 @@ test("{^{for}}", function() {
 	$.templates('<table><tbody>{^{for things}}{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}{{/for}}</tbody></table>')
 		.link("#result", model);
 
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	$.observable(model.things).insert(0, [{ thing: "tree", expanded: false }]);
 	result = $._data(model.things[0]).events.propertyChange.length;
 	$.view("#result", true).views._1.views[0].refresh();
 	result += "|" + $._data(model.things[0]).events.propertyChange.length;
@@ -4252,7 +7178,7 @@ test("{^{for}}", function() {
 	$.templates('<div>{^{for things}}{^{if expanded}}{{:thing}}{{/if}}{{/for}}</div>')
 		.link("#result", model);
 
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	$.observable(model.things).insert(0, [{ thing: "tree", expanded: false }]);
 	result = $._data(model.things[0]).events.propertyChange.length;
 	$.view("#result", true).views._1.views[0].refresh();
 	result += "|" + $._data(model.things[0]).events.propertyChange.length;
@@ -4292,7 +7218,7 @@ test("{^{for}}", function() {
 		.link("#result", model);
 
 	result = $("#result td").text();
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	$.observable(model.things).insert(0, [{ thing: "tree", expanded: false }, { thing: "bush", expanded: true }]);
 	result += "|" + $("#result td").text();
 	$.observable(model.things[0]).setProperty("expanded", true);
 	$.observable(model.things[1]).setProperty("expanded", false);
@@ -4336,7 +7262,7 @@ test("{^{for}}", function() {
 		.link("#result", model);
 
 	result = $("#result td").text();
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	$.observable(model.things).insert(0, [{ thing: "tree", expanded: false }, { thing: "bush", expanded: true }]);
 	result += "|" + $("#result").text();
 	$.observable(model.things[0]).setProperty("expanded", true);
 	$.observable(model.things[1]).setProperty("expanded", false);
@@ -4374,7 +7300,7 @@ test("{^{for}}", function() {
 	// =============================== Arrange ===============================
 
 	$.templates("<ul>{{for}}<li>Name: {{:firstName()}}. Width: {{:~settings.width}}</li>{{/for}}</ul>")
-		.link("#result", person1, {settings: settings});
+		.link("#result", person1, { settings: settings });
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
@@ -4427,12 +7353,30 @@ test("{^{for}}", function() {
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
-	$.observable(model.things).insert(0, {thing: "bush"});
+	$.observable(model.things).insert(0, { thing: "tree" });
+	$.observable(model.things).insert(0, { thing: "bush" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:1 #parent.parent.index:1|",
 	'Data-link to "#index" and "#get(\'item\').index" work correctly');
+	// -----------------------------------------------------------------------
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{for things}}<div>{{:thing}} Nested:{{for}}{{for}}<em data-link="#getIndex()"></em>{{/for}}{{/for}}</div>|{{/for}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	$.observable(model.things).insert(0, { thing: "tree" });
+	$.observable(model.things).insert(0, { thing: "bush" });
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "bush Nested:0|tree Nested:1|",
+	'Data-link to "#getIndex()" works correctly');
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
@@ -4455,9 +7399,9 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 	data = {
-			list: [],
-			q: true
-		};
+		list: [],
+		q: true
+	};
 
 	$.templates('<ul class="list">{^{if q}}{^{for list}}<li>{{:#data}}</li>{{/for}}{{/if}}</ul>')
 		.link("#result", data);
@@ -4481,7 +7425,7 @@ test("{^{for}}", function() {
 test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// =============================== Arrange ===============================
-	var data = {one: true, two: false, three: true},
+	var data = { one: true, two: false, three: true },
 		boundIfElseTmpl = $.templates(
 		'{^{if one pane=0}}'
 			+ '{^{if two pane=0}}'
@@ -4506,7 +7450,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({one: false, two: false, three: true});
+	$.observable(data).setProperty({ one: false, two: false, three: true });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4514,7 +7458,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({one: false, two: true, three: false});
+	$.observable(data).setProperty({ one: false, two: true, three: false });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4525,7 +7469,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	data = {expanded: true};
+	data = { expanded: true };
 	var deepIfTmpl = $.templates(
 			'<table><tbody>'
 			+ '<tr>{^{if expanded}}'
@@ -4594,13 +7538,17 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	equal(!deferredString && after, 'afterShallow',
 	'With shallow bound {^{if}} tag, there is no deferred binding and binding behaves correctly after further remove');
 
+	// ................................ Reset ................................
+	$("#result").empty();
+	result = "";
 });
 
 test("{^{props}} basic", function() {
+
 	// =============================== Arrange ===============================
 	var root = {
-		objA: {propA1: "valA1a"},
-		objB: {propB1: "valB1a"}
+		objA: { propA1: "valA1a" },
+		objB: { propB1: "valB1a" }
 	};
 
 	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},{{/props}}')
@@ -4608,7 +7556,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	$.observable(root.objA).setProperty({ propA1: "valA1b" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4617,7 +7565,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1c",propA2: "valA2a"});
+	$.observable(root.objA).setProperty({ propA1: "valA1c", propA2: "valA2a" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4626,7 +7574,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "",propA2: null});
+	$.observable(root.objA).setProperty({ propA1: "", propA2: null });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4635,7 +7583,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: null});
+	$.observable(root.objA).setProperty({ propA1: null });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4653,7 +7601,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	$.observable(root.objA).setProperty({ propA1: "valA1b" });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4662,7 +7610,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root).setProperty({ objA: {}});
+	$.observable(root).setProperty({ objA: {} });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4671,7 +7619,7 @@ test("{^{props}} basic", function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root).setProperty({ objA: {propX: "XX"}});
+	$.observable(root).setProperty({ objA: { propX: "XX" } });
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -4687,6 +7635,7 @@ test("{^{props}} basic", function() {
 });
 
 test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function() {
+
 	// =============================== Arrange ===============================
 
 	var root = {
@@ -4707,7 +7656,7 @@ test("{^{props}} modifying content, through arrayChange/propertyChange on target
 			add: function(ev, eventArgs) {
 				var view = eventArgs.view,
 					arr = view.get("array").data;
-				$.observable(arr).insert({key: "addkey", prop: "addprop"});
+				$.observable(arr).insert({ key: "addkey", prop: "addprop" });
 			},
 			remove: function(ev, eventArgs) {
 				var view = eventArgs.view,
@@ -4779,6 +7728,7 @@ test("{^{props}} modifying content, through arrayChange/propertyChange on target
 });
 
 test("{^{props}}..{{else}} ...", function() {
+
 	// =============================== Arrange ===============================
 
 	var root = {
@@ -4837,9 +7787,9 @@ test('data-link="{on ...', function() {
 		$.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
 	}
 	var thing = {
-			type: "shape",
-			swap: swap
-		};
+		type: "shape",
+		swap: swap
+	};
 
 	$.templates('<div data-link="{on swap}">{^{:type}}</div>')
 		.link("#result", thing);
@@ -4862,7 +7812,7 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{on ~swap}">{^{:type}}</div>')
-		.link("#result", thing, {swap: swap});
+		.link("#result", thing, { swap: swap });
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -4882,16 +7832,18 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{on ~util.swap}">{^{:type}} {^{:check}}</div>')
-		.link("#result", thing, {util:
-			{
-				swap: function(ev, eventArgs) {
-					$.observable(this.data).setProperty({
-						type: this.data.type === "shape" ? "line" : "shape",
-						check: this.data === eventArgs.view.data
-					});
-				},
-				data: thing
-			}});
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(this.data).setProperty({
+							type: this.data.type === "shape" ? "line" : "shape",
+							check: this.data === eventArgs.view.data
+						});
+					},
+					data: thing
+				}
+		});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -4913,10 +7865,12 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{on ~util.swap context=#data}">{^{:type}}</div>')
-		.link("#result", thing, {util:
-			{
-				swap: swap
-			}});
+		.link("#result", thing, {
+			util:
+				{
+					swap: swap
+				}
+		});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -4936,19 +7890,21 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{on ~util.swap context=~util.swapCtx}">{^{:type}} {^{:check}}</div>')
-		.link("#result", thing, {util:
-			{
-				swap: function(ev, eventArgs) {
-					$.observable(this.data).setProperty({
-						type: this.data.type === "shape" ? "line" : "shape",
-						check: this.data === eventArgs.view.data
-					});
-				},
-				data: thing,
-				swapCtx: {
-					data: thing
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(this.data).setProperty({
+							type: this.data.type === "shape" ? "line" : "shape",
+							check: this.data === eventArgs.view.data
+						});
+					},
+					data: thing,
+					swapCtx: {
+						data: thing
+					}
 				}
-			}});
+		});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -4970,19 +7926,21 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 
 	$.templates('<div data-link="{on ~util.swap data=#data}">{^{:type}} {^{:check}}</div>')
-		.link("#result", thing, {util:
-			{
-				swap: function(ev, eventArgs) {
-					$.observable(ev.data).setProperty({
-						type: ev.data.type === "shape" ? "line" : "shape",
-						check: ev.data === eventArgs.view.data
-					});
-				},
-				data: thing,
-				swapCtx: {
-					data: thing
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(ev.data).setProperty({
+							type: ev.data.type === "shape" ? "line" : "shape",
+							check: ev.data === eventArgs.view.data
+						});
+					},
+					data: thing,
+					swapCtx: {
+						data: thing
+					}
 				}
-			}});
+		});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
@@ -5045,7 +8003,7 @@ test('data-link="{on ...', function() {
 			test: function() {
 				res += "test ";
 			}
-		 });
+		});
 
 	// ................................ Act ..................................
 	var events = $._data($("#divForOn")[0]).events,
@@ -5110,9 +8068,9 @@ test('data-link="{on ...', function() {
 
 	// =============================== Arrange ===============================
 	var tmpl = $.templates("<div id=\"cont\" data-link=\"{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}\">\
-			<button id='doIt'>Do it</button>\
-			<span data-link='res'></span>\
-		</div>"),
+	<button id='doIt'>Do it</button>\
+	<span data-link='res'></span>\
+</div>"),
 
 		data = {
 			name: "Jo",
@@ -5151,18 +8109,18 @@ test('data-link="{on ...', function() {
 		+ "</div>");
 
 	$.link(true, "#result", {
-			unbind: function(ev, eventArgs) {
-				res += "unbind ";
-				eventArgs.linkCtx.tag.onDispose();
-			},
-			refresh: function(ev, eventArgs) {
-				res += "refresh ";
-				eventArgs.linkCtx.tag.refresh();
-			},
-			test: function() {
-				res += "test ";
-			}
-		 });
+		unbind: function(ev, eventArgs) {
+			res += "unbind ";
+			eventArgs.linkCtx.tag.onDispose();
+		},
+		refresh: function(ev, eventArgs) {
+			res += "refresh ";
+			eventArgs.linkCtx.tag.refresh();
+		},
+		test: function() {
+			res += "test ";
+		}
+	});
 
 	// ................................ Act ..................................
 	events = $._data($("#divForOn")[0]).events;
@@ -5227,26 +8185,26 @@ test('data-link="{on ...', function() {
 
 	// =============================== Arrange ===============================
 	$("#result").html("<div id=\"cont\" data-link=\"{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}\">\
-			<button id='doIt'>Do it</button>\
-			<span data-link='res'></span>\
-		</div>");
+	<button id='doIt'>Do it</button>\
+	<span data-link='res'></span>\
+</div>");
 
 	data = {
-			name: "Jo",
-			role: "Advisor",
-			option: {
-				allow: true
-			},
-			thisIsTheMethod: function(role, text, isFoo, compile, amount, root, ev, eventArgs) {
-				if (compile) {
-					compile.call(root, role, text, isFoo, amount, ev.data.allow, eventArgs.linkCtx.tag.tagCtx.args[2]);
-				}
-			},
-			process: function(role, text, isFoo, amount, allow, extraParam) {
-				$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
-			},
-			res: ""
-		};
+		name: "Jo",
+		role: "Advisor",
+		option: {
+			allow: true
+		},
+		thisIsTheMethod: function(role, text, isFoo, compile, amount, root, ev, eventArgs) {
+			if (compile) {
+				compile.call(root, role, text, isFoo, amount, ev.data.allow, eventArgs.linkCtx.tag.tagCtx.args[2]);
+			}
+		},
+		process: function(role, text, isFoo, amount, allow, extraParam) {
+			$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
+		},
+		res: ""
+	};
 
 	$.link(true, "#result", data);
 
@@ -5263,18 +8221,18 @@ test('data-link="{on ...', function() {
 	// =============================== Arrange ===============================
 	res = "1: ";
 	data = {
-			unbind: function(ev, eventArgs) {
-				res += "unbind ";
-				eventArgs.linkCtx.tag.onDispose();
-			},
-			refresh: function(ev, eventArgs) {
-				res += "refresh ";
-				eventArgs.linkCtx.tag.refresh();
-			},
-			test: function() {
-				res += "test ";
-			}
-		 };
+		unbind: function(ev, eventArgs) {
+			res += "unbind ";
+			eventArgs.linkCtx.tag.onDispose();
+		},
+		refresh: function(ev, eventArgs) {
+			res += "refresh ";
+			eventArgs.linkCtx.tag.refresh();
+		},
+		test: function() {
+			res += "test ";
+		}
+	};
 	$("#result").html("<div id=\"linkTgt\" data-link=\"{:name} {on 'click' refresh} {on 'mousedown mouseup' test}\" >oldcontent</div>");
 
 	$.link(true, "#linkTgt", data);
@@ -5331,8 +8289,8 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
 	after = $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
@@ -5356,9 +8314,9 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
@@ -5401,9 +8359,9 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
@@ -5445,9 +8403,9 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
@@ -5477,9 +8435,9 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({ title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir", width: 40 });
+	$.observable(person1).setProperty({ fullName: "compFirst compLast" });
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
@@ -5500,11 +8458,12 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
 
-// TODO ADDITIONAL TESTS:
-// 1: link(null, data) to link whole document
+	// TODO ADDITIONAL TESTS:
+	// 1: link(null, data) to link whole document
 });
 
 test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function() {
+
 	// =============================== Arrange ===============================
 
 	$.views.tags({
@@ -5518,8 +8477,8 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 		}
 	});
 
-	var initial = {a: { b: null }},
-		updated = {c: { val: 'leaf' }};
+	var initial = { a: { b: null } },
+		updated = { c: { val: 'leaf' } };
 
 	$.templates(
 		"{^{:a.b^c.val onError=~error + 'A '}} "
@@ -5533,7 +8492,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 		+ "<span data-link=\"{myTag1 a.b^c.val onError=~error + 'I '}\"></span> "
 		+ "<span data-link=\"{upper:a.b^c.val onError=~error + 'J '}\"></span> "
 		+ "<span data-link=\"{:a.b^c.val convert='upper' onError=~error + 'K '}\"></span> ")
-			.link("#result", initial, {error: "err:"});
+			.link("#result", initial, { error: "err:" });
 	// ................................ Act ..................................
 
 	before = "" + $._data(initial.a).events.propertyChange.length + " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
@@ -5542,9 +8501,9 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	after = $("#result").text() + "|";
 	$.observable(initial.a.b.c).setProperty('val', "leaf2");
 	after += $("#result").text() + "|";
-	$.observable(initial.a.b).setProperty('c', {val: "leaf3"});
+	$.observable(initial.a.b).setProperty('c', { val: "leaf3" });
 	after += $("#result").text() + "|";
-	$.observable(initial.a).setProperty('b', {c: {val: "leaf4"}});
+	$.observable(initial.a).setProperty('b', { c: { val: "leaf4" } });
 	after += $("#result").text() + "|";
 	after += "" + $._data(initial.a).events.propertyChange.length + " " + $._data(initial.a.b).events.propertyChange.length + " " + $._data(initial.a.b.c).events.propertyChange.length
 		+ " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
@@ -5616,12 +8575,12 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	$.templates(
 		"{^{:value() onError='error1'}} {^{:title}} "
-		+ "{^{:value().value() onError='error2'}} {^{:value().title onError='error2b'}} "
-		+ "{^{:value().value().value() onError='error3'}} {^{:value().value().title onError='error3b'}} "
-		+ "{^{:value().value().value().value() onError='error4'}} {^{:value().value().value().title onError='error4b'}} "
+		+ "{^{:value()^value() onError='error2'}} {^{:value()^title onError='error2b'}} "
+		+ "{^{:value()^value().value() onError='error3'}} {^{:value()^value().title onError='error3b'}} "
+		+ "{^{:value()^value().value().value() onError='error4'}} {^{:value()^value().value().title onError='error4b'}} "
 		).link("#result", initial);
 	// ................................ Act ..................................
-var B,C,D,a,b,c,d,e;
+	var B, C, D, a, b, c, d, e;
 
 	before = $("#result").text() + "|";
 	$.observable(initial).setProperty('value', B = new Item("string2", "B"));
@@ -5632,7 +8591,7 @@ var B,C,D,a,b,c,d,e;
 	after += $("#result").text() + "|";
 	$.observable(initial).removeProperty('value');
 	after += $("#result").text() + "|";
-	$.observable(initial).setProperty('value', a = new Item( b = new Item( c = new Item( d = new Item( e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
+	$.observable(initial).setProperty('value', a = new Item(b = new Item(c = new Item(d = new Item(e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
 	after += $("#result").text() + "|";
 
 	equal(before + after,
@@ -5682,13 +8641,14 @@ test('Bound tag properties and contextual properties', function() {
 			typeTemplates: {
 				shape: "Shape: {^{:form}}\n",
 				line: "Line: {^{:form}} {^{:thickness}}\n"
-			}}
+			}
+		}
 		);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
 	$.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
@@ -5721,8 +8681,8 @@ test('Bound tag properties and contextual properties', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
 	$.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
@@ -5765,8 +8725,8 @@ test('Bound tag properties and contextual properties', function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
 	$.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
@@ -5787,12 +8747,12 @@ test('Bound tag properties and contextual properties', function() {
 	});
 
 	var model = {
-			lead: "Jim",
-			people: [
-				{name: "Bob"},
-				{name: "Jim"}
-			]
-		};
+		lead: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
 
 	// ............................... Act .................................
 	$.templates("<div data-link=\"{for people ~team=#data tmpl='myTmpl'}\"></div>").link("#result", model);
@@ -5800,8 +8760,8 @@ test('Bound tag properties and contextual properties', function() {
 	result = $("#result").text();
 
 	$.observable(model.people).insert({
-			name: "newName"
-		});
+		name: "newName"
+	});
 
 	$.observable(model).setProperty("lead", "newName");
 
@@ -5809,7 +8769,7 @@ test('Bound tag properties and contextual properties', function() {
 
 	// ............................... Assert .................................
 	equal(result, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
-	:"Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
+	: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"data-link allows passing in new contextual variables to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
@@ -5882,6 +8842,7 @@ test("PropertyChange: setProperty()", 4, function() {
 module("API - ArrayChange");
 
 test("JsObservable: insert()", function() {
+
 	// =============================== Arrange ===============================
 	var things = ["1", "2"];
 
@@ -5922,7 +8883,7 @@ test("JsObservable: insert()", function() {
 	$.observable(things).insert("a");
 
 	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 a" ,
+	equal(things.join(" "), "1 2 a",
 	'insert("a") appends');
 	// -----------------------------------------------------------------------
 
@@ -6105,6 +9066,7 @@ test("JsObservable: insert()", function() {
 });
 
 test("JsObservable: remove()", function() {
+
 	// =============================== Arrange ===============================
 	var things = ["1", "2"];
 
@@ -6145,7 +9107,7 @@ test("JsObservable: remove()", function() {
 	$.observable(things).remove();
 
 	// ............................... Assert .................................
-	equal(things.join(" "), "1" ,
+	equal(things.join(" "), "1",
 	'remove() removes from end');
 	// -----------------------------------------------------------------------
 
@@ -6251,6 +9213,7 @@ test("JsObservable: remove()", function() {
 });
 
 test("JsObservable: move()", function() {
+
 	// =============================== Arrange ===============================
 	var things = ["1", "2", "3", "4"];
 
@@ -6562,6 +9525,7 @@ test("JsObservable: move()", function() {
 });
 
 test("JsViews ArrayChange: insert()", function() {
+
 	// =============================== Arrange ===============================
 	$.views.tags({
 		liTag: function() {
@@ -6569,15 +9533,15 @@ test("JsViews ArrayChange: insert()", function() {
 		}
 	});
 
-	model.things = [{thing: "Orig"}]; // reset Prop
+	model.things = [{ thing: "Orig" }]; // reset Prop
 
 	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
-	$.observable(model.things).insert(1, {thing: "Last"});
-	$.observable(model.things).insert(1, {thing: "Middle"});
+	$.observable(model.things).insert(0, { thing: "First" });
+	$.observable(model.things).insert(1, { thing: "Last" });
+	$.observable(model.things).insert(1, { thing: "Middle" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
@@ -6595,15 +9559,15 @@ test("JsViews ArrayChange: insert()", function() {
 		}
 	});
 
-	model.things = [{thing: "Orig"}]; // reset Prop
+	model.things = [{ thing: "Orig" }]; // reset Prop
 
 	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
-	$.observable(model.things).insert(1, {thing: "Last"});
-	$.observable(model.things).insert(1, {thing: "Middle"});
+	$.observable(model.things).insert(0, { thing: "First" });
+	$.observable(model.things).insert(1, { thing: "Last" });
+	$.observable(model.things).insert(1, { thing: "Middle" });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
@@ -6612,13 +9576,13 @@ test("JsViews ArrayChange: insert()", function() {
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	model.things = [{thing: "Orig"}]; // reset Prop
+	model.things = [{ thing: "Orig" }]; // reset Prop
 
 	// =============================== Arrange ===============================
 	$.templates('<table><tbody>{^{for things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody></table>')
 		.link("#result", model);
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
+	$.observable(model.things).insert(0, { thing: "First" });
 	$.observable(model.things).remove(0);
 
 	// ............................... Assert .................................
@@ -6647,6 +9611,7 @@ test("JsViews ArrayChange: refresh()", function() {
 module("API - $.observe()");
 
 test("observe/unobserve alternative signatures", function() {
+
 	reset();
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
@@ -6681,7 +9646,7 @@ test("observe/unobserve alternative signatures", function() {
 
 	// ................................ Act ..................................
 	$.observe(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
@@ -6698,7 +9663,7 @@ test("observe/unobserve alternative signatures", function() {
 
 	// ................................ Act ..................................
 	$.unobserve(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
 
 	// ............................... Assert .................................
 	equal(result, "",
@@ -6711,7 +9676,7 @@ test("observe/unobserve alternative signatures", function() {
 	reset();
 
 	// =============================== Arrange ===============================
-	var person = {last: " L"};
+	var person = { last: " L" };
 	function onch(ev, eventArgs) {
 	}
 
@@ -6740,7 +9705,7 @@ test("observe/unobserve alternative signatures", function() {
 		"observe/unobserve API calls in different orders: all bindings removed when unobserve called");
 
 	// =============================== Arrange ===============================
-	person = {first: "F", last: " L"};
+	person = { first: "F", last: " L" };
 
 	// ................................ Act ..................................
 	$.observe(person, "last", onch);
@@ -6757,7 +9722,7 @@ test("observe/unobserve alternative signatures", function() {
 		"observe/unobserve API calls in different orders (version 2): all bindings removed when unobserve called");
 
 	// =============================== Arrange ===============================
-	person = {first: "F", last: " L"};
+	person = { first: "F", last: " L" };
 
 	// ................................ Act ..................................
 	$.observe(person, "last", onch);
@@ -6781,7 +9746,7 @@ test("observe/unobserve alternative signatures", function() {
 		address: {
 			street: "1st Ave"
 		},
-		phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
+		phones: [{ number: "111 111 1111" }, { number: "222 222 2222" }]
 	};
 
 	// ................................ Act ..................................
@@ -6789,7 +9754,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person, "name", myListener);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve with path and handler works");
 
 	// ................................ Act ..................................
@@ -6797,7 +9762,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve without path and handler works");
 
 	// ................................ Act ..................................
@@ -6805,7 +9770,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person, "name", "address^street", "phones", myListener);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]),"[{},null,null,null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve with multiple paths and handler works");
 
 	// ................................ Act ..................................
@@ -6813,7 +9778,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person.phones);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]), "[{},null]",
 		"unobserve for array works");
 
 	// ................................ Act ..................................
@@ -6821,12 +9786,13 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person, "*", person.address, "*");
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve with deep paths using '*' works");
 });
 
 test("observe/unobserve using namespaces", function() {
-	var thing = {val: "initVal"};
+
+	var thing = { val: "initVal" };
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe("my.nmspace", thing, "val", myListener);
@@ -6986,7 +9952,7 @@ test("observe/unobserve using namespaces", function() {
 		address: {
 			street: "1st Ave"
 		},
-		phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
+		phones: [{ number: "111 111 1111" }, { number: "222 222 2222" }]
 	};
 
 	// ................................ Act ..................................
@@ -6994,7 +9960,7 @@ test("observe/unobserve using namespaces", function() {
 	$.unobserve("ns", person, "name", myListener);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, with path and handler works");
 
 	// ................................ Act ..................................
@@ -7002,7 +9968,7 @@ test("observe/unobserve using namespaces", function() {
 	$.unobserve("ns", person);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, without path and handler works");
 
 	// ................................ Act ..................................
@@ -7010,7 +9976,7 @@ test("observe/unobserve using namespaces", function() {
 	$.unobserve("ns", person, "name", "address^street", "phones", myListener);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]),"[{},null,null,null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve using namespaces, with multiple paths and handler works");
 
 	// ................................ Act ..................................
@@ -7018,7 +9984,7 @@ test("observe/unobserve using namespaces", function() {
 	$.unobserve("ns", person.phones);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]), "[{},null]",
 		"unobserve using namespaces, for array works");
 
 	// ................................ Act ..................................
@@ -7026,18 +9992,19 @@ test("observe/unobserve using namespaces", function() {
 	$.unobserve("ns", person, "*", person.address, "*");
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]),"[{},null]",
+	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, with deep paths using '*' works");
 
 });
 
-test("paths", function() {
+test("Paths", function() {
 
 	// =============================== Arrange ===============================
+	var originalAddress = person1.home.address;
 
 	// ................................ Act ..................................
 	$.observe(person1, "home^address.street", person1.home.address, "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
 
 	// ............................... Assert .................................
 	ok(result === "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
@@ -7049,7 +10016,7 @@ test("paths", function() {
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({home: home2}); // Swap object higher in path
+	$.observable(person1).setProperty({ home: home2 }); // Swap object higher in path
 
 	// ............................... Assert .................................
 	equal("" + (lastEventArgs.oldValue === home1) + (lastEventArgs.value === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
@@ -7061,7 +10028,7 @@ test("paths", function() {
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(address1).setProperty({street: "newValue2", ZIP: "newZip2"});
+	$.observable(address1).setProperty({ street: "newValue2", ZIP: "newZip2" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: ZIP, eventArgs: oldValue: newZip value: newZip2, eventArgs.path: ZIP|",
@@ -7069,11 +10036,11 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Reset ................................
-	$.observable(address1).setProperty({street: "Street1", ZIP: "111"}); // reset Prop
+	$.observable(address1).setProperty({ street: "Street1", ZIP: "111" }); // reset Prop
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
+	$.observable(address2).setProperty({ street: "newValue2", ZIP: "newZip2" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newValue2, eventArgs.path: street|",
@@ -7085,8 +10052,8 @@ test("paths", function() {
 	$.observable(person1).setProperty("home", home1); // Set object higher up to different object
 	reset();
 
-	$.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
-	$.observable(address1).setProperty({street: "newValue3", ZIP: "newZip3"});
+	$.observable(address2).setProperty({ street: "newValue2", ZIP: "newZip2" });
+	$.observable(address1).setProperty({ street: "newValue3", ZIP: "newZip3" });
 
 	// ............................... Assert .................................
 
@@ -7100,12 +10067,12 @@ test("paths", function() {
 
 	// ................................ Act ..................................
 	$.observable(person1).setProperty("home", home2); // Set object higher up to different object
-	$.observable(home1).setProperty("address", {street: "ignoreThisStreet", ZIP: "ignoreZip"});
-	$.observable(home2).setProperty("address", {street: "address3Street", ZIP: "address3Zip"});
+	$.observable(home1).setProperty("address", { street: "ignoreThisStreet", ZIP: "ignoreZip" });
+	$.observable(home2).setProperty("address", { street: "address3Street", ZIP: "address3Zip" });
 
 	// ............................... Assert .................................
 	equal(result,
-		  "calls: 1, ev.data: prop: home, path: address^street, eventArgs: oldValue: {\"address\":{\"street\":\"newValue3\",\"ZIP\":\"newZip3\"}} value: {\"address\":{\"street\":\"newValue2\",\"ZIP\":\"newZip2\"}}, eventArgs.path: home|"
+			"calls: 1, ev.data: prop: home, path: address^street, eventArgs: oldValue: {\"address\":{\"street\":\"newValue3\",\"ZIP\":\"newZip3\"}} value: {\"address\":{\"street\":\"newValue2\",\"ZIP\":\"newZip2\"}}, eventArgs.path: home|"
 		+ "calls: 2, ev.data: prop: address, path: street, eventArgs: oldValue: {\"street\":\"newValue2\",\"ZIP\":\"newZip2\"} value: {\"street\":\"address3Street\",\"ZIP\":\"address3Zip\"}, eventArgs.path: address|",
 	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is listening to intermediate paths on new object - 'i.e. 'address'");
 	// -----------------------------------------------------------------------
@@ -7114,7 +10081,7 @@ test("paths", function() {
 	reset();
 
 	// ................................ Act ..................................
-	$.unobserve(person1, "home^address.street", person1.home.address, "ZIP", myListener);
+	$.unobserve(person1, "home^address.street", originalAddress, "ZIP", myListener);
 
 	// ............................... Assert .................................
 	ok(!$._data(person1).events && !$._data(person1.home.address).events,
@@ -7125,7 +10092,7 @@ test("paths", function() {
 	reset();
 
 	$.observe(person1, "home^address.street", person1.home.address, "ZIP", "ZIP", "foo", myListener);
-	$.observe(person1.home.address, "street", function(){});
+	$.observe(person1.home.address, "street", function() { });
 
 	// ............................... Assert .................................
 	equal("" + $._data(person1.home.address).events.propertyChange.length + " "
@@ -7173,7 +10140,7 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	$.observable(person1.home.address).setProperty({street: "newValue4", ZIP: "newZip4"});
+	$.observable(person1.home.address).setProperty({ street: "newValue4", ZIP: "newZip4" });
 
 	// ............................... Assert .................................
 
@@ -7195,12 +10162,12 @@ test("paths", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(person1, "work^address.street", myListener);
-	$.observable(person1).setProperty({work: home2});
-	$.observable(address2).setProperty({street: "newAddress2"});
+	$.observable(person1).setProperty({ work: home2 });
+	$.observable(address2).setProperty({ street: "newAddress2" });
 
 	// ............................... Assert .................................
 	equal(result,
-		  "calls: 1, ev.data: prop: work, path: address^street, eventArgs: oldValue: undefined value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"newZip2\"}}, eventArgs.path: work|"
+			"calls: 1, ev.data: prop: work, path: address^street, eventArgs: oldValue: undefined value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"newZip2\"}}, eventArgs.path: work|"
 		+ "calls: 2, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newAddress2, eventArgs.path: street|",
 	'observing a deep path into missing properties, followed by $.observable(...).setProperty calls which supply the missing object property then modify subobjects deeper down the path lead to the correct callback events');
 	// -----------------------------------------------------------------------
@@ -7230,8 +10197,8 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
+	$.observable(settings).setProperty({ title: "Sir" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Mr Jo value: Mr newFirst, eventArgs.path: firstName|"
@@ -7268,7 +10235,7 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
 
 	// ............................... Assert .................................
 
@@ -7306,7 +10273,7 @@ test("paths", function() {
 	// -----------------------------------------------------------------------
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
@@ -7381,7 +10348,7 @@ test("paths", function() {
 
 	handlersCount = $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.observe(model, "person1^fullName", function() {});
+	$.observe(model, "person1^fullName", function() { });
 
 	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
@@ -7433,12 +10400,15 @@ test("paths", function() {
 	settings.onFoo = "Jo";
 	person1.lastName = "One";
 	reset();
+	$("#result").empty();
+	result = "";
 
 	// =============================== Teardown ===============================
 
 });
 
 test("observe context helper", function() {
+
 	// =============================== Arrange ===============================
 	var str = "aa",
 		main = {
@@ -7451,15 +10421,15 @@ test("observe context helper", function() {
 	function observeCtxHelper(val, currentRoot) {
 		if (val) {
 			if (val.charAt(0) === "%") {
-				return [obj, val.slice(1), currentRoot||{}];
+				return [obj, val.slice(1), currentRoot || {}];
 			}
 		}
 	}
 
 	// ................................ Act ..................................
 	$.observe(main, "title", "%name", myListener, observeCtxHelper);
-	$.observable(main).setProperty({title: "newTitle"});
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(main).setProperty({ title: "newTitle" });
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: title, eventArgs: oldValue: foo value: newTitle, eventArgs.path: title|"
@@ -7475,14 +10445,16 @@ test("observe context helper", function() {
 	obj.name = "One";
 
 	// ............................... Assert .................................
-	ok(handlersCount===1 && !$._data(obj).events,
+	ok(handlersCount === 1 && !$._data(obj).events,
 	"$.unobserve(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
+
+	$.unobserve(main, "title", "%name", myListener, observeCtxHelper);
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(str, myListener);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "",
@@ -7495,7 +10467,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "",
@@ -7508,7 +10480,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(null, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
@@ -7520,7 +10492,7 @@ test("observe context helper", function() {
 	$.unobserve(null, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
-	ok(handlersCount===1 && !$._data(obj).events,
+	ok(handlersCount === 1 && !$._data(obj).events,
 	"$.unobserve(null, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
@@ -7530,7 +10502,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(undefined, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
@@ -7542,7 +10514,7 @@ test("observe context helper", function() {
 	$.unobserve(undefined, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
-	ok(handlersCount===1 && !$._data(obj).events,
+	ok(handlersCount === 1 && !$._data(obj).events,
 	"$.unobserve(undefined, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
@@ -7552,7 +10524,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(undefined, str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "",
@@ -7576,7 +10548,7 @@ test("observe context helper", function() {
 	$.observe(true, str, myListener, observeCtxHelper);
 	$.observe(2, str, myListener, observeCtxHelper);
 
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "",
@@ -7588,7 +10560,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(true, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
@@ -7599,7 +10571,7 @@ test("observe context helper", function() {
 	$.unobserve(true, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
-	ok(handlersCount===1 && !$._data(obj).events,
+	ok(handlersCount === 1 && !$._data(obj).events,
 	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 	reset();
 
@@ -7609,7 +10581,7 @@ test("observe context helper", function() {
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(false, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	$.observable(obj).setProperty({ name: "newName" });
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
@@ -7620,7 +10592,7 @@ test("observe context helper", function() {
 	$.unobserve(false, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
-	ok(handlersCount===1 && !$._data(obj).events,
+	ok(handlersCount === 1 && !$._data(obj).events,
 	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 	reset();
 
@@ -7630,13 +10602,14 @@ test("observe context helper", function() {
 	//TODO test case for observe(domElement, "a.b.c", callback) should not bind at all
 });
 
-test("array", function() {
-// For V1 >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
-// For V1 >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
-// =============================== Arrange ===============================
+test("Array", function() {
+
+	// For V1 >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
+	// For V1 >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
+	// =============================== Arrange ===============================
 	// Using an the same event handler for arrayChange and propertyChange
 
-	var myArray = [1,2];
+	var myArray = [1, 2];
 
 	// ................................ Act ..................................
 	$.observe(myArray, myListener);
@@ -7681,11 +10654,11 @@ test("array", function() {
 		'$.unobserve(myArray, "length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
 
 	// =============================== Arrange ===============================
-		reset();
+	reset();
 
-var initialArray = [1,2],
-		altArray = [4,3,2,1],
-		obj = {name:{first:"n", arr: initialArray}};
+	var initialArray = [1, 2],
+			altArray = [4, 3, 2, 1],
+			obj = { name: { first: "n", arr: initialArray } };
 
 	$.observe(obj, "name.arr", myListener);
 
@@ -7780,7 +10753,7 @@ var initialArray = [1,2],
 
 	// =============================== Arrange ===============================
 	// Using an array event handler
-	obj = {name:{first:"n", arr: initialArray}};
+	obj = { name: { first: "n", arr: initialArray } };
 	var newArray1 = [1, 1],
 		newArray2 = [2, 2],
 		newArray3 = [3, 3];
@@ -7824,9 +10797,9 @@ var initialArray = [1,2],
 
 	// =============================== Arrange ===============================
 	// Using an array event handler
-	obj = {name:{first:"n", arr: [1,2]}};
+	obj = { name: { first: "n", arr: [1, 2] } };
 
-	myListener.array = function(ev,eventArgs) {
+	myListener.array = function(ev, eventArgs) {
 		result += "arrayListenerCalls: " + calls
 		+ ", eventArgs: change: " + eventArgs.change + "|";
 	};
@@ -7835,7 +10808,7 @@ var initialArray = [1,2],
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj).setProperty("name.arr", [4,3,2,1]);
+	$.observable(obj).setProperty("name.arr", [4, 3, 2, 1]);
 
 	// ............................... Assert .................................
 	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2] value: [4,3,2,1], eventArgs.path: arr|",
@@ -7859,7 +10832,7 @@ var initialArray = [1,2],
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
-		$.observe(obj.name.arr, myListener);
+	$.observe(obj.name.arr, myListener);
 
 	// ................................ Act ..................................
 	reset();
@@ -7878,15 +10851,15 @@ var initialArray = [1,2],
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
-	var people = [1,2];
-	function onch() {}
-	function onch2() {}
+	var people = [1, 2];
+	function onch() { }
+	function onch2() { }
 
 	// ................................ Act ..................................
 	$.observe(people, "length", onch);
 	$.observe(people, "length", onch2);
 	$.observe(people, "length2", onch);
-	$.templates("{^{for people}}{{/for}} {^{:people}}").link("#result", {people: people});
+	$.templates("{^{for people}}{{/for}} {^{:people}}").link("#result", { people: people });
 	$.observe(people, "length2", onch2);
 	$.unobserve(people, "length2", onch);
 	$.unobserve(people, "length2", onch2);
@@ -7899,339 +10872,8 @@ var initialArray = [1,2],
 		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
 });
 
-test("computed observables in paths", function() {
-	// =============================== Arrange ===============================
-	var app = { items: [
-		{
-			name: "one",
-			row: "1",
-			expanded: false
-		},
-		{
-			name: "two",
-			row: "2",
-			expanded: false
-		},
-		{
-			name: "three",
-			row: "3",
-			expanded: false
-		}
-	]};
-
-function testTemplate(message, template) {
-	$.templates(template)
-	.link("#result", app, {
-		getItems: function(exp) {
-			return exp ? ["a","b"]: [];
-		}
-	});
-
-	// ................................ Act ..................................
-	var ret = $("#result").text() + "|";
-		$.view("#result .groupdata").refresh();
-
-	$.observable(app.items[0]).setProperty("expanded", true);
-	ret += $("#result").text() + "|";
-
-	$.observable(app.items[0]).setProperty("expanded", false);
-	ret += $("#result").text() + "|";
-
-	$.observable(app.items[1]).setProperty("expanded", true);
-	ret += $("#result").text() + "|";
-
-	$.observable(app.items[1]).setProperty("expanded", false);
-	ret += $("#result").text() + "|";
-
-	$.observable(app.items).insert(0, {
-		name: "added",
-		row: "+",
-		expanded: false
-	});
-	ret += $("#result").text() + "|";
-	$.observable(app.items).remove(0);
-	ret += $("#result").text() + "|";
-	$("#result").empty();
-
-	// ............................... Assert .................................
-	equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|"
-	, "Interplay of view and tag refresh in deep content: " + message);
-}
-
-	// ............................... Assert .................................
-	testTemplate("div",
-	"{^{for items}}"
-		+ "{{:name}}"
-		+ "{^{for ~getItems(expanded) ~row=row}}"
-			+ "<div class='groupdata'>{{:~row}}{{:#data}}</div>"
-		+ "{{/for}}"
-	+ "{{/for}}");
-
-	// ............................... Assert .................................
-	testTemplate("deep div",
-	"{^{for items}}"
-		+ "<span>{{:name}}</span>"
-		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
-			+ "<span></span>"
-			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
-		+ "{{/for}}</div></div>"
-	+ "{{/for}}");
-
-	// ............................... Assert .................................
-	testTemplate("deep div2",
-	"{^{for items}}"
-		+ "<span>{{:name}}</span>"
-		+ "<div><div>{^{for ~getItems(expanded) ~row=row}}"
-			+ "<span></span>"
-			+ "<span class='groupdata'>{{:~row}}{{:#data}}</span>"
-		+ "{{/for}}<div></div></div></div>"
-	+ "{{/for}}");
-
-	// ............................... Assert .................................
-	testTemplate("li",
-	"<ul>{^{for items}}"
-		+ "<li>{{:name}}</li>"
-		+ "<li><ul>{^{for ~getItems(expanded) ~row=row ~item=#data}}"
-			+ "<li></li>"
-			+ "<li class='groupdata'>{{:~row}}{{:#data}}</li>"
-		+ "{{/for}}</ul></li>"
-	+ "{{/for}}</ul>");
-
-	// ............................... Assert .................................
-	testTemplate("table",
-	"<table>{^{for items}}"
-		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
-		+ "{^{for ~getItems(expanded) ~row=row}}"
-			+ "<tbody class='groupdata'><tr>"
-				+ "<td>{{:~row}}{{:#data}}</td>"
-			+ "</tr></tbody>"
-		+ "{{/for}}"
-	+ " {{/for}}</table>");
-
-	// ............................... Assert .................................
-	testTemplate("deep table",
-	"<table>{^{for items}}"
-		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
-		+ "<tbody class='groupdata'>"
-			+ "{^{for ~getItems(expanded) ~row=row}}"
-				+ "<tr>"
-					+ "<td>{{:~row}}{{:#data}}</td>"
-				+ "</tr>"
-			+ "{{/for}}"
-		+ "</tbody>"
-	+ " {{/for}}</table>");
-
-	// =============================== Arrange ===============================
-	var ret = "",
-		people1 = [{address:{street: "1 first street"}}],
-		people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}],
-		data1 = {value: "data1", people:people1},
-		data2 = {value: "data2", people:people2};
-	app = {
-			alt:false,
-			index: 1,
-			getPeople: getPeople,
-			getData: getData,
-			options: {
-				getWidth: function() {
-					return "33";
-				}
-			}
-		};
-
-	function getPeople(type) {
-		return this.alt ? people2 : people1;
-	}
-
-	getPeople.depends = function() {
-		return [app, "alt"];
-	};
-
-	function getData(type) {
-		return this.alt ? data2 : data1;
-	}
-
-	getData.depends = function() {
-		return [app, "alt"];
-	};
-
-	// ................................ Act ..................................
-	$.templates("{^{for (getPeople()[index]||{}).address}}{^{:street}}{{/for}}").link("#result", app);
-
-	ret = "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(app).setProperty("index", 0);
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people1[0].address).setProperty("street", "1 first streetB");
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(app).setProperty("index", 1);
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
-	ret += "|" + $("#result").text();
-
-	// ................................ Assert ..................................
-	equal(ret, "||1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
-		"deep paths with computed observables bind correctly to rest of path after computed returns new array");
-	$("#result").empty();
-
-	app.alt = false;
-	app.index = 0;
-	people1 = [{address:{street: "1 first street"}}];
-	people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}];
-	data1 = {value: "data1", people:people1};
-	data2 = {value: "data2", people:people2};
-
-	// ................................ Act ..................................
-	$.templates("{^{:(getData().people[index]).address^street}}").link("#result", app);
-
-	ret = $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people1[0].address).setProperty("street", "1 first streetB");
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
-	ret += "|" + $("#result").text();
-
-	// ................................ Assert ..................................
-	equal(ret, "1 first street|1 first streetB|1 first swappedstreet|1 second street",
-		"deep paths with computed observables bind correctly to rest of path after computed returns new object");
-	$("#result").empty();
-
-	//TODO add support for binding to [expression] accessors in deep paths, including [index] accessors for arrays, as above
-	//$.observable(app).setProperty("index", 1);
-	//ret += "|" + $("#result").text();
-
-	//$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
-	//ret += "|" + $("#result").text();
-
-	//$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
-	//ret += "|" + $("#result").text();
-
-	// TODO allow the following to work by declaring getPeople as depending on collection change of app.alt ? people2 : people;
-	//$.observable(people2).insert(1, {address:{street: "99 new street"}})
-	//ret += "|" + $("#result").text();
-
-	// =============================== Arrange ===============================
-	function getValue(a) {
-		return this.value + a;
-	}
-	function switchAlt() {
-		$.observable(app).setProperty("alt", !app.alt);
-	}
-
-	app.alt = false;
-	app.index = 0;
-	people1 = [{address:{street: "1 first street"}}];
-	people2 = [{address:{street: "1 second street"}},{address:{street: "2 second street"}}];
-	data1 = {value: "val1", people:people1, getValue:getValue},
-	data2 = {value: "val2", people:people2, getValue:getValue},
-
-	// ................................ Act ..................................
-	$.templates("{^{:getData().getValue(22)}}").link("#result", app);
-
-	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
-	ret = "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:(getData().getValue(22))}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:getData().getValue((getData().getValue(22)))}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:getData(getPeople(getData(alt || 2).getValue()).length).value}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{for (getPeople()[index]||{}).address}}{^{:street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:(((getData()).people[0]).address^street)}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:'b'+((getData().value) + ('a'+getData().value)) + getData().getValue(55)}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Act ..................................
-	$.templates("{^{:'a' + getData().value}}").link("#result", app);
-	ret += "|" + $("#result").text();
-	switchAlt();
-	ret += "--" + $("#result").text();
-	$("#result").empty();
-
-	// ................................ Assert ..................................
-	equal(ret, "|val222--val122|1 first street--1 second street2 second street|1 second street2 second street--1 first street"
-		+ "|val122--val222|val2val222--val1val122|val1--val2|1 second street--1 first street"
-		+ "|1 first street--1 second street|bval2aval2val255--bval1aval1val155|aval1--aval2",
-		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
-	});
-
 test("MVVM", function() {
+
 	reset();
 	// =============================== Arrange ===============================
 	function Person(name, address, phones) {
@@ -8302,7 +10944,7 @@ test("MVVM", function() {
 		message = '',
 		ret = '',
 		input,
-		getResult = function(sep) {ret += (sep || "|") + input.val() + "/" + $("#result").text();};
+		getResult = function(sep) { ret += (sep || "|") + input.val() + "/" + $("#result").text(); };
 
 	// ................................ Act ..................................
 	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
@@ -8330,7 +10972,7 @@ test("MVVM", function() {
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('<input data-link="address().street()" />{^{:address().street()}}').link("#result", person);
+	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
 
 	input = $("#result input");
 	getResult();
@@ -8351,11 +10993,11 @@ test("MVVM", function() {
 		+ "- same as if there was a '^' separator");
 	// =============================== Arrange ===============================
 
-	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({ number: "phone1" }), new Phone({ number: "phone2" })]);
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('<input data-link="address().street()" />{^{:address()^street()}}').link("#result", person);
+	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
 
 	var observeAllHandler = function(ev, eventArgs) {
 		message += JSON.stringify(eventArgs) + "\n";
@@ -8407,7 +11049,7 @@ test("MVVM", function() {
 
 	$("#result").empty();
 
- var eventsAfterEmptyTemplateContainer = !$._data(person).events
+	var eventsAfterEmptyTemplateContainer = !$._data(person).events
 		+ " " + !$._data(person.address()).events + "|";
 
 	// ............................... Assert .................................
@@ -8423,40 +11065,40 @@ test("MVVM", function() {
 
 	// =============================== Arrange ===============================
 
-	getResult = function(sep){ret += (sep || "|") + $("#result").text();};
+	getResult = function(sep) { ret += (sep || "|") + $("#result").text(); };
 
-	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number: "phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({ number: "phone1" }), new Phone({ number: "phone2" })]);
 
 	// ................................ Act ..................................
 	ret = "";
 	$.templates('{^{for phones()}}{^{:number()}},{{/for}}').link("#result", person);
 
 	getResult("\nInit>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhone" }));
 	getResult("insert:");
 	$.observable(person.phones()).remove(0);
 	getResult("remove:");
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
+	$.observable(person.phones()).refresh([new Phone({ number: "replacedPhone1" }), new Phone({ number: "replacedPhone2" })]);
 	getResult("refresh:");
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
+	$.observable(person.phones()).insert(1, [new Phone({ number: "insertedPhone3a" }), new Phone({ number: "insertedPhone3b" })]);
 	getResult("insert:");
-	$.observable(person.phones()).move(1,3,2);
+	$.observable(person.phones()).move(1, 3, 2);
 	getResult(" move:");
-	$.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
+	$.observable(person).setProperty("phones", [new Phone({ number: "replacedPhone1" })]);
 	getResult("\nSet>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhoneX" }));
 	getResult("insert:");
 	$.observable(person.phones()).remove(0);
 	getResult("remove:");
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
+	$.observable(person.phones()).refresh([new Phone({ number: "replacedPhoneX1" }), new Phone({ number: "replacedPhoneX2" })]);
 	getResult("refresh:");
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
+	$.observable(person.phones()).insert(1, [new Phone({ number: "insertedPhoneX3a" }), new Phone({ number: "insertedPhoneX3b" })]);
 	getResult("insert:");
-	$.observable(person.phones()).move(1,3,2);
+	$.observable(person.phones()).move(1, 3, 2);
 	getResult("move:");
 	$.observable(person).setProperty("phones", []);
 	getResult("\nsetEmpty>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhoneY" }));
 	getResult("insert:");
 
 	$("#result").empty();
@@ -8468,7 +11110,7 @@ test("MVVM", function() {
 		"Array operations with getters allow complete functionality, and track the modified tree at all times");
 	// =============================== Arrange ===============================
 
-	person = new Person("pete", new Address("1st Ave"), [new Phone({number: "phone1"}), new Phone({number:"phone2"})]);
+	person = new Person("pete", new Address("1st Ave"), [new Phone({ number: "phone1" }), new Phone({ number: "phone2" })]);
 
 	// ................................ Act ..................................
 	ret = "";
@@ -8484,19 +11126,19 @@ test("MVVM", function() {
 		+ " " + $._data(person.phones()).events.arrayChange.length
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhone" }));
 	$.observable(person.phones()).remove(0);
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
-	$.observable(person.phones()).move(1,3,2);
-	$.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
+	$.observable(person.phones()).refresh([new Phone({ number: "replacedPhone1" }), new Phone({ number: "replacedPhone2" })]);
+	$.observable(person.phones()).insert(1, [new Phone({ number: "insertedPhone3a" }), new Phone({ number: "insertedPhone3b" })]);
+	$.observable(person.phones()).move(1, 3, 2);
+	$.observable(person).setProperty("phones", [new Phone({ number: "replacedPhone1" })]);
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhoneX" }));
 	$.observable(person.phones()).remove(0);
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
-	$.observable(person.phones()).move(1,3,2);
+	$.observable(person.phones()).refresh([new Phone({ number: "replacedPhoneX1" }), new Phone({ number: "replacedPhoneX2" })]);
+	$.observable(person.phones()).insert(1, [new Phone({ number: "insertedPhoneX3a" }), new Phone({ number: "insertedPhoneX3b" })]);
+	$.observable(person.phones()).move(1, 3, 2);
 	$.observable(person).setProperty("phones", []);
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhoneY" }));
 	$.observable(person.phones()[0]).setProperty("number", "newNumber");
 
 	eventsCountAfterChanges = $._data(person).events.propertyChange.length
@@ -8536,7 +11178,7 @@ test("MVVM", function() {
 		+ " " + !$._data(person.phones()).events
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneZ"}));
+	$.observable(person.phones()).insert(new Phone({ number: "insertedPhoneZ" }));
 	$.observable(person.phones()[0]).setProperty("number", "newNumberZ");
 
 	$("#result").empty();
@@ -8559,6 +11201,7 @@ test("MVVM", function() {
 });
 
 test("observeAll", function() {
+
 	reset();
 
 	// =============================== Arrange ===============================
@@ -8578,10 +11221,10 @@ test("observeAll", function() {
 		},
 		"person1.home.address.street": "upper St",
 		"person1.home.address.ZIP": "33333",
-		things: [{thing: "tree"}]
+		things: [{ thing: "tree" }]
 	});
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1],model.things[0],model.things[1]]);
+	$.observable(model.things).insert({ thing: "bush" });
+	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
 	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
@@ -8614,7 +11257,7 @@ test("observeAll", function() {
 	equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll more than once does not add extra event bindings');
 
 	// ................................ Act ..................................
-	function cb2(ev, eventArgs) {}
+	function cb2(ev, eventArgs) { }
 
 	$.observable(model).observeAll(cb2);
 
@@ -8629,7 +11272,7 @@ test("observeAll", function() {
 
 	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with a different callback adds one binding for the new callback on each object or array');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	$.observable(model).unobserveAll(changeHandler);
 
 	// ............................... Assert .................................
@@ -8673,7 +11316,7 @@ test("observeAll", function() {
 		"true true true true true true true",
 	'unobserveAll() with no callback removes all bindings from the tree');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	$.observable(model.things).observeAll(changeHandler);
 
 	// ............................... Assert .................................
@@ -8696,6 +11339,7 @@ test("observeAll", function() {
 });
 
 test("observeAll/unobserveAll using namespaces", function() {
+
 	reset();
 
 	// =============================== Arrange ===============================
@@ -8715,10 +11359,10 @@ test("observeAll/unobserveAll using namespaces", function() {
 		},
 		"person1.home.address.street": "upper St",
 		"person1.home.address.ZIP": "33333",
-		things: [{thing: "tree"}]
+		things: [{ thing: "tree" }]
 	});
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1],model.things[0],model.things[1]]);
+	$.observable(model.things).insert({ thing: "bush" });
+	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
 	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
@@ -8751,7 +11395,7 @@ test("observeAll/unobserveAll using namespaces", function() {
 	equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll with namespace more than once does not add extra event bindings');
 
 	// ................................ Act ..................................
-	function cb2(ev, eventArgs) {}
+	function cb2(ev, eventArgs) { }
 
 	$.observable(model).observeAll("my.nmspace", cb2);
 
@@ -8908,24 +11552,25 @@ test("observeAll/unobserveAll using namespaces", function() {
 });
 module("API - Settings");
 
-test("settings, error handlers, onError", function() {
+test("Settings, error handlers, onError", function() {
+
 	// ................................ Act ..................................
-	$.views.settings.delimiters("@%","%@");
+	$.views.settings.delimiters("@%", "%@");
 	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
-	$.views.settings.delimiters("{{","}}");
+	$.views.settings.delimiters("{{", "}}");
 	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render();
 
 	// ............................... Assert .................................
 	equal(result, "A_yes_B|A_YES_B", "Custom delimiters with render()");
 
 	// ................................ Act ..................................
-	var app = {choose: true, name: "Jo"};
-	$.views.settings.delimiters("_^","^_", "*");
+	var app = { choose: true, name: "Jo" };
+	$.views.settings.delimiters("_^", "^_", "*");
 	$.templates('_*^if choose^_<div data-link="name"></div>_^else^_no<div data-link="name+2"></div>_^/if^_').link("#result", app);
 	result = $("#result").text();
-	$.observable(app).setProperty({choose: false, name: "other"});
+	$.observable(app).setProperty({ choose: false, name: "other" });
 	result += "|" + $("#result").text();
-	$.views.settings.delimiters("{{","}}", "^");
+	$.views.settings.delimiters("{{", "}}", "^");
 	$.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div>{{/if}}').link("#result", app);
 	result += "|" + $("#result").text();
 
@@ -8933,7 +11578,7 @@ test("settings, error handlers, onError", function() {
 	equal(result, "Jo|noother2|NOother2", "Custom delimiters with link()");
 
 	// =============================== Arrange ===============================
-	app = {choose: true, name: "Jo", onerr:"invalid'Jo'"};
+	app = { choose: true, name: "Jo", onerr: "invalid'Jo'" };
 	result = "";
 	var oldOnError = $.views.settings.onError;
 
@@ -8990,6 +11635,7 @@ test("settings, error handlers, onError", function() {
 	equal(result, "myErrFn for <Jo> myErrFn for <Jo>myErrFn for <Jo>", "onError handler in tags and in data-link expression, with override onError()");
 
 	// ................................ Reset ..................................
+	$("#result").empty();
 	$.views.settings({
 		onError: oldOnError
 	});
@@ -8997,7 +11643,7 @@ test("settings, error handlers, onError", function() {
 
 module("API - Declarations");
 
-test("template encapsulation", function() {
+test("Template encapsulation", function() {
 
 	// =============================== Arrange ===============================
 	$.templates({
@@ -9029,10 +11675,13 @@ test("template encapsulation", function() {
 	});
 
 	// ................................ Act ..................................
-	$.link.myTmpl7("#result", {people: people, first: false});
+	$.link.myTmpl7("#result", { people: people, first: false });
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 module("API - Views");
@@ -9180,6 +11829,9 @@ test("$.view() in regular content", function() {
 	// ............................... Assert .................................
 	ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 test("view.get() and view.getIndex() in regular content", function() {
@@ -9210,6 +11862,8 @@ test("view.get() and view.getIndex() in regular content", function() {
 	// ............................... Assert .................................
 	ok($.view("#1").getIndex() === 0 && $.view("#1", "item").index === 0 && $.view("#2").getIndex() === 1 && $.view("#2", "item").index === 1, '$.view(elem).getIndex() gets index of nearest item view');
 
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 test("$.view() in element-only content", function() {
@@ -9372,6 +12026,9 @@ test("$.view() in element-only content", function() {
 	// ............................... Assert .................................
 	ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 test("view.get() and view.getIndex() in element-only content", function() {
@@ -9407,11 +12064,14 @@ test("view.get() and view.getIndex() in element-only content", function() {
 	ok($.view("#sp1").getIndex() === 0 && $.view("#sp1", "item").index === 0 && $.view("#sp2").getIndex() === 1 && $.view("#sp2", "item").index === 1,
 		'$.view(elem).getIndex() gets index of nearest item view, up through both elCnt and regular content views');
 
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 module("API - Tag Controls");
 
 test("view.childTags() and tag.childTags()", function() {
+
 	// =============================== Arrange ===============================
 	$.link.boundTmplHierarchy("#result", topData);
 
@@ -9501,6 +12161,8 @@ test("view.childTags() and tag.childTags()", function() {
 	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
 		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 test("view.childTags() in element-only content", function() {
@@ -9611,15 +12273,17 @@ test("view.childTags() in element-only content", function() {
 		'tag.childTags(true, "myTagName") returns descendant tags of chosen name, and skips any unbound tags');
 
 	// =============================== Arrange ===============================
-	$.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", {row: {}});
+	$.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", { row: {} });
 
 	// ................................ Act ..................................
 	var tag = $("#result tr").view().childTags()[0];
 
-		// ............................... Assert .................................
+	// ............................... Assert .................................
 	ok(tag.tagName === "mySimpleWrap",
 		'childTags() correctly finds tag which has no output and renders within element contet, inside another tag also in element content');
 
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 test("view.childTags() in element-only content, using data-link", function() {
@@ -9662,6 +12326,9 @@ test("view.childTags() in element-only content, using data-link", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 0, 'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 //TODO add tests for tag.refresh()
@@ -9716,12 +12383,14 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	// ............................... Assert .................................
 	equal($("#result div").html(), " init before after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init, onBeforeLink and onAfterLink');
 
-//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
+	// ............................... Reset .................................
+	$("#result").empty();
+	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
 });
 
 test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
-	var person = {name: "Jo"};
+	var person = { name: "Jo" };
 
 	cancelChange = false;
 	noRenderOnUpdate = true;
@@ -9745,7 +12414,7 @@ test('two-way bound tag controls', function() {
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -9762,7 +12431,7 @@ test('two-way bound tag controls', function() {
 	noRenderOnUpdate = false;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName2"});
+	$.observable(person).setProperty({ name: "newName2" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -9780,7 +12449,7 @@ test('two-way bound tag controls', function() {
 	renders = true;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	$.observable(person).setProperty({ name: "newName3" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -9888,7 +12557,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -9915,12 +12584,12 @@ test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
 
 	var lower = function(val) {
-			return val.toLowerCase();
-		},
+		return val.toLowerCase();
+	},
 		upper = function(val) {
 			return val.toUpperCase();
 		},
-		options = {cvt: upper};
+		options = { cvt: upper };
 
 	// ................................ Act ..................................
 	$.templates({
@@ -9930,7 +12599,7 @@ test('two-way bound tag controls', function() {
 				return val.toUpperCase();
 			}
 		}
-	}).link("#result", person, {options: options});
+	}).link("#result", person, { options: options });
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 	linkedEl = $("#linkedEl")[0];
@@ -9941,8 +12610,8 @@ test('two-way bound tag controls', function() {
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - converter specified by data-linked convert property');
 
 	// ................................ Act ..................................
-	$.observable(options).setProperty({cvt: lower});
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(options).setProperty({ cvt: lower });
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -9950,7 +12619,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from one function to another');
 
 	// ................................ Act ..................................
-	$.observable(options).setProperty({cvt: "myupper"});
+	$.observable(options).setProperty({ cvt: "myupper" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -9982,7 +12651,7 @@ test('two-way bound tag controls', function() {
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -9999,7 +12668,7 @@ test('two-way bound tag controls', function() {
 	noRenderOnUpdate = false;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName2"});
+	$.observable(person).setProperty({ name: "newName2" });
 
 	// ............................... Assert .................................
 	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
@@ -10018,7 +12687,7 @@ test('two-way bound tag controls', function() {
 	renders = true;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	$.observable(person).setProperty({ name: "newName3" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -10128,7 +12797,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -10171,7 +12840,7 @@ test('two-way bound tag controls', function() {
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -10189,7 +12858,7 @@ test('two-way bound tag controls', function() {
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName2"});
+	$.observable(person).setProperty({ name: "newName2" });
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -10208,7 +12877,7 @@ test('two-way bound tag controls', function() {
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	$.observable(person).setProperty({ name: "newName3" });
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -10313,7 +12982,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(tag.linkedElem[0].value + "|" + tag.value,
@@ -10342,7 +13011,7 @@ test('two-way bound tag controls', function() {
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
-	$.observable(person).setProperty({name: "FirstName"});
+	$.observable(person).setProperty({ name: "FirstName" });
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -10398,7 +13067,7 @@ test('two-way bound tag controls', function() {
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	$.observable(person).setProperty({ name: "FirstName" });
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -10454,7 +13123,7 @@ test('two-way bound tag controls', function() {
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "First <b>Name</b>"});
+	$.observable(person).setProperty({ name: "First <b>Name</b>" });
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -10510,7 +13179,7 @@ test('two-way bound tag controls', function() {
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	$.observable(person).setProperty({ name: "FirstName" });
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -10555,11 +13224,11 @@ test('two-way bound tag controls', function() {
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
 });
 
-QUnit.asyncTest( "trigger=true - after keydown: <input/>", function() {
+QUnit.asyncTest("trigger=true - after keydown: <input/>", function() {
 	// =============================== Arrange ===============================
 
 	var res = "",
-		person = {name: "Jo"};
+		person = { name: "Jo" };
 
 	$.templates({
 		markup: '<input data-link="name trigger=true" />'
@@ -10570,7 +13239,7 @@ QUnit.asyncTest( "trigger=true - after keydown: <input/>", function() {
 	var events = $._data(linkedElem).events,
 		handlers = "|" + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	$.observable(person).setProperty({ name: "FirstName" });
 
 	events = $._data(linkedElem).events;
 	handlers += "|" + events.keydown.length;
@@ -10612,7 +13281,7 @@ QUnit.asyncTest("trigger=true - after keydown: {^{twoWayTag}}", function() {
 	// =============================== Arrange ===============================
 
 	var before = "",
-		person = {name: "Jo"};
+		person = { name: "Jo" };
 
 	$.templates({
 		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower trigger=true/}}',
@@ -10667,7 +13336,7 @@ QUnit.asyncTest("trigger=true - after keydown: {^{textbox}}", function() {
 	// =============================== Arrange ===============================
 
 	var before = "",
-		person = {name: "Jo"};
+		person = { name: "Jo" };
 
 	$.views.tags({
 		textbox: {
@@ -10736,7 +13405,7 @@ QUnit.asyncTest("trigger=true - after keydown: {^{contentEditable}}", function()
 	// =============================== Arrange ===============================
 
 	var before = "",
-		person = {name: "Jo <b>Smith</b>"};
+		person = { name: "Jo <b>Smith</b>" };
 
 	$.views.tags({
 		contentEditable: {
@@ -10810,47 +13479,50 @@ QUnit.asyncTest("trigger=true - after keydown: {^{contentEditable}}", function()
 
 		QUnit.start();
 	}, 0);
+
 });
 
 test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', function() {
 	// =============================== Arrange ===============================
-	var before, after, person = {name: "Jo", name2: "Jo2"},
+	var before, after, person = { name: "Jo", name2: "Jo2" },
 		cancelChange = false,
 		eventData = "";
 
-	$.views.tags({ twoWayTag: {
-		init: function(tagCtx, linkCtx) {
-			eventData += "init ";
-			if (this._.inline && !tagCtx.content) {
-				this.template = "<input/>";
+	$.views.tags({
+		twoWayTag: {
+			init: function(tagCtx, linkCtx) {
+				eventData += "init ";
+				if (this._.inline && !tagCtx.content) {
+					this.template = "<input/>";
+				}
+			},
+			render: function(val) {
+				eventData += "render ";
+			},
+			onBeforeLink: function(tagCtx, linkCtx) {
+				eventData += "onBeforeLink ";
+			},
+			onAfterLink: function(tagCtx, linkCtx) {
+				eventData += "onAfterLink ";
+				this.value = tagCtx.args[0];
+				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+			},
+			onUpdate: function(ev, eventArgs, tagCtxs) {
+				eventData += "onUpdate ";
+				return false;
+			},
+			onBeforeChange: function(ev, eventArgs) {
+				eventData += "onBeforeChange ";
+				if (!cancelChange) {
+					this.value = eventArgs.value;
+				}
+				return !cancelChange;
+			},
+			onDispose: function() {
+				eventData += "onDispose ";
 			}
-		},
-		render: function(val) {
-			eventData += "render ";
-		},
-		onBeforeLink: function(tagCtx, linkCtx) {
-			eventData += "onBeforeLink ";
-		},
-		onAfterLink: function(tagCtx, linkCtx) {
-			eventData += "onAfterLink ";
-			this.value = tagCtx.args[0];
-			this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
-		},
-		onUpdate: function(ev, eventArgs, tagCtxs) {
-			eventData += "onUpdate ";
-			return false;
-		},
-		onBeforeChange: function(ev, eventArgs) {
-			eventData += "onBeforeChange ";
-			if (!cancelChange) {
-				this.value = eventArgs.value;
-			}
-			return !cancelChange;
-		},
-		onDispose: function() {
-			eventData += "onDispose ";
 		}
-	} });
+	});
 
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
 	$.templates('<input id="linkedEl" data-link="{:name linkTo=name2:}"/>')
@@ -10861,7 +13533,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	// ................................ Act ..................................
 	before = linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = linkedEl.value;
 
 	// ............................... Assert .................................
@@ -10887,7 +13559,47 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	$(linkedEl).change();
 	after = "name:" + person.name + " name2:" + person.name2;
 
+	// =============================== Arrange ===============================
+
 	person.name = "Jo";
+	person.name2 = "Jo2";
+
+	$.templates('<input id="linkedEl" data-link="\'initialValue\' linkTo=name2"/>')
+		.link("#result", person);
+
+	var linkedEl = $("#linkedEl")[0];
+
+	// ................................ Act ..................................
+	before = "value: " + linkedEl.value + " name:" + person.name + " name2:" + person.name2;
+	linkedEl.value = "3rdNewVal";
+	$(linkedEl).change();
+	after = "name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value: initialValue name:Jo name2:Jo2|name:Jo name2:3rdNewVal",
+	'Data link using: <input data-link="\'initialValue\' linkTo=name2"/> - Initializes to provided string, and binds updated value of linkedElem back to "linkTo" target');
+
+	// =============================== Arrange ===============================
+
+	person.name = "Jo";
+	person.name2 = "Jo2";
+
+	$.templates('<input id="linkedEl" data-link="linkTo=name2"/>')
+		.link("#result", person);
+
+	var linkedEl = $("#linkedEl")[0];
+
+	// ................................ Act ..................................
+	before = "value: " + linkedEl.value + " name:" + person.name + " name2:" + person.name2;
+	linkedEl.value = "4thNewVal";
+	$(linkedEl).change();
+	after = "name:" + person.name + " name2:" + person.name2;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"value: [object Object] name:Jo name2:Jo2|name:Jo name2:4thNewVal",
+	'Data link using: <input data-link="linkTo=name2"/> - Initializes to current data item, and binds updated value of linkedElem back to "linkTo" target');
 
 	// =============================== Arrange ===============================
 
@@ -10911,7 +13623,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value,
@@ -10950,7 +13662,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -11025,7 +13737,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -11065,7 +13777,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	$.observable(person).setProperty({ name: "newName" });
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -11139,7 +13851,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	$.observable(person).setProperty({ name: "ANewName" });
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -11155,13 +13867,16 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
 	"name:ANewName name2:changethename value:changethename",
 	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
-test("tag control events", function() {
+test("Tag control events", function() {
 
 	// =============================== Arrange ===============================
 	var eventData = "";
-	model.things = [{thing: "box"}]; // reset Prop
+	model.things = [{ thing: "box" }]; // reset Prop
 
 	// ................................ Act ..................................
 	$.templates({
@@ -11224,7 +13939,7 @@ test("tag control events", function() {
 	equal($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
+	$.observable(model.things).insert(0, { thing: "tree" });
 
 	// ............................... Assert .................................
 	equal($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after onArrayChange", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
@@ -11263,7 +13978,7 @@ test("tag control events", function() {
 	// ............................... Assert .................................
 	equal($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
 
-//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
+	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
 });
 
 })();

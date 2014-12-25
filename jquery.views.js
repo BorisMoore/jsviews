@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 60 (Beta Candidate) */
+informal pre V1.0 commit counter: 61 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -47,7 +47,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		CHECKBOX = "checkbox",
 		RADIO = "radio",
 		NONE = "none",
-		sTRUE = "true",
+		SCRIPT = "SCRIPT",
+		TRUE = "true",
 		closeScript = '"></script>',
 		openScript = '<script type="jsv',
 		deferAttr = jsvAttrStr + "-df",
@@ -113,7 +114,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	//===============
 
 	function elemChangeHandler(ev, params, sourceValue) {
-		var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs,
+		var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs, exprOb,
 			source = ev.target,
 			bindings = source._jsvBnd,
 			splitBindings = /&(\d+)\+?/g;
@@ -141,6 +142,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 						}
 						cnvtName = to[1];
 						to = to[0]; // [object, path]
+						to = to + "" === to ? [linkCtx.data, to] : to;
 						if (cnvtName) {
 							if ($isFunction(cnvtName)) {
 								cvtBack = cnvtName;
@@ -165,7 +167,14 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 								sourceValue !== undefined) {
 							target = to[0]; // [object, path]
 							if (sourceValue !== undefined && target) {
-								target = target._jsvOb ? target._ob : target;
+								if (target._jsv) {
+									exprOb = target;
+									target = linkCtx.data;
+									while (exprOb && exprOb.sb) {
+										target = linkCtx._ctxCb(exprOb, target);
+										exprOb = exprOb.sb;
+									}
+								}
 								if (tag) {
 									tag._.chging = true; // marker to prevent tag change event triggering its own refresh
 								}
@@ -263,7 +272,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
-					cvt = cvt === "" ? sTRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
+					cvt = cvt === "" ? TRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue[0] || sourceValue) // convertVal
 						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true, onError); // renderTag
@@ -593,7 +602,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		var nodeName = elem.nodeName.toLowerCase(),
 			attr =
 				$viewsSettings.merge[nodeName] // get attr settings for input textarea select or optgroup
-				|| elem.contentEditable === sTRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
+				|| elem.contentEditable === TRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
 		return attr
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -720,12 +729,12 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	//---------------
 
 	function observeAndBind(linkCtx, source, target) { //TODO? linkFnArgs) {;
-		var binding, l, linkedElem,
+		var binding, l, linkedElem, exprFnDeps, exprOb,
 			tag = linkCtx.tag,
 			cvtBk = linkCtx.convertBack,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++,
-			handler = linkCtx._hdlr;
+			handler = linkCtx._hdl;
 
 		delete linkCtx._bndId;
 
@@ -742,10 +751,23 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				// Unobserve previous binding
 				$observable._apply(false, [source], linkCtx._depends, handler, true);
 			}
+
+			exprFnDeps = linkCtx.fn.deps.slice(); // Make a copy of the dependency paths for the compiled linkCtx expression - to pass to observe(). In getInnerCb(),
+			// (and whenever the object is updated, in innerCb), we will set exprOb.ob to the current object returned by that computed expression, for this view.
+			l = exprFnDeps.length;
+			while (l--) {
+				exprOb = exprFnDeps[l];
+				if (exprOb._jsv) {
+					// This path is an 'exprOb', corresponding to a computed, returning an object. We replace the exprOb by
+					// a view-binding-specific exprOb instance. The current object will be stored as exprOb.ob.
+					exprFnDeps[l] = $extend({}, exprOb);
+				}
+			}
+
 			binding = $observable._apply(
 				false,
 				[source],
-				linkCtx.fn.deps, // flatten the paths - to gather all the dependencies across args and bound params
+				exprFnDeps, // flatten the paths - to gather all the dependencies across args and bound params
 				depends,
 				handler,
 				linkCtx._ctxCb);
@@ -754,6 +776,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
 			binding._tgId = bindId;
+
 			// Add to the _jsvBnd on the target the view id and binding id - for unbinding when the target element is removed
 			target._jsvBnd = target._jsvBnd || "";
 			target._jsvBnd += "&" + bindId;
@@ -815,7 +838,9 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			// from = to;
 			// to = "body";
 			//}
-
+		if (typeof context !== "object") {
+			context = undefined;
+		}
 		if (tmplOrLinkTag && to) {
 			to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
 
@@ -1405,7 +1430,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			: (self.parentElem      // view.link()
 				|| document.body);  // link(null, data) to link the whole document
 
-		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== sTRUE;
+		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== TRUE;
 		parentTag = parentNode.tagName.toLowerCase();
 		elCnt = !!elContent[parentTag];
 
@@ -1607,7 +1632,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			linkCtx.view = new $sub.View(linkCtx.ctx, "link", topView, linkCtx.data, topView.tmpl, undefined, undefined, addBindingMarkers);
 		}
 		linkCtx._ctxCb = getContextCb(linkCtx.view); // _ctxCb is for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
-		linkCtx._hdlr = handler;
+		linkCtx._hdl = handler;
 		handler(true);
 	}
 
@@ -1629,7 +1654,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		return node &&
 			("" + node === node
 				? node
-				: node.tagName === "SCRIPT"
+				: node.tagName === SCRIPT
 					? node.type.slice(3)
 					: node.nodeType === 1 && node.getAttribute(jsvAttrStr) || "");
 	}
@@ -1650,8 +1675,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		var elCnt, tokens,
 			infos = [];
 		if (tokens = isVal ? node : markerNodeInfo(node)) {
-			infos.elCnt = !node.type;
-			elCnt = tokens.charAt(0) === "@" || !node.type;
+			elCnt = infos.elCnt = node.tagName !== SCRIPT;
+			elCnt = tokens.charAt(0) === "@" || elCnt;
 			infos._tkns = tokens;
 			// rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
 			tokens.replace(rBinding || rMarkerTokens, getInfos);
@@ -1677,7 +1702,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		if (marker) {
 			if (marker.nodeType !== 1) {
 				// For text nodes, we will add a script node before
-				marker = document.createElement("SCRIPT");
+				marker = document.createElement(SCRIPT);
 				marker.type = "jsv";
 				node.parentNode.insertBefore(marker, node);
 			} else if (!markerNodeInfo(marker) && !marker.getAttribute($viewsLinkAttr)) {
@@ -1742,7 +1767,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					: prevNode && prevNode.nextSibling);
 
 			while (node && (!nextNode || node !== nextNode)) {
-				if (withMarkers || elCnt || node.tagName !== "SCRIPT") {
+				if (withMarkers || elCnt || node.tagName !== SCRIPT) {
 					// All the top-level nodes in the view
 					// (except script marker nodes, unless withMarkers = true)
 					// (Note: If a script marker node, viewInfo.elCnt undefined)
@@ -1867,7 +1892,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 						} else {
 							$linkedElem.val(val);
 						}
-					} else if (linkedElem.contentEditable === sTRUE) {
+					} else if (linkedElem.contentEditable === TRUE) {
 						linkedElem.innerHTML = val;
 					}
 				}
@@ -1898,28 +1923,38 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	function bindTo(binding, cvtBk) {
 		// Two-way binding.
 		// We set the binding.to[1] to be the cvtBack, and binding.to[0] to be either the path to the target, or [object, path] where the target is the path on the provided object.
-		// So for a path with an object call: a.b.getObject().d.e, then we set to[0] to be [returnedObject, "d.e"], and we bind to the path on the returned object as target
+		// So for a computed path with an object call: a.b.getObject().d.e, then we set to[0] to be [exprOb, "d.e"], and we bind to the path on the returned object, exprOb.ob, as target
 		// Otherwise our target is the first path, paths[0], which we will convert with contextCb() for paths like ~a.b.c or #x.y.z
 
-		var bindto, pathIndex, firstPath, lastPath, bindtoOb,
+		var bindto, pathIndex, path, lastPath, bindtoOb,
 			linkCtx = binding.linkCtx,
 			source = linkCtx.data,
 			paths = linkCtx.fn.paths;
 		if (binding && paths) {
 			paths = (bindto = paths._jsvto) || paths[0];
 			pathIndex = paths && paths.length;
-			while (pathIndex && "" + (lastPath = paths[--pathIndex]) !== lastPath) {} // If the lastPath is an object (e.g. with _jsvOb property), take preceding one
-			if (lastPath && (!linkCtx.tag || linkCtx.tag.tagCtx.args.length)) {
-				lastPath = lastPath.split("^").join("."); // We don't need the "^" since binding has happened. For to binding, require just "."s
-				binding.to = lastPath.charAt(0) === "."
-					? [[bindtoOb = paths[pathIndex - 1], lastPath.slice(1)], cvtBk] // someexpr().lastpath - so need to get the bindtoOb object returned from the expression
-					: [linkCtx._ctxCb(firstPath = pathIndex ? paths[0].split("^").join(".") : lastPath) || [source, firstPath], cvtBk];
-
-				if (bindto && bindtoOb) {
-					// This is a linkTo binding {:expr linkTo=someob().some.path:}
-					// If it returned an object, we need to call the callback to get the object instance, so we bind to the final path (.some.path) starting from that object
-					binding.to[0][0] = linkCtx._ctxCb(bindtoOb, source);
+			if (pathIndex && (!linkCtx.tag || linkCtx.tag.tagCtx.args.length)) {
+				lastPath = paths[pathIndex - 1];
+				if (lastPath._jsv) {
+					bindtoOb = lastPath;
+					while (lastPath.sb && lastPath.sb._jsv) {
+						path = lastPath = lastPath.sb;
+					}
+					path = lastPath.sb || path && path.path;
+					lastPath = path ? path.slice(1) : bindtoOb.path;
 				}
+				binding.to = path
+					? [ // "...someexpr().lastpath..." - so need to get the bindtoOb 'exprOb' object for this view-binding
+						[
+							bindtoOb, // 'exprOb' for this expression and view-binding. So bindtoOb.ob is current object returned by expression.
+							lastPath
+						],
+						cvtBk
+					]
+					: [
+						linkCtx._ctxCb(path = lastPath.split("^").join(".")) || [source, path],
+						cvtBk
+					];
 			} else {
 				binding.to = [[], cvtBk];
 			}
@@ -2006,7 +2041,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			delete bindingStore[bindId]; // Delete already, so call to onDispose handler below cannot trigger recursive deletion (through recursive call to jQuery cleanData)
 			for (objId in binding.bnd) {
 				object = binding.bnd[objId];
-				obsId = ".obs" + binding.cbId;
+				obsId = binding.cbId;
 				if ($.isArray(object)) {
 					$([object]).off(arrayChangeStr + obsId).off(propertyChangeStr + obsId); // There may be either or both of arrayChange and propertyChange
 				} else {
@@ -2116,8 +2151,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			var tokens, tag,
 				items = [object];
 			if (view && path) {
-				if (path._jsvOb) {
-					return path._jsvOb.call(view.tmpl, object, view, $views);
+				if (path._jsv) {
+					return path._jsv.call(view.tmpl, object, view, $views);
 				}
 				if (path.charAt(0) === "~") {
 					// We return new items to insert into the sequence, replacing the "~a.b.c" string:
@@ -2637,7 +2672,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	}
 
 	$tags("props", {
-		baseTag: $tags["for"],
+		baseTag: "for",
 		dataMap: $views.map({
 			getTgt: $tags.props.dataMap.getTgt,
 			obsSrc: observeProps,
@@ -2855,26 +2890,4 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		}
 	});
 
-//TODO
-// Tests for different attr settings on tags
-	// tests of onAfterBind extensibility
-	// tests for maps...
-	// tests for programmatic map scenarios
-	// tests for sorted table, using map=sort or {{sort}} with props for setting sort parameters
-	// tests for setting()
-	// tests for settings.debugMode()
-	// tests for {on data=...}
-	// tests for {on } binding when doing top-level data-linking
-// tests for debug mode, noDomLevel0, noValidate
-// linkTo docs and tests.
-// Additional tests and examples for structured params - tagCtx.params
-// Using jsobservable without jsviews - settings??
-// Examples for:
-	// overriding error messages
-	// Binding to tag properties and contextual properties
-	// Fallback strings or onError handlers for any tag instance
-	// $.observable(object).removeProperty(path)
-	// data-link="{on ... myHandler}" (See unit tests. Examples to follow)
-// VERIFY link=false support
-// target="replace" scenarios
 })(this, this.jQuery);

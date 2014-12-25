@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 60 (Beta Candidate) */
+off(informal pre V1.0 commit counter: 61 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -24,10 +24,10 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		delimOpenChar0 = "{", delimOpenChar1 = "{", delimCloseChar0 = "}", delimCloseChar1 = "}", linkChar = "^",
 
 		rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-		//                                     none   object     helper    view  viewProperty pathTokens      leafToken
+		//        not                               object     helper    view  viewProperty pathTokens      leafToken
 
-		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^|\s*$)|[)\]])([([]?))|(\s+)/g,
-		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                        prn2  space
+		rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|[^\(\[])|[)\]])([([]?))|(\s+)/g,
+		//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                           prn2  space
 		// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
 
 		rNewLine = /[ \t]*(\r\n|\n|\r)/g,
@@ -52,6 +52,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			"`": "&#96;"
 		},
 		htmlStr = "html",
+		objectStr = "object",
 		tmplAttr = "data-jsv-tmpl",
 		$render = {},
 		jsvStores = {
@@ -238,9 +239,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		return this.index;
 	}
 
-	getIndex.depends = function() {
-		return ["index"];
-	};
+	getIndex.depends = "index";
 
 	//==========
 	// View.hlp
@@ -309,8 +308,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				if (linkCtx) {
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
-					tagCtx.ctx = extendCtx(tagCtx.ctx, linkCtx.view.ctx);
 				}
+				tagCtx.ctx = extendCtx(tagCtx.ctx, (linkCtx ? linkCtx.view : view).ctx);
 				$sub._lnk(tag);
 			}
 			tag._er = onError && value;
@@ -576,7 +575,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			};
 
 		self.data = data;
-		self.tmpl = template,
+		self.tmpl = template;
 		self.content = contentTmpl;
 		self.views = isArray ? [] : {};
 		self.parent = parentView;
@@ -643,7 +642,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	}
 
 	function compileTag(name, tagDef, parentTmpl) {
-		var init, tmpl;
+		var init, tmpl, baseTag;
 		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
 			tagDef = {
@@ -651,16 +650,19 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				render: tagDef
 			};
 		} else {
-			if (tagDef.baseTag) {
+			if (baseTag = tagDef.baseTag) {
+				tagDef.baseTag = baseTag = "" + baseTag === baseTag
+					? (parentTmpl && parentTmpl.tags[baseTag] || $.views.tags[baseTag])
+					: baseTag;
 				tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
-				tagDef = $extend($extend({}, tagDef.baseTag), tagDef);
+				tagDef = $extend($extend({}, baseTag), tagDef);
 			}
 			// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
 			if ((tmpl = tagDef.template) !== undefined) {
 				tagDef.template = "" + tmpl === tmpl ? ($templates[tmpl] || $templates(tmpl)) : tmpl;
 			}
 			if (tagDef.init !== false) {
-				// Set int: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
+				// Set init: false on tagDef if you want to provide just a render method, or render and template, but no constuctor or prototype.
 				// so equivalent to setting tag to render function, except you can also provide a template.
 				init = tagDef._ctr = function() {};
 				(init.prototype = tagDef).constructor = init;
@@ -829,7 +831,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 
 			var onStore, compile, itemName, thisStore;
 
-			if (name && typeof name === "object" && !name.nodeType && !name.markup && !name.getTgt) {
+			if (name && typeof name === objectStr && !name.nodeType && !name.markup && !name.getTgt) {
 				// Call to $.views.things(items[, parentTmpl]),
 
 				// Adding items to the store
@@ -915,6 +917,9 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		if (!!context === context) {
 			noIteration = context; // passing boolean as second param - noIteration
 			context = undefined;
+		}
+		if (typeof context !== objectStr) {
+			context = undefined; // context must be a boolean (noIteration) or a plain object
 		}
 
 		if (key === true) {
@@ -1190,10 +1195,10 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		fn.deps = [];
 		for (var key in paths) {
 			if (key !== "_jsvto" && paths[key].length) {
-				fn.deps = fn.deps.concat(paths[key]);
+				fn.deps = fn.deps.concat(paths[key]); // deps is the concatenation of the paths arrays for the different bindings
 			}
 		}
-		fn.paths = paths;
+		fn.paths = paths; // The array of paths arrays for the different bindings
 	}
 
 	function parsedParam(args, props, ctx) {
@@ -1207,32 +1212,29 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	function parseParams(params, pathBindings, tmpl) {
 
 		function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-			//rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*\.|\s*\^)|[)\]])([([]?))|(\s+)/g,
-			//          lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2   space
+		// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(!*?[#~]?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=\s*[.^]|\s*$|\s)|[)\]])([([]?))|(\s+)/g,
+		//   lftPrn0        lftPrn        bound            path    operator err                                                eq             path2       prn    comma   lftPrn2   apos quot      rtPrn rtPrnDot                    prn2  space
 			// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+			if (bound && !eq) {
+				path = bound + path; // e.g. some.fn(...)^some.path - so here path is "^some.path"
+			}
 			operator = operator || "";
 			lftPrn = lftPrn || lftPrn0 || lftPrn2;
 			path = path || path2;
+			// Could do this - but not worth perf cost?? :-
+			// if (!path.lastIndexOf("#data.", 0)) { path = path.slice(6); } // If path starts with "#data.", remove that.
 			prn = prn || prn2 || "";
 
-			var expr, isFn, exprFn,
-				fullLength = full.length - 1;
+			var expr, exprFn, binds, theOb, newOb;
 
 			function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
 				// rPath = /^(?:null|true|false|\d[\d.]*|(!*?)([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
 				//                                        none   object     helper    view  viewProperty pathTokens      leafToken
+				var subPath = object === ".";
 				if (object) {
-					if (bindings) {
-						if (named === "linkTo") {
-							bindto = pathBindings._jsvto = pathBindings._jsvto || [];
-							bindto.push(path);
-						}
-						if (!named || boundName) {
-							bindings.push(path.slice(not.length)); // Add path binding for paths on props and args
-						}
-					}
-					if (object !== ".") {
-						var ret = (helper
+					path = path.slice(not.length);
+					if (!subPath) {
+						allPath = (helper
 								? 'view.hlp("' + helper + '")'
 								: view
 									? "view"
@@ -1246,11 +1248,29 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 									) + (pathTokens || "")
 								: (leafToken = helper ? "" : view ? viewProperty || "" : object, ""));
 
-						ret = ret + (leafToken ? "." + leafToken : "");
+						allPath = allPath + (leafToken ? "." + leafToken : "");
 
-						return not + (ret.slice(0, 9) === "view.data"
-							? ret.slice(5) // convert #view.data... to data...
-							: ret);
+						allPath = not + (allPath.slice(0, 9) === "view.data"
+							? allPath.slice(5) // convert #view.data... to data...
+							: allPath);
+					}
+					if (bindings) {
+						binds = named === "linkTo" ? (bindto = pathBindings._jsvto = pathBindings._jsvto || []) : bndCtx.bd;
+						if (theOb = subPath && binds[binds.length-1]) {
+							if (theOb._jsv) {
+								while (theOb.sb) {
+									theOb = theOb.sb;
+								}
+								if (theOb.bnd) {
+									path = "^" + path.slice(1);
+								}
+								theOb.sb = path;
+								theOb.bnd = theOb.bnd || path.charAt(0) === "^";
+							}
+						} else {
+							binds.push(path);
+						}
+						pathStart[parenDepth] = index + (subPath ? 1 : 0);
 					}
 				}
 				return allPath;
@@ -1263,20 +1283,35 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
 					// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
 					if (!named || boundName || bindto) {
-						expr = pathStart[parenDepth];
-						if (fullLength > index - expr) { // We need to compile a subexpression
-							expr = full.slice(expr, index + 1);
+						expr = pathStart[parenDepth - 1];
+						if (full.length - 1 > index - (expr || 0)) { // We need to compile a subexpression
+							expr = full.slice(expr, index + all.length);
+							if (exprFn !== true) { // If not reentrant call during compilation
+								binds = bindto || bndStack[parenDepth-1].bd;
+								// Insert exprOb object, to be used during binding to return the computed object
+								theOb = binds[binds.length-1];
+								if (theOb && theOb.prm) {
+									while (theOb.sb && theOb.sb.prm) {
+										theOb = theOb.sb;
+									}
+									newOb = theOb.sb = {path: theOb.sb, bnd: theOb.bnd};
+								} else {
+									binds.push(newOb = {path: binds.pop()}); // Insert exprOb object, to be used during binding to return the computed object
+								}											 // (e.g. "some.object()" in "some.object().a.b" - to be used as context for binding the following tokens "a.b")
+							}
 							rtPrnDot = delimOpenChar1 + ":" + expr // The parameter or function subexpression
 								+ " onerror=''" // set onerror='' in order to wrap generated code with a try catch - returning '' as object instance if there is an error/missing parent
 								+ delimCloseChar0;
 							exprFn = tmplLinks[rtPrnDot];
 							if (!exprFn) {
 								tmplLinks[rtPrnDot] = true; // Flag that this exprFn (for rtPrnDot) is being compiled
-								tmplLinks[rtPrnDot] = exprFn = tmplFn(rtPrnDot, tmpl || bindings, true); // Compile the expression (or use cached copy already in tmpl.links)
-								exprFn.paths.push({_jsvOb: exprFn}); //list.push({_jsvOb: rtPrnDot});
+								tmplLinks[rtPrnDot] = exprFn = tmplFn(rtPrnDot, tmpl, true); // Compile the expression (or use cached copy already in tmpl.links)
 							}
-							if (exprFn !== true) { // If not reentrant call during compilation
-								(bindto || bindings).push({_jsvOb: exprFn}); // Insert special object for in path bindings, to be used for binding the compiled sub expression ()
+							if (exprFn !== true && newOb) {
+								// If not reentrant call during compilation
+								newOb._jsv = exprFn;
+								newOb.prm = bndCtx.bd;
+								newOb.bnd = newOb.bnd || newOb.path && newOb.path.indexOf("^") >= 0;
 							}
 						}
 					}
@@ -1290,33 +1325,35 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 						:
 					(
 						(lftPrn
-								? (parenDepth++, pathStart[parenDepth] = index++, lftPrn)
-								: "")
+							? (pathStart[parenDepth] = index++, bndCtx = bndStack[++parenDepth] = {bd: []}, lftPrn)
+							: "")
 						+ (space
 							? (parenDepth
 								? ""
 					// New arg or prop - so insert backspace \b (\x08) as separator for named params, used subsequently by rBuildHash, and prepare new bindings array
 								: (paramIndex = full.slice(paramIndex, index), named
 									? (named = boundName = bindto = false, "\b")
-									: "\b,") + paramIndex + (paramIndex = index + all.length, bindings && pathBindings.push(bindings = []), "\b")
+									: "\b,") + paramIndex + (paramIndex = index + all.length, bindings && pathBindings.push(bndCtx.bd = []), "\b")
 							)
 							: eq
 					// named param. Remove bindings for arg and create instead bindings array for prop
-								? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length, bound && (bindings = pathBindings[named] = []), path + ':')
+								? (parenDepth && syntaxError(params), bindings && pathBindings.pop(), named = path, boundName = bound, paramIndex = index + all.length, bound && (bindings = bndCtx.bd = pathBindings[named] = []), path + ':')
 								: path
 					// path
 									? (path.split("^").join(".").replace(rPath, parsePath)
 										+ (prn
-											? (fnCall[++parenDepth] = true, path.charAt(0) !== "." && (pathStart[parenDepth] = index), isFn ? "" : prn)
+					// some.fncall(
+											? (bndCtx = bndStack[++parenDepth] = {bd: []}, fnCall[parenDepth] = true, prn)
 											: operator)
 									)
 									: operator
+					// operator
 										? operator
 										: rtPrn
 					// function
-											? ((fnCall[parenDepth--] = false, rtPrn)
-												+ (prn
-													? (fnCall[++parenDepth] = true, prn)
+											? ((fnCall[parenDepth] = false, bndCtx = bndStack[--parenDepth], rtPrn)
+												+ (prn // rtPrn and prn, e.g )( in (a)() or a()(), or )[ in a()[]
+													? (bndCtx = bndStack[++parenDepth], fnCall[parenDepth] = true, prn)
 													: "")
 											)
 											: comma
@@ -1328,19 +1365,22 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				);
 			}
 		}
+
 		var named, bindto, boundName,
 			quoted, // boolean for string content in double quotes
 			aposed, // or in single quotes
 			bindings = pathBindings && pathBindings[0], // bindings array for the first arg
+			bndCtx = {bd: bindings},
+			bndStack = {0: bndCtx},
 			paramIndex = 0, // list,
 			tmplLinks = tmpl ? tmpl.links : bindings && (bindings.links = bindings.links || {}),
-			fnCall = {},
-			pathStart = {0: -1},
-			parenDepth = 0;
-		//pushBindings();
+			// The following are used for tracking path parsing including nested paths, such as "a.b(c^d + (e))^f", and chained computed paths such as
+			// "a.b().c^d().e.f().g" - which has four chained paths, "a.b()", "^c.d()", ".e.f()" and ".g"
+			parenDepth = 0,
+			fnCall = {}, // We are in a function call
+			pathStart = {}; // tracks the start of the current path such as c^d() in the above example
+
 		return (params + (tmpl ? " " : ""))
-			.replace(/\)\^/g, ").") // Treat "...foo()^bar..." as equivalent to "...foo().bar..."
-								//since preceding computed observables in the path will always be updated if their dependencies change
 			.replace(rParams, parseTokens);
 	}
 
@@ -1448,7 +1488,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 								: "{" + tagCtx + "}") + ")")
 							: tagName === ">"
 								? (hasEncoder = true, "h(" + params[0] + ')')
-								: (getsVal = true, "((v=" + params[0] + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
+								: (getsVal = true, "((v=" + (params[0] || 'data') + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
 						)
 						: (needView = hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 							+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
@@ -1483,7 +1523,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					}
 					if (onError) {
 						needView = true;
-						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + boundOnErrStart + 'j._err(e,view,' + onError + ')' + boundOnErrEnd + ';}\n' + (isLinkExpr ? "" : 'ret=ret');
+						code += ';\n}catch(e){ret' + (isLinkExpr ? "urn " : "+=") + boundOnErrStart + 'j._err(e,view,' + onError + ')' + boundOnErrEnd + ';}' + (isLinkExpr ? "" : 'ret=ret');
 					}
 				}
 			}
@@ -1671,7 +1711,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		var key, prop,
 			props = [];
 
-		if (typeof source === "object") {
+		if (typeof source === objectStr) {
 			for (key in source) {
 				prop = source[key];
 				if (!prop || !prop.toJSON || prop.toJSON()) {
@@ -1685,7 +1725,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	}
 
 	$tags("props", {
-		baseTag: $tags["for"],
+		baseTag: "for",
 		dataMap: dataMap(getTargetProps)
 	});
 
@@ -1740,7 +1780,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		splice = [].splice,
 		$isArray = $.isArray,
 		$expando = $.expando,
-		OBJECT = "object",
+		objectStr = "object",
 		PARSEINT = parseInt,
 		rNotWhite = /\S+/g,
 		propertyChangeStr = $sub.propChng = $sub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
@@ -1750,10 +1790,15 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
 		observeCbKey = 1,
+		observeInnerCbKey = 1,
 		$hasData = $.hasData,
 		remove = {}; // flag for removeProperty
 
 	//========================== Top-level functions ==========================
+
+	function getCbKey(cb) {
+		return cb._cId = cb._cId || (".obs" + observeCbKey++);
+	}
 
 	$sub.getDeps = function() {
 		var args = arguments;
@@ -1825,21 +1870,20 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 
 	function removeCbBindings(cbBindings, cbBindingsId) {
 		// If the cbBindings collection is empty we will remove it from the cbBindingsStore
-		var cb, found;
-
-		for (cb in cbBindings) {
-			found = true;
-			break;
+		for (var cb in cbBindings) {
+			return;
 		}
-		if (!found) {
-			delete cbBindingsStore[cbBindingsId];
-		}
+		delete cbBindingsStore[cbBindingsId]; // This binding collection is empty, so remove from store
 	}
 
 	function onObservableChange(ev, eventArgs) {
+		function isOb(val) {
+			return typeof val === objectStr && (paths[0] || allowArray && $isArray(val));
+		}
+
 		if (!(ev.data && ev.data.off)) {
 			// Skip if !!ev.data.off: - a handler that has already been removed (maybe was on handler collection at call time - then removed by another handler)
-			var allPath, filter, parentObs, oldIsOb, isOb,
+			var allPath, filter, parentObs,
 				oldValue = eventArgs.oldValue,
 				value = eventArgs.value,
 				ctx = ev.data,
@@ -1851,24 +1895,22 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				(ctx.cb.array || ctx.cb).call(ctx, ev, eventArgs); // If there is an arrayHandler expando on the regular handler, use it, otherwise use the regular handler for arrayChange events also - for example: $.observe(array, handler)
 				// or observeAll() with an array in the graph. Note that on data-link bindings we ensure always to have an array handler - $.noop if none is specified e.g. on the data-linked tag.
 			} else if (ctx.prop === eventArgs.path || ctx.prop === "*") {
-				oldIsOb = typeof oldValue === OBJECT && (paths[0] || allowArray && $isArray(oldValue)); // Note: && (paths[0] || $isArray(value)) is for perf optimization
-				isOb = typeof value === OBJECT && (paths[0] || allowArray && $isArray(value));
 				if (observeAll) {
 					allPath = observeAll._path + "." + eventArgs.path;
 					filter = observeAll.filter;
 					parentObs = [ev.target].concat(observeAll.parents());
 
-					if (oldIsOb) {
+					if (isOb(oldValue)) {
 						observe_apply(allowArray, observeAll.ns, [oldValue], paths, ctx.cb, true, filter, [parentObs], allPath); // unobserve
 					}
-					if (isOb) {
+					if (isOb(value)) {
 						observe_apply(allowArray, observeAll.ns, [value], paths, ctx.cb, undefined, filter, [parentObs], allPath);
 					}
 				} else {
-					if (oldIsOb) { // oldValue is an object, so unobserve
+					if (isOb(oldValue)) { // oldValue is an object, so unobserve
 						observe_apply(allowArray, [oldValue], paths, ctx.cb, true); // unobserve
 					}
-					if (isOb) { // value is an object, so observe
+					if (isOb(value)) { // value is an object, so observe
 						observe_apply(allowArray, [value], paths, ctx.cb);
 					}
 				}
@@ -1878,309 +1920,337 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	}
 
 	function $observe() {
-		// $.observe([namespace, ]root, [1 or more objects, path or path Array params...], callback[, contextCallback][, unobserveOrOrigRoot])
-		function observeOnOff(namespace, pathStr, isArrayBinding, off) {
-			var j, evData,
-				obIdExpando = $hasData(object),
-				boundObOrArr = wrapArray(object);
+		// $.observe([namespace, ]root, [1 or more objects, path or path Array params...], callback[, contextCallback][, unobserve])
 
-			namespace = initialNs ? namespace + "." + initialNs : namespace;
+		function innerObserve() {
 
-			if (unobserve || off) {
-				if (obIdExpando) {
-					$(boundObOrArr).off(namespace, onObservableChange);
-				}
-			} else {
-				if (events = obIdExpando && $._data(object)) {
-					events = events && events.events;
-					events = events && events[isArrayBinding ? arrayChangeStr : propertyChangeStr];
-					el = events && events.length;
+			function observeOnOff(namespace, pathStr, isArrayBinding, off) {
+				var j, evData,
+					obIdExpando = $hasData(object),
+					boundObOrArr = wrapArray(object),
+					prntObs = parentObs,
+					allPth = allPath;
 
-					while (el--) {
-						if ((data = events[el].data) && data.cb._cId === callback._cId && data.ns === initialNs) {
-							if (isArrayBinding) {
-								// Duplicate exists, so skip. (This can happen e.g. with {^{for people ~foo=people}})
-								return;
-							} else if (pathStr === "*" && data.prop !== pathStr || data.prop === prop) {
-								$(object).off(namespace, onObservableChange);
+				namespace = initialNs ? namespace + "." + initialNs : namespace;
+
+				if (unobserve || off) {
+					if (obIdExpando) {
+						$(boundObOrArr).off(namespace, onObservableChange);
+					}
+				} else {
+					if (events = obIdExpando && $._data(object)) {
+						events = events && events.events;
+						events = events && events[isArrayBinding ? arrayChangeStr : propertyChangeStr];
+						el = events && events.length;
+
+						while (el--) {
+							if ((data = events[el].data) && data.cb._cId === callback._cId && data.ns === initialNs) {
+								if (isArrayBinding) {
+									// Duplicate exists, so skip. (This can happen e.g. with {^{for people ~foo=people}})
+									return;
+								} else if (pathStr === "*" && data.prop !== pathStr) {
+									$(object).off(namespace, onObservableChange);
+								}
 							}
 						}
 					}
-				}
-				evData = isArrayBinding ? {}
-					: {
-						fullPath: path,
-						paths: pathStr ? [pathStr] : [],
-						prop: prop
-					};
-				evData.ns = initialNs;
-				evData.cb = callback;
+					evData = isArrayBinding ? {}
+						: {
+							fullPath: path,
+							paths: pathStr ? [pathStr] : [],
+							prop: prop
+						};
+					evData.ns = initialNs;
+					evData.cb = callback;
 
-				if (allPath) {
-					evData.observeAll = {
-						_path: allPath,
-						path: function() { // Step through path and parentObs parent chain, replacing '[]' by '[n]' based on current index of objects in parent arrays.
-							j = parentObs.length;
-							return allPath.replace(/[[.]/g, function(all) {
-								j--;
-								return all === "["
-									? "[" + $.inArray(parentObs[j - 1], parentObs[j])
-									: ".";
-							});
-						},
-						parents: function() {
-							return parentObs; // The chain of parents between the modified object and the root object used in the observeAll() call
-						},
-						filter: filter,
-						ns: initialNs
-					};
-				}
-				$(boundObOrArr).on(namespace, null, evData, onObservableChange);
-				if (cbBindings) {
-					// Add object to cbBindings, and add the counter to the jQuery data on the object
-					(cbBindingsStore[callback._cId] = cbBindings) // In some scenarios cbBindings was empty and removed
-						//from store - so defensively add back to store, to ensure correct disposal e.g. when views are removed
-						[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
-				}
-			}
-		}
-
-		function onUpdatedExpression(exprOb, paths) {
-			// Use the contextCb callback to execute the compiled exprOb template in the context of the view/data etc. to get the returned value, typically an object or array.
-			// If it is an array, register array binding
-			exprOb._ob = contextCb(exprOb, origRoot);
-			var origRt = origRoot;
-			return function(ev, eventArgs) {
-				var obj = exprOb._ob,
-					len = paths.length;
-				if (typeof obj === OBJECT) {
-					bindArray(obj, true);
-					if (len || allowArray && $isArray(obj)) {
-						observe_apply(allowArray, [obj], paths, callback, contextCb, true); // unobserve
+					if (allPath) {
+						// This is an observeAll call
+						evData.observeAll = {
+							_path: allPth,
+							path: function() { // Step through path and parentObs parent chain, replacing '[]' by '[n]' based on current index of objects in parent arrays.
+								j = prntObs.length;
+								return allPth.replace(/[[.]/g, function(all) {
+									j--;
+									return all === "["
+										? "[" + $.inArray(prntObs[j - 1], prntObs[j])
+										: ".";
+								});
+							},
+							parents: function() {
+								return prntObs; // The chain of parents between the modified object and the root object used in the observeAll() call
+							},
+							filter: filter,
+							ns: initialNs
+						};
+					}
+					$(boundObOrArr).on(namespace, null, evData, onObservableChange);
+					if (cbBindings) {
+						// Add object to cbBindings, and add the counter to the jQuery data on the object
+						(cbBindingsStore[callback._cId] = cbBindings) // In some scenarios cbBindings was empty and removed
+							//from store - so defensively add back to store, to ensure correct disposal e.g. when views are removed
+							[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
 					}
 				}
-				obj = exprOb._ob = contextCb(exprOb, origRt);
-				// Put the updated object instance onto the exprOb in the paths array, so subsequent string paths are relative to this object
-				if (typeof obj === OBJECT) {
-					bindArray(obj);
-					if (len || allowArray && $isArray(obj)) {
-						observe_apply(allowArray, [obj], paths, callback, contextCb, [origRt]);
-					}
-				}
-				callback(ev, eventArgs);
-			};
-		}
-
-		function bindArray(arr, unbind, isArray, relPath) {
-			if (allowArray) {
-				// This is a call to observe that does not come from observeAndBind (tag binding), so we allow arrayChange binding
-				var prevObj = object,
-					prevAllPath = allPath;
-
-				object = arr;
-				if (relPath) {
-					object = arr[relPath];
-					allPath += "." + relPath;
-				}
-				if (filter && object) {
-					object = $observable._fltr(allPath, object, relPath ? [arr].concat(parentObs) : parentObs, filter);
-				}
-				if (object && (isArray || $isArray(object))) {
-					observeOnOff(arrayChangeStr + ".observe" + (callback ? ".obs" + (cbId = callback._cId = callback._cId || observeCbKey++) : ""), undefined, true, unbind);
-				}
-				object = prevObj;
-				allPath = prevAllPath;
 			}
-		}
 
-		var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
-			allPath, filter, initialNs, initNsArr, initNsArrLen,
-			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
-			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
-			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
-			topLevel = true,
-			ns = observeStr,
-			paths = Array.apply(0, arguments),
-			lastArg = paths.pop(),
-			origRoot = paths.shift(),
-			root = origRoot,
-			object = root,
-			l = paths.length;
+			function getInnerCb(exprOb) {
+				// Returns the innerCb used for updating a computed in a compiled expression (setting the new instance as exprOb.ob, unobserving the previous object,
+				// and observing the new one), then calling the outerCB - i.e. the handler for the whole compiled expression.
+				// Initialized exprOb.ob to the current object.
+				// Uses the contextCb callback to execute the compiled exprOb template in the context of the view/data etc. to get the returned value, typically an object or array.
+				// If it is an array, registers array binding
+				var origRt = root;
+				// Note:  For https://github.com/BorisMoore/jsviews/issues/292ctxCb will need var ctxCb = contextCb || function(exprOb, origRt) {return exprOb._jsv(origRt);};
 
-		if (origRoot + "" === origRoot && allowArray) {
-			initialNs = origRoot; // The first arg is a namespace, since it is  a string, and this call is not from observeAndBind
-			origRoot = object = root = paths.shift();
-			l--;
-		}
+				exprOb.ob = contextCb(exprOb, origRt); // Initialize object
 
-		if ($isFunction(lastArg)) {
-			callback = lastArg;
-		} else {
+				return exprOb.cb = function(ev, eventArgs) {
+					var obj = exprOb.ob, // The old object
+						sub = exprOb.sb,
+						newObj = contextCb(exprOb, origRt);
+
+					if (newObj !== obj) {
+						if (typeof obj === objectStr) {
+							bindArray(obj, true);
+							if (sub || allowArray && $isArray(obj)) {
+								innerObserve([obj], sub, callback, contextCb, true); // unobserve on the old object
+							}
+						}
+						exprOb.ob = newObj;
+						// Put the updated object instance onto the exprOb in the paths array, so subsequent string paths are relative to this object
+						if (typeof newObj === objectStr) {
+							bindArray(newObj);
+							if (sub || allowArray && $isArray(newObj)) {
+								// Register array binding
+								innerObserve([newObj], sub, callback, contextCb);
+							}
+						}
+					}
+					// Call the outerCb - to execute the compiled expression that this computed is part of
+					callback(ev, eventArgs);
+				};
+			}
+
+			function bindArray(arr, unbind, isArray, relPath) {
+				if (allowArray) {
+					// This is a call to observe that does not come from observeAndBind (tag binding), so we allow arrayChange binding
+					var prevObj = object,
+						prevAllPath = allPath;
+
+					object = arr;
+					if (relPath) {
+						object = arr[relPath];
+						allPath += "." + relPath;
+					}
+					if (filter && object) {
+						object = $observable._fltr(allPath, object, relPath ? [arr].concat(parentObs) : parentObs, filter);
+					}
+					if (object && (isArray || $isArray(object))) {
+						observeOnOff(arrayChangeStr + ".observe" + (callback ? (cbId = getCbKey(callback)) : ""), undefined, true, unbind);
+					}
+					object = prevObj;
+					allPath = prevAllPath;
+				}
+			}
+
+			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
+				allPath, filter, initNsArr, initNsArrLen,
+				ns = observeStr,
+				paths = this != 1? // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+					[].concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
+												   // style - such as innerObserve([object], path.path, [origRoot], path.prm, innerCb, ...);
+					: Array.apply(0, arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
+				lastArg = paths.pop() || false,
+				root = paths.shift(),
+				object = root,
+				l = paths.length;
+
 			if (lastArg + "" === lastArg) { // If last arg is a string then this observe call is part of an observeAll call,
 				allPath = lastArg;          // and the last three args are the parentObs array, the filter, and the allPath string.
 				parentObs = paths.pop();
 				filter = paths.pop();
-				lastArg = paths.pop();
-				l = l - 3;
+				lastArg = !!paths.pop(); // unobserve
+				l -= 3;
 			}
-			if (lastArg === true) {
+			if (lastArg === !!lastArg) {
 				unobserve = lastArg;
-			} else if (lastArg) {
-				origRoot = lastArg;
-				topLevel = undefined;
+				lastArg = paths[l-1];
+				lastArg = l && lastArg + "" !== lastArg ? (l--, paths.pop()) : undefined;
 			}
-			lastArg = paths[l - 1];
-			if (l && lastArg === undefined || $isFunction(lastArg)) {
-				callback = paths.pop(); // If preceding is callback this will be contextCb param - which may be undefined
+			callback = lastArg;
+			if (l && $isFunction(paths[l - 1])) {
+				contextCb = callback;
+				callback = paths.pop();
 				l--;
 			}
-		}
-		if (l && $isFunction(paths[l - 1])) {
-			contextCb = callback;
-			callback = paths.pop();
-			l--;
-		}
-		// Use a unique namespace (e.g. obs7) associated with each observe() callback to allow unobserve to remove handlers
-		ns += unobserve
-			? (callback ? ".obs" + callback._cId : "")
-			: ".obs" + (cbId = callback._cId = callback._cId || observeCbKey++);
 
-		if (!unobserve) {
-			cbBindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
-		}
-
-		initNsArr = initialNs && initialNs.match(rNotWhite) || [""];
-		initNsArrLen = initNsArr.length;
-
-		while (initNsArrLen--) {
-			initialNs = initNsArr[initNsArrLen];
-
-			if ($isArray(root)) {
-				bindArray(root, unobserve, true);
-			} else {
-				// remove onObservableChange handlers that wrap that callback
-				if (unobserve && l === 0 && root) {
-					observeOnOff(ns, "");
-				}
+			// Use a unique namespace (e.g. obs7) associated with each observe() callback to allow unobserve to remove handlers
+			ns += unobserve
+				? (callback ? callback._cId + (callback._inId || ""): "")
+				: (cbId = getCbKey(callback)) + (callback._inId || "");
+			if (!unobserve) {
+				cbBindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
 			}
-			depth = 0;
-			for (i = 0; i < l; i++) {
-				path = paths[i];
-				if (path === "") {
-					continue;
-				}
-				object = root;
-				if ("" + path === path) {
-					parts = path.split("^");
-					if (parts[1]) {
-						// We bind the leaf, plus additional nodes based on depth.
-						// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
-						depth = parts[0].split(".").length;
-						path = parts.join(".");
-						depth = path.split(".").length - depth;
-						// if more than one ^ in the path, the first one determines depth
+
+			initNsArr = initialNs && initialNs.match(rNotWhite) || [""];
+			initNsArrLen = initNsArr.length;
+
+			while (initNsArrLen--) {
+				initialNs = initNsArr[initNsArrLen];
+
+				if ($isArray(root)) {
+					bindArray(root, unobserve, true);
+				} else {
+					// remove onObservableChange handlers that wrap that callback
+					if (unobserve && l === 0 && root) {
+						observeOnOff(ns, "");
 					}
-					if (contextCb && (items = contextCb(path, root))) {
-						// If contextCb returns an array of objects and paths, we will insert them
-						// into the sequence, replacing the current item (path)
-						l += items.length - 1;
-						splice.apply(paths, [i--, 1].concat(items));
+				}
+				depth = 0;
+				for (i = 0; i < l; i++) {
+					path = paths[i];
+					if (path === "" || path === undefined) {
 						continue;
 					}
-					parts = path.split(".");
-				} else {
-					if (topLevel && !$isFunction(path)) {
-						if (path && path._jsvOb) {
-							// Currently this will only occur if !unobserve
-							// This is a compiled function for binding to an object returned by a helper/data function.
-							innerCb = onUpdatedExpression(path, paths.slice(i + 1));
-							innerCb.noArray = !allowArray;
-							innerCb._cId = callback._cId; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
-							observe_apply(allowArray, [origRoot], paths.slice(0, i), innerCb, contextCb);
-							innerCb = undefined;
-							path = path._ob;
+					object = root;
+					if ("" + path === path) {
+						// Consider support for computed paths: https://github.com/BorisMoore/jsviews/issues/292
+						//if (/[\(\[\+]/.test(path)) {
+						//	var b={links:{}}, t = $sub.tmplFn("{:"+path+"}", b, true), items = t.paths[0];
+						//	l += items.length - 1;
+						//	splice.apply(paths, [i--, 1].concat(items));
+						//	continue;
+						//}
+						parts = path.split("^");
+						if (parts[1]) {
+							// We bind the leaf, plus additional nodes based on depth.
+							// "a.b.c^d.e" is depth 2, so listens to changes of e, plus changes of d and of c
+							depth = parts[0].split(".").length;
+							path = parts.join(".");
+							depth = path.split(".").length - depth;
+							// if more than one ^ in the path, the first one determines depth
 						}
-						object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
-					}
-					root = path;
-					parts = [root];
-				}
-				while (object && (prop = parts.shift()) !== undefined) {
-					if (typeof object === OBJECT) {
-						if ("" + prop === prop) {
-							if (prop === "") {
-								continue;
+						if (contextCb && (items = contextCb(path, root))) {
+							// If contextCb returns an array of objects and paths, we will insert them
+							// into the sequence, replacing the current item (path)
+							l += items.length - 1;
+							splice.apply(paths, [i--, 1].concat(items));
+							continue;
+						}
+						parts = path.split(".");
+					} else {
+						if (!$isFunction(path)) {
+							if (path && path._jsv) {
+								// This is a compiled function for binding to an object returned by a helper/data function.
+								// Set current object on exprOb.ob, and get innerCb for updating the object
+								innerCb = unobserve ? path.cb : getInnerCb(path);
+								innerCb.noArray = !allowArray;
+								innerCb._cId = callback._cId;
+								// Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
+								innerCb._inId = innerCb._inId || ".obIn" + observeInnerCbKey++;
+								if (path.bnd || path.prm && path.prm.length || !path.sb) {
+									// If the exprOb is bound e.g. foo()^sub.path, or has parameters e.g. foo(bar) or is a leaf object (so no sub path) e.g. foo()
+									// then observe changes on the object, or its parameters and sub-path
+									innerObserve([object], path.path, [origRoot], path.prm, innerCb, contextCb, unobserve);
+								}
+								if (path.sb) { // subPath
+									innerObserve([path.ob], path.sb, callback, contextCb, unobserve);
+								}
+								path = origRoot;
+								object = undefined;
+							} else {
+								object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
 							}
-							if ((parts.length < depth + 1) && !object.nodeType) {
-								// Add observer for each token in path starting at depth, and on to the leaf
-								if (!unobserve && (events = $hasData(object) && $._data(object))) {
-									events = events.events;
-									events = events && events[propertyChangeStr];
-									el = events && events.length;
-									skip = 0;
-									while (el--) { // Skip duplicates
-										data = events[el].data;
-										if (data && data.cb === callback && data.ns === initialNs) {
-											if (data.prop === prop || data.prop === "*") {
-												if (p = parts.join(".")) {
-													data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
-													// need to keep bindings for rest of path, ready for if the object gets swapped.
+						}
+						parts = [root = path];
+					}
+					while (object && (prop = parts.shift()) !== undefined) {
+						if (typeof object === objectStr) {
+							if ("" + prop === prop) {
+								if (prop === "") {
+									continue;
+								}
+								if ((parts.length < depth + 1) && !object.nodeType) {
+									// Add observer for each token in path starting at depth, and on to the leaf
+									if (!unobserve && (events = $hasData(object) && $._data(object))) {
+										events = events.events;
+										events = events && events[propertyChangeStr];
+										el = events && events.length;
+										skip = 0;
+										while (el--) { // Skip duplicates
+											data = events[el].data;
+											if (data && data.cb === callback && data.ns === initialNs) {
+												if (data.prop === prop || data.prop === "*") {
+													if (p = parts.join(".")) {
+														data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
+														// need to keep bindings for rest of path, ready for if the object gets swapped.
+													}
+													skip++;
 												}
-												skip++;
 											}
 										}
-									}
-									if (skip) {
-										// Duplicate binding(s) found, so move on
-										object = object[prop];
-										continue;
-									}
-								}
-								if (prop === "*") {
-									if (!unobserve && events && events.length) {
-										// Remove existing bindings, since they will be duplicates with "*"
-										observeOnOff(ns, "", false, true);
-									}
-									if ($isFunction(object)) {
-										if (dep = object.depends) {
-											observe_apply(allowArray, [dep], callback, unobserve || origRoot);
+										if (skip) {
+											// Duplicate binding(s) found, so move on
+											object = object[prop];
+											continue;
 										}
-									} else {
+									}
+									if (prop === "*") {
+										if (!unobserve && events && events.length) {
+											// Remove existing bindings, since they will be duplicates with "*"
+											observeOnOff(ns, "", false, true);
+										}
 										observeOnOff(ns, ""); // observe the object for any property change
+										for (p in object) {
+											// observing "*": So (in addition to listening to prop change, above) listen to arraychange on props of type array
+											bindArray(object, unobserve, undefined, p);
+										}
+										break;
+									} else if (prop) {
+										observeOnOff(ns + "." + prop, parts.join("^")); // By using "^" rather than "." we ensure that deep binding will be used on newly inserted object graphs
 									}
-									for (p in object) {
-										// observing "*": So (in addition to listening to prop change, above) listen to arraychange on props of type array
-										bindArray(object, unobserve, undefined, p);
-									}
-									break;
-								} else if (prop) {
-									observeOnOff(ns + "." + prop, parts.join("^")); // By using "^" rather than "." we ensure that deep binding will be used on newly insert object graphs
 								}
+								if (allPath) {
+									allPath += "." + prop;
+								}
+								prop = object[prop];
 							}
-							if (allPath) {
-								allPath += "." + prop;
+							if ($isFunction(prop)) {
+								if (dep = prop.depends) {
+									// This is a computed observable. We will observe any declared dependencies
+									innerObserve([object], resolvePathObjects(dep, object), callback, contextCb, unobserve);
+								}
+								break;
 							}
-							prop = object[prop];
+							object = prop;
 						}
-						if ($isFunction(prop)) {
-							if (dep = prop.depends) {
-								// This is a computed observable. We will observe any declared dependencies
-								observe_apply(allowArray, [object], resolvePathObjects(dep, object), callback, contextCb, unobserve || [origRoot]);
-							}
-							break;
-						}
-						object = prop;
 					}
+					bindArray(object, unobserve);
 				}
-				bindArray(object, unobserve);
 			}
-		}
-		if (cbId) {
-			removeCbBindings(cbBindings, cbId);
+			if (cbId) {
+				removeCbBindings(cbBindings, cbId);
+			}
+
+			// Return the cbBindings to the top-level caller, along with the cbId
+			return { cbId: cbId, bnd: cbBindings };
 		}
 
-		// Return the cbBindings to the top-level caller, along with the cbId
-		return { cbId: cbId, bnd: cbBindings };
+		var initialNs,
+			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
+			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
+			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+			ns = observeStr,
+			paths = Array.apply(0, arguments),
+			origRoot = paths[0];
+
+		if (origRoot + "" === origRoot && allowArray) {
+			initialNs = origRoot; // The first arg is a namespace, since it is  a string, and this call is not from observeAndBind
+			paths.shift();
+			origRoot = paths[0];
+		}
+
+		return innerObserve.apply(1, paths);
 	}
 
 	function $unobserve() {
@@ -2212,7 +2282,6 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve) {
 		function observeArray(arr, unobs) {
 			l = arr.length;
-			newParentObs = [[arr]].concat(newParentObs);
 			newAllPath = allPath + "[]";
 			while (l--) {
 				filterAndObserveAll(arr, l, unobs, 1);
@@ -2220,21 +2289,22 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		}
 
 		function filterAndObserveAll(obj, prop, unobs, nestedArray) {
-			var newObject;
+			var newObject, newParentObs;
 			if (prop !== $expando) {
-				if (newObject = $observable._fltr(newAllPath, obj[prop], newParentObs, filter)) {
-					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs.slice(), newAllPath, unobs); // If nested array, need to observe the array too - so set filter to ""
+				if (newObject = $observable._fltr(newAllPath, obj[prop], nextParentObs, filter)) {
+					newParentObs = nextParentObs.slice();
+					if (nestedArray && updatedTgt) {
+						newParentObs.unshift(updatedTgt); // For array change events need to add updated array to parentObs
+					}
+					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs); // If nested array, need to observe the array too - so set filter to undefined
 				}
 			}
 		}
 
 		function wrappedCb(ev, eventArgs) {
 			// This object is changing.
-			var oldParentObs = parentObs;
-
 			allPath = ev.data.observeAll._path;
-			newParentObs = [ev.target].concat(parentObs);
-
+			updatedTgt = ev.target;
 			switch (eventArgs.change) { // observeAll/unobserveAll on added or removed objects
 				case "insert":
 					observeArray(eventArgs.items);
@@ -2251,13 +2321,14 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					filterAndObserveAll(eventArgs, "oldValue", true);
 					filterAndObserveAll(eventArgs, "value");
 			}
+			updatedTgt = undefined;
 			cb.apply(this, arguments); // Observe this object (invoke the callback)
-			parentObs = oldParentObs;
 		}
 
-		var l, isObject, newAllPath, newParentObs;
+		var l, isObject, newAllPath, nextParentObs, updatedTgt;
 
-		if (typeof object === OBJECT) {
+		if (typeof object === objectStr) {
+			nextParentObs = [object].concat(parentObs); // The parentObs chain for the next depth of observeAll
 			isObject = $isArray(object) ? "" : "*";
 			if (cb) {
 				// Observe this object or array - and also listen for changes to object graph, to add or remove observers from the modified object graph
@@ -2266,19 +2337,18 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					// is the case for top-level calls or for nested array (array item of an array - e.g. member of 2-dimensional array).
 					// For array properties lower in the tree, with no filter, filter is set to 0 in filterAndObserveAll, so no arrayChange binding here,
 					// since they get arrayChange binding added during regular $.observe(array ...) binding.
-					wrappedCb._cId = cb._cId = cb._cId || observeCbKey++; // Identify wrapped callback with unwrapped callback, so unobserveAll will
-																		  // remove previous observeAll wrapped callback, if inner callback was the same;
-					$observe(namespace, object, isObject, wrappedCb, unobserve, filter, parentObs, allPath);
+					wrappedCb._cId = getCbKey(cb); // Identify wrapped callback with unwrapped callback, so unobserveAll will
+														  // remove previous observeAll wrapped callback, if inner callback was the same;
+					$observe(namespace, object, isObject, wrappedCb, unobserve, filter, nextParentObs, allPath);
 				}
 			} else {
 				// No callback. Just unobserve if unobserve === true.
-				$observe(namespace, object, isObject, undefined, unobserve, filter, parentObs, allPath);
+				$observe(namespace, object, isObject, undefined, unobserve, filter, nextParentObs, allPath);
 			}
 
 			if (isObject) {
 				// Continue stepping through object graph, observing object and arrays
 				// To override filtering, pass in filter function, or replace $.observable._fltr
-				newParentObs = [object].concat(parentObs); // Combine with below in single function that filters, observeAlls and prepends to parentObs
 				for (l in object) {
 					newAllPath = allPath + "." + l;
 					filterAndObserveAll(object, l, unobserve);
@@ -2298,7 +2368,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			object = $isFunction(object)
 				? object.set && object.call(parentObs[0]) // It is a getter/setter
 				: object;
-			return typeof object === OBJECT && object;
+			return typeof object === objectStr && object;
 		}
 	};
 
@@ -2517,7 +2587,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					events = $._data(this).events[handleObj.type];
 					l = events.length;
 					while (l-- && !found) {
-						found = (data = events[l].data) && data.cb === evData; // Found another one with same callback
+						found = (data = events[l].data) && data.cb._cId === evData._cId;
+						// Found another one with same callback (though may be a different innerCallback)
 					}
 					if (!found) {
 						// This was the last handler for this callback and object, so remove the binding entry
@@ -2540,7 +2611,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			if (this.src) {
 				this.unmap(); // We are re-mapping a new source
 			}
-			if (typeof source === "object") {
+			if (typeof source === objectStr) {
 				map.src = source;
 				map.tgt = target || map.tgt || [];
 				map.options = options || map.options;
@@ -2645,7 +2716,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		CHECKBOX = "checkbox",
 		RADIO = "radio",
 		NONE = "none",
-		sTRUE = "true",
+		SCRIPT = "SCRIPT",
+		TRUE = "true",
 		closeScript = '"></script>',
 		openScript = '<script type="jsv',
 		deferAttr = jsvAttrStr + "-df",
@@ -2711,7 +2783,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	//===============
 
 	function elemChangeHandler(ev, params, sourceValue) {
-		var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs,
+		var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs, exprOb,
 			source = ev.target,
 			bindings = source._jsvBnd,
 			splitBindings = /&(\d+)\+?/g;
@@ -2739,6 +2811,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 						}
 						cnvtName = to[1];
 						to = to[0]; // [object, path]
+						to = to + "" === to ? [linkCtx.data, to] : to;
 						if (cnvtName) {
 							if ($isFunction(cnvtName)) {
 								cvtBack = cnvtName;
@@ -2763,7 +2836,14 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 								sourceValue !== undefined) {
 							target = to[0]; // [object, path]
 							if (sourceValue !== undefined && target) {
-								target = target._jsvOb ? target._ob : target;
+								if (target._jsv) {
+									exprOb = target;
+									target = linkCtx.data;
+									while (exprOb && exprOb.sb) {
+										target = linkCtx._ctxCb(exprOb, target);
+										exprOb = exprOb.sb;
+									}
+								}
 								if (tag) {
 									tag._.chging = true; // marker to prevent tag change event triggering its own refresh
 								}
@@ -2861,7 +2941,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					// For {{: ...}} without a convert or convertBack, we already have the sourceValue, and we are done
 					// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
 					// If cvt is undefined then this is a tag, and we call renderTag to get the rendered content and instantiate the tag
-					cvt = cvt === "" ? sTRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
+					cvt = cvt === "" ? TRUE : cvt; // If there is a cvtBack but no cvt, set cvt to "true"
 					sourceValue = cvt // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
 						? $views._cnvt(cvt, view, sourceValue[0] || sourceValue) // convertVal
 						: $views._tag(linkFn._tag, view, view.tmpl, sourceValue, true, onError); // renderTag
@@ -3191,7 +3271,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		var nodeName = elem.nodeName.toLowerCase(),
 			attr =
 				$viewsSettings.merge[nodeName] // get attr settings for input textarea select or optgroup
-				|| elem.contentEditable === sTRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
+				|| elem.contentEditable === TRUE && {to: htmlStr, from: htmlStr}; // Or if contentEditable set to "true" set attr to "html"
 		return attr
 			? (to
 				? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -3318,12 +3398,12 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	//---------------
 
 	function observeAndBind(linkCtx, source, target) { //TODO? linkFnArgs) {;
-		var binding, l, linkedElem,
+		var binding, l, linkedElem, exprFnDeps, exprOb,
 			tag = linkCtx.tag,
 			cvtBk = linkCtx.convertBack,
 			depends = [],
 			bindId = linkCtx._bndId || "" + bindingKey++,
-			handler = linkCtx._hdlr;
+			handler = linkCtx._hdl;
 
 		delete linkCtx._bndId;
 
@@ -3340,10 +3420,23 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 				// Unobserve previous binding
 				$observable._apply(false, [source], linkCtx._depends, handler, true);
 			}
+
+			exprFnDeps = linkCtx.fn.deps.slice(); // Make a copy of the dependency paths for the compiled linkCtx expression - to pass to observe(). In getInnerCb(),
+			// (and whenever the object is updated, in innerCb), we will set exprOb.ob to the current object returned by that computed expression, for this view.
+			l = exprFnDeps.length;
+			while (l--) {
+				exprOb = exprFnDeps[l];
+				if (exprOb._jsv) {
+					// This path is an 'exprOb', corresponding to a computed, returning an object. We replace the exprOb by
+					// a view-binding-specific exprOb instance. The current object will be stored as exprOb.ob.
+					exprFnDeps[l] = $extend({}, exprOb);
+				}
+			}
+
 			binding = $observable._apply(
 				false,
 				[source],
-				linkCtx.fn.deps, // flatten the paths - to gather all the dependencies across args and bound params
+				exprFnDeps, // flatten the paths - to gather all the dependencies across args and bound params
 				depends,
 				handler,
 				linkCtx._ctxCb);
@@ -3352,6 +3445,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			binding.elem = target; // The target of all the individual bindings
 			binding.linkCtx = linkCtx;
 			binding._tgId = bindId;
+
 			// Add to the _jsvBnd on the target the view id and binding id - for unbinding when the target element is removed
 			target._jsvBnd = target._jsvBnd || "";
 			target._jsvBnd += "&" + bindId;
@@ -3413,7 +3507,9 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			// from = to;
 			// to = "body";
 			//}
-
+		if (typeof context !== "object") {
+			context = undefined;
+		}
 		if (tmplOrLinkTag && to) {
 			to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
 
@@ -4003,7 +4099,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			: (self.parentElem      // view.link()
 				|| document.body);  // link(null, data) to link the whole document
 
-		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== sTRUE;
+		validate = !$viewsSettings.noValidate && parentNode.contentEditable !== TRUE;
 		parentTag = parentNode.tagName.toLowerCase();
 		elCnt = !!elContent[parentTag];
 
@@ -4205,7 +4301,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			linkCtx.view = new $sub.View(linkCtx.ctx, "link", topView, linkCtx.data, topView.tmpl, undefined, undefined, addBindingMarkers);
 		}
 		linkCtx._ctxCb = getContextCb(linkCtx.view); // _ctxCb is for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
-		linkCtx._hdlr = handler;
+		linkCtx._hdl = handler;
 		handler(true);
 	}
 
@@ -4227,7 +4323,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		return node &&
 			("" + node === node
 				? node
-				: node.tagName === "SCRIPT"
+				: node.tagName === SCRIPT
 					? node.type.slice(3)
 					: node.nodeType === 1 && node.getAttribute(jsvAttrStr) || "");
 	}
@@ -4248,8 +4344,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		var elCnt, tokens,
 			infos = [];
 		if (tokens = isVal ? node : markerNodeInfo(node)) {
-			infos.elCnt = !node.type;
-			elCnt = tokens.charAt(0) === "@" || !node.type;
+			elCnt = infos.elCnt = node.tagName !== SCRIPT;
+			elCnt = tokens.charAt(0) === "@" || elCnt;
 			infos._tkns = tokens;
 			// rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g;
 			tokens.replace(rBinding || rMarkerTokens, getInfos);
@@ -4275,7 +4371,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		if (marker) {
 			if (marker.nodeType !== 1) {
 				// For text nodes, we will add a script node before
-				marker = document.createElement("SCRIPT");
+				marker = document.createElement(SCRIPT);
 				marker.type = "jsv";
 				node.parentNode.insertBefore(marker, node);
 			} else if (!markerNodeInfo(marker) && !marker.getAttribute($viewsLinkAttr)) {
@@ -4340,7 +4436,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 					: prevNode && prevNode.nextSibling);
 
 			while (node && (!nextNode || node !== nextNode)) {
-				if (withMarkers || elCnt || node.tagName !== "SCRIPT") {
+				if (withMarkers || elCnt || node.tagName !== SCRIPT) {
 					// All the top-level nodes in the view
 					// (except script marker nodes, unless withMarkers = true)
 					// (Note: If a script marker node, viewInfo.elCnt undefined)
@@ -4465,7 +4561,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 						} else {
 							$linkedElem.val(val);
 						}
-					} else if (linkedElem.contentEditable === sTRUE) {
+					} else if (linkedElem.contentEditable === TRUE) {
 						linkedElem.innerHTML = val;
 					}
 				}
@@ -4496,28 +4592,38 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	function bindTo(binding, cvtBk) {
 		// Two-way binding.
 		// We set the binding.to[1] to be the cvtBack, and binding.to[0] to be either the path to the target, or [object, path] where the target is the path on the provided object.
-		// So for a path with an object call: a.b.getObject().d.e, then we set to[0] to be [returnedObject, "d.e"], and we bind to the path on the returned object as target
+		// So for a computed path with an object call: a.b.getObject().d.e, then we set to[0] to be [exprOb, "d.e"], and we bind to the path on the returned object, exprOb.ob, as target
 		// Otherwise our target is the first path, paths[0], which we will convert with contextCb() for paths like ~a.b.c or #x.y.z
 
-		var bindto, pathIndex, firstPath, lastPath, bindtoOb,
+		var bindto, pathIndex, path, lastPath, bindtoOb,
 			linkCtx = binding.linkCtx,
 			source = linkCtx.data,
 			paths = linkCtx.fn.paths;
 		if (binding && paths) {
 			paths = (bindto = paths._jsvto) || paths[0];
 			pathIndex = paths && paths.length;
-			while (pathIndex && "" + (lastPath = paths[--pathIndex]) !== lastPath) {} // If the lastPath is an object (e.g. with _jsvOb property), take preceding one
-			if (lastPath && (!linkCtx.tag || linkCtx.tag.tagCtx.args.length)) {
-				lastPath = lastPath.split("^").join("."); // We don't need the "^" since binding has happened. For to binding, require just "."s
-				binding.to = lastPath.charAt(0) === "."
-					? [[bindtoOb = paths[pathIndex - 1], lastPath.slice(1)], cvtBk] // someexpr().lastpath - so need to get the bindtoOb object returned from the expression
-					: [linkCtx._ctxCb(firstPath = pathIndex ? paths[0].split("^").join(".") : lastPath) || [source, firstPath], cvtBk];
-
-				if (bindto && bindtoOb) {
-					// This is a linkTo binding {:expr linkTo=someob().some.path:}
-					// If it returned an object, we need to call the callback to get the object instance, so we bind to the final path (.some.path) starting from that object
-					binding.to[0][0] = linkCtx._ctxCb(bindtoOb, source);
+			if (pathIndex && (!linkCtx.tag || linkCtx.tag.tagCtx.args.length)) {
+				lastPath = paths[pathIndex - 1];
+				if (lastPath._jsv) {
+					bindtoOb = lastPath;
+					while (lastPath.sb && lastPath.sb._jsv) {
+						path = lastPath = lastPath.sb;
+					}
+					path = lastPath.sb || path && path.path;
+					lastPath = path ? path.slice(1) : bindtoOb.path;
 				}
+				binding.to = path
+					? [ // "...someexpr().lastpath..." - so need to get the bindtoOb 'exprOb' object for this view-binding
+						[
+							bindtoOb, // 'exprOb' for this expression and view-binding. So bindtoOb.ob is current object returned by expression.
+							lastPath
+						],
+						cvtBk
+					]
+					: [
+						linkCtx._ctxCb(path = lastPath.split("^").join(".")) || [source, path],
+						cvtBk
+					];
 			} else {
 				binding.to = [[], cvtBk];
 			}
@@ -4604,7 +4710,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			delete bindingStore[bindId]; // Delete already, so call to onDispose handler below cannot trigger recursive deletion (through recursive call to jQuery cleanData)
 			for (objId in binding.bnd) {
 				object = binding.bnd[objId];
-				obsId = ".obs" + binding.cbId;
+				obsId = binding.cbId;
 				if ($.isArray(object)) {
 					$([object]).off(arrayChangeStr + obsId).off(propertyChangeStr + obsId); // There may be either or both of arrayChange and propertyChange
 				} else {
@@ -4714,8 +4820,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 			var tokens, tag,
 				items = [object];
 			if (view && path) {
-				if (path._jsvOb) {
-					return path._jsvOb.call(view.tmpl, object, view, $views);
+				if (path._jsv) {
+					return path._jsv.call(view.tmpl, object, view, $views);
 				}
 				if (path.charAt(0) === "~") {
 					// We return new items to insert into the sequence, replacing the "~a.b.c" string:
@@ -5235,7 +5341,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	}
 
 	$tags("props", {
-		baseTag: $tags["for"],
+		baseTag: "for",
 		dataMap: $views.map({
 			getTgt: $tags.props.dataMap.getTgt,
 			obsSrc: observeProps,
@@ -5453,6 +5559,7 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 		}
 	});
 
+})(this, this.jQuery);
 //TODO
 // Tests for different attr settings on tags
 	// tests of onAfterBind extensibility
@@ -5463,6 +5570,8 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	// tests for settings.debugMode()
 	// tests for {on data=...}
 	// tests for {on } binding when doing top-level data-linking
+	// tests for {on } binding when doing top-level data-linking
+	// tests for baseTag as template object, or string, defined globally or on template.
 // tests for debug mode, noDomLevel0, noValidate
 // linkTo docs and tests.
 // Additional tests and examples for structured params - tagCtx.params
@@ -5473,6 +5582,6 @@ informal pre V1.0 commit counter: 60 (Beta Candidate) */
 	// Fallback strings or onError handlers for any tag instance
 	// $.observable(object).removeProperty(path)
 	// data-link="{on ... myHandler}" (See unit tests. Examples to follow)
+	// $.view()
 // VERIFY link=false support
 // target="replace" scenarios
-})(this, this.jQuery);

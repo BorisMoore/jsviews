@@ -91,9 +91,9 @@ $.views.converters({
 		return ($.inArray(val, this.tagCtx.props.array) + 1)  || "0";
 	},
 	setObject: function(val) {
-		var selectedObject = this.tagCtx.props.array[val-1];
+		var selectedObject = this.tagCtx.props.array[val-1] || null;
 		$.observable(this.linkCtx.data).setProperty(this.linkCtx.fn.paths[0], selectedObject);
-		return this.tagCtx.props.array[val-1];
+		return selectedObject;
 	}
 });
 

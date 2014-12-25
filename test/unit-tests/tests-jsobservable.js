@@ -12,8 +12,8 @@ var isIE8 = window.attachEvent && !window.addEventListener;
 //				});
 //			}
 //			var pageLen = parseInt(options.pageLength),
-//				start = parseInt(options.page) * pageLen, 
-//				end = start + pageLen; 
+//				start = parseInt(options.page) * pageLen,
+//				end = start + pageLen;
 //			return rows.slice(start, end);
 //		},
 //		obsSrc: function(map, ev, eventArgs) {
@@ -51,17 +51,17 @@ test("dataMap", function() {
 			pageLength: 1
 		},
 		cols: [
-			{ 
+			{
 				field: "id",
 				label: "Id",
 				show: true
 			},
-			{ 
+			{
 				field: "name",
 				label: "Name",
 				show: true
 			},
-			{ 
+			{
 				field: "role",
 				label: "Role",
 				show: false
@@ -212,9 +212,9 @@ test("dataMap", function() {
 				role: "Actor"
 			}
 		];
-	
+
 	tgt = map.tgt;
-	
+
 	map.map(otherRows);
 
 	after = (tgt === map.tgt);
@@ -332,7 +332,7 @@ test("dataMap", function() {
 	var before = viewSrcTgt(map2, "name");
 
 	map2.update();
-	
+
 	// ............................... Assert .................................
 	equal(before + "/" + viewSrcTgt(map2, "name"),
 		"Jeff,Amadeus,Ariel|ARIEL,JEFF/Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF",
@@ -362,7 +362,7 @@ test("dataMap", function() {
 	map.map(data.rows, {sortby: "id"}, tgt);
 
 	after = $._data(data.rows).events.arrayChange.length;
-	
+
 	// ............................... Assert .................................
 	equal(viewSrcTgt(map, "id") + " events: " + after, "id1,inserted,id2|ID1,ID2,INSERTED events: 2",
 		'map.map(source, options, target) will remap to chosen source, options, and target');
@@ -390,9 +390,9 @@ test("dataMap", function() {
 				role: "Actor"
 			}
 		];
-	
+
 	tgt = map.tgt;
-	
+
 	map.map(otherRows);
 
 	$.observable(otherRows).insert(1, [
@@ -470,6 +470,143 @@ test("dataMap", function() {
 		'If map has an obsTgt method, observable changes to target trigger observable source updates too');
 
 	map.unmap();
+});
+
+test("observeAll", function() {
+	// =============================== Arrange ===============================
+	var result = "",
+		inc = 0,
+	data = {
+		person: {
+		  name: "Pete",
+		  address: {
+			street: "1st Ave",
+		  },
+		  phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
+		}
+	};
+
+	$.observable(data).observeAll(
+		function (ev, eventArgs) {
+			result += "| ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: "
+			for (var key in eventArgs) {
+				result += key + ": " + JSON.stringify(eventArgs[key]) + " ";
+			}
+		}
+	);
+
+	// ................................ Act ..................................
+	$.observable(data.person).setProperty({
+		name: "Hermione",
+		"address.street": "Main St",
+	});
+
+	$.observable(data.person).setProperty({
+		address: {street: "New Street"},
+		phones: [{number:"123 123 1234"}]
+	});
+
+	$.observable(data.person.phones[0]).setProperty("foo", 34);
+
+	$.observable(data.person.phones).insert({
+		number:"456 456 AAAA"
+	});
+
+	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+
+	$.observable(data.person.phones).remove(0);
+
+	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+
+	$.observable(data.person.phones).insert({
+		number:"456 456 BBBB"
+	});
+
+	$.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+
+	$.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+
+	$.observable(data.person.phones[1]).removeProperty("subnum.b");
+
+	$.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+
+	$.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
+
+	$.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+
+	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+
+	$.observable(data.person.phones).remove(0);
+
+	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+
+// ............................... Assert .................................
+	result += "| DATA: " + JSON.stringify(data)
+
+	equal(result,
+'| ObserveAll Path: root.person'
++   ' eventArgs: change: "set" path: "name" value: "Hermione" oldValue: "Pete" remove: false'
+
++ ' | ObserveAll Path: root.person.address'
++   ' eventArgs: change: "set" path: "street" value: "Main St" oldValue: "1st Ave" remove: false'
+
++ ' | ObserveAll Path: root.person'
++   ' eventArgs: change: "set" path: "address" value: {"street":"New Street"} oldValue: {"street":"Main St"} remove: false'
+
++ ' | ObserveAll Path: root.person'
++   ' eventArgs: change: "set" path: "phones" value: [{"number":"123 123 1234"}] oldValue: [{"number":"111 111 1111"},{"number":"222 222 2222"}] remove: false'
+
++ ' | ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set" path: "foo" value: 34 oldValue: undefined remove: false'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert" index: 1 items: [{"number":"456 456 AAAA"}]'
+
++ ' | ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set" path: "number" value: "456 456 AAAA0" oldValue: "456 456 AAAA" remove: false'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "remove" index: 0 items: [{"number":"123 123 1234","foo":34}]'
+
++ ' | ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set" path: "number" value: "456 456 AAAA01" oldValue: "456 456 AAAA0" remove: false'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert" index: 1 items: [{"number":"456 456 BBBB"}]'
+
++ ' | ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set" path: "subnum" value: {"a":11,"b":22} oldValue: undefined remove: false'
+
++ ' | ObserveAll Path: root.person.phones[1].subnum'
++   ' eventArgs: change: "set" path: "a" value: "a2" oldValue: 11 remove: false'
+
++ ' | ObserveAll Path: root.person.phones[1].subnum'
++   ' eventArgs: change: "set" path: "b" value: undefined oldValue: 22 remove: true'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert" index: 1 items: [{"number":"456 456 CCCC"},{"number":"456 456 DDDD"}]'
+
++ ' | ObserveAll Path: root.person.phones[2]'
++   ' eventArgs: change: "set" path: "number" value: "456 456 DDDD3" oldValue: "456 456 DDDD" remove: false'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "refresh" oldItems: [{"number":"456 456 AAAA01"},{"number":"456 456 CCCC"},{"number":"456 456 DDDD3"},{"number":"456 456 BBBB","subnum":{"a":"a2"}}]'
+
++ ' | ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set" path: "number" value: "456 456 FFFF4" oldValue: "456 456 FFFF" remove: false'
+
++ ' | ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "remove" index: 0 items: [{"number":"456 456 EEEE"}]'
+
++ ' | ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set" path: "number" value: "456 456 FFFF45" oldValue: "456 456 FFFF4" remove: false'
+
++ ' | DATA: {"person":{"name":"Hermione","address":{"street":"New Street"},"phones":[{"number":"456 456 FFFF45"}]}}',
+
+	'observeAll scenarios, with observeAll.path() etc.');
+
+// ............................... Assert .................................
+$.observable(data).unobserveAll();
 });
 
 })(this, this.jQuery);
