@@ -604,7 +604,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\n No {^{ tags within elem markup (<span ). Use data-link=\"...\"", "Validation - {{if}} within <span> markup");
+	equal(result, "Syntax error\nNo {^{ tags within elem markup (<span ). Use data-link=\"...\"", "Validation - {{if}} within <span> markup");
 	result = "";
 
 	// =============================== Arrange ===============================
@@ -616,7 +616,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\n No {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input/> markup");
+	equal(result, "Syntax error\nNo {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input/> markup");
 	result = "";
 
 	// =============================== Arrange ===============================
@@ -628,7 +628,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\n No {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input markup wrapping />");
+	equal(result, "Syntax error\nNo {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input markup wrapping />");
 	result = "";
 
 	// =============================== Arrange ===============================
@@ -640,7 +640,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\n No {^{ tags within elem markup (<div ). Use data-link=\"...\"", "Validation - {{:...}} within element markup");
+	equal(result, "Syntax error\nNo {^{ tags within elem markup (<div ). Use data-link=\"...\"", "Validation - {{:...}} within element markup");
 	result = "";
 
 	// ................................ Reset ................................
@@ -3435,7 +3435,7 @@ test("Computed observables in paths", function() {
 
 	// =============================== Arrange ===============================
 	function getValue(a) {
-		return this.value + a;
+		return this.value + "_" + a;
 	}
 	function switchAlt() {
 		$.observable(app).setProperty("alt", !app.alt);
@@ -3453,78 +3453,86 @@ test("Computed observables in paths", function() {
 
 	// ................................ Act ..................................
 	$.observable(app).setProperty("alt", true);
-	ret = "|" + $("#result").text();
+	ret = "|A: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |A: val2_22--val1_22
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|B: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |B: 1 first street--1 second street2 second street
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|C: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |C: 1 second street2 second street--1 first street
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{:(getData()^getValue(22))}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|D: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |D: val1_22--val2_22
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:getData()^getValue((getData()^getValue(22)))}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	$.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
+	ret += "|E: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // E: val2_val2_33--val1_val1_33
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{:getData(getPeople(getData(alt || 2)^getValue())^length)^value}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|F: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |F: val1--val2
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|G: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |G: 1 second street--1 first street
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{:(((getData())^people[0])^address.street)}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|H: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |H: 1 first street--1 second street
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{:'b'+((getData()^value) + ('a'+getData()^value)) + getData()^getValue(55)}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|I: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |I: bval2aval2val2_55--bval1aval1val1_55
 	$("#result").empty();
 
 	// ................................ Act ..................................
 	$.templates("{^{:'a' + getData()^value}}").link("#result", app);
-	ret += "|" + $("#result").text();
+	ret += "|J: " + $("#result").text();
 	switchAlt();
-	ret += "--" + $("#result").text();
+	ret += "--" + $("#result").text(); // |J: aval1--aval2
 	$("#result").empty();
 
 	// ................................ Assert ..................................
-	equal(ret, "|val222--val122|1 first street--1 second street2 second street|1 second street2 second street--1 first street"
-		+ "|val122--val222|val2val222--val1val122|val1--val2|1 second street--1 first street"
-		+ "|1 first street--1 second street|bval2aval2val255--bval1aval1val155|aval1--aval2",
+	equal(ret,
+		"|A: val2_22--val1_22|" +
+		"B: 1 first street--1 second street2 second street|" +
+		"C: 1 second street2 second street--1 first street|" +
+		"D: val1_22--val2_22|" +
+		"E: val2_val2_33--val1_val1_33|" +
+		"F: val1--val2|" +
+		"G: 1 second street--1 first street|" +
+		"H: 1 first street--1 second street|" +
+		"I: bval2aval2val2_55--bval1aval1val1_55|" +
+		"J: aval1--aval2",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
 });
 
@@ -8892,6 +8900,38 @@ test('Bound tag properties and contextual properties', function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+
+	var model = {
+		sortby: "role",
+		cols: ["name", "role"],
+		sort: function(ev, eventArgs) {
+			$.observable(data).setProperty({
+				sortby: data.sortby === "role" ? "name" : "role"
+			});
+		}
+	};
+
+	// ............................... Act .................................
+	$.templates('{^{for cols itemVar="~col"}}{^{:~root.sortby === ~col}}{{/for}}').link("#result", model);
+
+	result = $("#result").text();
+
+	$.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
+
+	result += "|" + $("#result").text();
+
+	$.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
+
+	result += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, "falsetrue|truefalse|falsetrue",
+		"itemVar variables in item list are distinct variables");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
 });
 
 module("API - PropertyChange");
@@ -9155,7 +9195,6 @@ test("JsObservable: insert()", function() {
 	// ............................... Assert .................................
 	equal(things.join(" "), "1 2",
 	'insert(10, "a") (out of range) does nothing');
-
 });
 
 test("JsObservable: remove()", function() {
@@ -9289,7 +9328,6 @@ test("JsObservable: remove()", function() {
 	// ............................... Assert .................................
 	equal(things.join(" "), "1 2",
 	'remove(10) (out of range) does nothing');
-
 });
 
 test("JsObservable: move()", function() {
@@ -9573,7 +9611,6 @@ test("JsObservable: move()", function() {
 	// ............................... Assert .................................
 	equal(things.join(" "), "",
 	'move(1, 2) does nothing if array is empty');
-
 });
 
 test("JsViews ArrayChange: insert()", function() {
@@ -9633,10 +9670,9 @@ test("JsViews ArrayChange: insert()", function() {
 		.link("#result", model);
 	// ................................ Act ..................................
 	$.observable(model.things).insert(0, { thing: "First" });
-	$.observable(model.things).remove(0);
-
+	
 	// ............................... Assert .................................
-	equal($("#result").text(), "Orig",
+	equal($("#result").text(), "FirstOrig",
 	'Within element only content, insertion finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
 
 	// ................................ Reset ................................
@@ -9645,16 +9681,229 @@ test("JsViews ArrayChange: insert()", function() {
 });
 
 test("JsViews ArrayChange: remove()", function() {
-	// If one remove triggers another remove ensure one oldLength var is not affected by other one.
-	// TODO
+	// =============================== Arrange ===============================
+	$.views.tags({
+		liTag: function() {
+			return "<li>Tag</li>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(1); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
+	'Within element only content, remove(1) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(); //TagOrigTagFirstTagMiddleTagLastTag|after
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagOrigTagMiddleTag|after",
+	'Within element only content, remov finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	$.views.tags({
+		spanTag: function() {
+			return "<span>Tag</span>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(1); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
+	'Within regular content, remove(1) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagOrigTagMiddleTag|after",
+	'Within regular content, remove() finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
 });
 
 test("JsViews ArrayChange: move()", function() {
-	// TODO
+	// =============================== Arrange ===============================
+	$.views.tags({
+		liTag: function() {
+			return "<li>Tag</li>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
+
+	// ................................ Act ..................................
+	$.observable(model.things).move(2, 0, 2); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
+	'Within element only content, move(2, 0, 2) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	$.views.tags({
+		spanTag: function() {
+			return "<span>Tag</span>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	$.observable(model.things).move(2, 0, 2); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
+	'Within regular content, move(2, 0, 2) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
 });
 
 test("JsViews ArrayChange: refresh()", function() {
-	// TODO
+	// =============================== Arrange ===============================
+	$.views.tags({
+		liTag: function() {
+			return "<li>Tag</li>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
+
+	// ................................ Act ..................................
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagATagBTagCTag|after",
+	'Within element only content, refresh() finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	$.views.tags({
+		spanTag: function() {
+			return "<span>Tag</span>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+
+	// ............................... Assert .................................
+	equal($("#result").text(), "TagATagBTagCTag|after",
+	'Within regular content, refresh() finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+});
+
+test("JsViews jsv-domchange", function() {
+	// =============================== Arrange ===============================
+	function domchangeHandler(ev, tagCtx, linkCtx, eventArgs) {
+		result += ev.type + " " + ev.target.tagName + " " + tagCtx.params.args[0] + " " + (linkCtx.tag === tagCtx.tag) + " " + eventArgs.change + " | " ;
+	}
+	
+	$.views.tags({
+		spanTag: function() {
+			return "<span>Tag</span>";
+		}
+	});
+
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+		.link("#result", model);
+
+	$("#result div").on("jsv-domchange", domchangeHandler);
+
+	// ................................ Act ..................................
+	$.observable(model.things).insert({thing: "New"}); 
+	$.observable(model.things).move(2, 0, 2); 
+	$.observable(model.things).remove(1, 2); 
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+
+	// ............................... Assert .................................
+	equal(result, 
+		"jsv-domchange DIV things true insert | "
+		+ "jsv-domchange DIV things true move | "
+		+ "jsv-domchange DIV things true remove | "
+		+ "jsv-domchange DIV things true refresh | ",
+	'Correct behavior of $(...).on("jsv-domchange", domchangeHandler)');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	reset();
+
+	// =============================== Arrange ===============================
+	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
+
+	$.templates(
+		'<div data-link=\'"{on "jsv-domchange" ~domchange 333 444}\'>'
+			+ '{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span>'
+		+'</div>')
+		.link("#result", model, {
+			domchange: function(param1, param2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs) {
+				result += "Params: " + param1 + ", " + param2 + " | ";
+				domchangeHandler(ev, tagCtx, linkCtx, observableEventArgs);
+			}
+		});
+
+	// ................................ Act ..................................
+	$.observable(model.things).insert({thing: "New"}); 
+	$.observable(model.things).move(2, 0, 2); 
+	$.observable(model.things).remove(1, 2); 
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+
+	equal(result, 
+		"Params: 333, 444 | jsv-domchange DIV things true insert | "
+		+ "Params: 333, 444 | jsv-domchange DIV things true move | "
+		+ "Params: 333, 444 | jsv-domchange DIV things true remove | "
+		+ "Params: 333, 444 | jsv-domchange DIV things true refresh | ",
+	'Correct behavior of data-link=\'{on "jsv-domchange" ~domchange param1 param2}\'');
+
+	// ................................ Reset ................................
+	model.things = []; // reset Prop
+	$("#result").empty();
+	reset();
 });
 
 module("API - $.observe()");
@@ -10605,11 +10854,11 @@ test("observe context helper", function() {
 });
 
 test("Array", function() {
+	// TODO for V1 or after? >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
+	// TODO for V1 or after? >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
 
-	// For V1 >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
-	// For V1 >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
 	// =============================== Arrange ===============================
-	// Using an the same event handler for arrayChange and propertyChange
+	// Using the same event handler for arrayChange and propertyChange
 
 	var myArray = [1, 2];
 
@@ -10641,8 +10890,14 @@ test("Array", function() {
 
 	// ............................... Assert .................................
 	equal(result + $._data(myArray).events.arrayChange.length + " " + $._data(myArray).events.propertyChange.length,
-		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		+ "calls: 2, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|1 1",
+		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|"
+		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
+		'$.observe(myArray, "length", myListener) listens to array change on the array and to length propertyChange on the array');
+
+	// ............................... Assert .................................
+	equal(result + $._data(myArray).events.arrayChange.length + " " + $._data(myArray).events.propertyChange.length,
+		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|"
+		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
 		'$.observe(myArray, "length", myListener) listens to array change on the array and to length propertyChange on the array');
 
 	// ................................ Act ..................................
@@ -10654,6 +10909,35 @@ test("Array", function() {
 	// ............................... Assert .................................
 	equal(result + !$._data(myArray).events + " " + !$._data(myArray).events, "true true",
 		'$.unobserve(myArray, "length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
+
+	// =============================== Arrange ===============================
+	reset();
+
+	myArray = [1, 2, 3];
+
+	var done = false;
+	function listenAndChangeAgain(ev, eventArgs) {
+		myListener(ev, eventArgs);
+		if (!done && eventArgs.change === "remove") {
+			done = true;
+			$.observable(myArray).remove();
+		}
+	}
+
+	$.observe(myArray, "length", listenAndChangeAgain);
+
+	$.observable(myArray).remove(1);
+
+	// ............................... Assert .................................
+	equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
+			"calls: 1, ev.data: prop: length, eventArgs: oldValue: 3 value: 2, eventArgs.path: length|"
+			+ "regularCallbackCalls: 2, eventArgs: change: remove|"
+			+ "calls: 3, ev.data: prop: length, eventArgs: oldValue: 2 value: 1, eventArgs.path: length|"
+			+ "regularCallbackCalls: 4, eventArgs: change: remove|1 false",
+		'$.observe(myArray, "length", listenAndChangeAgain) with cascading changes preserves expected order on callbacks for array and array.length change');
+
+	// ................................ Reset ..................................
+	$.unobserve(myArray, "length", listenAndChangeAgain);
 
 	// =============================== Arrange ===============================
 	reset();
@@ -10706,8 +10990,8 @@ test("Array", function() {
 
 	// ............................... Assert .................................
 	equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name.arr).events.propertyChange.length,
-		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		+ "calls: 2, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|1 1",
+		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|"
+		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
 		'$.observe(object, "a.b.array", "a.b.array.length", myListener) listens to array change on the array and to length propertyChange on the array');
 
 	// ................................ Act ..................................
@@ -10753,7 +11037,6 @@ test("Array", function() {
 		'$.unobserve(object, "a.b.*", cbWithoutArrayCallback) removes the propertychange handler and any arraychange handlers');
 
 	// =============================== Arrange ===============================
-	// Using an array event handler
 	obj = { name: { first: "n", arr: initialArray } };
 	var newArray1 = [1, 1],
 		newArray2 = [2, 2],
@@ -12180,7 +12463,7 @@ test("view.childTags() in element-only content", function() {
 	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0
 		&& tags[1].tagName === "myWrapElCnt" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0
 		&& tags[2].tagName === "mySimpleWrap" && tags[2].tagCtx.props.val === 5 && tags[2].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags() returns top-level bound tags within the view, and skips any unbound tags');
+		'In element-only content, view.childTags() returns top-level bound non-flow tags within the view, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true);
@@ -12197,14 +12480,14 @@ test("view.childTags() in element-only content", function() {
 		&& tags[7].tagName === "myWrap2"
 		&& tags[8].tagName === "myWrap2ElCnt"
 		&& tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags(true) returns all tags within the view - in document order');
+		'In element-only content, view.childTags(true) returns all bound non-flow tags within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt");
 
 	// ............................... Assert .................................
 	ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags("myTagName") returns all top-level tags of the given name within the view - in document order');
+		'In element-only content, view.childTags("myTagName") returns all top-level bound tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2ElCnt");
@@ -12215,7 +12498,26 @@ test("view.childTags() in element-only content", function() {
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[0].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+		'In element-only content, view.childTags(true, "myTagName") returns all bound tags of the given name within the view - in document order');
+
+	// ................................ Act ..................................
+	tags = view1.childTags(true, "myFlow");
+
+	// ............................... Assert .................................
+	ok(tags.length === 2
+		&& tags[0].tagName === "myFlow"
+		&& tags[1].tagName === "myFlow"
+		&& tags[1].tagCtx.view.getIndex() === 0,
+		'In element-only content, view.childTags(true, "myFlow") for a flow tag returns all bound tags of the given name within the view - in document order');
+
+	// ................................ Act ..................................
+	tags = view1.childTags(true, "if");
+
+	// ............................... Assert .................................
+	ok(tags.length === 1
+		&& tags[0].tagName === "if"
+		&& tags[0].tagCtx.view.getIndex() === 0,
+		'In element-only content, view.childTags(true, "if") for a flow tag ("if" in this case) returns all bound tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2ElCnt");

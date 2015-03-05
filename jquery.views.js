@@ -1,5 +1,5 @@
 /*! JsViews v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 62 (Beta Candidate) */
+informal pre V1.0 commit counter: 63 (Beta Candidate) */
 /*
  * Interactive data-driven views using templates and data-linking.
  * Requires jQuery and jsrender.js (next-generation jQuery Templates, optimized for pure string-based rendering)
@@ -289,7 +289,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 				if (tag) {
 					tag._er = hasError;
-					callAfterLink(tag);
+					callAfterLink(tag, eventArgs);
 				}
 			}
 
@@ -1049,7 +1049,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 			if (inTag && id) {
 				// JsViews data-linking tags are not allowed within element markup. See https://github.com/BorisMoore/jsviews/issues/213
-				syntaxError(' No {^{ tags within elem markup (' + inTag + ' ). Use data-link="..."');
+				syntaxError('No {^{ tags within elem markup (' + inTag + ' ). Use data-link="..."');
 			}
 			if (tag) {
 				inTag = tag;
@@ -1197,7 +1197,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		function getViewInfos(vwInfos) {
 			// Used by view.childTags() and tag.childTags()
 			// Similar to processViewInfos in how it steps through bindings to find tags. Only finds data-linked tags.
-			var level, parentTag;
+			var level, parentTag, named;
 
 			if (vwInfos) {
 				len = vwInfos.length;
@@ -1206,7 +1206,8 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					// This is an open marker for a data-linked tag {^{...}}, within the content of the tag whose id is get.id. Add it to bindEls.
 					// Note - if bindingStore[vwInfo.id]._is === "tag" then getViewInfos is being called too soon - during first linking pass
 					parentTag = tag = bindingStore[vwInfo.id].linkCtx.tag;
-					if (!tag.flow) {
+					named = tag.tagName === tagName;
+					if (!tag.flow || named) {
 						if (!deep) {
 							level = 1;
 							while (parentTag = parentTag.parent) {
@@ -1214,7 +1215,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 							}
 							tagDepth = tagDepth || level; // The level of the first tag encountered.
 						}
-						if ((deep || level === tagDepth) && (!tagName || tag.tagName === tagName)) {
+						if ((deep || level === tagDepth) && (!tagName || named)) {
 							// Filter on top-level or tagName as appropriate
 							tags.push(tag);
 						}
@@ -1364,7 +1365,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 								// Add data binding
 								tagCtx = tag.tagCtx;
 								view = tagCtx.view;
-								callAfterLink(tag, tagCtx);
+								callAfterLink(tag);
 							}
 						}
 					}
@@ -1840,7 +1841,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		}
 	};
 
-	function callAfterLink(tag) {
+	function callAfterLink(tag, eventArgs) {
 		var $linkedElem, linkedElem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
 			tagCtx = tag.tagCtx,
 			view = tagCtx.view,
@@ -1852,7 +1853,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			};
 
 		if (tag.onAfterLink) {
-			tag.onAfterLink(tagCtx, linkCtx);
+			tag.onAfterLink(tagCtx, linkCtx, eventArgs);
 		}
 		delete tag._.unlinked;
 		$linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
@@ -2213,13 +2214,17 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		}
 	};
 
-	$sub.onStore.tag = function(name, item) {
-		$sub._lnk(item);
-	};
+	$extend($extend($sub._tg.prototype, linkMethods), {  // Add linkMethods to tagDef prototype
+		domChange: function() { // domChange notification support
+			var elem = this.parentElem,
+				hasListener = $.hasData(elem) && $._data(elem).events,
+				domChangeNotification = "jsv-domchange";
 
-	$sub._lnk = function(item) {
-		return $extend(item, linkMethods);
-	};
+			hasListener && hasListener[domChangeNotification]
+				// Only trigger handler if there is a handler listening for this event. (Note using triggerHandler - so no event bubbling.)
+				&& $(elem).triggerHandler(domChangeNotification, arguments);
+		}
+	});
 
 	$sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 
@@ -2330,8 +2335,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	//====================================
 
 	$extend(
-		$sub._lnk($sub.View.prototype),
-		{
+		$extend($sub.View.prototype, linkMethods), {
 			// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
 			addViews: function(index, dataItems, tmpl) {
 				// if view is not an array view, do nothing
@@ -2537,7 +2541,14 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					self._sel = args[1],
 					data == undefined ? null : data,
 					self._hlr = function(ev) {
-						return handler.apply(contextOb || linkCtx.data, [].concat(params, ev, {change: ev.type, view: view, linkCtx: linkCtx}));
+						return handler.apply(contextOb || linkCtx.data, [].concat(
+							params, // e.g. par1, par2
+							ev,
+							{change: ev.type, view: view, linkCtx: linkCtx},
+							params.slice.call(arguments, 1) // If triggering event (e.g. jsv-domchange) has additional arguments after ev, pass them too
+						));
+						// for {on 'click' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs)
+						// for {on 'jsv-domchange' handler par1 par2} use hanlder(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
 					}
 				);
 			}
@@ -2559,30 +2570,32 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			//}
 			//return false;
 		//},
-		onArrayChange: function(ev, eventArgs) {
+		onArrayChange: function(ev, eventArgs, tagCtx, linkCtx) {
 			var arrayView,
+				target = ev.target,
+				targetLength = target.length,
 				self = this,
 				change = eventArgs.change;
 			if (self._.noVws // Child views not supported because target is not html - e.g. data-link="title{for ...}"
 				|| self.tagCtxs[1] && ( // There is an {{else}}
-					change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
-					|| change === "remove" && !ev.target.length // removing , and new length 0, so going from n to 0
-					|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length // refreshing, and length is going from 0 to n or from n to 0
+					change === "insert" && targetLength === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
+					|| change === "remove" && !targetLength // removing , and new length 0, so going from n to 0
+					|| change === "refresh" && !eventArgs.oldItems.length !== !targetLength // refreshing, and length is going from 0 to n or from n to 0
 				)) {
 				self.refresh();
 			} else {
 				for (arrayView in self._.arrVws) {
 					arrayView = self._.arrVws[arrayView];
-					if (arrayView.data === ev.target) {
+					if (arrayView.data === target) {
 						arrayView._.onArrayChange.apply(arrayView, arguments);
 					}
 				}
 			}
+			self.domChange(tagCtx, linkCtx, eventArgs);
 			ev.done = true;
-			// TODO - plus similar for if, etc. $(self.parentElem).trigger("forArrayChange") https://github.com/BorisMoore/jsviews/issues/299
 		},
-		onAfterLink: function() {
-			var i, tagCtx, arrHandler, arrBinding, data,
+		onAfterLink: function(tagCtx, linkCtx) {
+			var i, arrHandler, arrBinding, data,
 				self = this,
 				arrayBindings = self._ars || {},
 				tagCtxs = self.tagCtxs,
@@ -2602,10 +2615,11 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					delete arrayBindings[i];
 				}
 				if (!arrayBindings[i] && $.isArray(data)) {
-					$observe(data, arrHandler = function(ev, eventArgs) { // Store array data as self._ar, and arrayChangeHandler as self._arCh
-						self.onArrayChange(ev, eventArgs);
+					$observe(data, arrHandler = function(ev, eventArgs) {
+						var tagCt = tagCtx;
+						self.onArrayChange(ev, eventArgs, tagCt, linkCtx);
 					});
-					arrayBindings[i] = [data, arrHandler];
+					arrayBindings[i] = [data, arrHandler]; // Store array data and arrayChangeHandler on self._ars[i]
 				}
 			}
 			for (i = selected + 1; i < l; i++) { // If there were previous bindings on later tagCtxs, remove them
@@ -2627,6 +2641,27 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	$extend($tags["for"], linkMethods);
 	$extend($tags["if"], linkMethods);
 	$extend($tags.include, linkMethods);
+
+	$extend($tags["if"], {
+		onUpdate: function(ev, eventArgs, tagCtxs) {
+			var tci, prevArg, different;
+			for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
+				prevArg = prevArg.args[0];
+				different = !prevArg !== !tagCtxs[tci].args[0];
+				if ((!this.convert && !!prevArg) || different) {
+					return different;
+					// If there is no converter, and newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
+					// If newArg and prevArg are different, return true, to update
+					// If newArg and prevArg are both falsey, move to the next {{else ...}}
+				}
+			}
+			// Boolean value of all args are unchanged (falsey), so return false to cancel update
+			return false;
+		},
+		onAfterLink: function(tagCtx, linkCtx, eventArgs) {
+			eventArgs && this.domChange(tagCtx, linkCtx, eventArgs);
+		}
+	});
 
 	function observeProps(map, ev, eventArgs) {
 		if (eventArgs.change === "set") {

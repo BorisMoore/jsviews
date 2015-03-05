@@ -1,6 +1,6 @@
 /*! jsviews.js v1.0.0-alpha single-file version:
 includes JsRender, JsObservable and JsViews  http://github.com/BorisMoore/jsrender and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 62 (Beta Candidate) */
+informal pre V1.0 commit counter: 63 (Beta Candidate) */
 
 /* JsRender:
  *    See http://github.com/BorisMoore/jsrender and http://jsviews.com/jsrender
@@ -86,20 +86,16 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 				extend: $extend,
 				syntaxErr: syntaxError,
 				onStore: {},
-				_lnk: retVal,
-				_ths: tagHandlersFromProps
+				_ths: tagHandlersFromProps,
+				_tg: function() {
+				
+				} // Constructor for tagDef
 			},
 			map: dataMap, // If jsObservable loaded first, use that definition of dataMap
 			_cnvt: convertVal,
 			_tag: renderTag,
 			_err: error
 		};
-
-	function baseApply(args) {
-		// In derived method (or handler declared declaratively as in {{:foo onChange=~fooChanged}} can call base method,
-		// using this.baseApply(arguments) (Equivalent to this._superApply(arguments) in jQuery UI)
-		return this.base.apply(this, args);
-	}
 
 	function getDerivedMethod(baseMethod, method) {
 		return function () {
@@ -303,11 +299,11 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 		if (res) {
 			if ($isFunction(res) && !res._wrp) {
+				// If it is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
+				// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
+				// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
+				// For example, ~util.foo() will have the ~util object as 'this' pointer
 				wrapped = function() {
-					// If it is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
-					// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
-					// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
-					// For example, ~util.foo() will have the ~util object as 'this' pointer
 					return res.apply((!this || this === global) ? view : this, arguments);
 				};
 				wrapped._wrp = true;
@@ -336,7 +332,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		if (converter || boundTag) {
 			tag = linkCtx && linkCtx.tag;
 			if (!tag) {
-				tag = {
+				tag = $extend(new $sub._tg(), {
 					_: {
 						inline: !linkCtx,
 						bnd: boundTag,
@@ -346,15 +342,12 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					cvt: converter,
 					flow: true,
 					tagCtx: tagCtx,
-					baseApply: baseApply,
-					_is: "tag"
-				};
+				});
 				if (linkCtx) {
 					linkCtx.tag = tag;
 					tag.linkCtx = linkCtx;
 				}
 				tagCtx.ctx = extendCtx(tagCtx.ctx, (linkCtx ? linkCtx.view : view).ctx);
-				$sub._lnk(tag);
 			}
 			tag._er = onError && value;
 			tagHandlersFromProps(tag, tagCtx);
@@ -484,19 +477,12 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			if (!tag) {
 				// This will only be hit for initial tagCtx (not for {{else}}) - if the tag instance does not exist yet
 				// Instantiate tag if it does not yet exist
-				if (tagDef._ctr) {
-					// If the tag has not already been instantiated, we will create a new instance.
-					// ~tag will access the tag, even within the rendering of the template content of this tag.
-					// From child/descendant tags, can access using ~tag.parent, or ~parentTags.tagName
-					tag = new tagDef._ctr();
-					callInit = !!tag.init;
-				} else {
-					// This is a simple tag declared as a function, or with init set to false. We won't instantiate a specific tag constructor - just a standard instance object.
-					$sub._lnk(tag = {
-						// tag instance object if no init constructor
-						render: tagDef.render
-					});
-				}
+				// If the tag has not already been instantiated, we will create a new instance.
+				// ~tag will access the tag, even within the rendering of the template content of this tag.
+				// From child/descendant tags, can access using ~tag.parent, or ~parentTags.tagName
+				tag = new tagDef._ctr();
+				callInit = !!tag.init;
+
 				tag._ = {
 					inline: !linkCtx,
 					unlinked: true
@@ -514,7 +500,6 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 				tag.tagName = tagName;
 				tag.parent = parentTag = ctx && ctx.tag;
-				tag._is = "tag";
 				tag._def = tagDef; // same as tag.constructor.prototype
 				tag.tagCtxs = tagCtxs;
 
@@ -689,8 +674,8 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	}
 
 	function compileTag(name, tagDef, parentTmpl) {
-		var constructor, tmpl, baseTag, prop, method,
-			compiledDef = {};
+		var constructor, tmpl, baseTag, prop,
+			compiledDef = new $sub._tg();
 
 		if ($isFunction(tagDef)) {
 			// Simple tag declared as function. No presenter instantation.
@@ -702,18 +687,17 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		if (baseTag = tagDef.baseTag) {
 			tagDef.flow = !!tagDef.flow; // default to false even if baseTag has flow=true
 				tagDef.baseTag = baseTag = "" + baseTag === baseTag
-					? (parentTmpl && parentTmpl.tags[baseTag] || $.views.tags[baseTag])
+					? (parentTmpl && parentTmpl.tags[baseTag] || $tags[baseTag])
 					: baseTag;
 
-			compiledDef = $extend({}, baseTag);
+			compiledDef = $extend(compiledDef, baseTag);
 
 			for (prop in tagDef) {
 				compiledDef[prop] = getMethod(baseTag[prop], tagDef[prop]);
 			}
 		} else {
-			compiledDef = $extend({}, tagDef);
+			compiledDef = $extend(compiledDef, tagDef);
 		}
-		compiledDef.baseApply = baseApply;
 
 		// Tag declared as object, used as the prototype for tag instantiation (control/presenter)
 		if ((tmpl = compiledDef.template) !== undefined) {
@@ -730,6 +714,12 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			compiledDef._parentTmpl = parentTmpl;
 		}
 		return compiledDef;
+	}
+
+	function baseApply(args) {
+		// In derived method (or handler declared declaratively as in {{:foo onChange=~fooChanged}} can call base method,
+		// using this.baseApply(arguments) (Equivalent to this._superApply(arguments) in jQuery UI)
+		return this.base.apply(this, args);
 	}
 
 	function compileTmpl(name, tmpl, parentTmpl, options) {
@@ -849,7 +839,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	function TmplObject(markup, options) {
 		// Template object constructor
 		var htmlTag,
-			wrapMap = $viewsSettings.wrapMap || {},
+			wrapMap = $viewsSettings.wrapMap || {}, // Only used in JsViews. Otherwise empty: {}
 			tmpl = $extend(
 				{
 					markup: markup,
@@ -960,15 +950,22 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	function fastRender(data, context, noIteration, parentView, key, onRender) {
 		var self = this;
 		if (!parentView && self.fn._nvw && !$.isArray(data)) {
-			return tryFn(self, data, {tmpl: self});
+			return tryFn(self, data, {tmpl: self}); // No views needed, so can directly call compiled template
 		}
 		return renderContent.call(self, data, context, noIteration, parentView, key, onRender);
 	}
 
 	function renderContent(data, context, noIteration, parentView, key, onRender) {
+		function setItemVar(item) {
+			// When itemVar is specified, set modified ctx with user-named ~item
+			newCtx = $extend({}, context);
+			newCtx[itemVar] = item;
+		}
+
 		// Render template against data as a tree of subviews (nested rendered template instances), or as a string (top-level template).
 		// If the data is the parent view, treat as noIteration, re-render with the same data context.
-		var i, l, dataItem, newView, childView, itemResult, swapContent, tagCtx, contentTmpl, tag_, outerOnRender, tmplName, tmpl, noViews,
+		var i, l, newView, childView, itemResult, swapContent, tagCtx, contentTmpl,
+			tag_, outerOnRender, tmplName, tmpl, noViews, itemVar, newCtx,
 			self = this,
 			result = "";
 
@@ -1003,6 +1000,13 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 				context.link = false;
 			}
 			parentView = parentView || tagCtx.view;
+
+			if (itemVar = tagCtx.props.itemVar) {
+				if (itemVar.charAt(0) !== "~") {
+					syntaxError("Use itemVar='~myItem'");
+				}
+				itemVar = itemVar.slice(1);
+			}
 			data = arguments.length ? data : parentView;
 		} else {
 			tmpl = self;
@@ -1025,10 +1029,6 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			if (!parentView || parentView.type === "top") {
 				(context = context || {}).root = data; // Provide ~root as shortcut to top-level data.
 			}
-
-			// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
-			// Note: If no jQuery, $extend does not support chained copies - so limit extend() to two parameters
-
 			if (!tmpl.fn) {
 				tmpl = $templates[tmpl] || $templates(tmpl);
 			}
@@ -1042,30 +1042,38 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					outerOnRender = undefined;
 					onRender = parentView._.onRender;
 				}
+				// Set additional context on views created here, (as modified context inherited from the parent, and to be inherited by child views)
 				context = tmpl.helpers
 					? extendCtx(tmpl.helpers, context)
 					: context;
+
+				newCtx = context;
 				if ($.isArray(data) && !noIteration) {
 					// Create a view for the array, whose child views correspond to each data item. (Note: if key and parentView are passed in
 					// along with parent view, treat as insert -e.g. from view.addViews - so parentView is already the view item for array)
 					newView = swapContent
-						? parentView :
-						(key !== undefined && parentView) || new View(context, "array", parentView, data, tmpl, key, contentTmpl, onRender);
+						? parentView
+						: (key !== undefined && parentView)
+							|| new View(context, "array", parentView, data, tmpl, key, contentTmpl, onRender);
+					if (itemVar) {
+						newView.it = itemVar;
+					}
+					itemVar = newView.it;
 					for (i = 0, l = data.length; i < l; i++) {
 						// Create a view for each data item.
-						dataItem = data[i];
-						childView = new View(context, "item", newView, dataItem, tmpl, (key || 0) + i, contentTmpl, onRender);
-						itemResult = tryFn(tmpl, dataItem, childView);
+						itemVar && setItemVar(data[i]);  // use modified ctx with user-named ~item
+						childView = new View(newCtx, "item", newView, data[i], tmpl, (key || 0) + i, contentTmpl, onRender);
+
+						itemResult = tryFn(tmpl, data[i], childView);
 						result += newView._.onRender ? newView._.onRender(itemResult, childView) : itemResult;
 					}
 				} else {
 					// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "myTag" except for
 					// "item", "array" and "data" views. A "data" view is from programmatic render(object) against a 'singleton'.
-					if (parentView || !tmpl.fn._nvw) {
-						newView = swapContent ? parentView : new View(context, tmplName || "data", parentView, data, tmpl, key, contentTmpl, onRender);
-						if (tag_ && !self.flow) {
-							newView.tag = self;
-						}
+					itemVar && setItemVar(data);
+					newView = swapContent ? parentView : new View(newCtx, tmplName || "data", parentView, data, tmpl, key, contentTmpl, onRender);
+					if (tag_ && !self.flow) {
+						newView.tag = self;
 					}
 					result += tryFn(tmpl, data, newView);
 				}
@@ -1493,7 +1501,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					tagCtx = paramStructure(node[3], 'params') + '},' + paramStructure(params = node[4]);
 					onError = node[5];
 					trigger = node[6];
-					markup = node[8];
+					markup = node[8] && node[8].replace(rUnescapeQuotes, "$1");
 					if (isElse = tagName === "else") {
 						pathBindings && pathBindings.push(node[7]);
 					} else {
@@ -1654,6 +1662,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		$sub = $views.sub,
 		$viewsSettings = $views.settings;
 
+		$sub._tg.prototype = {
+			baseApply: baseApply
+		};
+
 	if (jQuery) {
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// jQuery is loaded, so make $ the jQuery object
@@ -1669,8 +1681,8 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 		$ = global.jsviews = {};
 
-		$.isArray = Array && Array.isArray || function(obj) {
-			return Object.prototype.toString.call(obj) === "[object Array]";
+		$.isArray = Array.isArray || function(obj) {
+			return $.toString.call(obj) === "[object Array]";
 		};
 
 	//	//========================== Future Node.js support ==========================
@@ -1691,7 +1703,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			if (view) {
 				// For render errors, e is an exception thrown in compiled template, and view is the current view. For other errors, e is an error string.
 				e = fallback === undefined
-					? "{Error: " + e + "}"
+					? "{Error: " + (e.message || e) + "}"
 					: $isFunction(fallback)
 						? fallback(e, view) : fallback;
 			}
@@ -1718,21 +1730,6 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 							// (which would also render the tmpl/content on the current context but would iterate if it is an array)
 							self.tagCtx.render(self.tagCtx.view, true)); // no arg, so renders against parentView.data
 				return ret;
-			},
-			onUpdate: function(ev, eventArgs, tagCtxs) {
-				var tci, prevArg, different;
-				for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
-					prevArg = prevArg.args[0];
-					different = !prevArg !== !tagCtxs[tci].args[0];
-					if ((!this.convert && !!prevArg) || different) {
-						return different;
-						// If there is no converter, and newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
-						// If newArg and prevArg are different, return true, to update
-						// If newArg and prevArg are both falsey, move to the next {{else ...}}
-					}
-				}
-				// Boolean value of all args are unchanged (falsey), so return false to cancel update
-				return false;
 			},
 			flow: true
 		},
@@ -1763,6 +1760,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			},
 			flow: true
 		},
+		props: {
+			baseTag: "for",
+			dataMap: dataMap(getTargetProps)
+		},
 		include: {
 			flow: true
 		},
@@ -1791,11 +1792,6 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		}
 		return props;
 	}
-
-	$tags("props", {
-		baseTag: "for",
-		dataMap: dataMap(getTargetProps)
-	});
 
 	//========================== Register converters ==========================
 
@@ -1845,7 +1841,9 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			},
 		$sub = $views.sub,
 		$eventSpecial = $.event.special,
+		slice = [].slice,
 		splice = [].splice,
+		concat = [].concat,
 		$isArray = $.isArray,
 		$expando = $.expando,
 		objectStr = "object",
@@ -2124,10 +2122,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
 				allPath, filter, initNsArr, initNsArrLen,
 				ns = observeStr,
-				paths = this != 1? // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
-					[].concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
+				paths = this != 1 // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
 												   // style - such as innerObserve([object], path.path, [origRoot], path.prm, innerCb, ...);
-					: Array.apply(0, arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
+					: slice.call(arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
 				lastArg = paths.pop() || false,
 				root = paths.shift(),
 				object = root,
@@ -2308,7 +2306,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
 			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
-			paths = Array.apply(0, arguments),
+			paths = slice.call(arguments),
 			origRoot = paths[0];
 
 		if (origRoot + "" === origRoot && allowArray) {
@@ -2327,7 +2325,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 	function observe_apply() {
 		// $.observe(), but allowing you to include arrays within the arguments - which you want flattened.
-		var args = [].concat.apply([], arguments); // Flatten the arguments
+		var args = concat.apply([], arguments); // Flatten the arguments
 		return $observe.apply(args.shift(), args);
 	}
 
@@ -2610,7 +2608,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			var _data = this._data,
 				oldLength = _data.length;
 			_data.splice(oldIndex, numToMove);
-			_data.splice.apply(_data, [newIndex, 0].concat(items));
+			splice.apply(_data, [newIndex, 0].concat(items));
 			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
@@ -2633,10 +2631,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 				length = _data.length,
 				$data = $([_data]);
 
-			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
 				$data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
+			$data.triggerHandler(arrayChangeStr, eventArgs);
 		}
 	};
 
@@ -3025,7 +3023,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 				if (tag) {
 					tag._er = hasError;
-					callAfterLink(tag);
+					callAfterLink(tag, eventArgs);
 				}
 			}
 
@@ -3785,7 +3783,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 			if (inTag && id) {
 				// JsViews data-linking tags are not allowed within element markup. See https://github.com/BorisMoore/jsviews/issues/213
-				syntaxError(' No {^{ tags within elem markup (' + inTag + ' ). Use data-link="..."');
+				syntaxError('No {^{ tags within elem markup (' + inTag + ' ). Use data-link="..."');
 			}
 			if (tag) {
 				inTag = tag;
@@ -3933,7 +3931,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		function getViewInfos(vwInfos) {
 			// Used by view.childTags() and tag.childTags()
 			// Similar to processViewInfos in how it steps through bindings to find tags. Only finds data-linked tags.
-			var level, parentTag;
+			var level, parentTag, named;
 
 			if (vwInfos) {
 				len = vwInfos.length;
@@ -3942,7 +3940,8 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					// This is an open marker for a data-linked tag {^{...}}, within the content of the tag whose id is get.id. Add it to bindEls.
 					// Note - if bindingStore[vwInfo.id]._is === "tag" then getViewInfos is being called too soon - during first linking pass
 					parentTag = tag = bindingStore[vwInfo.id].linkCtx.tag;
-					if (!tag.flow) {
+					named = tag.tagName === tagName;
+					if (!tag.flow || named) {
 						if (!deep) {
 							level = 1;
 							while (parentTag = parentTag.parent) {
@@ -3950,7 +3949,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 							}
 							tagDepth = tagDepth || level; // The level of the first tag encountered.
 						}
-						if ((deep || level === tagDepth) && (!tagName || tag.tagName === tagName)) {
+						if ((deep || level === tagDepth) && (!tagName || named)) {
 							// Filter on top-level or tagName as appropriate
 							tags.push(tag);
 						}
@@ -4100,7 +4099,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 								// Add data binding
 								tagCtx = tag.tagCtx;
 								view = tagCtx.view;
-								callAfterLink(tag, tagCtx);
+								callAfterLink(tag);
 							}
 						}
 					}
@@ -4576,7 +4575,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		}
 	};
 
-	function callAfterLink(tag) {
+	function callAfterLink(tag, eventArgs) {
 		var $linkedElem, linkedElem, radioButtons, val, bindings, i, l, linkedTag, oldTrig, newTrig,
 			tagCtx = tag.tagCtx,
 			view = tagCtx.view,
@@ -4588,7 +4587,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			};
 
 		if (tag.onAfterLink) {
-			tag.onAfterLink(tagCtx, linkCtx);
+			tag.onAfterLink(tagCtx, linkCtx, eventArgs);
 		}
 		delete tag._.unlinked;
 		$linkedElem = tag.targetTag ? tag.targetTag.linkedElem : tag.linkedElem;
@@ -4949,13 +4948,17 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 		}
 	};
 
-	$sub.onStore.tag = function(name, item) {
-		$sub._lnk(item);
-	};
+	$extend($extend($sub._tg.prototype, linkMethods), {  // Add linkMethods to tagDef prototype
+		domChange: function() { // domChange notification support
+			var elem = this.parentElem,
+				hasListener = $.hasData(elem) && $._data(elem).events,
+				domChangeNotification = "jsv-domchange";
 
-	$sub._lnk = function(item) {
-		return $extend(item, linkMethods);
-	};
+			hasListener && hasListener[domChangeNotification]
+				// Only trigger handler if there is a handler listening for this event. (Note using triggerHandler - so no event bubbling.)
+				&& $(elem).triggerHandler(domChangeNotification, arguments);
+		}
+	});
 
 	$sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 
@@ -5066,8 +5069,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	//====================================
 
 	$extend(
-		$sub._lnk($sub.View.prototype),
-		{
+		$extend($sub.View.prototype, linkMethods), {
 			// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
 			addViews: function(index, dataItems, tmpl) {
 				// if view is not an array view, do nothing
@@ -5273,7 +5275,14 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					self._sel = args[1],
 					data == undefined ? null : data,
 					self._hlr = function(ev) {
-						return handler.apply(contextOb || linkCtx.data, [].concat(params, ev, {change: ev.type, view: view, linkCtx: linkCtx}));
+						return handler.apply(contextOb || linkCtx.data, [].concat(
+							params, // e.g. par1, par2
+							ev,
+							{change: ev.type, view: view, linkCtx: linkCtx},
+							params.slice.call(arguments, 1) // If triggering event (e.g. jsv-domchange) has additional arguments after ev, pass them too
+						));
+						// for {on 'click' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs)
+						// for {on 'jsv-domchange' handler par1 par2} use hanlder(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
 					}
 				);
 			}
@@ -5295,30 +5304,32 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			//}
 			//return false;
 		//},
-		onArrayChange: function(ev, eventArgs) {
+		onArrayChange: function(ev, eventArgs, tagCtx, linkCtx) {
 			var arrayView,
+				target = ev.target,
+				targetLength = target.length,
 				self = this,
 				change = eventArgs.change;
 			if (self._.noVws // Child views not supported because target is not html - e.g. data-link="title{for ...}"
 				|| self.tagCtxs[1] && ( // There is an {{else}}
-					change === "insert" && ev.target.length === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
-					|| change === "remove" && !ev.target.length // removing , and new length 0, so going from n to 0
-					|| change === "refresh" && !eventArgs.oldItems.length !== !ev.target.length // refreshing, and length is going from 0 to n or from n to 0
+					change === "insert" && targetLength === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
+					|| change === "remove" && !targetLength // removing , and new length 0, so going from n to 0
+					|| change === "refresh" && !eventArgs.oldItems.length !== !targetLength // refreshing, and length is going from 0 to n or from n to 0
 				)) {
 				self.refresh();
 			} else {
 				for (arrayView in self._.arrVws) {
 					arrayView = self._.arrVws[arrayView];
-					if (arrayView.data === ev.target) {
+					if (arrayView.data === target) {
 						arrayView._.onArrayChange.apply(arrayView, arguments);
 					}
 				}
 			}
+			self.domChange(tagCtx, linkCtx, eventArgs);
 			ev.done = true;
-			// TODO - plus similar for if, etc. $(self.parentElem).trigger("forArrayChange") https://github.com/BorisMoore/jsviews/issues/299
 		},
-		onAfterLink: function() {
-			var i, tagCtx, arrHandler, arrBinding, data,
+		onAfterLink: function(tagCtx, linkCtx) {
+			var i, arrHandler, arrBinding, data,
 				self = this,
 				arrayBindings = self._ars || {},
 				tagCtxs = self.tagCtxs,
@@ -5338,10 +5349,11 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 					delete arrayBindings[i];
 				}
 				if (!arrayBindings[i] && $.isArray(data)) {
-					$observe(data, arrHandler = function(ev, eventArgs) { // Store array data as self._ar, and arrayChangeHandler as self._arCh
-						self.onArrayChange(ev, eventArgs);
+					$observe(data, arrHandler = function(ev, eventArgs) {
+						var tagCt = tagCtx;
+						self.onArrayChange(ev, eventArgs, tagCt, linkCtx);
 					});
-					arrayBindings[i] = [data, arrHandler];
+					arrayBindings[i] = [data, arrHandler]; // Store array data and arrayChangeHandler on self._ars[i]
 				}
 			}
 			for (i = selected + 1; i < l; i++) { // If there were previous bindings on later tagCtxs, remove them
@@ -5363,6 +5375,27 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 	$extend($tags["for"], linkMethods);
 	$extend($tags["if"], linkMethods);
 	$extend($tags.include, linkMethods);
+
+	$extend($tags["if"], {
+		onUpdate: function(ev, eventArgs, tagCtxs) {
+			var tci, prevArg, different;
+			for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
+				prevArg = prevArg.args[0];
+				different = !prevArg !== !tagCtxs[tci].args[0];
+				if ((!this.convert && !!prevArg) || different) {
+					return different;
+					// If there is no converter, and newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
+					// If newArg and prevArg are different, return true, to update
+					// If newArg and prevArg are both falsey, move to the next {{else ...}}
+				}
+			}
+			// Boolean value of all args are unchanged (falsey), so return false to cancel update
+			return false;
+		},
+		onAfterLink: function(tagCtx, linkCtx, eventArgs) {
+			eventArgs && this.domChange(tagCtx, linkCtx, eventArgs);
+		}
+	});
 
 	function observeProps(map, ev, eventArgs) {
 		if (eventArgs.change === "set") {

@@ -1,5 +1,5 @@
 /*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 62 (Beta Candidate) */
+informal pre V1.0 commit counter: 63 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -29,7 +29,9 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			},
 		$sub = $views.sub,
 		$eventSpecial = $.event.special,
+		slice = [].slice,
 		splice = [].splice,
+		concat = [].concat,
 		$isArray = $.isArray,
 		$expando = $.expando,
 		objectStr = "object",
@@ -308,10 +310,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
 				allPath, filter, initNsArr, initNsArrLen,
 				ns = observeStr,
-				paths = this != 1? // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
-					[].concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
+				paths = this != 1 // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
 												   // style - such as innerObserve([object], path.path, [origRoot], path.prm, innerCb, ...);
-					: Array.apply(0, arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
+					: slice.call(arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
 				lastArg = paths.pop() || false,
 				root = paths.shift(),
 				object = root,
@@ -492,7 +494,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
 			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
-			paths = Array.apply(0, arguments),
+			paths = slice.call(arguments),
 			origRoot = paths[0];
 
 		if (origRoot + "" === origRoot && allowArray) {
@@ -511,7 +513,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 
 	function observe_apply() {
 		// $.observe(), but allowing you to include arrays within the arguments - which you want flattened.
-		var args = [].concat.apply([], arguments); // Flatten the arguments
+		var args = concat.apply([], arguments); // Flatten the arguments
 		return $observe.apply(args.shift(), args);
 	}
 
@@ -794,7 +796,7 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 			var _data = this._data,
 				oldLength = _data.length;
 			_data.splice(oldIndex, numToMove);
-			_data.splice.apply(_data, [newIndex, 0].concat(items));
+			splice.apply(_data, [newIndex, 0].concat(items));
 			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
@@ -817,10 +819,10 @@ informal pre V1.0 commit counter: 62 (Beta Candidate) */
 				length = _data.length,
 				$data = $([_data]);
 
-			$data.triggerHandler(arrayChangeStr, eventArgs);
 			if (length !== oldLength) {
 				$data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
+			$data.triggerHandler(arrayChangeStr, eventArgs);
 		}
 	};
 
