@@ -1,37 +1,11 @@
-/*global test, equal, module, test, ok, QUnit, _jsv, viewsAndBindings */
+/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
 (function(global, $, undefined) {
 "use strict";
 
 var isIE8 = window.attachEvent && !window.addEventListener;
 
-//var	rowPagerMap = $.views.map({
-//		getTgt: function(rows, options) {
-//			if (options.sortby) {
-//				rows = rows.slice().sort(function(a, b) {
-//					return a[options.sortby].toLowerCase().localeCompare(b[options.sortby].toLowerCase());
-//				});
-//			}
-//			var pageLen = parseInt(options.pageLength),
-//				start = parseInt(options.page) * pageLen,
-//				end = start + pageLen;
-//			return rows.slice(start, end);
-//		},
-//		obsSrc: function(map, ev, eventArgs) {
-//			var target = map.tgt;
-//			switch (eventArgs.change) {
-//			case "remove":
-//				var index = $.inArray(eventArgs.items[0], target);
-//				if (index > -1) {
-//					$.observable(target).remove(index);
-//				}
-//				break;
-//			case "insert":
-//				$.observable(target).insert(eventArgs.items);
-//			}
-//		}
-//	});
-
 module("jsobservable");
+
 test("dataMap", function() {
 	// =============================== Arrange ===============================
 	var sortMap = $.views.map(function(rows, options) {
@@ -488,7 +462,7 @@ test("observeAll", function() {
 
 	$.observable(data).observeAll(
 		function (ev, eventArgs) {
-			result += "| ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: "
+			result += "| ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: ";
 			for (var key in eventArgs) {
 				result += key + ": " + JSON.stringify(eventArgs[key]) + " ";
 			}
@@ -541,7 +515,7 @@ test("observeAll", function() {
 	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
 
 // ............................... Assert .................................
-	result += "| DATA: " + JSON.stringify(data)
+	result += "| DATA: " + JSON.stringify(data);
 
 	equal(result,
 '| ObserveAll Path: root.person'

@@ -1,5 +1,5 @@
-/*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
-informal pre V1.0 commit counter: 63 (Beta Candidate) */
+/*! JsObservable v1.0.0-alpha: http://www.jsviews.com/#jsobservable
+informal pre V1.0 commit counter: 64 (Beta Candidate)*/
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -8,19 +8,32 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
  * Released under the MIT License.
  */
 
-(function(global, $, undefined) {
-	// global is the this object, which is window when running in the usual browser environment.
-	// $ is the global var jQuery or jsviews
-	"use strict";
+//jshint -W018, -W041
 
-	if (!$) {
-		throw "jsViews/jsObservable require jQuery";
+(function (factory) {
+	if (typeof define === "function" && define.amd) {
+		// Loading from AMD script loader. Register as an anonymous module.
+		define(["jquery"], factory);
+	} else {
+		// Browser using plain <script> tag
+		factory(this.jQuery);
 	}
-	if ($.observable) { return; } // JsObservable is already loaded
+} (function($) {
+	"use strict";
 
 	//========================== Top-level vars ==========================
 
 	var versionNumber = "v1.0.0-alpha",
+		requiresStr = "JsViews requires ";
+
+	if (!$) {
+		// jQuery is not loaded.
+		throw requiresStr + "jQuery"; // We require jQuery
+	}
+
+	if ($.observable) { return $; } // JsObservable is already loaded
+
+	var $eventSpecial = $.event.special,
 		$views = $.views =
 			$.views // jsrender was loaded before jquery.observable
 			|| { // jsrender not loaded so set up $.views and $.views.sub here, and merge back in jsrender if loaded afterwards
@@ -28,20 +41,19 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 				sub: {}
 			},
 		$sub = $views.sub,
-		$eventSpecial = $.event.special,
+		$isFunction = $.isFunction,
+		$isArray = $.isArray,
+		OBJECT = "object",
 		slice = [].slice,
 		splice = [].splice,
 		concat = [].concat,
-		$isArray = $.isArray,
 		$expando = $.expando,
-		objectStr = "object",
 		PARSEINT = parseInt,
 		rNotWhite = /\S+/g,
 		propertyChangeStr = $sub.propChng = $sub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
 		arrayChangeStr = $sub.arrChng = $sub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
 		cbBindingsStore = $sub._cbBnds = $sub._cbBnds || {},
 		observeStr = propertyChangeStr + ".observe",
-		$isFunction = $.isFunction,
 		observeObjKey = 1,
 		observeCbKey = 1,
 		observeInnerCbKey = 1,
@@ -61,7 +73,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 				deps = [],
 				l = args.length;
 			while (l--) {
-				arg = args[l--],
+				arg = args[l--];
 				dep = args[l];
 				if (dep) {
 					deps = deps.concat($isFunction(dep) ? dep(arg, arg) : dep);
@@ -127,12 +139,12 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 		for (var cb in cbBindings) {
 			return;
 		}
-		delete cbBindingsStore[cbBindingsId]; // This binding collection is empty, so remove from store
+		cbBindingsStore[cbBindingsId] = undefined; // This binding collection is empty, so remove from store
 	}
 
 	function onObservableChange(ev, eventArgs) {
 		function isOb(val) {
-			return typeof val === objectStr && (paths[0] || allowArray && $isArray(val));
+			return typeof val === OBJECT && (paths[0] || allowArray && $isArray(val));
 		}
 
 		if (!(ev.data && ev.data.off)) {
@@ -264,7 +276,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 						newObj = contextCb(exprOb, origRt);
 
 					if (newObj !== obj) {
-						if (typeof obj === objectStr) {
+						if (typeof obj === OBJECT) {
 							bindArray(obj, true);
 							if (sub || allowArray && $isArray(obj)) {
 								innerObserve([obj], sub, callback, contextCb, true); // unobserve on the old object
@@ -272,7 +284,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 						}
 						exprOb.ob = newObj;
 						// Put the updated object instance onto the exprOb in the paths array, so subsequent string paths are relative to this object
-						if (typeof newObj === objectStr) {
+						if (typeof newObj === OBJECT) {
 							bindArray(newObj);
 							if (sub || allowArray && $isArray(newObj)) {
 								// Register array binding
@@ -419,7 +431,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 						parts = [root = path];
 					}
 					while (object && (prop = parts.shift()) !== undefined) {
-						if (typeof object === objectStr) {
+						if (typeof object === OBJECT) {
 							if ("" + prop === prop) {
 								if (prop === "") {
 									continue;
@@ -580,7 +592,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 
 		var l, isObject, newAllPath, nextParentObs, updatedTgt;
 
-		if (typeof object === objectStr) {
+		if (typeof object === OBJECT) {
 			nextParentObs = [object].concat(parentObs); // The parentObs chain for the next depth of observeAll
 			isObject = $isArray(object) ? "" : "*";
 			if (cb) {
@@ -621,7 +633,7 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 			object = $isFunction(object)
 				? object.set && object.call(parentObs[0]) // It is a getter/setter
 				: object;
-			return typeof object === objectStr && object;
+			return typeof object === OBJECT && object;
 		}
 	};
 
@@ -667,7 +679,9 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 					while (object && parts.length > 1) {
 						object = object[parts.shift()];
 					}
-					object && self._setProperty(object, parts[0], value, nonStrict);
+					if (object) {
+						self._setProperty(object, parts[0], value, nonStrict);
+					}
 				}
 			}
 			return self;
@@ -858,32 +872,36 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 	}
 
 	$views.map = function(mapDef) {
-		function newMap(source, options, target) {
+		function Map(source, options, target) {
 			var changing,
 				map = this;
 			if (this.src) {
 				this.unmap(); // We are re-mapping a new source
 			}
-			if (typeof source === objectStr) {
+			if (typeof source === OBJECT) {
 				map.src = source;
 				map.tgt = target || map.tgt || [];
 				map.options = options || map.options;
 				map.update();
 
-				mapDef.obsSrc && $observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
-					if (!changing) {
-						changing = true;
-						mapDef.obsSrc(map, ev, eventArgs);
-						changing = undefined;
-					}
-				}, map.srcFlt);
-				mapDef.obsTgt && $observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
+				if (mapDef.obsSrc) {
+					$observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
+						if (!changing) {
+							changing = true;
+							mapDef.obsSrc(map, ev, eventArgs);
+							changing = undefined;
+						}
+					}, map.srcFlt);
+				}
+				if (mapDef.obsTgt ) {
+					$observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
 					if (!changing) {
 						changing = true;
 						mapDef.obsTgt(map, ev, eventArgs);
 						changing = undefined;
 					}
-				}, map.tgtFlt);
+					}, map.tgtFlt);
+				}
 			}
 		}
 
@@ -899,10 +917,10 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 		}
 
 		mapDef.map = function(source, options, target) {
-			return new newMap(source, options, target);
+			return new Map(source, options, target);
 		};
 
-		(newMap.prototype = {
+		(Map.prototype = {
 			srcFlt: mapDef.srcFlt || shallowFilter, // default to shallowFilter
 			tgtFlt: mapDef.tgtFlt || shallowFilter,
 			update: function(options) {
@@ -912,16 +930,22 @@ informal pre V1.0 commit counter: 63 (Beta Candidate) */
 			unmap: function() {
 				var map = this;
 				if (map.src) {
-					map.obs && $observable(map.src).unobserveAll(map.obs, map.srcFlt);
-					map.obt && $observable(map.tgt).unobserveAll(map.obt, map.tgtFlt);
+					if (map.obs) {
+						$observable(map.src).unobserveAll(map.obs, map.srcFlt);
+					}
+					if (map.obt) {
+						$observable(map.tgt).unobserveAll(map.obt, map.tgtFlt);
+					}
 					map.src = undefined;
 				}
 			},
-			map: newMap,
+			map: Map,
 			_def: mapDef
-		}).constructor = newMap;
+		}).constructor = Map;
 
 		return mapDef;
 	};
 
-})(this, this.jQuery);
+
+	return $;
+}));

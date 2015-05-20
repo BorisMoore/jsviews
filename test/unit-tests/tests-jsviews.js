@@ -1,9 +1,9 @@
-/*global test, equal, module, test, ok, QUnit, _jsv, viewsAndBindings */
+/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
 (function(global, $, undefined) {
 "use strict";
-(function() {
 /* Setup */
 var isIE8 = window.attachEvent && !window.addEventListener;
+	$.views.settings.debugMode(true); // For using viewsAndBindings()
 
 // =============== Model ===============
 function fullName(reverse, upper) {
@@ -582,10 +582,12 @@ test("Template validation", function() {
 	result = "";
 
 	// =============================== Arrange ===============================
+	$.templates('<img>')
+		.link("#result", person1);
+
 	$.templates('prop: <input id="last" data-link="lastName"/><br><div><br/>'
 		+ '{{if true}}<input id="{{:\'last\'}}" data-link="lastName">{{/if}}<img/></div><img>')
 		.link("#result", person1);
-
 	// ................................ Act ..................................
 	result = $("#result input")[0].value + $("#result input")[1].value;
 
@@ -596,39 +598,59 @@ test("Template validation", function() {
 	result = "";
 
 	// =============================== Arrange ===============================
-	try {
-		$.templates('<span {{if true}}id="last"{{/if}}>a</span>')
-		.link("#result", { thing: "Orig" });
-	} catch (e) {
-		result = e.message;
-	}
+	$.templates('<input {{if true}}id="last"{{/if}} {{if false}}id="first"{{/if}} data-link="lastName"/>')
+		.link("#result", { lastName: "Blow" });
+	
+	// ............................... Assert .................................
+	equal($("#result #last").val(), "Blow",
+		"{{if}} is supported within <input/> markup even when data-linking");
+	result = "";
+
+	// =============================== Arrange ===============================
+	$.templates('<input data-link="lastName" {{if true}}id="last"/> {{else}}/>{{/if}}')
+		.link("#result", { lastName: "Blow" });
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\nNo {^{ tags within elem markup (<span ). Use data-link=\"...\"", "Validation - {{if}} within <span> markup");
+	equal($("#result #last").val(), "Blow",
+		"{{if}} wrapping closing delimiter of <input/> markup is supported even when data-linking");
 	result = "";
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input {{if true}}id="last\"{{/if}} data-link="lastName">')
-		.link("#result", { thing: "Orig" });
+		$.templates('<input {^{if true}}id="last"{{/if}} data-link="lastName">')
+		.link("#result", { lastName: "Blow" });
 	} catch (e) {
 		result = e.message;
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\nNo {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input/> markup");
+	equal(result, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
+		"Validation - {^{if}} within <input  markup");
 	result = "";
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input {{if true}}id="last\"/> {{else}}/>{{/if}}')
+		$.templates('<input data-link="lastName" {^{if true}}id="last"/> {{else}}/>{{/if}}')
+		.link("#result", { lastName: "Blow" });
+	} catch (e) {
+		result = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(result, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
+		"Validation - {^{if}} wrapping closing delimiter of <input/> markup");
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<span {^{if true}}id="last"{{/if}}>a</span>')
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\nNo {^{ tags within elem markup (<input ). Use data-link=\"...\"", "Validation - {{if}} within <input markup wrapping />");
+	equal(result, "Syntax error\n{^{ within elem markup (<span ). Use data-link=\"...\"",
+		"Validation - {^{if}} within <span> markup");
 	result = "";
 
 	// =============================== Arrange ===============================
@@ -640,7 +662,8 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, "Syntax error\nNo {^{ tags within elem markup (<div ). Use data-link=\"...\"", "Validation - {{:...}} within element markup");
+	equal(result, "Syntax error\n{^{ within elem markup (<div ). Use data-link=\"...\"",
+		"Validation - {^{:...}} within element markup");
 	result = "";
 
 	// ................................ Reset ................................
@@ -736,7 +759,7 @@ test("jQuery cleanData integration", function() {
 module("API - data-link");
 
 test("Basic $.link(expression, container, data) and $.link(tmpl, container, data)", function() {
-
+	
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
 	$.link("lastName 44 a=3", "#inner", person1);
@@ -3245,8 +3268,8 @@ test("Computed observables in paths", function() {
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|"
-		, "Interplay of view and tag refresh in deep content: " + message);
+		equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|",
+			"Interplay of view and tag refresh in deep content: " + message);
 	}
 
 	// ............................... Assert .................................
@@ -4438,8 +4461,7 @@ test("Computed observables in two-way binding", function() {
 		+ "n0new n0 n0new n0new n1 n1 s1 s1|"
 		+ "n0new n0 n0new n0new n1new n1 n1new n1new|"
 		+ "s0new s0new s0new n0new n1new n1 n1new n1new|"
-		+ "s0new s0new s0new n0new s1new s1new s1new n1new|"
-	,
+		+ "s0new s0new s0new n0new s1new s1new s1new n1new|",
 		'Two-way bindings with chained computed observables using linkTo remain independent when same template links different elements of an array');
 
 		// ................................ Reset ................................
@@ -7160,6 +7182,120 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
+	model.things = []; // reset Prop
+
+	$.templates('{^{if things.length}}X {^{for things}}{{:thing}}{{/for}}{{/if}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	after = $("#result").text();
+	$.observable(model.things).insert({ thing: "box " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert({ thing: "table " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert(0, { thing: "tree " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove(0);
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([{ thing: "pen " },{ thing: "lamp " }]);
+	after += "|" + $("#result").text();
+	$.observable(model.things).move(0, 1);
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([]);
+	after += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, isIE8
+		? "|X box |X boxtable  |Xtree  boxtable  |Xtree  box  |X  box  ||Xpen lamp  |Xlamp pen  |"
+		: "|X box |X box table |X tree box table |X tree box |X box ||X pen lamp |X lamp pen |",
+	'{^{if things.length}}{^{for things}} content block bound to both array and array.length responds correctly to observable array changes');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = []; // reset Prop
+
+	$.templates('{^{for things.length && things}}{{:thing}}{{/for}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	after = $("#result").text();
+	$.observable(model.things).insert({ thing: "box " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert({ thing: "table " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert(0, { thing: "tree " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove(0);
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([{ thing: "pen " },{ thing: "lamp " }]);
+	after += "|" + $("#result").text();
+	$.observable(model.things).move(0, 1);
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([]);
+	after += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, isIE8
+		? "|box |box table |tree box table |tree box |box ||pen lamp  |lamp pen  |"
+		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
+	'{^{for things.length && things}} content block bound to both array and array.length responds correctly to observable array changes');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = []; // reset Prop
+
+	$.templates('{^{for things.length}}{^{for ~root.things}}{{:thing}}{{/for}}{{/for}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	after = $("#result").text();
+	$.observable(model.things).insert({ thing: "box " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert({ thing: "table " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).insert(0, { thing: "tree " });
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove(0);
+	after += "|" + $("#result").text();
+	$.observable(model.things).remove();
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([{ thing: "pen " },{ thing: "lamp " }]);
+	after += "|" + $("#result").text();
+	$.observable(model.things).move(0, 1);
+	after += "|" + $("#result").text();
+	$.observable(model.things).refresh([]);
+	after += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, isIE8
+		? "|box |box table |tree box table |tree box |box ||pen lamp  |lamp pen  |"
+		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
+	'{^{for things.length}}{^{for ~root.things}} content bound to both array and array.length responds correctly to observable array changes');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	model.things = [{ thing: "box" }, { thing: "table" }]; // reset Prop
 
 	$.templates('{{include things}}{^{:length}} {^{for}}{{:thing}}{{/for}}{{/include}}')
@@ -7881,6 +8017,74 @@ test("{^{props}}..{{else}} ...", function() {
 	};
 
 	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
+		+ '{{else objB}}{^{:key}}:{^{:prop}},'
+		+ '{{else}}'
+			+ 'NONE'
+		+ '{{/props}}')
+
+		.link("#result", root);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).setProperty("propA2", "valA2");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1,|propA1:valA1,propA2:valA2,",
+	'{^{props}} - set new property on objA - shows additional property');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objA).removeProperty("propA1").removeProperty("propA2");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propA1:valA1,propA2:valA2,|propB1:valb1,propB2:valb2,",
+	'{^{props}} - remove properties from objA - switches to {{else objB}}');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objB).removeProperty("propB1").removeProperty("propB2");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "propB1:valb1,propB2:valb2,|NONE",
+	'{^{props}} - remove properties from objB - switches to {{else}}');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objB).removeProperty("NotAProperty");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "NONE|NONE",
+	'{^{props}} - remove inexistant property from objB - remains on {{else}}');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(root.objB).setProperty("newProp", "");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, "NONE|newProp:,",
+	'{^{props}} - set property on objB to undefined - render {{else objB}}');
+
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
+
+	// =============================== Arrange ===============================
+
+	root = {
+		objA: { propA1: "valA1" },
+		objB: { propB1: "valb1", propB2: "valb2" }
+	};
+
+	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
 			+ '<button class="removePropA" data-link="{on ~remove}">remove</button>,'
 		+ '{{else objB}}{^{:key}}:{^{:prop}},'
 			+ '<button class="removePropB" data-link="{on ~remove}">remove</button>,'
@@ -8432,8 +8636,7 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	'Name: Mr Jo. Width: 30-One Name: Mr Jo. Width: 30-OneOne|Name: Sir newFirst. Width: 40-newLast Name: Sir newFirst. Width: 40-newLastnewLast'
-,
+	'Name: Mr Jo. Width: 30-One Name: Mr Jo. Width: 30-OneOne|Name: Sir newFirst. Width: 40-newLast Name: Sir newFirst. Width: 40-newLastnewLast',
 	'Data link using: {^{tmplTag/}} {^{:lastName}} <span data-link="{tmplTag}"></span><span data-link="lastName"></span><input data-link="lastName"/>');
 
 	// ................................ Reset ................................
@@ -8902,7 +9105,7 @@ test('Bound tag properties and contextual properties', function() {
 
 	// =============================== Arrange ===============================
 
-	var model = {
+	model = {
 		sortby: "role",
 		cols: ["name", "role"],
 		sort: function(ev, eventArgs) {
@@ -9670,7 +9873,7 @@ test("JsViews ArrayChange: insert()", function() {
 		.link("#result", model);
 	// ................................ Act ..................................
 	$.observable(model.things).insert(0, { thing: "First" });
-	
+
 	// ............................... Assert .................................
 	equal($("#result").text(), "FirstOrig",
 	'Within element only content, insertion finds correctly the previous view, prevNode, nextNode, etc and establishes correct element order and binding');
@@ -9694,7 +9897,7 @@ test("JsViews ArrayChange: remove()", function() {
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1); 
+	$.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
@@ -9723,14 +9926,14 @@ test("JsViews ArrayChange: remove()", function() {
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1); 
+	$.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
 	'Within regular content, remove(1) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(); 
+	$.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagOrigTagMiddleTag|after",
@@ -9756,7 +9959,7 @@ test("JsViews ArrayChange: move()", function() {
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2); 
+	$.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
@@ -9778,7 +9981,7 @@ test("JsViews ArrayChange: move()", function() {
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2); 
+	$.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
@@ -9803,7 +10006,7 @@ test("JsViews ArrayChange: refresh()", function() {
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagATagBTagCTag|after",
@@ -9825,7 +10028,7 @@ test("JsViews ArrayChange: refresh()", function() {
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]);
 
 	// ............................... Assert .................................
 	equal($("#result").text(), "TagATagBTagCTag|after",
@@ -9841,7 +10044,7 @@ test("JsViews jsv-domchange", function() {
 	function domchangeHandler(ev, tagCtx, linkCtx, eventArgs) {
 		result += ev.type + " " + ev.target.tagName + " " + tagCtx.params.args[0] + " " + (linkCtx.tag === tagCtx.tag) + " " + eventArgs.change + " | " ;
 	}
-	
+
 	$.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
@@ -9856,13 +10059,13 @@ test("JsViews jsv-domchange", function() {
 	$("#result div").on("jsv-domchange", domchangeHandler);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert({thing: "New"}); 
-	$.observable(model.things).move(2, 0, 2); 
-	$.observable(model.things).remove(1, 2); 
-	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+	$.observable(model.things).insert({thing: "New"});
+	$.observable(model.things).move(2, 0, 2);
+	$.observable(model.things).remove(1, 2);
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]);
 
 	// ............................... Assert .................................
-	equal(result, 
+	equal(result,
 		"jsv-domchange DIV things true insert | "
 		+ "jsv-domchange DIV things true move | "
 		+ "jsv-domchange DIV things true remove | "
@@ -9888,12 +10091,12 @@ test("JsViews jsv-domchange", function() {
 		});
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert({thing: "New"}); 
-	$.observable(model.things).move(2, 0, 2); 
-	$.observable(model.things).remove(1, 2); 
-	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]); 
+	$.observable(model.things).insert({thing: "New"});
+	$.observable(model.things).move(2, 0, 2);
+	$.observable(model.things).remove(1, 2);
+	$.observable(model.things).refresh([{ thing: "A" }, { thing: "B" }, { thing: "C" }]);
 
-	equal(result, 
+	equal(result,
 		"Params: 333, 444 | jsv-domchange DIV things true insert | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true move | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true remove | "
@@ -11897,7 +12100,7 @@ test("Settings, error handlers, onError", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(result, '<<Syntax error\nUnmatched or missing tag: \"{{/if}}\" in template:\n{{if}}>>: override thrown error', "Override thrown error - with link()");
+	equal(result, '<<Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}>>: override thrown error', "Override thrown error - with link()");
 
 	// ................................ Act ..................................
 	$.templates('{{:missing.willThrow onError=onerr}} {^{if missing.willThrow onError=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="missing.willThrow onError=onerr + \' (in data-link)\'"></span>').link("#result", app);
@@ -13303,9 +13506,7 @@ test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
 	var res = "";
 
-	$.templates({
-		markup: '{^{twoWayTag name trigger="keydown mouseup"/}}'
-	}).link("#result", person);
+	$.templates('{^{twoWayTag name trigger="keydown mouseup"/}}').link("#result", person);
 
 	var linkedElem = $("#result input")[0],
 		events = $._data(linkedElem).events,
@@ -13360,9 +13561,7 @@ test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
 	res = "";
 
-	$.templates({
-		markup: '<input data-link=\'name trigger="keydown mouseup"\' />'
-	}).link("#result", person);
+	$.templates('<input data-link=\'name trigger="keydown mouseup"\' />').link("#result", person);
 
 	linkedElem = $("#result input")[0];
 
@@ -13416,9 +13615,7 @@ test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
 	res = "";
 
-	$.templates({
-		markup: '<div contenteditable="true" data-link=\'name trigger="keydown mouseup"\'>some content</div>'
-	}).link("#result", person);
+	$.templates('<div contenteditable="true" data-link=\'name trigger="keydown mouseup"\'>some content</div>').link("#result", person);
 
 	linkedElem = $("#result div")[0];
 
@@ -13526,15 +13723,14 @@ test('two-way bound tag controls', function() {
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
 });
 
-QUnit.asyncTest("trigger=true - after keydown: <input/>", function() {
+test("trigger=true - after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 
-	var res = "",
+	var done = assert.async(),
+		res = "",
 		person = { name: "Jo" };
 
-	$.templates({
-		markup: '<input data-link="name trigger=true" />'
-	}).link("#result", person);
+	$.templates('<input data-link="name trigger=true" />').link("#result", person);
 
 	var linkedElem = $("#result input")[0];
 
@@ -13575,14 +13771,15 @@ QUnit.asyncTest("trigger=true - after keydown: <input/>", function() {
 		ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(true, container)');
 
-		QUnit.start();
+		done();
 	}, 0);
 });
 
-QUnit.asyncTest("trigger=true - after keydown: {^{twoWayTag}}", function() {
+test("trigger=true - after keydown: {^{twoWayTag}}", function(assert) {
 	// =============================== Arrange ===============================
 
-	var before = "",
+	var done = assert.async(),
+		before = "",
 		person = { name: "Jo" };
 
 	$.templates({
@@ -13630,14 +13827,15 @@ QUnit.asyncTest("trigger=true - after keydown: {^{twoWayTag}}", function() {
 		ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
 
-		QUnit.start();
+		done();
 	}, 0);
 });
 
-QUnit.asyncTest("trigger=true - after keydown: {^{textbox}}", function() {
+test("trigger=true - after keydown: {^{textbox}}", function(assert) {
 	// =============================== Arrange ===============================
 
-	var before = "",
+	var done = assert.async(),
+		before = "",
 		person = { name: "Jo" };
 
 	$.views.tags({
@@ -13699,14 +13897,15 @@ QUnit.asyncTest("trigger=true - after keydown: {^{textbox}}", function() {
 		ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
 
-		QUnit.start();
+		done();
 	}, 0);
 });
 
-QUnit.asyncTest("trigger=true - after keydown: {^{contentEditable}}", function() {
+test("trigger=true - after keydown: {^{contentEditable}}", function(assert) {
 	// =============================== Arrange ===============================
 
-	var before = "",
+	var done = assert.async(),
+		before = "",
 		person = { name: "Jo <b>Smith</b>" };
 
 	$.views.tags({
@@ -13779,7 +13978,7 @@ QUnit.asyncTest("trigger=true - after keydown: {^{contentEditable}}", function()
 		ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
 
-		QUnit.start();
+		done();
 	}, 0);
 
 });
@@ -14281,7 +14480,8 @@ test("Tag control events", function() {
 	equal($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
 
 	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
-});
 
-})();
+$.views.settings.debugMode(false); // For using viewsAndBindings()
+
+});
 })(this, this.jQuery);
