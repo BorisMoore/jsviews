@@ -583,4 +583,27 @@ test("observeAll", function() {
 $.observable(data).unobserveAll();
 });
 
+
+test("observeAll_cyclic",function(){
+	var obj = { }
+
+	obj.childs = [
+		{ parent: obj, id:1 },
+		{ parent: obj, id:2 },
+		{ parent: obj, id:3 }  
+	];
+
+	var result = 'not triggered';
+	
+	$.observable(obj).observeAll(function(){
+		result = 'triggered';
+	});
+
+	$.observable(obj).setProperty('test', true);
+	
+	equal(result, 'triggered');
+	
+});
+
+
 })(this, this.jQuery);

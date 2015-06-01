@@ -2440,20 +2440,26 @@ var $eventSpecial = $.event.special,
 
 	//========================== Initialize ==========================
 
-	function $observeAll(namespace, cb, filter, unobserve) {
+	function $observeAll(namespace, cb, filter, unobserve, objMap) {
 		if (namespace + "" !== namespace) {
 			filter = cb;
 			cb = namespace;
 			namespace = "";
 		}
-		observeAll(namespace, this._data, cb, filter, [], "root", unobserve);
+		observeAll(namespace, this._data, cb, filter, [], "root", unobserve, objMap);
 	}
 
 	function $unobserveAll(namespace, cb, filter) {
 		$observeAll.call(this, namespace, cb, filter, true);
 	}
 
-	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve) {
+	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve, objMap) {
+		objMap = objMap || [];
+		if(objMap.indexOf(object)!==-1){
+			return;
+		}
+		objMap.push(object);
+		
 		function observeArray(arr, unobs) {
 			l = arr.length;
 			newAllPath = allPath + "[]";
@@ -2470,7 +2476,7 @@ var $eventSpecial = $.event.special,
 					if (nestedArray && updatedTgt) {
 						newParentObs.unshift(updatedTgt); // For array change events need to add updated array to parentObs
 					}
-					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs); // If nested array, need to observe the array too - so set filter to undefined
+					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs, objMap); // If nested array, need to observe the array too - so set filter to undefined
 				}
 			}
 		}
