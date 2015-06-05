@@ -2440,25 +2440,30 @@ var $eventSpecial = $.event.special,
 
 	//========================== Initialize ==========================
 
-	function $observeAll(namespace, cb, filter, unobserve, objMap) {
+	function $observeAll(namespace, cb, filter, unobserve) {
 		if (namespace + "" !== namespace) {
 			filter = cb;
 			cb = namespace;
 			namespace = "";
 		}
-		observeAll(namespace, this._data, cb, filter, [], "root", unobserve, objMap);
+		observeAll(namespace, this._data, cb, filter, [], "root", unobserve);
 	}
 
 	function $unobserveAll(namespace, cb, filter) {
 		$observeAll.call(this, namespace, cb, filter, true);
 	}
 
-	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve, objMap) {
-		objMap = objMap || [];
-		if(objMap.indexOf(object)!==-1){
+	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve) {
+		//TODO: check if handlers are attached
+		var evtMap = $._data(object, 'events');
+		if(evtMap['propertyChange'] && 
+			evtMap['propertyChange'].namespace && 
+			evtMap['propertyChange'].namespace.indexOf('.observe')!==-1){
+			
+			//handler already attached
 			return;
+			
 		}
-		objMap.push(object);
 		
 		function observeArray(arr, unobs) {
 			l = arr.length;
@@ -2476,7 +2481,7 @@ var $eventSpecial = $.event.special,
 					if (nestedArray && updatedTgt) {
 						newParentObs.unshift(updatedTgt); // For array change events need to add updated array to parentObs
 					}
-					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs, objMap); // If nested array, need to observe the array too - so set filter to undefined
+					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs); // If nested array, need to observe the array too - so set filter to undefined
 				}
 			}
 		}
