@@ -2454,6 +2454,17 @@ var $eventSpecial = $.event.special,
 	}
 
 	function observeAll(namespace, object, cb, filter, parentObs, allPath, unobserve) {
+		//TODO: check if handlers are attached
+		var evtMap = $._data(object, 'events');
+		if(evtMap['propertyChange'] && 
+			evtMap['propertyChange'].namespace && 
+			evtMap['propertyChange'].namespace.indexOf('.observe')!==-1){
+			
+			//handler already attached
+			return;
+			
+		}
+		
 		function observeArray(arr, unobs) {
 			l = arr.length;
 			newAllPath = allPath + "[]";
