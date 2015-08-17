@@ -259,7 +259,7 @@ if (!$.observe) {
 				// NOTE - WE DO NOT support ObserveAll on data with cyclic graphs which include DUPLICATE REFERENCES TO ARRAY PROPERTIES - such as data.children = data.descendants = []
 			}
 			if (!objMap) {
-				window.map = objMap = {un: unobserve}; // Map object to register observed objects for this observeAll
+				objMap = {un: unobserve}; // Map object to register observed objects for this observeAll
 			}
 
 			if (cb) {
