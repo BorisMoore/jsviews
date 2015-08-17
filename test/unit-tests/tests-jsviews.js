@@ -1,9 +1,8 @@
-/*global test, equal, module, ok, QUnit, _jsv, viewsAndBindings */
+/*global test, equal, module, ok, _jsv, viewsAndBindings*/
 (function(global, $, undefined) {
 "use strict";
 /* Setup */
 var isIE8 = window.attachEvent && !window.addEventListener;
-	$.views.settings.debugMode(true); // For using viewsAndBindings()
 
 // =============== Model ===============
 function fullName(reverse, upper) {
@@ -115,7 +114,7 @@ var cancelChange = false,
 
 $.views
 	.converters({
-		upper: updown,
+		upper_: updown,
 		cvtBack: function(val) {
 			return val;
 		}
@@ -446,6 +445,8 @@ module("Template structure");
 
 test("Template validation", function() {
 
+	$.views.settings.debugMode(); // For using _jsv
+
 	// =============================== Arrange ===============================
 	try {
 		$.templates('<svg height="210" width="400"><path data-link="d{:path}" /></svg>'
@@ -582,9 +583,6 @@ test("Template validation", function() {
 	result = "";
 
 	// =============================== Arrange ===============================
-	$.templates('<img>')
-		.link("#result", person1);
-
 	$.templates('prop: <input id="last" data-link="lastName"/><br><div><br/>'
 		+ '{{if true}}<input id="{{:\'last\'}}" data-link="lastName">{{/if}}<img/></div><img>')
 		.link("#result", person1);
@@ -593,8 +591,24 @@ test("Template validation", function() {
 
 	$.observable(person1).setProperty("lastName", "Two");
 	result += $("#result input")[0].value + $("#result input")[1].value;
+
 	// ............................... Assert .................................
 	equal(result, "OneOneTwoTwo", "Validation - void elements can have self-close slashes, or not...");
+	result = "";
+
+	// =============================== Arrange ===============================
+	var markupData = {markup: "<img/><img>"}
+	$.templates('{^{:markup}}')
+		.link("#result", markupData);
+
+	// ................................ Act ..................................
+	result = "" + ($("#result").html().indexOf("<img><img>")>60);
+
+	$.observable(markupData).setProperty("markup", "<br/><br>");
+	result += "|" + ($("#result").html().indexOf("<br><br>")>60);
+
+	// ............................... Assert .................................
+	equal(result, "true|true", "Validation - void elements inserted from data can have self-close slashes, or not...");
 	result = "";
 
 	// =============================== Arrange ===============================
@@ -685,11 +699,16 @@ test("Template validation", function() {
 	for (v in viewstore) {
 		delete viewstore[v];
 	}
+
+	$.views.settings.debugMode(false);
 });
 
 module("data-link scenarios");
 
 test("jQuery cleanData integration", function() {
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
@@ -759,7 +778,12 @@ test("jQuery cleanData integration", function() {
 module("API - data-link");
 
 test("Basic $.link(expression, container, data) and $.link(tmpl, container, data)", function() {
-	
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	home1.address = address1; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
+
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
 	$.link("lastName 44 a=3", "#inner", person1);
@@ -864,6 +888,8 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	$.unlink();
+
+	$.views.settings.debugMode(false);
 });
 
 test("Top-level linking", function() {
@@ -1020,6 +1046,11 @@ test("Top-level linking", function() {
 });
 
 test("$.link() and $().link() variants", function() {
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	home1.address = address1; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -1471,11 +1502,18 @@ test("$.link() and $().link() variants", function() {
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 
+	$.views.settings.debugMode(false);
 });
 
 module("template.link()");
 
 test("Helper overriding", 12, function() {
+
+// ................................ Reset ................................
+	home1.address = address1; // reset Prop
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
 
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
@@ -1669,6 +1707,13 @@ test("Helper overriding", 12, function() {
 });
 
 test('data-link="expression"', function() {
+
+// ................................ Reset ................................
+	home1.address = address1; // reset Prop
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -2045,9 +2090,14 @@ test('data-link="expression"', function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 	result = "";
+
+	$.views.settings.debugMode(false);
 });
 
 test('data-link="attr{:expression}"', function() {
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
 
 	// =============================== Arrange ===============================
 
@@ -2210,6 +2260,86 @@ test('data-link="attr{:expression}"', function() {
 	// ............................... Assert .................................
 	ok(before === 'One' && after === "false",
 	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to false - sets title to "false"');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="data-foo{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("data-foo");
+	var beforeVal = $("#result span").data("foo");
+	$.observable(person1).setProperty("lastName", "Two");
+	after = $("#result span")[0].getAttribute("data-foo");
+	var afterVal = $("#result span").data("foo");
+	
+	// ............................... Assert .................................
+	ok(before === 'One' && before === beforeVal && after === "Two" && after === afterVal,
+	'Data link using: <span data-link="data-foo{:lastName}"></span> sets data-foo attribute to lastName value and sets $(elem).data("foo") to the same value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	var originalAddress = person1.home.address;
+	$.templates('prop: <span data-link="data-foo{:home.address}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("data-foo");
+	var beforeVal = $("#result span").data("foo");
+	var crazyAddress = [1,2];
+	$.observable(person1.home).setProperty("address", crazyAddress);
+	after = $("#result span")[0].getAttribute("data-foo");
+	var afterVal = $("#result span").data("foo");
+	
+	// ............................... Assert .................................
+	ok(before === originalAddress.toString() && beforeVal === originalAddress && after === crazyAddress.toString() && afterVal === crazyAddress,
+	'Data link using: <span data-link="data-foo{:home.address}"></span> sets data-foo attribute to address.toString() value and sets $(elem).data("foo") to address');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+	person1.home.address = originalAddress; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="data-foo{:lastName} data-foo-bar{:lastName} a-b-c{:lastName} a_b_c-d-e{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	var el = $("#result span")[0];
+	before = el.getAttribute("data-foo") + el.getAttribute("data-foo-bar") + el.getAttribute("a-b-c") + el.getAttribute("a_b_c-d-e");
+	$.observable(person1).setProperty("lastName", "Two");
+	after = el.getAttribute("data-foo") + el.getAttribute("data-foo-bar") + el.getAttribute("a-b-c") + el.getAttribute("a_b_c-d-e");
+
+	// ............................... Assert .................................
+	ok(before === 'OneOneOneOne' && after === "TwoTwoTwoTwo",
+	'Data link using: data-link="data-foo{:lastName} data-foo-bar{:lastName} a-b-c{:lastName} a_b_c-d-e{:lastName}" sets attributes to lastName value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="a-b_foo{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("a-b_foo");
+	$.observable(person1).setProperty("lastName", "Two");
+	after = $("#result span")[0].getAttribute("a-b_foo");
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "Two",
+	'Data link using: <span data-link="a-foo{:lastName}"></span> sets data-foo attribute to lastName value');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -2547,9 +2677,18 @@ test('data-link="attr{:expression}"', function() {
 
 test('data-link="{cvt:expression:cvtBack}"', function() {
 
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	person2._firstName = "Xavier"; // reset Prop
+	person2.lastName = "Two"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	settings.width = 30; // reset Prop
+
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="{upper:lastName true added=firstName()}"></span>')
+	$.templates('prop: <span data-link="{upper_:lastName true added=firstName()}"></span>')
 		.link("#result", person2);
 
 	// ................................ Act ..................................
@@ -3001,6 +3140,14 @@ test('data-link="{if...}"', function() {
 
 test('data-link="{tag...}"', function() {
 
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	settings.width = 30; // reset Prop
+
+	// =============================== Arrange ===============================
 	$.views.tags({
 		norendernotemplate: {},
 		voidrender: function() { },
@@ -3544,6 +3691,23 @@ test("Computed observables in paths", function() {
 	ret += "--" + $("#result").text(); // |J: aval1--aval2
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+	getValue.depends = "value";
+
+	// ................................ Act ..................................
+	$.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
+	ret += "|K: " + $("#result").text();
+	$.observable(data2).setProperty("value", "newVal1");
+	ret += "--" + $("#result").text();
+	switchAlt();
+	ret += "--" + $("#result").text();
+	$.observable(data1).setProperty("value", "newVal2");
+	ret += "--" + $("#result").text();  // |K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33
+
+	// ................................ Act ..................................
+	$("#result").empty();
+	ret += "|L: " + !!$._data(data1).events + " " + !!$._data(data1).events + " " + (JSON.stringify($.views.sub._cbBnds) === "{}");
+	// |L: false false true
 	// ................................ Assert ..................................
 	equal(ret,
 		"|A: val2_22--val1_22|" +
@@ -3555,7 +3719,9 @@ test("Computed observables in paths", function() {
 		"G: 1 second street--1 first street|" +
 		"H: 1 first street--1 second street|" +
 		"I: bval2aval2val2_55--bval1aval1val1_55|" +
-		"J: aval1--aval2",
+		"J: aval1--aval2|" +
+		"K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33|" + 
+		"L: false false true",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
 });
 
@@ -6316,6 +6482,10 @@ module("API - data-bound tags");
 
 test("{^{:expression}}", function() {
 
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
+
 	// =============================== Arrange ===============================
 
 	$.templates('prop:{^{:lastName}}')
@@ -6571,9 +6741,12 @@ test("{^{:expression}}", function() {
 	$.unlink(true, "#result");
 	$("#result").empty();
 
+	$.views.settings.debugMode(false);
 });
 
 test("{^{>expression}}", function() {
+
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -6625,9 +6798,16 @@ test("{^{>expression}}", function() {
 	address1.street = "StreetOne";
 	person1.home = home1;
 
+	$.views.settings.debugMode(false);
 });
 
 test("{^{tag}}", function() {
+
+	// ................................ Reset ................................
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	settings.width = 30; // reset Prop
 
 	// =============================== Arrange ===============================
 	$.views.tags({
@@ -6976,6 +7156,14 @@ test("{^{tag}}", function() {
 });
 
 test("{^{for}}", function() {
+
+	// ................................ Reset ................................
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	settings.width = 30; // reset Prop
+	model.things = []; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -7912,6 +8100,8 @@ test("{^{props}} basic", function() {
 	// ............................... Assert .................................
 	equal(JSON.stringify($.views.sub._cbBnds), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
+
+	$.views.settings.debugMode(false);
 });
 
 test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function() {
@@ -8128,6 +8318,8 @@ test("{^{props}}..{{else}} ...", function() {
 });
 
 test('data-link="{on ...', function() {
+
+	$.views.settings.debugMode(); // For using _jsv
 
 	// =============================== Arrange ===============================
 
@@ -8619,9 +8811,18 @@ test('data-link="{on ...', function() {
 	equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	'$.unlink(true, "#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
+
+	$.views.settings.debugMode(false);
 });
 
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
+
+	// ................................ Reset ................................
+	person1._firstName = "Jo"; // reset Prop
+	person1.lastName = "One"; // reset Prop
+	settings.title = "Mr"; // reset Prop
+	settings.width = 30; // reset Prop
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -8796,6 +8997,8 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 });
 
 test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function() {
+
+	$.views.settings.debugMode(); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -9140,6 +9343,9 @@ test('Bound tag properties and contextual properties', function() {
 module("API - PropertyChange");
 
 test("PropertyChange: setProperty()", 4, function() {
+
+	// ................................ Reset ................................
+	person1.home.address.street = "StreetOne"; // reset Prop
 
 	// =============================== Arrange ===============================
 	reset();
@@ -9814,6 +10020,8 @@ test("JsObservable: move()", function() {
 	// ............................... Assert .................................
 	equal(things.join(" "), "",
 	'move(1, 2) does nothing if array is empty');
+
+	$.views.settings.debugMode(false);
 });
 
 test("JsViews ArrayChange: insert()", function() {
@@ -10113,7 +10321,12 @@ module("API - $.observe()");
 
 test("observe/unobserve alternative signatures", function() {
 
+	// ................................ Reset ................................
+	person1.home.address.street = "StreetOne"; // reset Prop
+	person1.home.address.ZIP = "111"; // reset Prop
+	$.views.settings.debugMode(); // For using _jsv
 	reset();
+
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe(person1.home.address, "street", myListener);
@@ -10285,11 +10498,15 @@ test("observe/unobserve alternative signatures", function() {
 	// ............................... Assert .................................
 	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve with deep paths using '*' works");
+
+	$.views.settings.debugMode(false);
 });
 
 test("observe/unobserve using namespaces", function() {
 
+	$.views.settings.debugMode(); // For using _jsv
 	var thing = { val: "initVal" };
+
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
 	$.observe("my.nmspace", thing, "val", myListener);
@@ -10483,9 +10700,18 @@ test("observe/unobserve using namespaces", function() {
 	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, with deep paths using '*' works");
 
+	$.views.settings.debugMode(false);
 });
 
 test("Paths", function() {
+
+	// ................................ Reset ................................
+	person1.home = home1;
+	address1.street = "StreetOne"; // reset Prop
+	address1.ZIP = "111"; // reset Prop
+	address2.street = "StreetTwo"; // reset Prop
+	address2.ZIP = "222"; // reset Prop
+	home2 = { address: address2 };
 
 	// =============================== Arrange ===============================
 	var originalAddress = person1.home.address;
@@ -10631,8 +10857,7 @@ test("Paths", function() {
 	address1.street = "StreetOne"; // reset Prop
 	address1.ZIP = "111"; // reset Prop
 	address2.street = "StreetTwo"; // reset Prop
-	address1.ZIP = "222"; // reset Prop
-	home2 = { address: address2 },
+	home2 = { address: address2 };
 	reset();
 
 	// =============================== Arrange ===============================
@@ -11057,6 +11282,9 @@ test("observe context helper", function() {
 });
 
 test("Array", function() {
+
+	$.views.settings.debugMode(); // For using _jsv
+
 	// TODO for V1 or after? >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
 	// TODO for V1 or after? >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
 
@@ -11356,6 +11584,8 @@ test("Array", function() {
 	// ............................... Assert .................................
 	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(people).events]), "[{},{},null]",
 		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
+
+	$.views.settings.debugMode(false);
 });
 
 test("MVVM", function() {
@@ -11686,359 +11916,10 @@ test("MVVM", function() {
 
 });
 
-test("observeAll", function() {
-
-	reset();
-
-	// =============================== Arrange ===============================
-	function changeHandler(ev, eventArgs) {
-		for (var key in eventArgs) {
-			result += key + ": " + eventArgs[key] + "|";
-		}
-	}
-
-	$.observable(model).observeAll(changeHandler);
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({
-		"person1.home.address": {
-			street: "1st",
-			ZIP: "00000"
-		},
-		"person1.home.address.street": "upper St",
-		"person1.home.address.ZIP": "33333",
-		things: [{ thing: "tree" }]
-	});
-	$.observable(model.things).insert({ thing: "bush" });
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
-
-	// ............................... Assert .................................
-	equal(result, "change: set|path: address|value: [object Object]|oldValue: [object Object]|remove: false|change: set|path: street|value: upper St|oldValue: 1st|remove: false|change: set|path: ZIP|value: 33333|oldValue: 00000|remove: false|change: set|path: things|value: [object Object]|oldValue: |remove: false|change: insert|index: 1|items: [object Object]|change: refresh|oldItems: [object Object],[object Object]|change: set|path: thing|value: bush+|oldValue: bush|remove: false|",
-		"observeAll raises correct change events");
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'observeAll maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll(changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll more than once does not add extra event bindings');
-
-	// ................................ Act ..................................
-	function cb2(ev, eventArgs) { }
-
-	$.observable(model).observeAll(cb2);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with a different callback adds one binding for the new callback on each object or array');
-
-	// ................................ Act ..................................
-	$.observable(model).unobserveAll(changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'Calling unobserveAll(myCallback) removes just my callback bindings');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll(changeHandler);
-
-	$.observable(model.things).unobserveAll(changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 1 1 1", 'Calling $.observable(objectOrArrayInTree).unobserveAll(myCallback) removes just my callback bindings in the subtree only');
-
-	// ................................ Act ..................................
-	$.observable(model).unobserveAll();
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events + " "
-		+ !$._data(model.things).events + " "
-		+ !$._data(model.things[0]).events + " "
-		+ !$._data(model.things[1]).events,
-		"true true true true true true true",
-	'unobserveAll() with no callback removes all bindings from the tree');
-
-	// ................................ Act ..................................
-	$.observable(model.things).observeAll(changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1", '$.observable(someArray).observeAll(changeHandler) works correctly');
-
-	$.observable(model.things).unobserveAll(changeHandler);
-
-	// ................................ Reset ..................................
-	model = {
-		person1: person1,
-		person2: person2,
-		things: []
-	};
-	person1.street = "StreetOne";
-	person1.ZIP = "222";
-});
-
-test("observeAll/unobserveAll using namespaces", function() {
-
-	reset();
-
-	// =============================== Arrange ===============================
-	function changeHandler(ev, eventArgs) {
-		for (var key in eventArgs) {
-			result += key + ": " + eventArgs[key] + "|";
-		}
-	}
-
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({
-		"person1.home.address": {
-			street: "1st",
-			ZIP: "00000"
-		},
-		"person1.home.address.street": "upper St",
-		"person1.home.address.ZIP": "33333",
-		things: [{ thing: "tree" }]
-	});
-	$.observable(model.things).insert({ thing: "bush" });
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
-
-	// ............................... Assert .................................
-	equal(result, "change: set|path: address|value: [object Object]|oldValue: [object Object]|remove: false|change: set|path: street|value: upper St|oldValue: 1st|remove: false|change: set|path: ZIP|value: 33333|oldValue: 00000|remove: false|change: set|path: things|value: [object Object]|oldValue: |remove: false|change: insert|index: 1|items: [object Object]|change: refresh|oldItems: [object Object],[object Object]|change: set|path: thing|value: bush+|oldValue: bush|remove: false|",
-		"observeAll with namespace raises correct change events");
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'observeAll with namespace maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll with namespace more than once does not add extra event bindings');
-
-	// ................................ Act ..................................
-	function cb2(ev, eventArgs) { }
-
-	$.observable(model).observeAll("my.nmspace", cb2);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with namespace with a different callback adds one binding for the new callback on each object or array');
-
-	// ................................ Act ..................................
-	$.observable(model).unobserveAll("my.nmspace");
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events + " "
-		+ !$._data(model.things).events + " "
-		+ !$._data(model.things[0]).events + " "
-		+ !$._data(model.things[1]).events,
-		"true true true true true true true",
-		'Calling unobserveAll("my.nmspace") removes all bindings with that namespace');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-	$.observable(model).observeAll("our.nmspace", changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with different namespaces adds one binding for each namespace for each object or array');
-
-	// ................................ Act ..................................
-	$.observable(model).unobserveAll("my.nmspace");
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1 1 1 1 1", 'Calling unobserveAll("my.nmspace") removes all bindings with that namespace');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace our.nmspace", changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with whitespace-separated namespaces adds one binding for each namespace (if not already bound) for each object or array');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-
-	$.observable(model.things).unobserveAll("my.nmspace", changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length + " "
-	+ $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "2 2 2 2 1 1 1", 'Calling $.observable(objectOrArrayInTree).unobserveAll("my.nmspace", myCallback) removes just my callback bindings in the subtree only');
-
-	// ................................ Act ..................................
-	$.observable(model).unobserveAll();
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events + " "
-		+ !$._data(model.things).events + " "
-		+ !$._data(model.things[0]).events + " "
-		+ !$._data(model.things[1]).events,
-		"true true true true true true true",
-	'unobserveAll() with no callback and no namespace removes all bindings from the tree');
-
-	// ................................ Act ..................................
-	$.observable(model.things).observeAll("my.nmspace", changeHandler);
-
-	// ............................... Assert .................................
-	listeners = $._data(model.things).events.arrayChange.length + " "
-	+ $._data(model.things[0]).events.propertyChange.length + " "
-	+ $._data(model.things[1]).events.propertyChange.length;
-
-	equal(listeners, "1 1 1", '$.observable("my.nmspace", someArray).observeAll(changeHandler) works correctly');
-
-	$.observable(model.things).unobserveAll(changeHandler);
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-	$.observable(model).observeAll("our.nmspace", cb2);
-	$.observable(model).unobserveAll("my.nmspace our.nmspace");
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events + " "
-		+ !$._data(model.things).events + " "
-		+ !$._data(model.things[0]).events + " "
-		+ !$._data(model.things[1]).events,
-		"true true true true true true true",
-	'unobserveAll("my.nmspace our.nmspace") removes all bindings for each namespace in whitespace-separated list');
-
-	// ................................ Act ..................................
-	$.observable(model).observeAll("my.nmspace", changeHandler);
-	$.observable(model).observeAll("our.nmspace", cb2);
-	$.observable(model).unobserveAll("nmspace");
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events + " "
-		+ !$._data(model.things).events + " "
-		+ !$._data(model.things[0]).events + " "
-		+ !$._data(model.things[1]).events,
-		"true true true true true true true",
-	'unobserveAll("nmspace") removes all bindings for all namespaces that include that namespace component');
-
-	// ................................ Reset ..................................
-	model = {
-		person1: person1,
-		person2: person2,
-		things: []
-	};
-	person1.street = "StreetOne";
-	person1.ZIP = "222";
-});
 module("API - Settings");
 
 test("Settings, error handlers, onError", function() {
+	$.views.settings.debugMode();
 
 	// ................................ Act ..................................
 	$.views.settings.delimiters("@%", "%@");
@@ -12125,6 +12006,8 @@ test("Settings, error handlers, onError", function() {
 	$.views.settings({
 		onError: oldOnError
 	});
+
+	$.views.settings.debugMode(false);
 });
 
 module("API - Declarations");
