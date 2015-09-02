@@ -30,7 +30,7 @@ test('More Errors for require() for JsRender, JsViews, JsObservable, JsRender te
 	$jsr = require("jsrender")(require("jQuery"));
 	
 	try {
-		$jsr = require('../../jsviews')(); // Should provide jQuery
+		$jsr = require('../../')(); // Should provide jQuery
 	}
 	catch(e) {
 		result = e;
@@ -42,7 +42,7 @@ test('More Errors for require() for JsRender, JsViews, JsObservable, JsRender te
 	// ................................ Act ..................................
 
 	try {
-		$jsr = require('../../jsviews')("a"); // Should provide jQuery
+		$jsr = require('../../')("a"); // Should provide jQuery
 	}
 	catch(e) {
 		result = e;
@@ -56,7 +56,7 @@ test('More Errors for require() for JsRender, JsViews, JsObservable, JsRender te
 	$jsr = require("jsrender");
 	
 	try {
-		$jsr = require('../../jsviews')($jsr); // Should provide jQuery
+		$jsr = require('../../')($jsr); // Should provide jQuery
 	}
 	catch(e) {
 		result = e;

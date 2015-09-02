@@ -19,7 +19,7 @@ test("jQuery global: require('jquery.views')", function() {
 	$jsr = require('../../jquery.observable.js'); // $jsr === global.jQuery // Else JsViews requires JsObservable
 	$jsr = require('../../jquery.views'); // $jsr === global.jQuery
 
-	// Use require to get server template, thanks to Browserify bundle that used jsrender.tmplify transform
+	// Use require to get server template, thanks to Browserify bundle that used jsrender/tmplify transform
 	var tmpl = require('../templates/name-template.html'); // Uses jsrender attached to global jQuery
 
 	var result = tmpl(data);

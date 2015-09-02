@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.0-beta.65 (Beta Candidate): http://jsviews.com/ */
+/*! jquery.views.js v1.0.0-beta.68 (Beta Candidate): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -53,7 +53,7 @@ if (!$ || !$.fn) {
 }
 
 if (jsr && !jsr.fn) {
-	jsr.toJq($); // map over from jsrender namespace to jQuery namespace
+	jsr.views.sub._jq($); // map over from jsrender namespace to jQuery namespace
 }
 
 var $observe, $observable,
@@ -1117,7 +1117,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 			// If there are ids (markers since the last tag), move them to the defer string
 			tagStack.unshift(parentTag);
 			parentTag = tag.slice(1);
-			if (tagStack[0] && tagStack[0] === badParent[parentTag]) {
+			if (validate && tagStack[0] && tagStack[0] === badParent[parentTag]) {
 				// Missing <tbody>
 				// TODO: replace this by smart insertion of <tbody> tags
 				error('Parent of <tr> must be <tbody>');
@@ -2937,16 +2937,17 @@ $extend($, {
 	}
 });
 
-$views.utility = {
-	validate: function(html) {
-		try {
-			topView.link(undefined, document.createElement("div"), undefined, undefined, html, undefined, undefined, 1);
-		}
-		catch (e) {
-			return e.message;
-		}
-	}
-};
+// Possible future addition - e.g. for ckeditor tag control
+//$views.utility = {
+//	validate: function(html) {
+//		try {
+//			topView.link(undefined, document.createElement("div"), undefined, undefined, html, undefined, undefined, 1);
+//		}
+//		catch (e) {
+//			return e.message;
+//		}
+//	}
+//};
 
 //===============================
 // Extend jQuery instance plugins

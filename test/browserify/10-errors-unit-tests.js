@@ -13,7 +13,7 @@ test('Error cases for require() for JsRender, JsViews, JsObservable, JsRender te
 	// ................................ Act ..................................
 
 	try {
-		// Server template in bundle, thanks to Browserify jsrender.tmplify transform
+		// Server template in bundle, thanks to Browserify jsrender/tmplify transform
 		tmpl = require('../templates/name-template.html')(); // Should provide $ with $.templates defined (jsrender or jQuery namespace)
 	}
 	catch(e) {

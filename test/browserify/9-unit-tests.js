@@ -15,9 +15,9 @@ test("jQuery global: require('jsviews')", function() {
 	// ................................ Act ..................................
 	global.jQuery = require('jquery');
 
-	var $jsr = require('../../jsviews'); // Uses global jQuery, so $jsr === global.jQuery is global jQuery namespace 
+	var $jsr = require('../../'); // Uses global jQuery, so $jsr === global.jQuery is global jQuery namespace 
 
-	// Use require to get server template, thanks to Browserify bundle that used jsrender.tmplify transform
+	// Use require to get server template, thanks to Browserify bundle that used jsrender/tmplify transform
 	var tmpl = require('../templates/name-template.html'); // Uses jsrender attached to global jQuery
 
 	var result = tmpl(data);

@@ -4,7 +4,7 @@ _The power of MVVM, the flexibility of JavaScript, the speed and ease of JsRende
 **JsViews** builds on top of **[JsRender](http://www.jsviews.com/#jsrender)** templates, and adds data-binding and **[observable data](http://www.jsviews.com/#jsobservable)**, to provide a fully-fledged MVVM platform for easily creating interactive data-driven single
  page apps and websites.
 
-**JSRender** and **JsViews** together provide the next-generation implementation of both _JQuery Templates_, and _JQuery Data Link_ - and supersede those libraries.
+**JsRender** and **JsViews** together provide the next-generation implementation of both _JQuery Templates_, and _JQuery Data Link_ - and supersede those libraries.
 
 See also the _[JsRender](https://github.com/BorisMoore/jsrender)_ repository on GitHub<br/>
 
