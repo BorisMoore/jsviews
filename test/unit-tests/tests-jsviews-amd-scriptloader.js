@@ -1,9 +1,6 @@
 /*global test, equal, module, ok*/
 (function(global, jQuery, undefined) {
 "use strict";
-if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
-
-module("AMD Script Loader");
 
 function undefine() { // Undefine registered modules from previously run tests.
 	require.undef("jsviews");
@@ -13,6 +10,10 @@ function undefine() { // Undefine registered modules from previously run tests.
 	require.undef("jquery");
 	delete window.jQuery;
 }
+
+if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
+
+module("AMD Script Loader");
 
 test("Loading jquery.observable.js using RequireJS", function(assert) {
 	var done = assert.async(),
@@ -67,7 +68,6 @@ test("Loading jsviews.js using RequireJS", function(assert) {
 
 			var result = $("#result").text() + " " + (jq !== $ && $ === window.jQuery);
 			equal(result, "Name: Jo updated! true", "jsviews.js loaded");
-			$.observable = $.link = undefined;
 			done();
 		});
 	});

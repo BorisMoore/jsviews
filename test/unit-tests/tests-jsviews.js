@@ -1,6 +1,7 @@
 /*global test, equal, module, ok, _jsv, viewsAndBindings*/
 (function(global, $, undefined) {
 "use strict";
+
 /* Setup */
 var isIE8 = window.attachEvent && !window.addEventListener;
 
@@ -602,10 +603,10 @@ test("Template validation", function() {
 		.link("#result", markupData);
 
 	// ................................ Act ..................................
-	result = "" + ($("#result").html().indexOf("<img><img>")>60);
+	result = "" + ($("#result").html().indexOf(isIE8 ? "<IMG><IMG>": "<img><img>")>60);
 
 	$.observable(markupData).setProperty("markup", "<br/><br>");
-	result += "|" + ($("#result").html().indexOf("<br><br>")>60);
+	result += "|" + ($("#result").html().indexOf(isIE8 ? "<BR><BR>": "<br><br>")>60);
 
 	// ............................... Assert .................................
 	equal(result, "true|true", "Validation - void elements inserted from data can have self-close slashes, or not...");
@@ -1059,7 +1060,7 @@ test("$.link() and $().link() variants", function() {
 		options: { bar: "BarA" }
 	};
 
-	$.link("person1.lastName + ' ' + person1.home.address^street + ' ' + ~options.bar", "#inner", model, help);
+	$.link("~root.person1.lastName + ' ' + person1.home.address^street + ' ' + ~options.bar", "#inner", model, help);
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
@@ -1437,6 +1438,51 @@ test("$.link() and $().link() variants", function() {
 	person1.lastName = "One"; // reset Prop
 
 	// =============================== Arrange ===============================
+	var data = {color: "green"},
+		outerHelp = {
+			ob: {
+				val: "outerVal",
+				tmpl: $.templates("Inside {^{:~root.color}} {^{:~ob.val}} {^{:~foo}} NAME: {^{:lastName}}")
+			}
+		};
+	help.foo = "Foo";
+
+	$.templates('{^{:~root.color}} {^{:~ob.val}} <span class="inner"></span>').link("#result", data, outerHelp);
+	before = $("#result").text();
+
+	$.link("{include person1 tmpl=~ob.tmpl}", "span.inner", model, help);
+
+	// ................................ Act ..................................
+	before += "|" + $("#result").text();
+	$.observable(person1).setProperty("lastName", "newLast");
+	after = $("#result").text();
+	$.observable(data).setProperty("color", "red");
+	after += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	(isIE8 ? 'green outerVal |'
+		+ 'green outerVal Inside green outerVal Foo NAME: One|'
+		+ 'green outerVal Inside green outerVal Foo NAME:newLast|'
+		+ 'red outerVal Insidered outerVal Foo NAME:newLast'
+	: 'green outerVal |'
+		+ 'green outerVal Inside green outerVal Foo NAME: One|'
+		+ 'green outerVal Inside green outerVal Foo NAME: newLast|'
+		+ 'red outerVal Inside red outerVal Foo NAME: newLast'),
+	'$.link(expression, selector, data, helpers) links correctly to target elements within a linked rendered template - and extends the context of the target view');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events,
+	"$(container).empty removes current listeners and two-way bindings from that content");
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
 
 	$.templates('<span data-link="title{:person1.lastName} {include person1 tmpl=~options.tmpl}"></span>'
 		+ ' <div data-link="title{:person1.lastName} {include person1 ^tmpl=~options.tmpl}"></div>'
@@ -1444,10 +1490,10 @@ test("$.link() and $().link() variants", function() {
 	// Rendered and linked by template: multiple targets
 
 	var model2 = {
-		person1: {
-			lastName: "lastModel2Name"
-		}
-	},
+			person1: {
+				lastName: "lastModel2Name"
+			}
+		},
 		help2 = {
 			options: {
 				tmpl: $.templates(" NAMEModel2: {^{:lastName}}")
@@ -1465,13 +1511,16 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
-	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
-	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
-	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast - Model1: modLast- Model2: lastModel2Name'
+	(isIE8
+	? 'NAME: OneNAME: OneOne One One One|'
+		+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
+		+ ' - Model1: modLast- Model2: lastModel2Name'
 	: ' NAME: One  NAME: One One One One One|'
-	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast - Model1: modLast- Model2: lastModel2Name'),
-	'$.link(true, selector, data, helpers) links correctly to within a linked rendered template - leading to dual two-way binding to both models and contexts');
+		+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
+		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'
+		+ ' - Model1: modLast- Model2: lastModel2Name'),
+	'$.link(true, selector, data, helpers) is a no-op when targetting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
 	$.observable(model2.person1).setProperty("lastName", "newModel2Last");
@@ -1483,13 +1532,14 @@ test("$.link() and $().link() variants", function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	(isIE8 ? 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
-	+ 'NAME:new_ORIGMOD_LastNAME:new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
-	+ 'NAME:new_ORIGMOD_LastNAME_ORIGMOD_NewTmpl: new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'
+	(isIE8
+	? 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
+		+ 'NAME:new_ORIGMOD_LastNAME:new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
+		+ 'NAME:new_ORIGMOD_LastNAME_ORIGMOD_NewTmpl: new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'
 	: ' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
-	+ ' NAME: new_ORIGMOD_Last  NAME: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
-	+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'),
-	'Continue: $.link(true, selector, data, helpers) links correctly to within a linked rendered template - leading to dual two-way binding to both models and contexts');
+		+ ' NAME: new_ORIGMOD_Last  NAME: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
+		+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'),
+	'Continue: $.link(true, selector, data, helpers) is a no-op when targetting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
 	$("#result").empty();
@@ -1501,7 +1551,194 @@ test("$.link() and $().link() variants", function() {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
+	model2.person1.lastName = "lastModel2Name"; // reset Prop
+	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
 
+	// =============================== Arrange ===============================
+
+	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.link(true, "#inner", model2, help2); //NO-OP
+	after = $("#result").text();
+	$.observable(model2.person1).setProperty("lastName", "newLast2");
+	after += "|" + $("#result").text();
+	$("#result input").val("modLast").change();
+	after += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after + getTitles("#inner") + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
+	"One|One|One|modLast title:modLast - Model1: modLast- Model2: newLast2",
+	'$.link(true, selector, data, helpers) is a no-op when targetting within a previously linked rendered template');
+
+	// ................................ Act ..................................
+	before = $("#result").text() + getTitles("#inner");
+	$.link("{include person1 ^tmpl=~options.tmpl} title{:\'title2:\' + person1.lastName}", "#inner", model2, help2);
+	after = $("#result").text() + getTitles("#inner");
+	$.observable(model2.person1).setProperty("lastName", "last2B");
+	after += "|" + $("#result").text() + getTitles("#inner");
+	$.observable(model.person1).setProperty("lastName", "last1A");
+	after += "|" + $("#result").text() + getTitles("#inner");
+	$("#result input").val("modMoreLast").change();
+	after += "|" + $("#result").text() + getTitles("#inner");
+	$.observable(help2.options).setProperty("tmpl", $.templates("Model2NEWTmpl: {^{:lastName}}"));
+	after += "|" + $("#result").text() + getTitles("#inner");
+
+	// ............................... Assert .................................
+	equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
+	isIE8
+	? "modLast title:modLast|"
+		+ "Model2Tmpl: newLast2 title2:newLast2|"
+		+ "Model2Tmpl:last2B title2:last2B|"
+		+ "last1A title:last1A|"
+		+ "modMoreLast title:modMoreLast|"
+		+ "Model2NEWTmpl: last2B title:modMoreLast"
+		+ " - Model1: modMoreLast- Model2: last2B"
+	: "modLast title:modLast|"
+		+ "Model2Tmpl: newLast2 title2:newLast2|"
+		+ "Model2Tmpl: last2B title2:last2B|"
+		+ "last1A title:last1A|"
+		+ "modMoreLast title:modMoreLast|"
+		+ "Model2NEWTmpl: last2B title:modMoreLast"
+		+ " - Model1: modMoreLast- Model2: last2B",
+	'$.link(expression, selector, data, helpers) links content correctly, including within a previously linked rendered template - leading to dual two-way binding to both models and contexts');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events,
+	"$(container).empty removes current listeners and two-way bindings from that content");
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	model2.person1.lastName = "lastModel2Name"; // reset Prop
+	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
+
+	// =============================== Arrange ===============================
+
+	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+
+	// ................................ Act ..................................
+	before = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$.observable(model.person1).setProperty("lastName", "newLast3");
+
+	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast4").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	$("#inner").unlink();
+
+	$.observable(model.person1).setProperty("lastName", "newLast5");
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast6").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	$("#result input").unlink();
+
+	$.observable(model.person1).setProperty("lastName", "newLast7");
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast8").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"One title:One val:One|"
+	+ "newLast3 title:newLast3 val:newLast3|"
+	+ "modLast4 title:modLast4 val:modLast4 data:modLast4|"
+	+ "modLast4 title:modLast4 val:newLast5|"
+	+ "modLast4 title:modLast4 val:modLast6 data:modLast6|"
+	+ "modLast4 title:modLast4 val:modLast6|"
+	+ "modLast4 title:modLast4 val:modLast8 data:newLast7",
+	'$(selector).unlink() removes data binding on target element, including both directions of binding on two-way data-linking');
+
+	// ............................... Assert .................................
+	ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
+	'$(selector).unlink() removes data binding, and the "link" views, for target elements');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events,
+	"$(container).empty removes current listeners and two-way bindings from that content");
+
+	// ................................ Reset ................................
+	person1.lastName = "One"; // reset Prop
+	model2.person1.lastName = "lastModel2Name"; // reset Prop
+	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
+
+	// =============================== Arrange ===============================
+
+	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+
+	// ................................ Act ..................................
+	before = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$.observable(model.person1).setProperty("lastName", "newLast3");
+
+	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast4").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	$.unlink("#inner");
+
+	$.observable(model.person1).setProperty("lastName", "newLast5");
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast6").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	$.unlink("#result input");
+
+	$.observable(model.person1).setProperty("lastName", "newLast7");
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
+
+	$("#result input").val("modLast8").change();
+
+	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"One title:One val:One|"
+	+ "newLast3 title:newLast3 val:newLast3|"
+	+ "modLast4 title:modLast4 val:modLast4 data:modLast4|"
+	+ "modLast4 title:modLast4 val:newLast5|"
+	+ "modLast4 title:modLast4 val:modLast6 data:modLast6|"
+	+ "modLast4 title:modLast4 val:modLast6|"
+	+ "modLast4 title:modLast4 val:modLast8 data:newLast7",
+	'$.unlink(selector) removes data binding on target element, including both directions of binding on two-way data-linking');
+
+	// ............................... Assert .................................
+	ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
+	'$.unlink(selector) removes data binding, and the "link" views, for target elements');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+
+	ok(!viewsAndBindings() && !$._data(person1).events,
+	"$(container).empty removes current listeners and two-way bindings from that content");
+
+	// ................................ Reset ................................
 	$.views.settings.debugMode(false);
 });
 
@@ -7862,7 +8099,7 @@ test("{^{for}}", function() {
 
 	// ............................... Assert .................................
 
-	ok(viewsAndBindings().split(" ").length === 3 // We removed view inside div, but still have the view for the outer template.
+	ok(viewsAndBindings().split(" ").length === 7 // We removed view inside div, but still have the view for the outer template.
 		&& !$._data(model.things).events,
 		'$(container).empty removes listeners for empty tags in element-only content (_df="#n_/n_")');
 
@@ -7881,7 +8118,7 @@ test("{^{for}}", function() {
 	$.observable(data.list).insert("added");
 
 	// ............................... Assert .................................
-	ok(viewsAndBindings().split(" ").length === 9 // We removed view inside div, but still have the view for the outer template.
+	ok(viewsAndBindings().split(" ").length === 13 // We removed view inside div, but still have the view for the outer template.
 		&& $._data(data.list).events.arrayChange.length === 1
 		&& $("#result ul").text() === "added",
 		'In element-only content, updateContent calls disposeTokens on _df inner bindings');
@@ -13604,6 +13841,8 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
+
+	$("#result").empty();
 });
 
 test("trigger=true - after keydown: <input/>", function(assert) {
@@ -14361,6 +14600,8 @@ test("Tag control events", function() {
 
 	// ............................... Assert .................................
 	equal($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
+
+	$("#result").empty();
 
 	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
 

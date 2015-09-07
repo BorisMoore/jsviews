@@ -1,5 +1,6 @@
 function viewsAndBindings() {
 	var key,
+		topView = _jsv.views[0],
 		res = "",
 		topViews = "",
 		bindings = "";
@@ -12,10 +13,10 @@ function viewsAndBindings() {
 
 	res = res.slice(2); // Remove view 0
 
-	res = res ? "Views: " + res + "\n" : "";
+	res = res ? "Bound Views: " + res + "\n" : "";
 
-	for (key in _jsv.views[0].views) {
-		if (_jsv.views[key]) {
+	for (key in topView.views) {
+		if (topView.views[key]) {
 			topViews += key + " ";
 		}
 	}

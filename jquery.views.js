@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.0-beta.68 (Beta Candidate): http://jsviews.com/ */
+/*! jquery.views.js v1.0.0-beta.69 (Beta Candidate): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -131,6 +131,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkMethods, linkViewsSel, 
 	rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
 	rOpenTagMarkers = /(#)()(\d+)(\^)/g,
 	rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g,
+	rSplitBindings = /&(\d+)\+?/g,
 	getComputedStyle = global.getComputedStyle;
 
 $observable = $.observable;
@@ -151,12 +152,11 @@ $observe = $observable.observe;
 function elemChangeHandler(ev, params, sourceValue) {
 	var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs, exprOb,
 		source = ev.target,
-		bindings = source._jsvBnd,
-		splitBindings = /&(\d+)\+?/g;
+		bindings = source._jsvBnd;
 
 	// _jsvBnd is a string with the syntax: "&bindingId1&bindingId2"
 	if (bindings) {
-		while (binding = splitBindings.exec(bindings)) {
+		while (binding = rSplitBindings.exec(bindings)) {
 			if (binding = bindingStore[binding[1]]) {
 				if (to = binding.to) {
 					// The binding has a 'to' field, which is of the form [[targetObject, toPath], cvtBack]
@@ -885,6 +885,8 @@ function $link(tmplOrLinkTag, to, from, context, noIteration, parentView, prevNo
 		context = undefined;
 	} else if (typeof context !== "object") {
 		context = undefined; // context must be a boolean (noIteration) or a plain object
+	} else {
+		context = $extend({}, context);
 	}
 	if (tmplOrLinkTag && to) {
 		to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
@@ -941,7 +943,7 @@ function $link(tmplOrLinkTag, to, from, context, noIteration, parentView, prevNo
 						$(targetEl).empty();
 					}
 				} else if (tmplOrLinkTag === true && parentView === topView) {
-					// $.link(true, selector, data, ctx) - where selector points to elem in top-level content
+					// $.link(true, selector, data, ctx) - where selector points to elem in top-level content. (If not top-level content, no-op)
 					refresh = {lnk: 1};
 				} else {
 					break;
@@ -1628,7 +1630,7 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 			rTagIndex = rTagDatalink.lastIndex;
 			attr = tokens[1];
 			tagExpr = tokens[3];
-			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {someTag...} and is followed by linkExpression is an {else...} add to tagExpr
+			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {someTag...} and is followed by an {else...} add to tagExpr
 				tagExpr += "}{" + linkExpressions.shift()[3];
 				hasElse = true;
 			}
@@ -1699,8 +1701,11 @@ function bindDataLinkTarget(linkCtx, linkFn) {
 	handler.noArray = true;
 	if (linkCtx.isLk) {
 		// Top-level linking: .link(expressionOrTrue, data, context) - so we need to create a view for the linking, with the data and ctx
-		// which may be different than the current context of the target. Treat the new view as child of topView.
-		linkCtx.view = new $sub.View(linkCtx.ctx, "link", topView, linkCtx.data, topView.tmpl, undefined, undefined, addBindingMarkers);
+		// which may be different than the current context of the target. Note that this view is not a standard data-linked view, so it will
+		// be disposed only when its parent view is disposed.
+		linkCtx.view = new $sub.View(
+			$sub.extendCtx(linkCtx.ctx, linkCtx.view.ctx),
+			"link", linkCtx.view, linkCtx.data, linkCtx.expr, undefined, undefined, addBindingMarkers);
 	}
 	linkCtx._ctxCb = getContextCb(linkCtx.view); // _ctxCb is for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 	linkCtx._hdl = handler;
@@ -2114,9 +2119,43 @@ function clean(elems) {
 	}
 }
 
+//function clean(elems) {
+//	// Remove data-link bindings, or contained views
+//	var elem, bindings, binding,
+//		elemArray = [],
+//		len = elems.length,
+//		i = len;
+//	while (i--) {
+//		// Copy into an array, so that deletion of nodes from DOM will not cause our 'i' counter to get shifted
+//		// (Note: This seems as fast or faster than elemArray = [].slice.call(elems); ...)
+//		elemArray.push(elems[i]);
+//	}
+//	i = len;
+//	while (i--) {
+//		elem = elemArray[i];
+//		if (elem.parentNode) {
+//			// Has not already been removed from the DOM
+//			if (bindings = elem._jsvBnd) {
+//				// Get propertyChange bindings for this element
+//				// This may be an element with data-link, or the opening script marker node for a data-linked tag {^{...}}
+//				// bindings is a string with the syntax: "(&bindingId)*"
+////				bindings = bindings.slice(1).split("&");
+//				elem._jsvBnd = "";
+//	//			l = bindings.length;
+////				while (l--) {
+//				while (binding = rSplitBindings.exec(bindings)) {
+//							// Remove associated bindings
+//					removeViewBinding(binding, elem._jsvLkEl, elem); // unbind bindings with this bindingId on this view
+//				}
+//			}
+//			disposeTokens(markerNodeInfo(elem) + (elem._df || ""));
+//		}
+//	}
+//}
+
 function removeViewBinding(bindId, linkedElemTag, elem) {
 	// Unbind
-	var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, $linkedElem, linkedElem, trigger,
+	var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, $linkedElem, linkedElem, trigger, view,
 		binding = bindingStore[bindId];
 
 	if (linkedElemTag) {
@@ -2168,14 +2207,39 @@ function removeViewBinding(bindId, linkedElemTag, elem) {
 					}
 				}
 			}
-			delete linkCtx.view._.bnds[bindId];
+			view = linkCtx.view;
+			if (view.type === "link") {
+				view.parent.removeViews(view._.key, undefined, true); // A "link" view is associated with the binding, so should be disposed with binding.
+			} else {
+				delete view._.bnds[bindId];
+			}
 		}
 		$sub._cbBnds[binding.cbId] = undefined;
 	}
 }
 
 function $unlink(tmplOrLinkTag, to) {
-	if (tmplOrLinkTag === undefined) {
+	if (to === undefined) {
+		to = tmplOrLinkTag;
+		tmplOrLinkTag = undefined;
+	}
+	if (to) { // to is a jquery object or an element or selector
+		to = to.jquery ? to : $(to);
+		if (tmplOrLinkTag === undefined) {
+			clean(to);
+		} else if (tmplOrLinkTag === true) {
+			to.each(function() {
+				var innerView;
+				//TODO fix this for better perf. Rather that calling inner view multiple times which does querySelectorAll each time, consider a single querySelectorAll
+				// or simply call view.removeViews() on the top-level views under the target 'to' node, then clean(...)
+				while ((innerView = $view(this, true)) && innerView.parent) {
+					innerView.parent.removeViews(innerView._.key, undefined, true);
+				}
+				clean(this.getElementsByTagName("*"));
+			});
+			clean(to);
+		}
+	} else if (tmplOrLinkTag === undefined) {
 		// Call to $.unlink() is equivalent to $.unlink(true, "body")
 		if (activeBody) {
 			$(activeBody)
@@ -2183,48 +2247,12 @@ function $unlink(tmplOrLinkTag, to) {
 				.off('blur', '[contenteditable]', elemChangeHandler);
 			activeBody = undefined;
 		}
-		tmplOrLinkTag = true;
 		topView.removeViews();
 		clean(document.body.getElementsByTagName("*"));
-	} else if (to && tmplOrLinkTag === true) {
-		to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
-		to.each(function() {
-			var innerView;
-			while ((innerView = $view(this, true)) && innerView.parent) {
-				innerView.parent.removeViews(innerView._.key, undefined, true);
-			}
-			clean(this.getElementsByTagName("*"));
-			clean([this]);
-		});
 	}
-	return to; // Allow chaining, to attach event handlers, etc.
-
-//} else if (to) {
-//	to = to.jquery ? to : $(to); // to is a jquery object or an element or selector
-//	if (tmplOrLinkTag === true) {
-//		// Call to $(el).unlink(true) - unlink content of element, but don't remove bindings on element itself
-//		to.each(function() {
-//			var innerView;
-////TODO fix this for better perf. Rather that calling inner view multiple times which does querySelectorAll each time, consider a single querySelectorAll
-//// or simply call view.removeViews() on the top-level views under the target 'to' node, then clean(...)
-//			while ((innerView = $view(this, true)) && innerView.parent) {
-//				innerView.parent.removeViews(innerView._.key, undefined, true);
-//			}
-//			clean(this.getElementsByTagName("*"));
-//			clean([this]);
-//		});
-//	} else if (tmplOrLinkTag === undefined) {
-//		// Call to $(el).unlink() // Not currently supported
-//		clean(to);
-////TODO provide this unlink API
-//	} else if ("" + tmplOrLinkTag === tmplOrLinkTag) {
-//		// Call to $(el).unlink(tmplOrLinkTag ...)
-//		$.each(to, function() {
-//			//...
-//		});
-//	}
-//TODO - unlink the content and the arrayChange, but not any other bindings on the element (if container rather than "replace")
 }
+
+// Note that call to $(el).unlink(tmplOrLinkTag ...) not supported - currently no-op.
 
 function tmplUnlink(to, from) {
 	return $unlink(this, to, from);
@@ -2300,7 +2328,7 @@ $sub.onStore.template = function(name, item) {
 	}
 };
 
-$extend($extend($sub._tg.prototype, linkMethods), {  // Add linkMethods to tagDef prototype
+$extend($extend($sub._tg.prototype, linkMethods), { // Add linkMethods to tagDef prototype
 	domChange: function() { // domChange notification support
 		var elem = this.parentElem,
 			hasListener = $.hasData(elem) && $._data(elem).events,
@@ -3031,8 +3059,8 @@ $viewsSettings({
 				views: viewStore,
 				bindings: bindingStore
 			};
-		} else {
-			global._jsv = undefined;
+		} else if (global._jsv) {
+			global._jsv = undefined; // In IE8 cannot do delete global._jsv
 		}
 	},
 	jsv: function() {

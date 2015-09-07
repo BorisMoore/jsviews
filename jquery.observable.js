@@ -1,4 +1,4 @@
-/*! JsObservable v1.0.0-beta.68 (Beta Candidate): http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.0-beta.69 (Beta Candidate): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -397,7 +397,7 @@ if (!$.observe) {
 				// Uses the contextCb callback to execute the compiled exprOb template in the context of the view/data etc. to get the returned value, typically an object or array.
 				// If it is an array, registers array binding
 				var origRt = root;
-				// Note:  For https://github.com/BorisMoore/jsviews/issues/292ctxCb will need var ctxCb = contextCb || function(exprOb, origRt) {return exprOb._jsv(origRt);};
+				// Note: For https://github.com/BorisMoore/jsviews/issues/292ctxCb will need var ctxCb = contextCb || function(exprOb, origRt) {return exprOb._jsv(origRt);};
 
 				exprOb.ob = contextCb(exprOb, origRt); // Initialize object
 
@@ -456,7 +456,7 @@ if (!$.observe) {
 				paths = this != 1 // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
 					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
 													// style - such as innerObserve([object], path.path, [origRoot], path.prm, innerCb, ...);
-					: slice.call(arguments),   // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
+					: slice.call(arguments), // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
 				lastArg = paths.pop() || false,
 				root = paths.shift(),
 				object = root,
@@ -643,7 +643,7 @@ if (!$.observe) {
 			origRoot = paths[0];
 
 		if (origRoot + "" === origRoot && allowArray) {
-			initialNs = origRoot; // The first arg is a namespace, since it is  a string, and this call is not from observeAndBind
+			initialNs = origRoot; // The first arg is a namespace, since it is a string, and this call is not from observeAndBind
 			paths.shift();
 			origRoot = paths[0];
 		}

@@ -1,6 +1,7 @@
 /*global test, equal, ok, QUnit*/
 (function(undefined) {
 "use strict";
+
 var jsrender = require('jsrender');
 var tmplify = require('jsrender/tmplify');
 
