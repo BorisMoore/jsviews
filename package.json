@@ -1,6 +1,6 @@
 {
   "name": "jsviews",
-  "version": "v1.0.0-beta.69",
+  "version": "v1.0.0-beta.70",
   "description": "Next-generation MVVM and MVP framework - built on top of JsRender templates. Bringing templates to life...",
   "main": "./jsviews.js",
   "author": {

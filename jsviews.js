@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.0-beta.69 (Beta Candidate) single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.0-beta.70 (Beta Candidate) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -1563,10 +1563,10 @@ function parseParams(params, pathBindings, tmpl) {
 		// "a.b().c^d().e.f().g" - which has four chained paths, "a.b()", "^c.d()", ".e.f()" and ".g"
 		parenDepth = 0,
 		fnCall = {}, // We are in a function call
-		pathStart = {}; // tracks the start of the current path such as c^d() in the above example
+		pathStart = {}, // tracks the start of the current path such as c^d() in the above example
+		result = (params + (tmpl ? " " : "")).replace(rParams, parseTokens);
 
-	return (params + (tmpl ? " " : ""))
-		.replace(rParams, parseTokens);
+	return !parenDepth && result || syntaxError(params); // Syntax error if unbalanced parens in params expression
 }
 
 function buildCode(ast, tmpl, isLinkExpr) {
@@ -3258,7 +3258,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 	// When called (in propertyChangeHandler) for target HTML returns true
 	// When called (in propertyChangeHandler) for other targets returns boolean for "changed"
 	var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle,
-		renders = sourceValue !== undefined && !linkCtx._noUpd, // For data-link="^{...}", don't update the first time (no initial render) - e.g. to leave server rendered values.
+		renders = attr !== NONE && sourceValue !== undefined && !linkCtx._noUpd, // For data-link="^{...}", don't update the first time (no initial render) - e.g. to leave server rendered values.
 		source = linkCtx.data,
 		target = tag && tag.parentElem || linkCtx.elem,
 		$target = $(target),
@@ -4989,6 +4989,40 @@ function clean(elems) {
 	}
 }
 
+//function clean(elems) {
+//	// Remove data-link bindings, or contained views
+//	var elem, bindings, binding,
+//		elemArray = [],
+//		len = elems.length,
+//		i = len;
+//	while (i--) {
+//		// Copy into an array, so that deletion of nodes from DOM will not cause our 'i' counter to get shifted
+//		// (Note: This seems as fast or faster than elemArray = [].slice.call(elems); ...)
+//		elemArray.push(elems[i]);
+//	}
+//	i = len;
+//	while (i--) {
+//		elem = elemArray[i];
+//		if (elem.parentNode) {
+//			// Has not already been removed from the DOM
+//			if (bindings = elem._jsvBnd) {
+//				// Get propertyChange bindings for this element
+//				// This may be an element with data-link, or the opening script marker node for a data-linked tag {^{...}}
+//				// bindings is a string with the syntax: "(&bindingId)*"
+////				bindings = bindings.slice(1).split("&");
+//				elem._jsvBnd = "";
+//	//			l = bindings.length;
+////				while (l--) {
+//				while (binding = rSplitBindings.exec(bindings)) {
+//							// Remove associated bindings
+//					removeViewBinding(binding, elem._jsvLkEl, elem); // unbind bindings with this bindingId on this view
+//				}
+//			}
+//			disposeTokens(markerNodeInfo(elem) + (elem._df || ""));
+//		}
+//	}
+//}
+
 function removeViewBinding(bindId, linkedElemTag, elem) {
 	// Unbind
 	var objId, linkCtx, tag, object, obsId, tagCtxs, l, map, $linkedElem, linkedElem, trigger, view,
@@ -5045,7 +5079,7 @@ function removeViewBinding(bindId, linkedElemTag, elem) {
 			}
 			view = linkCtx.view;
 			if (view.type === "link") {
-				view.parent.removeViews(view._.key, undefined, true); // a "link" view is associated with the binding, so should be disposed with binding.
+				view.parent.removeViews(view._.key, undefined, true); // A "link" view is associated with the binding, so should be disposed with binding.
 			} else {
 				delete view._.bnds[bindId];
 			}
