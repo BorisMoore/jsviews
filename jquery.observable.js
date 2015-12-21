@@ -1,4 +1,4 @@
-/*! JsObservable v1.0.0-beta.70 (Beta Candidate): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.71 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -751,6 +751,9 @@ if (!$.observe) {
 			if ($isFunction(property)) {
 				if (property.set) {
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
+					leaf = leaf._wrp  // Case of JsViews 2-way data-linking to a helper function as getter, with a setter.
+						// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
+						|| leaf;
 					getter = property;
 					setter = property.set === true ? property : property.set;
 					property = property.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
@@ -764,12 +767,18 @@ if (!$.observe) {
 						setter.call(leaf, value);	//set
 						value = getter.call(leaf);	//get updated value
 					} else if (removeProp = value === remove) {
-						delete leaf[path];
-						value = undefined;
+						if (property !== undefined) {
+							delete leaf[path];
+							value = undefined;
+						} else {
+							path = undefined; // If value was already undefined, don't trigger handler for removeProp
+						}
 					} else if (path) {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
+					if (path) {
+						this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
+					}
 				}
 			}
 		},

@@ -1,6 +1,6 @@
 {
   "name": "jsviews",
-  "version": "v1.0.0-beta.70",
+  "version": "v0.9.71",
   "description": "Next-generation MVVM and MVP framework - built on top of JsRender templates. Bringing templates to life...",
   "main": "./jsviews.js",
   "author": {
@@ -33,7 +33,7 @@
     "glob-stream": "^5.0.0",
     "gulp": "^3.9.0",
     "jquery": "^2.1.4",
-    "jsrender": "^1.0.0-rc.69",
+    "jsrender": "^0.9.71",
     "qunit": "^0.7.6"
   },
   "dependencies": {}

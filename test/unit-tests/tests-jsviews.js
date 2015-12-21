@@ -220,6 +220,10 @@ $.views.tags({
 	myFlow: {
 		flow: true
 	},
+	myFlow2: {
+		flow: true,
+		template: "flow2"
+	},
 	myWrapElCnt: {
 		attr: "html",
 		render: function(val) {
@@ -269,6 +273,9 @@ $.templates({
 						+ '{{/if}}'
 						+ '{{myFlow}}'
 							+ '<span>zz</span>'
+							+ '{{if true}}'
+								+ '{{myFlow2/}}'
+							+ '{{/if}}'
 						+ '{{/myFlow}}'
 					+ '</span>'
 				+ '{{/myWrap}}'
@@ -296,6 +303,9 @@ $.templates({
 						+ '{{/if}}'
 						+ '{{myFlowElCnt}}'
 							+ 'xx<span id="spInFlow{{:#getIndex()+1}}"></span>'
+							+ '{{if true}}'
+								+ '{{myFlow2/}}'
+							+ '{{/if}}'
 						+ '{{/myFlowElCnt}}'
 					+ '</tr>'
 				+ '{{/myWrapElCnt}}'
@@ -4416,12 +4426,19 @@ test("Computed observables in two-way binding", function() {
 
 	(function() {
 		// =============================== Arrange ===============================
-		var person = {
+		var people = [
+		{
 			firstName: "Jeff",
 			lastName: "Friedman"
-		};
+		},
+		{
+			firstName: "Rose",
+			lastName: "Lee"
+		}
+		];
 
 		function fullName(reverse) {
+			var person = this.data; // this pointer is the view
 			return reverse
 				? person.lastName + " " + person.firstName
 				: person.firstName + " " + person.lastName;
@@ -4433,33 +4450,36 @@ test("Computed observables in two-way binding", function() {
 
 		fullName.set = function(val) {
 			val = val.split(" ");
+			var person = this.data; // this pointer is the view
 			$.observable(person).setProperty({
 				lastName: val.pop(),
 				firstName: val.join(" ")
 			});
 		};
 
-		$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full" data-link="~fullName()"/>')
-			.link("#result", person, { fullName: fullName });
+		$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full{{:#index}}" data-link="~fullName()"/>')
+			.link("#result", people, { fullName: fullName });
 
 		// ................................ Act ..................................
-		var res = $("#result").text() + $("#full").val();
+		var res = $("#result").text() + ":" + $("#full0").val();
 
-		$.observable(person).setProperty({ firstName: "newFirst", lastName: "newLast" });
+		$.observable(people[0]).setProperty({ firstName: "newFirst", lastName: "newLast" });
 
-		res += "|" + $("#result").text() + $("#full").val();
+		res += "|" + $("#result").text() + ":" + $("#full0").val();
 
-		$("#full").val("2wayFirst 2wayLast").change();
+		$("#full0").val("2wayFirst 2wayLast").change();
 
-		res += "|" + $("#result").text() + $("#full").val();
+		res += "|" + $("#result").text() + ":" + $("#full0").val();
 
 		// ............................... Assert .................................
 		equal(res,
 		isIE8
-		? "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|"
-			+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
-		: "Jeff Friedman Jeff Friedman Friedman Jeff Jeff Friedman|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|"
-			+ "2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
+		? "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
+		+ "newFirstnewLastnewFirst newLastnewLast newFirst Rose Lee Rose Lee Lee Rose :newFirst newLast|"
+		+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst Rose Lee Rose Lee Lee Rose :2wayFirst 2wayLast"
+		: "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
+		+ "newFirst newLast newFirst newLast newLast newFirst Rose Lee Rose Lee Lee Rose :newFirst newLast|"
+		+ "2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst Rose Lee Rose Lee Lee Rose :2wayFirst 2wayLast",
 		'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
 
 		// ................................ Reset ................................
@@ -6253,7 +6273,7 @@ test("Chained computed observables in template expressions", function() {
 
 		var theB, theC, theD, theE, theF, data, res,
 			resCount = 1,
-			tmpl = $.templates('{^{:f.e().d().c().b().a /}} {^{:f.e().d().c().b()^a /}} {^{:f.e().d().c()^b().a /}} {^{:f.e().d()^c().b().a /}} {^{:f.e()^d().c().b().a /}} {^{:f^e().d().c().b().a /}}');
+			tmpl = $.templates('{^{:f.e().d().c().b().a }} {^{:f.e().d().c().b()^a }} {^{:f.e().d().c()^b().a }} {^{:f.e().d()^c().b().a }} {^{:f.e()^d().c().b().a }} {^{:f^e().d().c().b().a }}');
 
 		setData();
 
@@ -6878,7 +6898,7 @@ test("{^{:expression}}", function() {
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// =============================== Arrange ===============================
 
@@ -6901,7 +6921,7 @@ test("{^{:expression}}", function() {
 	'$.link(expression, selector) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
@@ -6975,7 +6995,7 @@ test("{^{:expression}}", function() {
 	'$(selector).link(expression) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 	$("#result").empty();
 
 	$.views.settings.debugMode(false);
@@ -7787,6 +7807,26 @@ test("{^{for}}", function() {
 	equal(after, 'None',
 	'{^{for things}}{{else}}{{/for}} binds to removeProperty change on path - and renders {{else}} block');
 
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = []; // reset Prop
+	$.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}{^{if true}}_yes{{/if}}')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, { thing: "tree" });
+	$.observable(model.things).insert(0, { thing: "box" });
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'None_yes|boxtree_yes',
+	'{^{for things}}{{else}}{{/for}}{^{if ...}} starting with empty array binds to array inserts');
+	// See https://github.com/BorisMoore/jsviews/issues/326
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
@@ -9040,14 +9080,14 @@ test('data-link="{on ...', function() {
 	'$.link(true, "#linkTgt", data): top-level linking to element (not container) adds {on } binding handlers correctly - including calling refresh() on {on } tag');
 
 	// ................................ Act ..................................
-	$.unlink(true, "#linkTgt");
+	$.unlink("#linkTgt");
 
 	// ............................... Assert .................................
 	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
 
 	equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
-	'$.unlink(true, "#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
+	'$.unlink("#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
 
 	$.views.settings.debugMode(false);
 });
@@ -9143,12 +9183,12 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	result = 'prop:OneOne computed:Mr Jo OneMr Jo One Tag:Name: Mr Jo. Width: 30Name: Mr Jo. Width: 30OneMr Jo One|prop:compLastcompLast computed:Sir compFirst compLastSir compFirst compLast Tag:Name: Sir compFirst. Width: 40Name: Sir compFirst. Width: 40compLastSir compFirst compLast';
 
 	// ................................ Act ..................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// ............................... Assert .................................
 
 	ok(before + "|" + after === result && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
-	"$.unlink(true, container) removes the views and current listeners from that content");
+	"$.unlink(container) removes the views and current listeners from that content");
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -9162,12 +9202,12 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 		.link("#result", person1);
 
 	// ................................ Act ..................................
-	$("#result").unlink(true);
+	$("#result").unlink();
 
 	// ............................... Assert .................................
 
 	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
-	"$(container).unlink(true) removes the views and current listeners from that content");
+	"$(container).unlink() removes the views and current listeners from that content");
 
 	// =============================== Arrange ===============================
 
@@ -12463,7 +12503,34 @@ test("view.get() and view.getIndex() in regular content", function() {
 	view = view1.get("myWrap");
 
 	// ............................... Assert .................................
-	ok(view.ctx.val === 1 && view.type === "myWrap", 'view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
+	ok(view === view1, 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
+
+	// ................................ Act ..................................
+	view = view1.get(true, "myWrap");
+
+	// ............................... Assert .................................
+	ok(view === view1, 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ................................ Act ..................................
+	view = view1.get(true, "myFlow");
+
+	// ............................... Assert .................................
+	ok(view.tmpl.markup === "<span>zz</span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ................................ Act ..................................
+	view = view1.get(true, "myFlow2");
+
+	// ............................... Assert .................................
+	ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ................................ Act ..................................
+	view = view1.get(true);
+
+	// ............................... Assert .................................
+	ok(view.type === "myWrap2" && view === view1.get(true, "myWrap2") && view === $.view("#sp0").parent, 'view.get(true) gets nearest child view of any type');
+
+	// ............................... Assert .................................
+	ok(view1.get(true, "nonexistent") === false, 'view.get(true, "viewTypeName") returns false if no descendant of that type, starting from the view itself');
 
 	// ............................... Assert .................................
 	ok($.view("#1").getIndex() === 0 && $.view("#1", "item").index === 0 && $.view("#2").getIndex() === 1 && $.view("#2", "item").index === 1, '$.view(elem).getIndex() gets index of nearest item view');
@@ -12548,6 +12615,42 @@ test("$.view() in element-only content", function() {
 
 	// ............................... Assert .................................
 	ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "myTagName") gets the first (depth first) nested view of that type');
+
+	// ................................ Act ..................................
+	view = $.view("#tr1").get(true);
+
+	// ............................... Assert .................................
+	ok(view.type === "myWrap2ElCnt", 'Within element-only content, view.get(true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+
+	// ................................ Act ..................................
+	view = $.view("#tr1").get(true, "myFlowElCnt");
+
+	// ............................... Assert .................................
+	ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "myTagName") gets the first (depth first) nested view of that type');
+
+	// ................................ Act ..................................
+	view = $.view("#tr1");
+
+	// ............................... Assert .................................
+	ok(view.type === "myWrapElCnt" && view === view.get("myWrapElCnt"), 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
+
+	// ............................... Assert .................................
+	ok(view === view.get(true, "myWrapElCnt"), 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ................................ Act ..................................
+	view = $.view("#tr1").get(true, "myFlowElCnt");
+
+	// ............................... Assert .................................
+	ok(view.tmpl.markup === "xx<span id=\"spInFlow{{:#getIndex()+1}}\"></span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ................................ Act ..................................
+	view = $.view("#tr1").get(true, "myFlow2");
+
+	// ............................... Assert .................................
+	ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+
+	// ............................... Assert .................................
+	ok($.view("#tr1").get(true, "nonexistent") === false, 'view.get(true, "viewTypeName") returns false if no descendant of that type, starting from the view itself');
 
 	// =============================== Arrange ===============================
 
@@ -13672,11 +13775,11 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(true, container)');
+	'Data link using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -13726,11 +13829,11 @@ test('two-way bound tag controls', function() {
 	'Data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
+	'Data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -13781,11 +13884,11 @@ test('two-way bound tag controls', function() {
 	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(true, container)');
+	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -13836,11 +13939,11 @@ test('two-way bound tag controls', function() {
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink(true, "#result");
+	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(true, container)');
+	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	$("#result").empty();
 });
@@ -13887,11 +13990,11 @@ test("trigger=true - after keydown: <input/>", function(assert) {
 		'Data link using: <input data-link=\'name trigger=true\' /> has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink(true, "#result");
+		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(true, container)');
+		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
@@ -13943,11 +14046,11 @@ test("trigger=true - after keydown: {^{twoWayTag}}", function(assert) {
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink(true, "#result");
+		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
+		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
@@ -14013,11 +14116,11 @@ test("trigger=true - after keydown: {^{textbox}}", function(assert) {
 		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink(true, "#result");
+		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
+		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
@@ -14094,11 +14197,11 @@ test("trigger=true - after keydown: {^{contentEditable}}", function(assert) {
 		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink(true, "#result");
+		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(true, container)');
+		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);

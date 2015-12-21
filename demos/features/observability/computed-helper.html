@@ -95,7 +95,8 @@ fullName.depends = ["#data.firstName", "#data.lastName"];
 // Setter for fullName - for two-way binding
 fullName.set = function(val) {
 	val = val.split(" ");
-	$.observable(person).setProperty({
+	// The this pointer is the view, so this.data is the current data item
+	$.observable(this.data).setProperty({
 		lastName: val.pop(),
 		firstName: val.join(" ")
 	});
@@ -159,7 +160,8 @@ fullName.depends = ["#data.firstName", "#data.lastName"];
 
 // For two-way binding of computed observables, provide a setter
 fullName.set = function(val) {
-    $.observable(this).setProperty({
+    // The this pointer is the view, so this.data is the current data item
+    $.observable(this.data).setProperty({
         lastName: ...,
         firstName: ...
     });
