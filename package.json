@@ -36,5 +36,5 @@
     "jsrender": "^0.9.71",
     "qunit": "^0.7.6"
   },
-  "dependencies": {}
+  "dependencies": { }
 }
