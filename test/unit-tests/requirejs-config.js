@@ -6,6 +6,6 @@ requirejs.config({
       "jsrender": "./jsrender",
       "jquery.observable": "./jquery.observable",
       "jquery.views": "./jquery.views",
-      "jsviews": "./jsviews",
+      "jsviews": "./jsviews"
     }
 });

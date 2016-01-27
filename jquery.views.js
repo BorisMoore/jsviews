@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.71 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.72 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var global = (0, eval)('this'), // jshint ignore:line
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.0-alpha",
+var versionNumber = "v0.9.72",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -57,6 +57,7 @@ if (jsr && !jsr.fn) {
 }
 
 var $observe, $observable,
+	$isArray = $.isArray,
 	$views = $.views;
 
 if (!$views || !$views.settings) {
@@ -185,6 +186,10 @@ function elemChangeHandler(ev, params, sourceValue) {
 						} else {
 							cvtBack = view.getRsc("converters", cnvtName);
 						}
+					}
+					if (linkCtx.elem.nodeName === "SELECT") {
+						linkCtx.elem._jsvSel = sourceValue = sourceValue || (linkCtx.elem.multiple ? [] : sourceValue);
+						// data-link <select> to string or (multiselect) array of strings
 					}
 					if (cvtBack) {
 						sourceValue = cvtBack.call(tag, sourceValue);
@@ -388,10 +393,11 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 	// When called for a tag, either in tag.refresh() or propertyChangeHandler(), returns a promise (and supports async)
 	// When called (in propertyChangeHandler) for target HTML returns true
 	// When called (in propertyChangeHandler) for other targets returns boolean for "changed"
-	var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle,
+	var setter, prevNode, nextNode, promise, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle, jsvSel,
 		renders = attr !== NONE && sourceValue !== undefined && !linkCtx._noUpd, // For data-link="^{...}", don't update the first time (no initial render) - e.g. to leave server rendered values.
 		source = linkCtx.data,
 		target = tag && tag.parentElem || linkCtx.elem,
+		targetParent = target.parentNode,
 		$target = $(target),
 		view = linkCtx.view,
 		targetVal = linkCtx._val,
@@ -402,7 +408,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 
 	if (tag) {
 		// Initialize the tag with element references
-		tag.parentElem = tag.parentElem || (linkCtx.expr || tag._elCnt) ? target : target.parentNode;
+		tag.parentElem = tag.parentElem || (linkCtx.expr || tag._elCnt) ? target : targetParent;
 		prevNode = tag._prv;
 		nextNode = tag._nxt;
 	}
@@ -483,6 +489,10 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 			sourceValue = (sourceValue && sourceValue !== "false") ? attr : null;
 			// Use attr, not prop, so when the options (for example) are changed dynamically, but include the previously selected value,
 			// they will still be selected after the change
+		} else if (attr === "value" && target.nodeName === "SELECT") {
+			target._jsvSel = $isArray(sourceValue)
+				? sourceValue
+				: "" + sourceValue; // If not array, coerce to string
 		}
 
 		if (setter = fnSetters[attr]) {
@@ -537,22 +547,25 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 				}
 				// Remove dynamically added linkCtx and ctx from view
 				view.linkCtx = oldLinkCtx;
-			} else if (change = change || targetVal !== sourceValue) {
-				if (attr === "text" && target.children && !target.children[0]) {
-					// This code is faster then $target.text()
-					if (target.textContent !== undefined) {
-						target.textContent = sourceValue;
+			} else {
+				if (change = change || targetVal !== sourceValue) {
+					if (attr === "text" && target.children && !target.children[0]) {
+						// This code is faster then $target.text()
+						if (target.textContent !== undefined) {
+							target.textContent = sourceValue;
+						} else {
+							target.innerText = sourceValue === null ? "" : sourceValue;
+						}
 					} else {
-						target.innerText = sourceValue === null ? "" : sourceValue;
+						$target[setter](sourceValue);
 					}
-				} else {
-					$target[setter](sourceValue);
 				}
-// Removing this for now, to avoid side-effects when you programmatically set the value, and want the focus to stay on the text box
-//							if (target.nodeName.toLowerCase() === "input") {
-//								$target.blur(); // Issue with IE. This ensures HTML rendering is updated.
-//							}
-						// Data link the new contents of the target node
+				if ((jsvSel = targetParent._jsvSel)
+					// Setting value of <option> element
+					&& (attr === "value" || !$target.attr("value"))) { // Setting value attribute, or setting textContent if attribute is null
+					// Set/unselect selection based on value set on parent <select>. Works for multiselect too
+					target.selected = $.inArray("" + sourceValue, $isArray(jsvSel) ? jsvSel : [jsvSel]) > -1;
+				}
 			}
 		} else if (change = change || targetVal !== sourceValue) {
 			// Setting an attribute to undefined should remove the attribute
@@ -908,11 +921,6 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 			} else {
 				if (tmplOrLinkExpr.markup !== undefined) {
 					// This is a call to template.link()
-					if (parentView.link === false) {
-						context = context || {};
-						context.link = onRender = false; // If link=false, don't allow nested context to switch on linking
-					}
-					// Set link=false, explicitly, to disable linking within a template nested within a linked template
 					if (replaceMode) {
 						placeholderParent = targetEl.parentNode;
 					}
@@ -1085,8 +1093,8 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 		} else {
 			// We are in phrasing or flow content, so use script marker nodes
 			// Example: <script type="jsv3/"></script> - data-linked tag, close marker
-			// TODO add validation to track whether we are in attribute context (not yet hit preceding ending with a >) or element content of current 'parentTag'
-			// and accordingly disallow inserting script markers in attribute context. Similar for elCnt too, so no "<table {{if ...}}...{{/if}}... >" or "<table {{if ...}}...> ...{{/if}}..."
+			// We validate with inTag so no script markers are inserted in attribute context e.g. for:
+			// "<table {{if ...}}...{{/if}}... >" or "<table {{if ...}}...> ...{{/if}}..."
 			preceding = id
 				? (preceding + endOfElCnt + spaceBefore + (inTag ? "" : openScript + id + closeScript)+ spaceAfter + tag)
 				: endOfElCnt || all;
@@ -1095,13 +1103,13 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 		if (validate && boundId) {
 			if (inTag) {
 				// JsViews data-linking tags are not allowed within element markup.
-				// See https://github.com/BorisMoore/jsviews/issues/303
+				// See jsviews/issues/303
 				syntaxError('{^{ within elem markup (' + inTag + ' ). Use data-link="..."');
 			}
 			if (id.charAt(0) === "#") {
 				tagStack.unshift(id.slice(1));
 			} else if (id.slice(1) !== (bndId = tagStack.shift())) {
-				// See https://github.com/BorisMoore/jsviews/issues/213
+				// See jsviews/issues/213
 				syntaxError('Closing tag for {^{...}} under different elem: <' + bndId + '>');
 			}
 		}
@@ -1413,7 +1421,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 						if (tag.onBeforeLink) {
 							tag.onBeforeLink();
 						}
-						// We data-link depth-last ("on the way in"), which is better for perf - and allows setting parent tags etc.
+						// We data-link depth-first ("on the way in"), which is better for perf - and allows setting parent tags etc.
 						view = tag.tagCtx.view;
 						addDataBinding(undefined, tag._prv, view, linkInfo.id);
 					} else {
@@ -1572,7 +1580,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 
 function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data, context) {
 	// Add data binding for data-linked elements or {^{...}} data-linked tags
-	var tmpl, tokens, attr, convertBack, params, trimLen, tagExpr, linkFn, linkCtx, tag, rTagIndex, hasElse,
+	var tmpl, tokens, attr, convertBack, params, trimLen, tagExpr, linkFn, linkCtx, tag, rTagIndex, hasElse, lastIndex,
 		linkExpressions = [];
 
 	if (boundTagId) {
@@ -1609,10 +1617,13 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 		// This is the first time this view template has been linked, so we compile the data-link expressions, and store them on the template.
 
 		linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
-		rTagDatalink.lastIndex = 0;
-
+		lastIndex = rTagDatalink.lastIndex = 0;
 		while (tokens = rTagDatalink.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
 			linkExpressions.push(tokens);
+			lastIndex = rTagDatalink.lastIndex;
+		}
+		if (lastIndex < linkMarkup.length) {
+			syntaxError(linkMarkup);
 		}
 		while (tokens = linkExpressions.shift()) {
 			// Iterate over the data-link expressions, for different target attrs,
@@ -1629,9 +1640,6 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 				tagExpr += "}{{/" + tokens[4] + "}";
 			}
 			params = tokens[9];
-			if (convertBack = tokens[10]) {
-				convertBack = convertBack.slice(1);
-			}
 
 			linkCtx = {
 				data: data, // source
@@ -1645,10 +1653,13 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 			};
 
 			if (tokens[6]) {
+				convertBack = tokens[10];
 				linkCtx.convert = tokens[5] || "";
-				if (!attr && convertBack !== undefined) {
+				if (!attr && convertBack !== undefined && defaultAttr(node)) {
 					// Default target, so allow 2 way binding
-					linkCtx.convertBack = convertBack;
+					linkCtx.convertBack = convertBack = convertBack.slice(1);
+				} else {
+					convertBack = undefined;
 				}
 			}
 			// Compile the linkFn expression which evaluates and binds a data-link expression
@@ -1875,7 +1886,8 @@ function asyncElemChangeHandler(ev) {
 
 function bindElChange($elem, trig, onoff) {
 	if (trig) {
-		$elem[onoff](trig === true ? "keydown" : trig, trig === true ? asyncElemChangeHandler : elemChangeHandler);
+		trig = "" + trig === trig ? trig : "keydown"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown'): Get 'keydown' with async
+		$elem[onoff](trig, trig === "keydown" ? asyncElemChangeHandler : elemChangeHandler);
 	}
 }
 
@@ -2001,7 +2013,7 @@ function removeViewBinding(bindId, linkedElemTag, elem) {
 		for (objId in binding.bnd) {
 			object = binding.bnd[objId];
 			obsId = binding.cbId;
-			if ($.isArray(object)) {
+			if ($isArray(object)) {
 				$([object]).off(arrayChangeStr + obsId).off(propertyChangeStr + obsId); // There may be either or both of arrayChange and propertyChange
 			} else {
 				$(object).off(propertyChangeStr + obsId);
@@ -2153,7 +2165,7 @@ $sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 	delimCloseChar0 = delimChars[2];
 	delimCloseChar1 = delimChars[3];
 	linkChar = delimChars[4];
-	rTagDatalink = new RegExp("(?:^|\\s*)([\\w-]*)(\\" + linkChar + ")?(\\" + delimOpenChar1 + $sub.rTag + "\\" + delimCloseChar0 + ")", "g");
+	rTagDatalink = new RegExp("(?:^|\\s*)([\\w-]*)(\\" + linkChar + ")?(\\" + delimOpenChar1 + $sub.rTag + "(:\\w*)?\\" + delimCloseChar0 + ")", "g");
 
 	// Default rTag:      attr  bind tagExpr   tag         converter colon html     comment            code      params
 	//          (?:^|\s*)([\w-]*)(\^)?({(?:(?:(\w+(?=[\/\s}]))|(?:(\w+)?(:)|(>)|!--((?:[^-]|-(?!-))*)--|(\*)))\s*((?:[^}]|}(?!}))*?))})
@@ -2673,7 +2685,7 @@ $extend($tags["for"], {
 				$observe(arrBinding[0], arrBinding[1], true); //unobserve previous array
 				delete arrayBindings[i];
 			}
-			if (!arrayBindings[i] && $.isArray(data)) {
+			if (!arrayBindings[i] && $isArray(data)) {
 				$observe(data, arrHandler = function(ev, eventArgs) {
 					var tagCt = tagCtx;
 					tag.onArrayChange(ev, eventArgs, tagCt, linkCtx);

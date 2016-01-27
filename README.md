@@ -8,8 +8,19 @@
 
 The content of this ***ReadMe*** is available also as a *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*.
 
+<h3>Installation</h3>
+
+jsviews.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site.
+
+CDN delivery is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
+
+Alternatively:
+- It can be installed with ***[Bower](http://bower.io/search/?q=jsviews)***, using `$ bower install jsviews` 
+- It can be loaded using an AMD script loader, such as RequireJS
+- For installation using *Node.js* (*npm*) -- and browser loading using *Browserify* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
+
 <h3>JsRender and JsViews</h3>
-**JsRender** is used for data-driven rendering of templates to strings, ready for insertion in the DOM. (See [JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart) and [JsRender GitHub repository](https://github.com/BorisMoore/jsrender)).
+**JsRender** is used for data-driven rendering of templates to strings, ready for insertion in the DOM. (See *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender GitHub repository](https://github.com/BorisMoore/jsrender)).
 
 **[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
 
@@ -28,8 +39,8 @@ Any JsRender tag, `{{...}}` can be *data-linked* by writing `{^{...}}`, as in:
 
 ```html
 <ul>
-  {^{for people}} <!-- List will update when people array changes -->
-    <li>{^{:name}}</li> <!-- Will update when name property changes -->
+  {^{for people}} <!--List will update when people array changes-->
+    <li>{^{:name}}</li> <!--Will update when name property changes-->
   {{/for}}
 </ul>
 ```
@@ -41,8 +52,8 @@ Any JsRender tag, `{{...}}` can be *data-linked* by writing `{^{...}}`, as in:
 HTML elements within templates can be *data-linked* by adding a `data-link` attribute:
 
 ```html
-<input data-link="name"/> <!-- Two-way data-binding to the name property -->
-<span data-link="name"></span> <!-- Will update when name property changes -->
+<input data-link="name"/> <!--Two-way data-binding to the name property-->
+<span data-link="name"></span> <!--Will update when name property changes-->
 ```
 
 HTML elements within 'top-level' page content can also be data-linked -- see [below](#jsv-quickstart@toplink).
@@ -127,12 +138,12 @@ Jim <input value="Jim" />
 
 with the `name` property of `person` object data-linked to the `"Jim"` text node and *two-way* data-linked to the `<input />`
 
-See: [Playing with JsViews](http://www.jsviews.com/#jsvplaying) for working samples, such as [this one](http://www.jsviews.com/#jsvplaying@twoway)
+See: *[Playing with JsViews](http://www.jsviews.com/#jsvplaying)* for working samples, such as [this one](http://www.jsviews.com/#jsvplaying@twoway)
 
 [Learn more...](http://www.jsviews.com/#jsvlinktmpl)
 
 <h3 id="jsv-quickstart@toplink"><i>Top-level data-linking</i></h3>
-  
+
 You can use data-linking not only for templated content, but also to data-bind to top-level HTML content in your page: 
 
 ```js
@@ -173,7 +184,7 @@ JsViews uses the *<a href="http://www.jsviews.com/#onpropchange">property change
 
 **observe() and observeAll()**
 
-The [$.observe()](http://www.jsviews.com/#observe) and [$.observable().observeAll()](http://www.jsviews.com/#observeAll) APIs make it very easy for you to register event handlers or listeners, so your code can listen to specific observable changes made to your data objects or view models:
+The [`$.observe()`](http://www.jsviews.com/#observe) and [`$.observable().observeAll()`](http://www.jsviews.com/#observeAll) APIs make it very easy for you to register event handlers or listeners, so your code can listen to specific observable changes made to your data objects or view models:
 
 ```js
 $.observe(person, "name", function(...) {
@@ -222,16 +233,46 @@ $(".changeBtn").on("click", function() {
   // Get index of this 'item view'. (Equals index of person in people array)
   var index = view.index;
 
-   // Change the person.name
-   $.observable(person).setProperty("name", person.name + " " + index);
+  // Change the person.name
+  $.observable(person).setProperty("name", person.name + " " + index);
 });
 ```
 
 [Learn more...](http://www.jsviews.com/#$view)
 
+
+<h3><i>Data-linked paths</i></h3>
+
+JsViews data-linked templates (and the `$.observe()` API) use the same [paths and expressions](http://www.jsviews.com/#paths) as JsRender templates, but in addition provide *'leaf'* data-binding -- such as:
+
+```html
+{^{:team.manager.name`}}                    <!--updates when name changes-->
+<span data-link="team.manager.name"></span> <!--updates when name changes-->
+<input data-link="team.manager.name" />     <!--two-way binding to name-->
+```
+
+But data-linked paths have additional support, such as linking deeper into paths:
+
+```html
+{^{:team^manager.name}}   <!--updates when name, manager, or team changes-->
+```
+
+[Learn more...](http://www.jsviews.com/#linked-paths)
+
+<h3><i>Computed observables</i></h3>
+
+JsViews also allows you to data-bind to computed values, such as:
+
+```html
+{^{:shoppingCart.totalAmount()}}        <!--updates when totalAmount() changes-->
+<input data-link="person.fullName()" /> <!--two-way binding, computed fullName()-->
+```
+
+[Learn more...](http://www.jsviews.com/#computed)
+
 <h3><i>Documentation and APIs</i></h3>
 
-See the [www.jsviews.com](http://www.jsviews.com) site, including the  [JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart), [JsViews APIs](http://www.jsviews.com/#jsvapi) and [JsObservable APIs](http://www.jsviews.com/#jsoapi)topics.
+See the [www.jsviews.com](http://www.jsviews.com) site, including the *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*, [JsViews APIs](http://www.jsviews.com/#jsvapi) and [JsObservable APIs](http://www.jsviews.com/#jsoapi)topics.
 
 <h3><i>Demos</i></h3>
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsvapi).

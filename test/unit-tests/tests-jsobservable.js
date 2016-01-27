@@ -581,7 +581,7 @@ test("observeAll", function() {
 			person: {
 			  name: "Pete",
 			  address: {
-				street: "1st Ave",
+				street: "1st Ave"
 			  },
 			  phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
 			}
@@ -592,7 +592,7 @@ test("observeAll", function() {
 	// ................................ Act ..................................
 	$.observable(data.person).setProperty({
 		name: "Hermione",
-		"address.street": "Main St",
+		"address.street": "Main St"
 	});
 
 	$.observable(data.person).setProperty({
@@ -721,7 +721,14 @@ test("observeAll", function() {
 	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
-	equal(result, 'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
+	equal(result,
+'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|'
++ 'ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|'
++ 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
++ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|'
++ 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
 		"observeAll raises correct change events");
 
 	// ............................... Assert .................................
@@ -817,7 +824,32 @@ test("observeAll", function() {
 
 	equal(listeners, "1 1 1", '$.observable(someArray).observeAll(observeAllCb2) works correctly');
 
+	// ................................ Act ..................................
+	reset();
+	$.observable(model.things).insert({ thing: "bush" });
+	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	$.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
+	$.observable(model.things).remove(2);
+
+	// ............................... Assert .................................
+	equal(result, 
+'ObserveAll Path: root eventArgs: change: insert|index: 3|items: [object Object]|'
++ 'ObserveAll Path: root eventArgs: change: refresh|oldItems: [object Object],[object Object],[object Object],[object Object]|'
++ 'ObserveAll Path: root[0] eventArgs: change: set|path: thing|value: tree+|oldValue: tree|remove: false|'
++ 'ObserveAll Path: root[1] eventArgs: change: set|path: thing|value: bush++|oldValue: bush+|remove: false|'
++ 'ObserveAll Path: root eventArgs: change: remove|index: 2|items: [object Object]|',
+
+	'$.observable(someArray).observeAll(observeAllCb2) raises the correct array change events');
+
 	$.observable(model.things).unobserveAll(observeAllCb2);
+
+	// ............................... Assert .................................
+	listeners = "" + !!$._data(model.things).events + " "
+	+ !!$._data(model.things[0]).events + " "
+	+ !!$._data(model.things[1]).events;
+
+	equal(listeners, "false false false", '$.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
 
 	// ................................ Reset ..................................
 	model = {
@@ -827,6 +859,462 @@ test("observeAll", function() {
 	};
 	person1.home.address.street = "StreetOne",
 	person1.home.address.ZIP = "111";
+});
+
+test('observe(... "**" ...)', function() {
+	reset();
+
+	// =============================== Arrange ===============================
+	var inc = 0,
+		data = {
+			person: {
+			  name: "Pete",
+			  address: {
+				street: "1st Ave"
+			  },
+			  phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
+			}
+		};
+
+	$.observe(data, "**", observeAllCb1);
+
+	// ................................ Act ..................................
+	$.observable(data.person).setProperty({
+		name: "Hermione",
+		"address.street": "Main St"
+	});
+
+	$.observable(data.person).setProperty({
+		address: {street: "New Street"},
+		phones: [{number:"123 123 1234"}]
+	});
+
+	$.observable(data.person.phones[0]).setProperty("foo", 34);
+
+	$.observable(data.person.phones).insert({
+		number:"456 456 AAAA"
+	});
+
+	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+
+	$.observable(data.person.phones).remove(0);
+
+	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+
+	$.observable(data.person.phones).insert({
+		number:"456 456 BBBB"
+	});
+
+	$.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+
+	$.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+
+	$.observable(data.person.phones[1]).removeProperty("subnum.b");
+
+	$.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+
+	$.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
+
+	$.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+
+	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+
+	$.observable(data.person.phones).remove(0);
+
+	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+
+// ............................... Assert .................................
+	result += "DATA: " + JSON.stringify(data);
+
+	equal(result,
+'ObserveAll Path: root.person'
++   ' eventArgs: change: "set"|path: "name"|value: "Hermione"|oldValue: "Pete"|remove: false'
+
++ '|ObserveAll Path: root.person.address'
++   ' eventArgs: change: "set"|path: "street"|value: "Main St"|oldValue: "1st Ave"|remove: false'
+
++ '|ObserveAll Path: root.person'
++   ' eventArgs: change: "set"|path: "address"|value: {"street":"New Street"}|oldValue: {"street":"Main St"}|remove: false'
+
++ '|ObserveAll Path: root.person'
++   ' eventArgs: change: "set"|path: "phones"|value: [{"number":"123 123 1234"}]|oldValue: [{"number":"111 111 1111"},{"number":"222 222 2222"}]|remove: false'
+
++ '|ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set"|path: "foo"|value: 34|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 AAAA"}]'
+
++ '|ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set"|path: "number"|value: "456 456 AAAA0"|oldValue: "456 456 AAAA"|remove: false'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "remove"|index: 0|items: [{"number":"123 123 1234","foo":34}]'
+
++ '|ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set"|path: "number"|value: "456 456 AAAA01"|oldValue: "456 456 AAAA0"|remove: false'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 BBBB"}]'
+
++ '|ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set"|path: "subnum"|value: {"a":11,"b":22}|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: root.person.phones[1].subnum'
++   ' eventArgs: change: "set"|path: "a"|value: "a2"|oldValue: 11|remove: false'
+
++ '|ObserveAll Path: root.person.phones[1].subnum'
++   ' eventArgs: change: "set"|path: "b"|value: undefined|oldValue: 22|remove: true'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 CCCC"},{"number":"456 456 DDDD"}]'
+
++ '|ObserveAll Path: root.person.phones[2]'
++   ' eventArgs: change: "set"|path: "number"|value: "456 456 DDDD3"|oldValue: "456 456 DDDD"|remove: false'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "refresh"|oldItems: [{"number":"456 456 AAAA01"},{"number":"456 456 CCCC"},{"number":"456 456 DDDD3"},{"number":"456 456 BBBB","subnum":{"a":"a2"}}]'
+
++ '|ObserveAll Path: root.person.phones[1]'
++   ' eventArgs: change: "set"|path: "number"|value: "456 456 FFFF4"|oldValue: "456 456 FFFF"|remove: false'
+
++ '|ObserveAll Path: root.person.phones'
++   ' eventArgs: change: "remove"|index: 0|items: [{"number":"456 456 EEEE"}]'
+
++ '|ObserveAll Path: root.person.phones[0]'
++   ' eventArgs: change: "set"|path: "number"|value: "456 456 FFFF45"|oldValue: "456 456 FFFF4"|remove: false'
+
++ '|DATA: {"person":{"name":"Hermione","address":{"street":"New Street"},"phones":[{"number":"456 456 FFFF45"}]}}',
+
+	'observeAll scenarios using "**", with observeAll.path() etc.');
+
+	$.unobserve(data, "**");
+
+	reset();
+
+	// =============================== Arrange ===============================
+	$.observe(model, "**", observeAllCb1);
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({
+		"person1.home.address": {
+			street: "1st",
+			ZIP: "00000"
+		},
+		"person1.home.address.street": "upper St",
+		"person1.home.address.ZIP": "33333",
+		things: [{ thing: "tree" }]
+	});
+	$.observable(model.things).insert({ thing: "bush" });
+	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+
+	// ............................... Assert .................................
+	equal(result,
+'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|'
++ 'ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|'
++ 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
++ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|'
++ 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
+		'$.observe(data, "**", ...) works as observeAll and raises correct change events');
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", '$.observe(data, "**", ...) works as observeAll and maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
+
+	// ................................ Act ..................................
+	$.observe(model, "**", observeAllCb1);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", 'Calling $.observe(data, "**", ...) more than once does not add extra event bindings');
+
+	// ................................ Act ..................................
+	$.observe(model, "**", observeAllCb3);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 2 2 2", 'Calling $.observe(data, "**", ...) with a different callback adds one binding for the new callback on each object or array');
+
+	// ................................ Act ..................................
+	$.unobserve(model, "**",  observeAllCb1);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1 1 1 1 1", 'Calling $.unobserve(data, "**", myCallback) removes just my callback bindings');
+
+	// ................................ Act ..................................
+	$.observe(model, "**", observeAllCb1);
+
+	$.unobserve(model.things, "**",  observeAllCb1);
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person1).events.propertyChange.length + " "
+	+ $._data(model.person1.home).events.propertyChange.length + " "
+	+ $._data(model.person1.home.address).events.propertyChange.length + " "
+	+ $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "2 2 2 2 1 1 1", 'Calling $.unobserve(objectOrArrayInTree, "**", myCallback) removes just my callback bindings in the subtree only');
+
+	// ................................ Act ..................................
+	$.unobserve(model, "**");
+
+	// ............................... Assert .................................
+	equal(!$._data(model).events + " "
+		+ !$._data(model.person1).events + " "
+		+ !$._data(model.person1.home).events + " "
+		+ !$._data(model.person1.home.address).events + " "
+		+ !$._data(model.things).events + " "
+		+ !$._data(model.things[0]).events + " "
+		+ !$._data(model.things[1]).events,
+		"true true true true true true true",
+	'unobserveAll() with no callback removes all bindings from the tree');
+
+	// ................................ Act ..................................
+	$.observe(model.things, "**", observeAllCb2);
+
+	// ............................... Assert .................................
+	listeners = $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1", '$.observe(someArray, "**", observeAllCb2) works correctly');
+
+	$.unobserve(model.things, "**",  observeAllCb2);
+
+	listeners = "" + !!$._data(model.things).events + " "
+	+ !!$._data(model.things[0]).events + " "
+	+ !!$._data(model.things[1]).events;
+
+	equal(listeners, "false false false", '$.unobserve(someArray, "**", observeAllCb2) removes listeners correctly');
+
+	// ................................ Act ..................................
+	$.observe(model, "things.**", observeAllCb2);
+
+	// ............................... Assert .................................
+	listeners = $._data(model.things).events.arrayChange.length + " "
+	+ $._data(model.things[0]).events.propertyChange.length + " "
+	+ $._data(model.things[1]).events.propertyChange.length;
+
+	equal(listeners, "1 1 1", '$.observe(data, "arrayProp.**", observeAllCb2) works correctly');
+
+	// ................................ Act ..................................
+	reset();
+	$.observable(model.things).insert({ thing: "bush" });
+	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	$.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
+	$.observable(model.things).remove(2);
+
+	// ............................... Assert .................................
+	equal(result, 
+'ObserveAll Path: root eventArgs: change: insert|index: 3|items: [object Object]|'
++ 'ObserveAll Path: root eventArgs: change: refresh|oldItems: [object Object],[object Object],[object Object],[object Object]|'
++ 'ObserveAll Path: root[0] eventArgs: change: set|path: thing|value: tree+|oldValue: tree|remove: false|'
++ 'ObserveAll Path: root[1] eventArgs: change: set|path: thing|value: bush++|oldValue: bush+|remove: false|'
++ 'ObserveAll Path: root eventArgs: change: remove|index: 2|items: [object Object]|',
+		'$.observe(data, "arrayProp.**", ...) works as observeAll and raises correct change events');
+
+	// ................................ Act ..................................
+	$.unobserve(model, "things.**",  observeAllCb2);
+
+	// ............................... Assert .................................
+	listeners = "" + !!$._data(model.things).events + " "
+	+ !!$._data(model.things[0]).events + " "
+	+ !!$._data(model.things[1]).events;
+
+	equal(listeners, "false false false", '$.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
+
+	reset();
+
+	// ................................ Reset ..................................
+	inc = 0;
+	data = {};
+
+	// =============================== Arrange ===============================
+
+	model = {};
+
+	function observeAllCb4(ev, eventArgs) {
+		result += "ObserveAll Path: " + (ev.data.observeAll && ev.data.observeAll.path()) + " eventArgs: ";
+		for (var key in eventArgs) {
+			result += key + ": " + JSON.stringify(eventArgs[key]) + "|";
+		}
+	}
+
+	$.observe(model, "owner", "person^address.street", "person.**", "person^**", "person^name", observeAllCb4);
+
+	$.observable(model).setProperty({
+		owner: "Jeff",
+		person: {
+			name: "Pete",
+			address: {
+				street: "1st Ave"
+			},
+			phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
+		}
+	});
+
+	// ................................ Act ..................................
+	$.observable(model.person).setProperty({
+		name: "Hermione",
+		"address.street": "Main St"
+	});
+
+	$.observable(model.person).setProperty({
+		address: {street: "New Street"},
+		phones: [{number:"123 123 1234"}]
+	});
+
+	$.observable(model).setProperty({
+		"person.name": "John",
+		"person.address.street": "Last St"
+	});
+
+	$.observable(model.person.phones[0]).setProperty("foo", 34);
+
+	$.observable(model.person.phones).insert({
+		number:"456 456 AAAA"
+	});
+
+	$.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
+
+	$.observable(model.person.phones).remove(0);
+
+	$.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
+
+	$.observable(model.person.phones).insert({
+		number:"456 456 BBBB"
+	});
+
+	$.observable(model.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+
+	$.observable(model.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+
+	$.observable(model.person.phones[1]).removeProperty("subnum.b");
+
+	$.observable(model.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+
+	$.observable(model.person.phones[2]).setProperty("number", model.person.phones[2].number + inc++);
+
+	$.observable(model.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+
+	$.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
+
+	$.observable(model.person.phones).remove(0);
+
+	$.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
+
+	// ............................... Assert .................................
+
+	result += "DATA: " + JSON.stringify(model);
+
+	equal(result,
+'ObserveAll Path: undefined eventArgs: change: "set"|path: "owner"|value: "Jeff"|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: undefined eventArgs: change: "set"|path: "person"|value: {"name":"Pete","address":{"street":"1st Ave"},"phones":[{"number":"111 111 1111"},{"number":"222 222 2222"}]}|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: root eventArgs: change: "set"|path: "name"|value: "Hermione"|oldValue: "Pete"|remove: false'
+
++ '|ObserveAll Path: root.address eventArgs: change: "set"|path: "street"|value: "Main St"|oldValue: "1st Ave"|remove: false'
+
++ '|ObserveAll Path: root eventArgs: change: "set"|path: "address"|value: {"street":"New Street"}|oldValue: {"street":"Main St"}|remove: false'
+
++ '|ObserveAll Path: root eventArgs: change: "set"|path: "phones"|value: [{"number":"123 123 1234"}]|oldValue: [{"number":"111 111 1111"},{"number":"222 222 2222"}]|remove: false'
+
++ '|ObserveAll Path: root eventArgs: change: "set"|path: "name"|value: "John"|oldValue: "Hermione"|remove: false'
+
++ '|ObserveAll Path: root.address eventArgs: change: "set"|path: "street"|value: "Last St"|oldValue: "New Street"|remove: false'
+
++ '|ObserveAll Path: root.phones[0] eventArgs: change: "set"|path: "foo"|value: 34|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 AAAA"}]'
+
++ '|ObserveAll Path: root.phones[1] eventArgs: change: "set"|path: "number"|value: "456 456 AAAA0"|oldValue: "456 456 AAAA"|remove: false'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "remove"|index: 0|items: [{"number":"123 123 1234","foo":34}]'
+
++ '|ObserveAll Path: root.phones[0] eventArgs: change: "set"|path: "number"|value: "456 456 AAAA01"|oldValue: "456 456 AAAA0"|remove: false'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 BBBB"}]'
+
++ '|ObserveAll Path: root.phones[1] eventArgs: change: "set"|path: "subnum"|value: {"a":11,"b":22}|oldValue: undefined|remove: false'
+
++ '|ObserveAll Path: root.phones[1].subnum eventArgs: change: "set"|path: "a"|value: "a2"|oldValue: 11|remove: false'
+
++ '|ObserveAll Path: root.phones[1].subnum eventArgs: change: "set"|path: "b"|value: undefined|oldValue: 22|remove: true'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "insert"|index: 1|items: [{"number":"456 456 CCCC"},{"number":"456 456 DDDD"}]'
+
++ '|ObserveAll Path: root.phones[2] eventArgs: change: "set"|path: "number"|value: "456 456 DDDD3"|oldValue: "456 456 DDDD"|remove: false'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "refresh"|oldItems: [{"number":"456 456 AAAA01"},{"number":"456 456 CCCC"},{"number":"456 456 DDDD3"},{"number":"456 456 BBBB","subnum":{"a":"a2"}}]'
+
++ '|ObserveAll Path: root.phones[1] eventArgs: change: "set"|path: "number"|value: "456 456 FFFF4"|oldValue: "456 456 FFFF"|remove: false'
+
++ '|ObserveAll Path: root.phones eventArgs: change: "remove"|index: 0|items: [{"number":"456 456 EEEE"}]'
+
++ '|ObserveAll Path: root.phones[0] eventArgs: change: "set"|path: "number"|value: "456 456 FFFF45"|oldValue: "456 456 FFFF4"|remove: false'
+
++ '|DATA: {"owner":"Jeff","person":{"name":"John","address":{"street":"Last St"},"phones":[{"number":"456 456 FFFF45"}]}}',
+
+	'observeAll scenarios using multiple paths, with or without "**", raise correct events, with observeAll.path() etc.');
+
+	// ............................... Assert .................................
+	listeners = $._data(model).events.propertyChange.length + " "
+	+ $._data(model.person).events.propertyChange.length + " "
+	+ $._data(model.person.address).events.propertyChange.length + " "
+	+ $._data(model.person.phones).events.arrayChange.length + " "
+	+ $._data(model.person.phones[0]).events.propertyChange.length;
+
+	equal(listeners, "2 1 1 1 1", 'observeAll scenarios using multiple paths, with or without "**", duplicate listeners are avoided');
+
+	// ................................ Reset ..................................
+	$.unobserve(model, "**");
+
+	reset();
+
+	model = {
+		person1: person1,
+		person2: person2,
+		things: []
+	};
+	person1.home.address.street = "StreetOne",
+	person1.home.address.ZIP = "111";
+
 });
 
 test("observeAll - cyclic graphs", function() {

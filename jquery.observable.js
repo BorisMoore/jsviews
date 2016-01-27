@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.71 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.72 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.0-alpha",
+var versionNumber = "v0.9.72",
 	$observe, $observable,
 
 	$views = $.views =
@@ -100,19 +100,23 @@ if (!$.observe) {
 			: data;
 	},
 
-	resolvePathObjects = function(paths, root) {
-		paths = $isArray(paths) ? paths : [paths];
+	resolvePathObjects = function(paths, root, callback) {
+		paths = paths
+			? $isArray(paths)
+				? paths
+				: [paths]
+			: [];
 
 		var i, path,
 			object = root,
 			nextObj = object,
-			l = paths.length,
+			l = paths && paths.length,
 			out = [];
 
 		for (i = 0; i < l; i++) {
 			path = paths[i];
 			if ($isFunction(path)) {
-				out = out.concat(resolvePathObjects(path.call(root, root), root));
+				out = out.concat(resolvePathObjects(path.call(root, root, callback), root));
 				continue;
 			} else if ("" + path !== path) {
 				root = nextObj = path;
@@ -213,8 +217,8 @@ if (!$.observe) {
 			if (prop !== $expando) {
 				if (newObject = $observable._fltr(newAllPath, obj[prop], nextParentObs, filter)) {
 					newParentObs = nextParentObs.slice();
-					if (nestedArray && updatedTgt) {
-						newParentObs.unshift(updatedTgt); // For array change events need to add updated array to parentObs
+					if (nestedArray && updatedTgt && newParentObs[0] !== updatedTgt) {
+						newParentObs.unshift(updatedTgt); // For array change events when observing an array which is not the root, need to add updated array to parentObs
 					}
 					observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs, objMap);
 					// If nested array, need to observe the array too - so set filter to undefined
@@ -255,7 +259,7 @@ if (!$.observe) {
 			if (objMap && notRemoving && $hasData(object) && objMap[obId = $data(object).obId]) {
 				objMap[obId]++;
 				return; // This object has already being observed/unobserved by this observeAll/unobserveAll call (must be a cyclic object graph) so skip, to avoid
-				// stack overflow/multiple instances of listener. See https://github.com/BorisMoore/jsviews/pull/305
+				// stack overflow/multiple instances of listener. See jsviews/pull/305
 				// NOTE - WE DO NOT support ObserveAll on data with cyclic graphs which include DUPLICATE REFERENCES TO ARRAY PROPERTIES - such as data.children = data.descendants = []
 			}
 			if (!objMap) {
@@ -345,8 +349,6 @@ if (!$.observe) {
 									// Duplicate exists, so skip. (This can happen e.g. with {^{for people ~foo=people}})
 									// or for cases with cyclic objects - e.g. obj.children = obj.descendants = []
 									return;
-								} else if (pathStr === "*" && data.prop !== pathStr) {
-									$(object).off(namespace, onObservableChange);
 								}
 							}
 						}
@@ -397,7 +399,7 @@ if (!$.observe) {
 				// Uses the contextCb callback to execute the compiled exprOb template in the context of the view/data etc. to get the returned value, typically an object or array.
 				// If it is an array, registers array binding
 				var origRt = root;
-				// Note: For https://github.com/BorisMoore/jsviews/issues/292ctxCb will need var ctxCb = contextCb || function(exprOb, origRt) {return exprOb._jsv(origRt);};
+				// Note: For jsviews/issues/292 ctxCb will need var ctxCb = contextCb || function(exprOb, origRt) {return exprOb._jsv(origRt);};
 
 				exprOb.ob = contextCb(exprOb, origRt); // Initialize object
 
@@ -453,7 +455,7 @@ if (!$.observe) {
 			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, el, data, events, contextCb, items, cbBindings, depth, innerCb, parentObs,
 				allPath, filter, initNsArr, initNsArrLen,
 				ns = observeStr,
-				paths = this != 1 // Using != for IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+				paths = this != 1 // Using != for IE<10 bug- see jsviews/issues/237
 					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
 													// style - such as innerObserve([object], path.path, [origRoot], path.prm, innerCb, ...);
 					: slice.call(arguments), // Don't flatten - this is the first 'top-level call, to innerObserve.apply(1, paths)
@@ -511,7 +513,7 @@ if (!$.observe) {
 					}
 					object = root;
 					if ("" + path === path) {
-						// Consider support for computed paths: https://github.com/BorisMoore/jsviews/issues/292
+						// Consider support for computed paths: jsviews/issues/292
 						//if (/[\(\[\+]/.test(path)) {
 						//	var b={links:{}}, t = $sub.tmplFn("{:"+path+"}", b, true), items = t.paths[0];
 						//	l += items.length - 1;
@@ -576,14 +578,16 @@ if (!$.observe) {
 										skip = 0;
 										while (el--) { // Skip duplicates
 											data = events[el].data;
-											if (data && data.cb === callback && data.ns === initialNs) {
-												if (data.prop === prop || data.prop === "*") {
-													if (p = parts.join(".")) {
-														data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
-														// need to keep bindings for rest of path, ready for if the object gets swapped.
-													}
-													skip++;
+											if (data
+												&& data.cb._cId === callback._cId
+												&& data.ns === initialNs
+												&& !callback._inId // Don't skip if this is an innerCb for an object returned by a computed observable.
+												&& (data.prop === prop || data.prop === "*" || data.prop === "**")) {
+												if (p = parts.join(".")) {
+													data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
+													// need to keep bindings for rest of path, ready for if the object gets swapped.
 												}
+												skip++;
 											}
 										}
 										if (skip) {
@@ -592,17 +596,21 @@ if (!$.observe) {
 											continue;
 										}
 									}
-									if (prop === "*") {
+									if (prop === "*" || prop === "**") { // "*" => all properties. "**" => all properties and sub-properties (i.e. deep observeAll behavior)
 										if (!unobserve && events && events.length) {
-											// Remove existing bindings, since they will be duplicates with "*"
+											// Remove existing bindings, since they will be duplicates with "*" or "**"
 											observeOnOff(ns, "", false, true);
 										}
-										observeOnOff(ns, ""); // observe the object for any property change
-										for (p in object) {
-											// observing "*": So (in addition to listening to prop change, above) listen to arraychange on props of type array
-											if (p !== $expando) {
-												bindArray(object, unobserve, undefined, p);
+										if (prop === "*") {
+											observeOnOff(ns, ""); // observe the object for any property change
+											for (p in object) {
+												// observing "*": So (in addition to listening to prop change, above) listen to arraychange on props of type array
+												if (p !== $expando) {
+													bindArray(object, unobserve, undefined, p);
+												}
 											}
+										} else {
+											$.observable(object)[(unobserve ? "un" : "") + "observeAll"](callback); // observe or unobserve the object for any property change
 										}
 										break;
 									} else if (prop) {
@@ -617,7 +625,7 @@ if (!$.observe) {
 							if ($isFunction(prop)) {
 								if (dep = prop.depends) {
 									// This is a computed observable. We will observe any declared dependencies
-									innerObserve([object], resolvePathObjects(dep, object), callback, contextCb, unobserve);
+									innerObserve([object], resolvePathObjects(dep, object, callback), callback, contextCb, unobserve);
 								}
 								break;
 							}
@@ -638,7 +646,7 @@ if (!$.observe) {
 		var initialNs,
 			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
-			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see https://github.com/BorisMoore/jsviews/issues/237
+			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see jsviews/issues/237
 			paths = slice.call(arguments),
 			origRoot = paths[0];
 
@@ -755,8 +763,8 @@ if (!$.observe) {
 						// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
 						|| leaf;
 					getter = property;
-					setter = property.set === true ? property : property.set;
-					property = property.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
+					setter = getter.set === true ? getter : getter.set;
+					property = getter.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
 				}
 			}
 

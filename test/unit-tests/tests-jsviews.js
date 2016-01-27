@@ -3048,341 +3048,309 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 	person1.lastName = "One"; // reset Prop
 });
 
-test('data-link="{for...}"', function() {
+test('2-way binding', function() {
 
 	// =============================== Arrange ===============================
+	var tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="name"></option>{{/for}}</select>');
 
-	model.things = [{ thing: "box" }]; // reset Prop
+	var model = {
+			selected: "Jim",
+			people: [
+				{ name: "Bob" },
+				{ name: "Jim" }
+			]
+		},
+		newName = "new";
 
-	var tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}"></span>');
-	$.templates("inner", "{^{:thing}}", tmpl);
-
+	// ............................... Act .................................
 	tmpl.link("#result", model);
 
-	// ................................ Act ..................................
-	before = $("#result").text();
-	$.observable(model.things).insert(0, { thing: "tree" });
-	after = $("#result").text();
+	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).remove(2);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val('Jim').change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
-	'data-link="{for things}" binds to array changes on leaf array.');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: [{ thing: "triangle" }, { thing: "circle" }] });
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
-	'data-link="{for things}" binds to property change on path');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: { thing: "square" } });
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'square',
-	'data-link="{for things}" binds to property change on path - swapping from array to singleton object');
-
-	// ................................ Act ..................................
-	$.observable(model.things).setProperty("thing", "square2");
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'square2',
-	'data-link="{for things tmpl=...}" supports live binding within the template content');
-
-	// =============================== Arrange ===============================
-
-	model.things = [{ thing: "box" }]; // reset Prop
-	model.emptyText = "None"; // reset Prop
-
-	tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}{else tmpl=\'empty\'}"></span>');
-	$.templates({
-		inner: "{^{:thing}}",
-		empty: "{^{:emptyText}}"
-	}, tmpl);
-
-	tmpl.link("#result", model);
-
-	// ................................ Act ..................................
-	before = $("#result").text();
-	$.observable(model.things).insert(0, { thing: "tree" });
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
-	'data-link="{for things}{else ...}" binds to array changes on leaf array.');
-
-	// ................................ Act ..................................
-	before = $("#result").text();
-	$.observable(model.things).remove(0, 2);
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'treebox|None',
-	'data-link="{for things}{else ...}" renders {{else}} block when array is emptied');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: [{ thing: "triangle" }, { thing: "circle" }] });
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
-	'data-link="{for things}{else ...}" binds to property change on path');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: { thing: "square" } });
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'square',
-	'data-link="{for things}{else ...}" binds to property change on path - swapping from array to singleton object');
-
-	// ................................ Act ..................................
-	$.observable(model.things).setProperty("thing", "square2");
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'square2',
-	'data-link="{for things tmpl=...}{else ...}" supports live binding within the {for} template content');
-
-	// ................................ Act ..................................
-	$.observable(model).removeProperty("things");
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'None',
-	'data-link="{for things tmpl=...}{else tmpl=...}" binds to removeProperty change on path - and renders {{else}} block');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty("emptyText", "No things");
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(after, 'No things',
-	'data-link="{for things tmpl=...}{else tmpl=...}" supports live binding within the {else} template content');
-
-	// =============================== Arrange ===============================
-
-	model.things = [{ thing: "box" }]; // reset Prop
-
-	tmpl = $.templates('<span data-link="title{for things tmpl=\'inner\'}{else tmpl=\'None\'}"></span>');
-	$.templates("inner", "{{:thing}}", tmpl);
-
-	tmpl.link("#result", model);
-
-	// ................................ Act ..................................
-	var elem = $("#result span")[0];
-	before = elem.title;
-	$.observable(model.things).insert(0, { thing: "tree" });
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
-	'data-link="title{for things}{else ...}" binds to array changes on leaf array.');
-
-	// ................................ Act ..................................
-	before = elem.title;
-	$.observable(model.things).remove(0, 2);
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'treebox|None',
-	'data-link="title{for things}{else ...} renders {{else}} block when array is emptied');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: [{ thing: "triangle" }, { thing: "circle" }] });
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
-	'data-link="title{for things}{else ...} binds to property change on path');
-
-	// ................................ Act ..................................
-	$.observable(model).setProperty({ things: { thing: "square" } });
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(after, 'square',
-	'data-link="title{for things}{else ...} binds to property change on path - swapping from array to singleton object');
-
-	// ................................ Act ..................................
-	$.observable(model.things).setProperty("thing", "square2");
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(after, 'square',
-	'data-link="title{for things tmpl=...}{else ...}" Non html targets (e.g. title) do not support live binding within the {for} template content');
-
-	// ................................ Act ..................................
-	$.observable(model).removeProperty("things");
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(after, 'None',
-	'data-link="title{for things}{else ...}" binds to removeProperty change on path - and renders {{else}} block');
-
-	// ................................ Act ..................................
-	$.observable(model.things).setProperty("emptyText", "No things");
-	after = elem.title;
-
-	// ............................... Assert .................................
-	equal(after, 'None',
-	'data-link="title{for things tmpl=...}{else tmpl=...}" Non html targets (e.g. title) do not support live binding within the {else} template content');
-
-	// =============================== Arrange ===============================
-
-	model.things = [{ thing: "box" }]; // reset Prop
-
-	var countItems = 0;
-	tmpl = $.templates('<span data-link="{for things tmpl=\'inner\'}"></span>');
-
-	$.templates("inner", "{{test:thing}}", tmpl);
-	$.views.converters("test", function(val) {
-		return val + countItems++;
-	}, tmpl);
-
-	tmpl.link("#result", model);
-
-	// ................................ Act ..................................
-	before = $("#result").text();
-	$.observable(model.things).insert([{ thing: "addedA" }, { thing: "addedB" }]);
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'box0|box0addedA1addedB2',
-	'data-link="{for things}" binds to array changes and the changes are rendered incrementally');
-
-	// =============================== Arrange ===============================
-
-	model.things = [{ thing: "box" }]; // reset Prop
-	countItems = 0;
-
-	tmpl = $.templates('<ul data-link="{for things tmpl=\'inner\'}"></ul>');
-
-	$.templates("inner", "<li>{{test:thing}}</li>", tmpl);
-	$.views.converters("test", function(val) {
-		return val + countItems++;
-	}, tmpl);
-
-	tmpl.link("#result", model);
-
-	// ................................ Act ..................................
-	before = $("#result").text();
-	$.observable(model.things).insert([{ thing: "addedA" }, { thing: "addedB" }]);
-	after = $("#result").text();
-
-	// ............................... Assert .................................
-	equal(before + "|" + after, 'box0|box0addedA1addedB2',
-	'data-link="{for things}" in elCnt binds to array changes and the changes are rendered incrementally');
+	equal(result, "Jim-1|new-2|Bob-0|JimJim-1|",
+		'<select data-link="selected">...<option data-link="name">');
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	model.things = []; // reset Prop
-});
-
-test('data-link="{if...}"', function() {
 
 	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected">{^{for people}}<option value="{{:name}}">{{:name.toUpperCase()}}</option>{{/for}}</select>');
 
-	var data = {
-		format: 1,
-		first: "Jo",
-		last: "Sanders"
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
 	};
 
-	var tmpl = $.templates(
-		'<span data-link="{if format===1 tmpl=\'format1\'}{else format===2 tmpl=\'format2\'}{else tmpl=\'format3\'}"></span>'
-		+ '<span>{^{if format===1 tmpl=\'format1\'}}{{else format===2 tmpl=\'format2\'}}{{else tmpl=\'format3\'}}{{/if}}</span>');
+	// ............................... Act .................................
+	tmpl.link("#result", model);
 
-	$.templates({
-		format1: "{^{:first}} {^{:last}}",
-		format2: "{^{:last}} {^{:first}}",
-		format3: "{^{:last}} ({^{:first}})"
-	}, tmpl);
+	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
-	tmpl.link("#result", data);
+	$.observable(model.people).insert({
+		name: newName
+	});
 
-	var element1 = $($("#result span")[0]);
-	var element2 = $($("#result span")[1]);
+	$.observable(model).setProperty("selected", newName);
 
-	// ................................ Act ..................................
-	var res = element1.text() + "/" + element2.text();
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(data).setProperty("format", 2);
-	res += "|" + element1.text() + "/" + element2.text();
+	$.observable(model.people).remove(2);
 
-	$.observable(data).setProperty("format", 3);
-	res += "|" + element1.text() + "/" + element2.text();
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(data).setProperty("format", 1);
-	res += "|" + element1.text() + "/" + element2.text();
+	$("#result select").val('Jim').change();
 
-	$.observable(data).setProperty("first", "Jo2");
-	res += "|" + element1.text() + "/" + element2.text();
-
-	$.observable(data).setProperty("last", "Sanders2");
-	res += "|" + element1.text() + "/" + element2.text();
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
-		? "Jo Sanders/Jo Sanders|Sanders Jo/Sanders Jo|Sanders (Jo)/Sanders (Jo)|Jo Sanders/Jo Sanders|Jo2 Sanders/Jo2 Sanders|Jo2Sanders2/Jo2Sanders2"
-		: "Jo Sanders/Jo Sanders|Sanders Jo/Sanders Jo|Sanders (Jo)/Sanders (Jo)|Jo Sanders/Jo Sanders|Jo2 Sanders/Jo2 Sanders|Jo2 Sanders2/Jo2 Sanders2",
-	'<span data-link="{if expr ...}{else expr2...}{else ...}"></span> is equivalent to <span>{^{if expr ...}}{{else expr2...}}{{else ...}}{{/if}}</span>');
-
-	// =============================== Arrange ===============================
-	data = {
-		format: 1,
-		first: "Jo",
-		last: "Sanders"
-	};
-
-	tmpl = $.templates(
-		'<span data-link="title{if format===1 tmpl=\'format1\'}{else format===2 tmpl=\'format2\'}{else tmpl=\'format3\'}"></span>');
-
-	$.templates({
-		format1: "{^{:first}} {^{:last}}",
-		format2: "{^{:last}} {^{:first}}",
-		format3: "{^{:last}} ({^{:first}})"
-	}, tmpl);
-
-	tmpl.link("#result", data);
-
-	element1 = $("#result span")[0];
-
-	// ................................ Act ..................................
-	res = element1.title;
-
-	$.observable(data).setProperty("format", 2);
-	res += "|" + element1.title;
-
-	$.observable(data).setProperty("format", 3);
-	res += "|" + element1.title;
-
-	$.observable(data).setProperty("format", 1);
-	res += "|" + element1.title;
-
-	// ............................... Assert .................................
-	equal(res, "Jo Sanders|Sanders Jo|Sanders (Jo)|Jo Sanders",
-	'<span data-link="title{if expr ...}{else expr2...}{else ...}"></span> binds and updates correctly when expr and expr2 change');
-
-	// ................................ Act ..................................
-	res = element1.title;
-
-	$.observable(data).setProperty("first", "Jo2");
-	res += "|" + element1.title;
-
-	$.observable(data).setProperty("last", "Sanders2");
-	res += "|" + element1.title;
-
-	// ............................... Assert .................................
-	equal(res, "Jo Sanders|Jo Sanders|Jo Sanders",
-	'data-link="title{if expr tmpl=...}{else expr2 tmpl=...}...": Non html targets (e.g. title) do not support live binding within the {if} and {else} template content');
+	equal(result, "JIM-1|NEW-2|BOB-0|JimJIM-1|",
+		'<select data-link="selected">...<option value="{{:name}}">{{:name.toUpperCase()}}');
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected">{^{for people}}<option>{{:name}}</option>{{/for}}</select>');
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).remove(2);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val('Jim').change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	equal(result, "Jim-1|new-2|Bob-0|JimJim-1|",
+		'<select data-link="selected">...<option>{{:name}}');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="value{:name} {:name.toUpperCase()}"></option>{{/for}}</select>');
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).remove(2);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val('Jim').change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	equal(result, "JIM-1|NEW-2|BOB-0|JimJIM-1|",
+		'<select data-link="selected">...<option data-link="value{:name} {:name.toUpperCase()}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).remove(2);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val('Jim').change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	equal(result, "JIM-1|NEW-2|BOB-0|JimJIM-1|",
+		'<select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
+
+	model = {
+		selected: ["Jim","Bob"],
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	result = $("#result select")[0].multiple + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName, "Bob"]);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).remove(2);
+
+	result += $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert([
+		{
+			name: "Pete"
+		},
+		{
+			name: "Jo"
+		}
+	]);
+
+	$("#result select").val(['Jo']).change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val([]).change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$("#result select").val(["Bob", "Pete", "Jim"]).change();
+
+	result += model.selected + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", "Bob");
+
+	result += $("#result select")[0].multiple + $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	equal(result, "trueBOBJIM-0|BOBNEW-0|BOB-0|JoJO-3|--1|Bob,Jim,PeteBOBJIMPETE-0|trueBOB-0|",
+		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name} value{:id}"></option>{{/for}}</select>');
+
+	model = {
+		selected: "J",
+		people: [
+			{ name: "Bob", id: "B" },
+			{ name: "Noone", id: "" },
+			{ name: "Jim", id: "J" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	result = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", ["", "J"]);
+
+	result += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", "B");
+
+	result += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", []);
+
+	result += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", "");
+
+	result += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", ["J"]);
+
+	result += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", null);
+
+	result += $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	equal(result, "trueJim:2|NooneJim:1|Bob:0|:-1|Noone:1|Jim:2|trueNoone:1|",
+		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
 });
 
 test('data-link="{tag...}"', function() {
@@ -4022,7 +3990,7 @@ test("Computed observables in $.link() expressions", function() {
 					address: address
 				},
 				obtype: "b"
-			},
+			}
 		};
 
 		function changeHome(label) {
@@ -4117,7 +4085,7 @@ test("Computed observables in $.link() expressions", function() {
 					address: address
 				},
 				obtype: "b"
-			},
+			}
 		};
 
 		function changeHome(label) {
@@ -4233,7 +4201,7 @@ test("Computed observables in $.link() expressions", function() {
 					address: address
 				},
 				obtype: "b"
-			},
+			}
 		};
 
 		function changeHome(label) {
@@ -4310,7 +4278,7 @@ test("Computed observables in two-way binding", function() {
 			fullName: fullName
 		};
 
-		fullName.depends = [person, "*"];
+		fullName.depends = "*";
 
 		fullName.set = function(val) {
 			val = val.split(" ");
@@ -5529,12 +5497,10 @@ test("Chained computed observables in template expressions", function() {
 			this._ob = val;
 		};
 
-		var res, resCount, helpers, ch, person, person2, data;
+		var res, person, data;
 
 		function setData() {
 			res = "";
-			resCount = 1;
-			ch = 0;
 
 			person = {
 				ob: ob,
@@ -5543,18 +5509,7 @@ test("Chained computed observables in template expressions", function() {
 					type: "T"
 				}
 			};
-			person2 = {
-				ob: ob,
-				_ob: {
-					street: "A2",
-					type: "T2"
-				}
-			};
 			data = {person: person};
-		}
-
-		function swapPerson() {
-			$.observable(data).setProperty("person", data.person === person ? person2 : person);
 		}
 
 		function changeOb() {
@@ -5573,7 +5528,7 @@ test("Chained computed observables in template expressions", function() {
 		}
 
 		function getResult(name) {
-			res += (name||resCount++) + ": " + $("#result").text() + " |";
+			res += name + ": " + $("#result").text() + " |";
 		}
 
 		var tmpl = $.templates("<span data-link='person^ob().street + person^ob().type'></span>");
@@ -11310,6 +11265,7 @@ test("Paths", function() {
 
 	// ................................ Act ..................................
 	$.observe(model, "person1^fullName", "person1.address.*", myListener);
+	$.observe(model, "person1^fullName", "person1.home.address.street", "person1.home.address.*", myListener);
 
 	handlersCount = $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
@@ -11561,9 +11517,6 @@ test("observe context helper", function() {
 test("Array", function() {
 
 	$.views.settings.debugMode(); // For using _jsv
-
-	// TODO for V1 or after? >>>>> $.observe(person, "**", changeHandler); // all props and arraychange on all array-type props - over complete object graph of person.
-	// TODO for V1 or after? >>>>> $.observe(person.phones, "**", changeHandler); // all props and arraychange on all array-type props over complete object graph of each phone
 
 	// =============================== Arrange ===============================
 	// Using the same event handler for arrayChange and propertyChange
