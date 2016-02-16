@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.72 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.73 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -6,7 +6,7 @@
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsRender >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsRender:
  * See http://jsviews.com/#jsrender and http://github.com/BorisMoore/jsrender
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.72",
+var versionNumber = "v0.9.73",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable,
 
@@ -239,10 +239,10 @@ function $viewsDelimiters(openChars, closeChars, link) {
 		// make rTag available to JsViews (or other components) for parsing binding expressions
 		$sub.rTag = "(?:" + rTag + ")";
 		//                        { ^? {   tag+params slash?  or closingTag                                                   or comment
-		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
+		rTag = new RegExp("(?:" + openChars + rTag + "(\\/)?|\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1 + "(?:(?:\\/(\\w+))\\s*|!--[\\s\\S]*?--))" + closeChars, "g");
 
-		// Default:  bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
-		//      /(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+		// Default:  bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
+		//      /(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}
 
 		rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
 		// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
@@ -1228,43 +1228,43 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 		}
 	}
 
-	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, slash, closeBlock, index) {
+	function parseTag(all, bind, tagName, converter, colon, html, codeTag, params, slash, bind2, closeBlock, index) {
 /*
 
-     bind     tagName         cvt   cln html code   params             slash           closeBlk  comment
-/(?:{(\^)?{(?:(\w+(?=[/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{{(?:(?:\/(\w+))|!--[\s\S]*?--))}}/g
+     bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
+/(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}/g
 
 (?:
-  {(\^)?{				bind
+  {(\^)?{            bind
   (?:
-    (\w+				tagName
+    (\w+             tagName
       (?=[\/\s}])
     )
     |
-    (\w+)?(:)			converter colon
+    (\w+)?(:)        converter colon
     |
-    (>)					html
+    (>)              html
     |
-    (\*)				codeTag
+    (\*)             codeTag
   )
   \s*
-  (						params
+  (                  params
     (?:[^}]|}(?!}))*?
   )
-  (\/)?					slash
+  (\/)?              slash
   |
-  {{
+  {(\^)?{            bind2
   (?:
-    (?:\/(\w+))			closeBlock
+    (?:\/(\w+))\s*   closeBlock
     |
-    !--[\s\S]*?--		comment
+    !--[\s\S]*?--    comment
   )
 )
 }}/g
 
 */
 
-		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":") {
+		if (codeTag && bind || slash && !tagName || params && params.slice(-1) === ":" || bind2) {
 			syntaxError(all);
 		}
 
@@ -2034,7 +2034,7 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsObservable >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsObservable:
  * See http://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -3004,7 +3004,7 @@ if (!$.observe) {
 /* JsViews:
  * Interactive data-driven views using templates and data-linking.
  * See http://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -5200,7 +5200,7 @@ function addLinkMethods(tagOrView, isTag) {
 	tagOrView.contents = function(deep, select) {
 		// For a view or a tag, return jQuery object with the content nodes,
 		if (deep !== !!deep) {
-			// deep not boolean, so this is getContents(selector)
+			// deep not boolean, so this is contents(selector)
 			select = deep;
 			deep = undefined;
 		}
@@ -5318,7 +5318,8 @@ function addLinkMethods(tagOrView, isTag) {
 			}
 		};
 	} else {
-			// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
+		// This is a view
+		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
 		tagOrView.addViews = function(index, dataItems, tmpl) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
@@ -5444,12 +5445,12 @@ function addLinkMethods(tagOrView, isTag) {
 			return this;
 		};
 
-		tagOrView.refresh = function(context) {
+		tagOrView.refresh = function() {
 			var self = this,
 				parent = self.parent;
 
 			if (parent) {
-				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, context, true);
+				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, undefined, true);
 				setArrayChangeLink(self);
 			}
 			return self;

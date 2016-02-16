@@ -1,9 +1,9 @@
-/*! JsObservable v0.9.72 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.73 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.72",
+var versionNumber = "v0.9.73",
 	$observe, $observable,
 
 	$views = $.views =

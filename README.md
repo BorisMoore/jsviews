@@ -8,7 +8,7 @@
 
 The content of this ***ReadMe*** is available also as a *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*.
 
-<h3>Installation</h3>
+<h2>JsViews Installation</h2>
 
 jsviews.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site.
 
@@ -18,6 +18,8 @@ Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsviews)***, using `$ bower install jsviews` 
 - It can be loaded using an AMD script loader, such as RequireJS
 - For installation using *Node.js* (*npm*) -- and browser loading using *Browserify* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
+
+*Example HTML page:* [Loading JsViews](http://www.jsviews.com/#download/pages-jsv)
 
 <h3>JsRender and JsViews</h3>
 **JsRender** is used for data-driven rendering of templates to strings, ready for insertion in the DOM. (See *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender GitHub repository](https://github.com/BorisMoore/jsrender)).
@@ -239,7 +241,6 @@ $(".changeBtn").on("click", function() {
 ```
 
 [Learn more...](http://www.jsviews.com/#$view)
-
 
 <h3><i>Data-linked paths</i></h3>
 

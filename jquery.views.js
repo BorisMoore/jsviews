@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.72 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.73 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -7,7 +7,7 @@
  * Also requires jquery.observable.js
  *   See JsObservable at http://jsviews.com/#download and http://github.com/BorisMoore/jsviews
  *
- * Copyright 2015, Boris Moore
+ * Copyright 2016, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var global = (0, eval)('this'), // jshint ignore:line
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v0.9.72",
+var versionNumber = "v0.9.73",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -2267,7 +2267,7 @@ function addLinkMethods(tagOrView, isTag) {
 	tagOrView.contents = function(deep, select) {
 		// For a view or a tag, return jQuery object with the content nodes,
 		if (deep !== !!deep) {
-			// deep not boolean, so this is getContents(selector)
+			// deep not boolean, so this is contents(selector)
 			select = deep;
 			deep = undefined;
 		}
@@ -2374,6 +2374,7 @@ function addLinkMethods(tagOrView, isTag) {
 	};
 
 	if (isTag) {
+		// This is a TAG
 		tagOrView.domChange = function() { // domChange notification support
 			var elem = this.parentElem,
 				hasListener = $.hasData(elem) && $._data(elem).events,
@@ -2385,7 +2386,8 @@ function addLinkMethods(tagOrView, isTag) {
 			}
 		};
 	} else {
-			// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
+		// This is a VIEW
+		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
 		tagOrView.addViews = function(index, dataItems, tmpl) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
@@ -2511,12 +2513,12 @@ function addLinkMethods(tagOrView, isTag) {
 			return this;
 		};
 
-		tagOrView.refresh = function(context) {
+		tagOrView.refresh = function() {
 			var self = this,
 				parent = self.parent;
 
 			if (parent) {
-				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, context, true);
+				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, undefined, true);
 				setArrayChangeLink(self);
 			}
 			return self;
