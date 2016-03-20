@@ -73,8 +73,6 @@ function sort(array) {
 
 // =============== DATA ===============
 
-function onFoo1() { return; }
-
 var address1 = { street: "StreetOne", ZIP: "111" },
 	address2 = { street: "StreetTwo", ZIP: "222" },
 	home1 = { address: address1 },
@@ -88,8 +86,7 @@ var address1 = { street: "StreetOne", ZIP: "111" },
 		width: 30,
 		reverse: true,
 		upper: updown,
-		title: "Mr",
-		onFoo: onFoo1
+		title: "Mr"
 	},
 
 	model = {
@@ -410,43 +407,6 @@ function reset() {
 	calls = 0;
 }
 
-function myListener(ev, eventArgs) {
-	calls++;
-	lastEventArgs = eventArgs;
-	lastEvData = ev.data;
-
-	switch (eventArgs.change) {
-		case "set":
-			var oldValue = eventArgs.oldValue,
-				value = eventArgs.value;
-
-			oldValue = (typeof oldValue === "function")
-				? (oldValue = "" + oldValue, oldValue.slice(0, oldValue.indexOf("{")))
-				: "" + oldValue === oldValue
-					? oldValue
-					: JSON.stringify(oldValue);
-			value = (typeof value === "function")
-				? (value = "" + value, value.slice(0, value.indexOf("{")))
-				: "" + value === value
-					? value
-					: JSON.stringify(value);
-			result += "calls: " + calls
-				+ ", ev.data: prop: " + ev.data.prop + (ev.data.paths.length ? ", path: " + ev.data.paths.join(", ") : "")
-				+ ", eventArgs: oldValue: " + oldValue + " value: " + value + ", eventArgs.path: " + eventArgs.path + "|";
-			break;
-		case "insert":
-		case "remove":
-		case "move":
-		case "refresh":
-			result += "regularCallbackCalls: " + calls
-			+ ", eventArgs: change: " + eventArgs.change + "|";
-			break;
-		default:
-			throw "Error";
-	}
-	return result;
-}
-
 // End Setup
 
 //test("TEST", function() {
@@ -456,7 +416,7 @@ module("Template structure");
 
 test("Template validation", function() {
 
-	$.views.settings.debugMode(); // For using _jsv
+	$.views.settings.advanced({_jsv: true}); // For using window._jsv
 
 	// =============================== Arrange ===============================
 	try {
@@ -475,8 +435,8 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>')
-		.link("#result", { things: [{ thing: "Orig" }] });
+		var tmpl = $.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>');  // throws syntax error
+		tmpl.link("#result", { things: [{ thing: "Orig" }] });
 	} catch (e) {
 		result = e.message;
 	}
@@ -487,7 +447,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:thing}}<span></div>')
+		$.templates('<div>{{:thing}}<span></div>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -499,7 +459,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}</span></div>')
+		$.templates('<div>{{:Thing}}</span></div>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -511,7 +471,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<span>{{:Thing}}</span></span>')
+		$.templates('<span>{{:Thing}}</span></span>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -535,7 +495,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}<span/></div>')
+		$.templates('<div>{{:Thing}}<span/></div>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -547,7 +507,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}')
+		$.templates('<div>{{:Thing}}') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -559,7 +519,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('</div>{{:Thing}}')
+		$.templates('</div>{{:Thing}}') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -571,7 +531,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div/>')
+		$.templates('<div/>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -583,7 +543,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}<input></input></div>')
+		$.templates('<div>{{:Thing}}<input></input></div>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -642,7 +602,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input {^{if true}}id="last"{{/if}} data-link="lastName">')
+		$.templates('<input {^{if true}}id="last"{{/if}} data-link="lastName">') // throws syntax error
 		.link("#result", { lastName: "Blow" });
 	} catch (e) {
 		result = e.message;
@@ -650,12 +610,12 @@ test("Template validation", function() {
 
 	// ............................... Assert .................................
 	equal(result, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
-		"Validation - {^{if}} within <input  markup");
+		"Validation - {^{if}} within <input markup");
 	result = "";
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input data-link="lastName" {^{if true}}id="last"/> {{else}}/>{{/if}}')
+		$.templates('<input data-link="lastName" {^{if true}}id="last"/> {{else}}/>{{/if}}') // throws syntax error
 		.link("#result", { lastName: "Blow" });
 	} catch (e) {
 		result = e.message;
@@ -680,7 +640,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div {^{:true}}>a</div>')
+		$.templates('<div {^{:true}}>a</div>') // throws syntax error
 		.link("#result", { thing: "Orig" });
 	} catch (e) {
 		result = e.message;
@@ -711,7 +671,7 @@ test("Template validation", function() {
 		delete viewstore[v];
 	}
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 module("data-link scenarios");
@@ -793,7 +753,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	home1.address = address1; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
@@ -900,10 +860,11 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	person1.lastName = "One"; // reset Prop
 	$.unlink();
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("Top-level linking", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 
@@ -926,7 +887,7 @@ test("Top-level linking", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -965,7 +926,7 @@ test("Top-level linking", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -1011,7 +972,7 @@ test("Top-level linking", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -1052,8 +1013,10 @@ test("Top-level linking", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
+
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("$.link() and $().link() variants", function() {
@@ -1061,7 +1024,7 @@ test("$.link() and $().link() variants", function() {
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	home1.address = address1; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -1749,7 +1712,7 @@ test("$.link() and $().link() variants", function() {
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 module("template.link()");
@@ -1960,7 +1923,7 @@ test('data-link="expression"', function() {
 	person1._firstName = "Jo"; // reset Prop
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -2338,7 +2301,7 @@ test('data-link="expression"', function() {
 	$("#result").empty();
 	result = "";
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test('data-link="attr{:expression}"', function() {
@@ -3573,6 +3536,7 @@ test('data-link="{tag...}"', function() {
 });
 
 test("Computed observables in paths", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var app = {
@@ -3720,15 +3684,15 @@ test("Computed observables in paths", function() {
 	}
 
 	getPeople.depends = function() {
-		return [app, "alt"];
+		return [this, "alt"]; // this is app
 	};
 
 	function getData(type) {
 		return this.alt ? data2 : data1;
 	}
 
-	getData.depends = function() {
-		return [app, "alt"];
+	getData.depends = function(data) {
+		return [data, "alt"]; // data === this === app
 	};
 
 	// ................................ Act ..................................
@@ -3921,7 +3885,7 @@ test("Computed observables in paths", function() {
 
 	// ................................ Act ..................................
 	$("#result").empty();
-	ret += "|L: " + !!$._data(data1).events + " " + !!$._data(data1).events + " " + (JSON.stringify($.views.sub._cbBnds) === "{}");
+	ret += "|L: " + !!$._data(data1).events + " " + !!$._data(data1).events + " " + (JSON.stringify(_jsv.cbBindings) === "{}");
 	// |L: false false true
 	// ................................ Assert ..................................
 	equal(ret,
@@ -3938,6 +3902,100 @@ test("Computed observables in paths", function() {
 		"K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33|" + 
 		"L: false false true",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
+
+
+	// =============================== Arrange ===============================
+
+	ret = "";
+	var model = {
+		enabled: function(val) {
+			if (!arguments.length) {
+				return this._enabled + this._selected + this._colored;
+			}
+			this._enabled = val;
+		},
+		selected: function(val) {
+			if (!arguments.length) {
+				return this._selected;
+			}
+			this._selected = val;
+		},
+		colored: function(val) {
+			if (!arguments.length) {
+				return this._colored;
+			}
+			this._colored = val;
+		},
+		_colored: "C",
+		_enabled: "E",
+		_selected: "S"
+	};
+
+	model.selected.set = model.colored.set = model.enabled.set = true;
+
+	model.enabled.depends = [,"selected"];
+
+	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+
+	// ................................ Act ..................................
+
+	ret = $._data(model).events.propertyChange.length + "_";
+
+	$.observable(model).setProperty("selected", "s2")
+
+	ret += $("#result").text();
+
+	equal(ret, "1_ESC", 'Computed function with depends = [undefined,"selected"] - no listener added');
+
+	// ................................ Reset ................................
+	model.selected("S");
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	model.enabled.depends = [,"selected", model, "colored"];
+
+	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+
+	// ................................ Act ..................................
+
+	ret = $._data(model).events.propertyChange.length + "_";
+
+	$.observable(model).setProperty("selected", "s2")
+
+	ret += $("#result").text() + "_";
+
+	$.observable(model).setProperty("colored", "c3")
+
+	ret += $("#result").text();
+
+	equal(ret, "2_ESC_Es2c3", 'Computed function with depends = [undefined,"selected", model, "colored"] - has listener for "colored" only');
+
+	// ................................ Reset ................................
+	model.selected("S");
+	model.colored("C");
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	model.enabled.depends = ["enabled"];
+
+	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+
+	// ................................ Act ..................................
+
+	ret = $._data(model).events.propertyChange.length + "_";
+
+	$.observable(model).setProperty("enabled", "e2")
+
+	ret += $("#result").text();
+
+	equal(ret, "1_e2SC", "Computed function with circular depends - no stack overflow - handler skipped");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("Computed observables in $.link() expressions", function() {
@@ -5515,7 +5573,7 @@ test("Chained computed observables in template expressions", function() {
 		function changeOb() {
 			$.observable(data.person).setProperty("ob", {
 				street: data.person._ob.street + "+",
-				type:  data.person._ob.type + "+"
+				type: data.person._ob.type + "+"
 			});
 		}
 
@@ -6696,7 +6754,7 @@ test("{^{:expression}}", function() {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -6953,12 +7011,12 @@ test("{^{:expression}}", function() {
 	$.unlink("#result");
 	$("#result").empty();
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("{^{>expression}}", function() {
 
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -7010,7 +7068,7 @@ test("{^{>expression}}", function() {
 	address1.street = "StreetOne";
 	person1.home = home1;
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("{^{tag}}", function() {
@@ -7375,7 +7433,7 @@ test("{^{for}}", function() {
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
 	model.things = []; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -8123,6 +8181,7 @@ test("{^{for}}", function() {
 });
 
 test("{^{if}}...{{else}}...{{/if}}", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var data = { one: true, two: false, three: true },
@@ -8241,9 +8300,12 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 	result = "";
+
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("{^{props}} basic", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var root = {
@@ -8330,13 +8392,14 @@ test("{^{props}} basic", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 
@@ -8422,14 +8485,17 @@ test("{^{props}} modifying content, through arrayChange/propertyChange on target
 
 	before = "" + $._data(root).events.propertyChange.length + "-" + $._data(root.objA).events.propertyChange.length;
 	$("#result").empty();
-	after = "" + ($._data(root).events === undefined) + "-" + ($._data(root.objA).events === undefined) + " -" + JSON.stringify($.views.sub._cbBnds);
+	after = "" + ($._data(root).events === undefined) + "-" + ($._data(root.objA).events === undefined) + " -" + JSON.stringify(_jsv.cbBindings);
 
 	// ............................... Assert .................................
 	equal(before + "|" + after, "1-1|true-true -{}",
 	'{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)');
+
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("{^{props}}..{{else}} ...", function() {
+	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 
@@ -8496,7 +8562,7 @@ test("{^{props}}..{{else}} ...", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
 	// =============================== Arrange ===============================
@@ -8545,13 +8611,15 @@ test("{^{props}}..{{else}} ...", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify($.views.sub._cbBnds), "{}",
+	equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
+
+	$.views.settings.advanced({_jsv: false});
 });
 
 test('data-link="{on ...', function() {
 
-	$.views.settings.debugMode(); // For using _jsv
+	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 
@@ -8824,7 +8892,7 @@ test('data-link="{on ...', function() {
 
 	// ................................ Act ..................................
 	$("#result").empty();
-	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	// ............................... Assert .................................
 	equal(eventBindings,
@@ -8941,7 +9009,7 @@ test('data-link="{on ...', function() {
 
 	// ................................ Act ..................................
 	$("#result").empty();
-	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	// ............................... Assert .................................
 	equal(eventBindings,
@@ -9038,13 +9106,13 @@ test('data-link="{on ...', function() {
 	$.unlink("#linkTgt");
 
 	// ............................... Assert .................................
-	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings]);
+	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	'$.unlink("#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
@@ -9054,7 +9122,7 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -9223,14 +9291,14 @@ test('data-link="{tag...} and {^{tag}} in same template"', function() {
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
-
+	$.views.settings.advanced({_jsv: false});
 	// TODO ADDITIONAL TESTS:
 	// 1: link(null, data) to link whole document
 });
 
 test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function() {
 
-	$.views.settings.debugMode(); // For using viewsAndBindings()
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
 	// =============================== Arrange ===============================
 
@@ -9572,690 +9640,6 @@ test('Bound tag properties and contextual properties', function() {
 
 });
 
-module("API - PropertyChange");
-
-test("PropertyChange: setProperty()", 4, function() {
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-
-	// =============================== Arrange ===============================
-	reset();
-	$.observable(undefined).setProperty("street", "abc");
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.observable(undefined).setProperty(...) does nothing");
-
-	// =============================== Arrange ===============================
-	reset();
-	$.observe(person1.home.address, "street", myListener);
-
-	// ................................ Act ..................................
-	$.observable(person1.home.address).setProperty("street", "newValue");
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|",
-	"setProperty triggers 'observable.observe() callbacks with ev and eventArgs correctly populated");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	result1 = result;
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observable(person1.home).setProperty("address.street", "newValue");
-
-	// ............................... Assert .................................
-	equal(result, result1,
-	"setProperty on deep path is equivalent to setProperty on last object before leaf");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty("home.address.street", "newValue");
-
-	// ............................... Assert .................................
-	equal(result, result1,
-	"setProperty on even deeper path is equivalent to setProperty on last object before leaf");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	reset();
-
-	// =============================== Teardown ===============================
-	$.unobserve(person1.home.address, "street", myListener);
-});
-
-module("API - ArrayChange");
-
-test("JsObservable: insert()", function() {
-
-	// =============================== Arrange ===============================
-	var things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(0, "a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "a 1 2",
-	'insert(0, "a") inserts at 0');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(1, "a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 a 2",
-	'insert(1, "a") inserts at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(2, "a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 a",
-	'insert(2, "a") inserts at 2');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 a",
-	'insert("a") appends');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(1, ["a", "b"]);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 a b 2",
-	'insert(1, ["a", "b"]) inserts multiple elements at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(["a", "b", "c"]);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 a b c",
-	'insert(["a", "b", "c"]) appends multiple elements');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("1", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 b 2",
-	'insert("1", "b") treats first param as index and inserts at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("0", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "b 1 2",
-	'insert("0", "b") treats first param as index and inserts at 0');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("a", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'insert("a", "b") does nothing - since parseInt("a") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("1a", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 b 2",
-	'insert("1a", "b") inserts "b" at 1 - since parseInt("1a") is 1');
-
-	// =============================== Arrange ===============================
-	things = [];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "a",
-	'insert("a") still appends "a", correctly if array is empty at first');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(1);
-
-	// ............................... Assert .................................
-	equal(things.join(" ") + (things[2] === 1), "1 2 1true",
-	'insert(1) appends 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(0);
-
-	// ............................... Assert .................................
-	equal(things.join(" ") + (things[2] === 0), "1 2 0true",
-	'insert(0) appends 0');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(undefined);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 ",
-	'insert(undefined) appends undefined');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(1, undefined);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1  2",
-	'insert(1, undefined) inserts undefined');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(0, undefined);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), " 1 2",
-	'insert(0, undefined) inserts undefined');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert([undefined, null, 0, 1, "2"]);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2   0 1 2",
-	'insert(1, [undefined, null, 0, 1, "2"]) inserts correctly');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert("a", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'insert("a", "b") does nothing - since parseInt("a") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(-1, "a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'insert(-1, "a") does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).insert(10, "a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'insert(10, "a") (out of range) does nothing');
-});
-
-test("JsObservable: remove()", function() {
-
-	// =============================== Arrange ===============================
-	var things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(0);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "2",
-	'remove(0) removes 1 item at 0');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1",
-	'remove(1) removes 1 item at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove(2) does nothing (out of range');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove();
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1",
-	'remove() removes from end');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(1, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4",
-	'remove(1, 2) removes multiple items at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(1, 10);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1",
-	'remove(1, 10) removes all relevant items');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove("1c", "2.001 euros");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4",
-	'remove("1c", "2.001 euros") does parseInt and removes 2 items at 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove("a");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove("a") does nothing - since parseInt("a") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove("a", "b");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove(1, "b") does nothing - since parseInt("b") is NaN');
-
-	// =============================== Arrange ===============================
-	things = [];
-
-	// ................................ Act ..................................
-	$.observable(things).remove();
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "",
-	'remove() does nothing if array is empty at first');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(-1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove(-1) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(10);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove(10, "a") (out of range) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2"];
-
-	// ................................ Act ..................................
-	$.observable(things).remove(10);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'remove(10) (out of range) does nothing');
-});
-
-test("JsObservable: move()", function() {
-
-	// =============================== Arrange ===============================
-	var things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 3 2 4",
-	'move(1, 2) moves 1 item from 1 to 2 - so swaps them');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(2, 1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 3 2 4",
-	'move(1, 2) moves 1 item from 2 to 1 - so swaps them');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 3);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 3 4 2",
-	'move(1, 2) moves 1 item at from 1 to 3');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 2, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4 2 3",
-	'move(1, 2, 2) moves 2 items at from 1 to 2');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 3, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4 2 3",
-	'move(1, 3, 2) moves 2 items from 1 to 2 - same as if moving to 2, since hits the end of the array');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 2, 3);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1, 2, 3) moves 3 items from 1 to 2 - which does nothing since hits the end of the array');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 6, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4 2 3",
-	'move(1, 6, 2) moves 2 items from 1 to 6 - same as if moving to 2, since hits the end of the array');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1, 1) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 1, 3);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1, 1, 3) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move();
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move() does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(10, 0);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(10, 0) does nothing (out of range)');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(0, 10);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "2 3 4 1",
-	'move(0, 10) moves item 0 to the end (out of range)');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(3, 0, 6);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "4 1 2 3",
-	'move(3, 0, 6) moves any items that are not out of range');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(-1, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(-1, 2) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(-1, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(-1, 2) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, -1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1, -1) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 2, -1);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move(1, 2, -1) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("a", 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("a", 2) does nothing');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", "2px");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 4 2 3",
-	'move("1c", "2.001 euros, "2px") does parseInt and moves 2 items from 1 to 2');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("c", "2.001 euros", "2px");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("c", "2.001 euros, "2px") does nothing since parseInt("c") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", "euros", "2px");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("1c", "euros, "2px") does nothing since parseInt("euros") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", "px");
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("1c", "2.001 euros, "px") does nothing since parseInt("px") is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", undefined);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 3 2 4",
-	'move("1c", "2.001 euros, undefined) moves 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", null);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 3 2 4",
-	'move("1c", "2.001 euros, null) moves 1');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", undefined);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("1c", undefined) does does nothing since parseInt(undefined) is NaN');
-
-	// =============================== Arrange ===============================
-	things = ["1", "2", "3", "4"];
-
-	// ................................ Act ..................................
-	$.observable(things).move("1c", null);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "1 2 3 4",
-	'move("1c", null) does does nothing since parseInt(null) is NaN');
-
-	// =============================== Arrange ===============================
-	things = [];
-
-	// ................................ Act ..................................
-	$.observable(things).move(1, 2);
-
-	// ............................... Assert .................................
-	equal(things.join(" "), "",
-	'move(1, 2) does nothing if array is empty');
-
-	$.views.settings.debugMode(false);
-});
-
 test("JsViews ArrayChange: insert()", function() {
 
 	// =============================== Arrange ===============================
@@ -10480,7 +9864,10 @@ test("JsViews ArrayChange: refresh()", function() {
 });
 
 test("JsViews jsv-domchange", function() {
+
 	// =============================== Arrange ===============================
+	result = "";
+
 	function domchangeHandler(ev, tagCtx, linkCtx, eventArgs) {
 		result += ev.type + " " + ev.target.tagName + " " + tagCtx.params.args[0] + " " + (linkCtx.tag === tagCtx.tag) + " " + eventArgs.change + " | " ;
 	}
@@ -10553,71 +9940,10 @@ module("API - $.observe()");
 
 test("observe/unobserve alternative signatures", function() {
 
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	person1.home.address.ZIP = "111"; // reset Prop
-	$.views.settings.debugMode(); // For using _jsv
-	reset();
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(person1.home.address, "street", myListener);
-	$.observable(person1.home.address).setProperty("street", "newValue");
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|",
-	"$.observe(object, path, cb)");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	reset();
+	$.views.settings.advanced({_jsv: true});
 
 	// =============================== Arrange ===============================
 
-	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "street", myListener);
-	$.observable(person1.home.address).setProperty("street", "newValue");
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.unobserve(object, path, cb)");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-				+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
-	"$.observe(object, path1, path2, cb)");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	person1.home.address.ZIP = "111"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.unobserve(object, path1, path2, cb) removes previous handlers");
-
-	// ................................ Reset ................................
-	person1.home.address.street = "StreetOne"; // reset Prop
-	person1.home.address.ZIP = "111"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
 	var person = { last: " L" };
 	function onch(ev, eventArgs) {
 	}
@@ -10629,41 +9955,14 @@ test("observe/unobserve alternative signatures", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
 		"observe/unobserve API calls combined with template binding: all bindings removed when content removed from DOM and unobserve called");
 
-	// =============================== Arrange ===============================
-	function onch2(ev, eventArgs) {
-	}
-
-	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.observe(person, "last", onch2);
-	$.unobserve(person, "last", onch);
-	$.unobserve(person, "last", onch2);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
-		"observe/unobserve API calls in different orders: all bindings removed when unobserve called");
+	// ................................ Reset ................................
+	reset();
 
 	// =============================== Arrange ===============================
-	person = { first: "F", last: " L" };
-
-	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.observe(person, "last", onch2);
-	$.observe(person, "first", onch);
-	$.observe(person, "first", onch2);
-	$.unobserve(person, "last", onch);
-	$.unobserve(person, "last", onch2);
-	$.unobserve(person, "first", onch);
-	$.unobserve(person, "first", onch2);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
-		"observe/unobserve API calls in different orders (version 2): all bindings removed when unobserve called");
-
-	// =============================== Arrange ===============================
+	function onch2(ev, eventArgs) {}
 	person = { first: "F", last: " L" };
 
 	// ................................ Act ..................................
@@ -10679,1120 +9978,18 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person, "first", onch2);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
 		"Observe API calls combined with template binding (version 2): all bindings removed when content removed from DOM and unobserve called");
 
-	// =============================== Arrange ===============================
-	person = {
-		name: "Pete",
-		address: {
-			street: "1st Ave"
-		},
-		phones: [{ number: "111 111 1111" }, { number: "222 222 2222" }]
-	};
-
-	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person, "name", myListener);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve with path and handler works");
-
-	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve without path and handler works");
-
-	// ................................ Act ..................................
-	$.observe(person, "name", "address^street", "phones", myListener);
-	$.unobserve(person, "name", "address^street", "phones", myListener);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
-		"unobserve with multiple paths and handler works");
-
-	// ................................ Act ..................................
-	$.observe(person.phones, myListener);
-	$.unobserve(person.phones);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]), "[{},null]",
-		"unobserve for array works");
-
-	// ................................ Act ..................................
-	$.observe(person, "name", "address^street", "phones", myListener);
-	$.unobserve(person, "*", person.address, "*");
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve with deep paths using '*' works");
-
-	$.views.settings.debugMode(false);
-});
-
-test("observe/unobserve using namespaces", function() {
-
-	$.views.settings.debugMode(); // For using _jsv
-	var thing = { val: "initVal" };
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe("my.nmspace", thing, "val", myListener);
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-
-	// ............................... Assert .................................
-	equal(result + $._data(thing).events.propertyChange.length,
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
-		"$.observe(namespace, object, path, cb)");
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.unobserve("my.nmspace", thing);
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-
-	// ............................... Assert .................................
-	equal(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
-		"[{},{},null]",
-		"$.observe(namespace, object, path, cb); $.unobserve(namespace, object); removes all events added with the same namespace");
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.unobserve(thing);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-
-	// ............................... Assert .................................
-	equal(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
-		"[{},{},null]",
-		"$.observe(namespace, object, path, cb); $.unobserve(object); removes all events even if added with the namespace");
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.unobserve("my2.nmspace", thing);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-
-	// ............................... Assert .................................
-	equal(result + $._data(thing).events.propertyChange.length,
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
-		"$.observe(namespace, object, path, cb); $.unobserve(otherNamespace, object); does not remove events if added with a different namespace");
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
-
-	// ............................... Assert .................................
-	equal(result + $._data(thing).events.propertyChange.length,
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
-		"$.observe(namespace1, object, path, cb); $.observe(namespace2, object, path, cb); $.unobserve(namespace1, object); Add two events with different namespaces, then remove one of the namespaces - leaves the other handlers");
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace your.nmspace", thing, "val", myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
-
-	// ............................... Assert .................................
-	equal(result + $._data(thing).events.propertyChange.length,
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
-		'$.observe("my.nmspace your.nmspace", object, path, cb); $.unobserve(my.nmspace, object); Whitepace separated namespaces adds events for each namespace, then remove one of the namespaces - leaves the other handlers - as in previous test');
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace your.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
-
-	// ............................... Assert .................................
-	equal(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "[{},{},null]",
-		'$.unobserve("my.nmspace your.nmspace", object); $.unobserve with whitepace separated namespaces removes handler for each namespace');
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-
-	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
-
-	// ............................... Assert .................................
-	equal(result + JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(thing).events]),
-		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
-		+ "[{},{},null]",
-		'$.observe("my.nmspace", object, path, cb); $.observe("your.nmspace", object, path, cb); $.unobserve("nmspace", object); removes all handlers for "nmspace" no matter what other namespaces where use ("my", "your", for example');
-
-	// ................................ Reset ................................
-	$.unobserve(thing);
-	thing.val = "initVal"; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-	var person = {
-		name: "Pete",
-		address: {
-			street: "1st Ave"
-		},
-		phones: [{ number: "111 111 1111" }, { number: "222 222 2222" }]
-	};
-
-	// ................................ Act ..................................
-	$.observe("ns", person, "name", myListener);
-	$.unobserve("ns", person, "name", myListener);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve using namespaces, with path and handler works");
-
-	// ................................ Act ..................................
-	$.observe("ns", person, "name", myListener);
-	$.unobserve("ns", person);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve using namespaces, without path and handler works");
-
-	// ................................ Act ..................................
-	$.observe("ns", person, "name", "address^street", "phones", myListener);
-	$.unobserve("ns", person, "name", "address^street", "phones", myListener);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
-		"unobserve using namespaces, with multiple paths and handler works");
-
-	// ................................ Act ..................................
-	$.observe("ns", person.phones, myListener);
-	$.unobserve("ns", person.phones);
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person.phones).events]), "[{},null]",
-		"unobserve using namespaces, for array works");
-
-	// ................................ Act ..................................
-	$.observe("ns", person, "name", "address^street", "phones", myListener);
-	$.unobserve("ns", person, "*", person.address, "*");
-
-	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, $._data(person).events]), "[{},null]",
-		"unobserve using namespaces, with deep paths using '*' works");
-
-	$.views.settings.debugMode(false);
-});
-
-test("Paths", function() {
-
-	// ................................ Reset ................................
-	person1.home = home1;
-	address1.street = "StreetOne"; // reset Prop
-	address1.ZIP = "111"; // reset Prop
-	address2.street = "StreetTwo"; // reset Prop
-	address2.ZIP = "222"; // reset Prop
-	home2 = { address: address2 };
-
-	// =============================== Arrange ===============================
-	var originalAddress = person1.home.address;
-
-	// ................................ Act ..................................
-	$.observe(person1, "home^address.street", person1.home.address, "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({ street: "newValue", ZIP: "newZip" });
-
-	// ............................... Assert .................................
-	ok(result === "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
-		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
-	"$.observe(object, some.deep.path, object2, path, cb) is listening to leaf");
-
 	// ................................ Reset ................................
 	reset();
 
-	// ................................ Act ..................................
-	$.observable(person1).setProperty({ home: home2 }); // Swap object higher in path
-
-	// ............................... Assert .................................
-	equal("" + (lastEventArgs.oldValue === home1) + (lastEventArgs.value === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
-		+ " eventArgs: oldValue: {\"address\":{\"street\":\"newValue\",\"ZIP\":\"newZip\"}} value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"222\"}}, eventArgs.path: home|",
-	"$.observe(object, some.deep.path, object2, path, cb) is listening to root");
-
-	// ................................ Reset ................................
-	reset();
-
-	// ................................ Act ..................................
-	$.observable(address1).setProperty({ street: "newValue2", ZIP: "newZip2" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: ZIP, eventArgs: oldValue: newZip value: newZip2, eventArgs.path: ZIP|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is no longer listening to original leaf on that path - 'i.e. 'street', but is listening to other paths as before - 'i.e. 'ZIP'");
-
-	// ................................ Reset ................................
-	$.observable(address1).setProperty({ street: "Street1", ZIP: "111" }); // reset Prop
-	reset();
-
-	// ................................ Act ..................................
-	$.observable(address2).setProperty({ street: "newValue2", ZIP: "newZip2" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newValue2, eventArgs.path: street|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is now listening to leaf on new descendant objects - 'i.e. 'street' on 'address2'");
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty("home", null); // Set object higher up on path to null
-	$.observable(person1).setProperty("home", home1); // Set object higher up to different object
-	reset();
-
-	$.observable(address2).setProperty({ street: "newValue2", ZIP: "newZip2" });
-	$.observable(address1).setProperty({ street: "newValue3", ZIP: "newZip3" });
-
-	// ............................... Assert .................................
-
-	equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: Street1 value: newValue3, eventArgs.path: street|"
-		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip3, eventArgs.path: ZIP|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after setting object to null, higher up on deep path, then setting to new object, is no longer listening to that path on original descendant objects but is now listening to the path on new descendant objects");
-
-	// ................................ Reset ................................
-	reset();
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty("home", home2); // Set object higher up to different object
-	$.observable(home1).setProperty("address", { street: "ignoreThisStreet", ZIP: "ignoreZip" });
-	$.observable(home2).setProperty("address", { street: "address3Street", ZIP: "address3Zip" });
-
-	// ............................... Assert .................................
-	equal(result,
-			"calls: 1, ev.data: prop: home, path: address^street, eventArgs: oldValue: {\"address\":{\"street\":\"newValue3\",\"ZIP\":\"newZip3\"}} value: {\"address\":{\"street\":\"newValue2\",\"ZIP\":\"newZip2\"}}, eventArgs.path: home|"
-		+ "calls: 2, ev.data: prop: address, path: street, eventArgs: oldValue: {\"street\":\"newValue2\",\"ZIP\":\"newZip2\"} value: {\"street\":\"address3Street\",\"ZIP\":\"address3Zip\"}, eventArgs.path: address|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is listening to intermediate paths on new object - 'i.e. 'address'");
-
-	// ................................ Reset ................................
-	reset();
-
-	// ................................ Act ..................................
-	$.unobserve(person1, "home^address.street", originalAddress, "ZIP", myListener);
-
-	// ............................... Assert .................................
-	ok(!$._data(person1).events && !$._data(person1.home.address).events,
-	"$.unobserve(object, 'home.address.street', object2, 'ZIP', cb) removes the current listeners from that path");
-
-	// ................................ Reset ................................
-	reset();
-
-	$.observe(person1, "home^address.street", person1.home.address, "ZIP", "ZIP", "foo", myListener);
-	$.observe(person1.home.address, "street", function() { });
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1.home.address).events.propertyChange.length + " "
-	+ $._data(person1.home).events.propertyChange.length + " "
-	+ $._data(person1).events.propertyChange.length, "4 1 1",
-	"Avoid duplicate handlers");
-
-	// ................................ Act ..................................
-	$.unobserve(person1, "home^address.ZIP");
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1.home.address).events.propertyChange.length + " "
-	+ !$._data(person1.home).events + " "
-	+ !$._data(person1).events, "3 true true",
-	"unobserve(object, paths) - with no callback specified: Remove handlers only for selected properties");
-
-	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*", myListener);
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1.home.address).events.propertyChange.length, "1",
-	'unobserve(object, "*", myListener) removes all handlers on this object for any props, for this callback');
-
-	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*");
-
-	// ............................... Assert .................................
-	ok(!$._data(person1.home.address).events,
-	'unobserve(object, "*") removes all handlers on this object for any props, for any callback');
-
-	// ................................ Reset ................................
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(person1.home.address, "*", "ZIP", myListener);
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1.home.address).events.propertyChange.length, "1",
-	'Add a listener for "*" - avoids duplicates');
-
-	// ................................ Act ..................................
-	$.observable(person1.home.address).setProperty({ street: "newValue4", ZIP: "newZip4" });
-
-	// ............................... Assert .................................
-
-	equal(result, "calls: 1, ev.data: prop: *, eventArgs: oldValue: address3Street value: newValue4, eventArgs.path: street|"
-							+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: address3Zip value: newZip4, eventArgs.path: ZIP|",
-	'listen to both "*" and specific prop. Note: Eliminates duplicates for specific props when there is also a "*"');
-
-	// ................................ Reset ................................
-	$.unobserve(person1.home.address, "*");
-	person1.home = home1;
-	address1.street = "StreetOne"; // reset Prop
-	address1.ZIP = "111"; // reset Prop
-	address2.street = "StreetTwo"; // reset Prop
-	home2 = { address: address2 };
-	reset();
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(person1, "work^address.street", myListener);
-	$.observable(person1).setProperty({ work: home2 });
-	$.observable(address2).setProperty({ street: "newAddress2" });
-
-	// ............................... Assert .................................
-	equal(result,
-			"calls: 1, ev.data: prop: work, path: address^street, eventArgs: oldValue: undefined value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"newZip2\"}}, eventArgs.path: work|"
-		+ "calls: 2, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newAddress2, eventArgs.path: street|",
-	'observing a deep path into missing properties, followed by $.observable(...).setProperty calls which supply the missing object property then modify subobjects deeper down the path lead to the correct callback events');
-
-	// ................................ Reset ................................
-	$.unobserve(person1, "work^address.street");
-	address2.street = "StreetTwo"; // reset Prop
-	delete person1.work; // reset Prop
-	reset();
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*");
-
-	// ............................... Assert .................................
-	ok(!$._data(person1.home.address).events,
-	'unobserve(object, "*") removes all handlers on this object for any props, both "*" and specific props, for any callback');
-
-	// ................................ Act ..................................
-	$.observe(person1, "fullName", myListener);
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "3",
-	'Add a listener for computed property');
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
-	$.observable(settings).setProperty({ title: "Sir" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Mr Jo value: Mr newFirst, eventArgs.path: firstName|"
-				+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|"
-				+ "calls: 3, ev.data: prop: title, eventArgs: oldValue: Mr value: Sir, eventArgs.path: title|",
-	'listen to changes in dependent props for a computed');
-
-	// ................................ Reset ................................
-	person1._firstName = "Jo";
-	person1.lastName = "One";
-	settings.title = "Sir";
-	reset();
-
-	// =============================== Arrange ===============================
-	listeners = "Before: "
-	+ $._data(model.person1).events.propertyChange.length;
-
-	// ................................ Act ..................................
-	$.unobserve(person1, "fullName", myListener);
-
-	// ............................... Assert .................................
-	equal(listeners + ". After: "
-		+ !$._data(model.person1).events, "Before: 3. After: true",
-	'unobserve(object, "computed", cb) removes handlers');
-
-	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", myListener);
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "3",
-	'Add a listener for computed property on a deep path');
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
-
-	// ............................... Assert .................................
-
-	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
-				+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|",
-	'listen to changes in dependent props for a computed');
-
-	// ................................ Reset ................................
-	person1._firstName = "Jo";
-	person1.lastName = "One";
-	reset();
-
-	// =============================== Arrange ===============================
-	listeners = "Before: "
-	+ $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length;
-
-	// ................................ Act ..................................
-	$.unobserve(model, "person1^fullName", myListener);
-
-	// ............................... Assert .................................
-	equal(listeners + ". After: "
-		+ !$._data(model).events + " "
-		+ !$._data(model.person1).events, "Before: 1 3. After: true true",
-	'unobserve(object, "computed", cb) removes handlers');
-
-	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1^firstName", "person1^lastName", "person1^firstName", myListener);
-
-	// ............................... Assert .................................
-	equal("" + $._data(person1).events.propertyChange.length, "3",
-	'Add a listener for computed property on deep path plus redundant computed dependency plus redundant computed prop.');
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty({ firstName: "newFirst", lastName: "newLast" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
-		+ "calls: 2, ev.data: prop: lastName, eventArgs: oldValue: One value: newLast, eventArgs.path: lastName|",
-	'listen to changes in dependent props for a computed. (Note: We avoid duplicate handlers)');
-
-	// ................................ Reset ................................
-	person1._firstName = "Jo";
-	person1.lastName = "One";
-	reset();
-
-	// =============================== Arrange ===============================
-	listeners = "Before: "
-	+ $._data(settings).events.propertyChange.length + " "
-	+ $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length;
-
-	// ................................ Act ..................................
-	$.unobserve(model, "person1^fullName", myListener);
-
-	// ............................... Assert .................................
-	equal(listeners + ". After: "
-		+ !$._data(settings).events + " "
-		+ !$._data(model).events + " "
-		+ !$._data(model.person1).events, "Before: 1 1 3. After: true true true",
-	'unobserve(object, "computed", cb) removes handlers');
-
-	// =============================== Arrange ===============================
-	$.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
-
-	listeners = $._data(model).events.propertyChange.length + " "
-	+ $._data(model.person1).events.propertyChange.length + " "
-	+ $._data(model.person1.home).events.propertyChange.length + " "
-	+ $._data(model.person1.home.address).events.propertyChange.length;
-
-	equal(listeners, "2 1 1 1", 'No duplicate handlers for $.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb)');
-
-	// ................................ Act ..................................
-	$.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
-
-	// ............................... Assert .................................
-	equal(!$._data(model).events + " "
-		+ !$._data(model.person1).events + " "
-		+ !$._data(model.person1.home).events + " "
-		+ !$._data(model.person1.home.address).events, "true true true true",
-	'$.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb) removes all handlers');
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1.home.address.*", myListener);
-
-	$.unobserve(model);
-
-	handlersCount = !$._data(model).events + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
-
-	$.unobserve(person1);
-
-	// ............................... Assert .................................
-	equal(handlersCount + "|" + !$._data(model).events + " " + !$._data(model.person1).events + " " + $._data(model.person1.home.address).events.propertyChange.length,
-		"true 3 1|true true 1",
-	'unobserve(object) removes all observe handlers from object, but does not remove handlers on paths on descendant objects');
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1.address.*", myListener);
-	$.observe(model, "person1^fullName", "person1.home.address.street", "person1.home.address.*", myListener);
-
-	handlersCount = $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
-
-	$.observe(model, "person1^fullName", function() { });
-
-	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
-
-	$.unobserve(model, myListener);
-
-	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
-
-	$.unobserve(person1, myListener);
-
-	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
-
-	$.unobserve(model, "*", person1, "*");
-	$.unobserve(model.person1.home.address);
-	$.unobserve(model.person1.home);
-	$.unobserve(settings);
-
-	// ............................... Assert .................................
-	equal("" + handlersCount + " " + !$._data(model).events + " " + !$._data(model.person1).events + " " + !$._data(model.person1.home.address).events, "1 4 1|2 7 1|1 7 1|1 3 1 true true true",
-	'unobserve(object) removes all observe handlers from object, but does not remove handlers on paths on descendant objects');
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(person1, "fullName", myListener);
-	$.observe(settings, "*", myListener);
-	handlersCount = $._data(person1).events.propertyChange.length + $._data(settings).events.propertyChange.length;
-
-	$.unobserve(person1, "*", settings, "*");
-
-	// ............................... Assert .................................
-	equal("" + handlersCount + " " + !$._data(person1).events + " " + !$._data(settings).events, "4 true true",
-	'unobserve(object1, "*", object2, "*") removes all observe handlers from objects');
-
-	// =============================== Arrange ===============================
-
-	// ................................ Act ..................................
-	$.observe(settings, "onFoo", myListener);
-	$.observable(settings).setProperty("onFoo", function onfoonew() { return; });
-	$.unobserve(settings);
-
-	// ............................... Assert .................................
-	equal(!$._data(settings).events && result, "calls: 1, ev.data: prop: onFoo, eventArgs: oldValue: function onFoo1()  value: function onfoonew() , eventArgs.path: onFoo|",
-	'Can observe properties of type function');
-
-	// ................................ Reset ................................
-	settings.onFoo = "Jo";
-	person1.lastName = "One";
-	reset();
-	$("#result").empty();
-	result = "";
-
-	// =============================== Teardown ===============================
-
-});
-
-test("observe context helper", function() {
-
-	// =============================== Arrange ===============================
-	var str = "aa",
-		main = {
-			title: "foo"
-		},
-		obj = {
-			name: "One"
-		};
-
-	function observeCtxHelper(val, currentRoot) {
-		if (val) {
-			if (val.charAt(0) === "%") {
-				return [obj, val.slice(1), currentRoot || {}];
-			}
-		}
-	}
-
-	// ................................ Act ..................................
-	$.observe(main, "title", "%name", myListener, observeCtxHelper);
-	$.observable(main).setProperty({ title: "newTitle" });
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: title, eventArgs: oldValue: foo value: newTitle, eventArgs.path: title|"
-							+ "calls: 2, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve({}, "%name", myListener, observeCtxHelper);
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
-	reset();
-
-	$.unobserve(main, "title", "%name", myListener, observeCtxHelper);
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(str, myListener);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.observe(path, cb): Observe with no root object and no observeCtxHelper does nothing");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.observe(path, cb): Observe with no root object and with observeCtxHelper does nothing");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(null, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(null, path, cb, observeCtxHelper) observe with null as root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(null, "%name", myListener, observeCtxHelper);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(null, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
-	reset();
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(undefined, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(undefined, path, cb, observeCtxHelper) observe with undefined root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(undefined, "%name", myListener, observeCtxHelper);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(undefined, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
-	reset();
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(undefined, str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(null, myListener, observeCtxHelper);
-	$.observe(0, myListener, observeCtxHelper);
-	$.observe(false, myListener, observeCtxHelper);
-	$.observe(true, myListener, observeCtxHelper);
-	$.observe(2, myListener, observeCtxHelper);
-
-	$.observe(null, str, myListener, observeCtxHelper);
-	$.observe(0, str, myListener, observeCtxHelper);
-	$.observe(false, str, myListener, observeCtxHelper);
-	$.observe(true, str, myListener, observeCtxHelper);
-	$.observe(2, str, myListener, observeCtxHelper);
-
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(true, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(true, "%name", myListener, observeCtxHelper);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-	reset();
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(false, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({ name: "newName" });
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(false, "%name", myListener, observeCtxHelper);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-	reset();
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	//TODO test case for observe(domElement, "a.b.c", callback) should not bind at all
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("Array", function() {
 
-	$.views.settings.debugMode(); // For using _jsv
-
-	// =============================== Arrange ===============================
-	// Using the same event handler for arrayChange and propertyChange
-
-	var myArray = [1, 2];
-
-	// ................................ Act ..................................
-	$.observe(myArray, myListener);
-
-	$.observable(myArray).insert(10);
-
-	// ............................... Assert .................................
-	equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
-		"regularCallbackCalls: 1, eventArgs: change: insert|1 true",
-		"$.observe(myArray, myListener) listens just to array change on the array");
-
-	// ................................ Act ..................................
-	reset();
-	$.unobserve(myArray, myListener);
-
-	$.observable(myArray).insert(11);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(myArray).events + " " + !$._data(myArray).events, "true true",
-		"$.unobserve(myArray, cbWithoutArrayCallback) removes the arraychange handler");
-
-	// ................................ Act ..................................
-	reset();
-	$.observe(myArray, "length", myListener);
-
-	$.observable(myArray).insert(14);
-
-	// ............................... Assert .................................
-	equal(result + $._data(myArray).events.arrayChange.length + " " + $._data(myArray).events.propertyChange.length,
-		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|"
-		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
-		'$.observe(myArray, "length", myListener) listens to array change on the array and to length propertyChange on the array');
-
-	// ............................... Assert .................................
-	equal(result + $._data(myArray).events.arrayChange.length + " " + $._data(myArray).events.propertyChange.length,
-		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|"
-		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
-		'$.observe(myArray, "length", myListener) listens to array change on the array and to length propertyChange on the array');
-
-	// ................................ Act ..................................
-	reset();
-	$.unobserve(myArray, "length", myListener);
-
-	$.observable(myArray).insert(15);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(myArray).events + " " + !$._data(myArray).events, "true true",
-		'$.unobserve(myArray, "length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
-
-	// =============================== Arrange ===============================
-	reset();
-
-	myArray = [1, 2, 3];
-
-	var done = false;
-	function listenAndChangeAgain(ev, eventArgs) {
-		myListener(ev, eventArgs);
-		if (!done && eventArgs.change === "remove") {
-			done = true;
-			$.observable(myArray).remove();
-		}
-	}
-
-	$.observe(myArray, "length", listenAndChangeAgain);
-
-	$.observable(myArray).remove(1);
-
-	// ............................... Assert .................................
-	equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
-			"calls: 1, ev.data: prop: length, eventArgs: oldValue: 3 value: 2, eventArgs.path: length|"
-			+ "regularCallbackCalls: 2, eventArgs: change: remove|"
-			+ "calls: 3, ev.data: prop: length, eventArgs: oldValue: 2 value: 1, eventArgs.path: length|"
-			+ "regularCallbackCalls: 4, eventArgs: change: remove|1 false",
-		'$.observe(myArray, "length", listenAndChangeAgain) with cascading changes preserves expected order on callbacks for array and array.length change');
-
-	// ................................ Reset ..................................
-	$.unobserve(myArray, "length", listenAndChangeAgain);
-
-	// =============================== Arrange ===============================
-	reset();
-
-	var initialArray = [1, 2],
-			altArray = [4, 3, 2, 1],
-			obj = { name: { first: "n", arr: initialArray } };
-
-	$.observe(obj, "name.arr", myListener);
-
-	// ................................ Act ..................................
-	$.observable(initialArray).insert(10);
-
-	// ............................... Assert .................................
-	equal(result + $._data(initialArray).events.arrayChange.length + " " + !$._data(initialArray).events.propertyChange,
-		"regularCallbackCalls: 1, eventArgs: change: insert|1 true",
-		'$.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens just to array change on the array');
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(obj).setProperty("name.arr", altArray);
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2,10] value: [4,3,2,1], eventArgs.path: arr|",
-	'$.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens to property change for swapping the array property');
-
-	// ............................... Assert .................................
-	reset();
-	equal(!$._data(initialArray).events + " " + $._data(altArray).events.arrayChange.length, "true 1",
-	'$.observable(obj).setProperty("name.arr", newArray) removes the arrayChange handler on previous array, and adds arrayChange to new array');
-
-	// ................................ Act ..................................
-	$.observable(obj.name.arr).insert(11);
-
-	// ............................... Assert .................................
-	equal(result, "regularCallbackCalls: 1, eventArgs: change: insert|",
-	'$.observe(object, "a.b.myArray", cbWithoutArrayCallback) listens to array changes on leaf array property (regular callback)');
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj.name).events.propertyChange.length + $._data(obj.name.arr).events.arrayChange.length;
-	$.unobserve(obj, "name.arr", myListener);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 2 && !$._data(obj.name).events && !$._data(obj.name.arr).events,
-	'$.unobserve(object, "a.b.myArray") removes both arrayChange and propertyChange event handlers');
-	reset();
-	$.observe(obj, "name.arr", "name.arr.length", myListener);
-
-	$.observable(obj.name.arr).insert(16);
-
-	// ............................... Assert .................................
-	equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name.arr).events.propertyChange.length,
-		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|"
-		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1",
-		'$.observe(object, "a.b.array", "a.b.array.length", myListener) listens to array change on the array and to length propertyChange on the array');
-
-	// ................................ Act ..................................
-	reset();
-	$.unobserve(obj, "name.arr", "name.arr.length", myListener);
-
-	$.observable(obj.name.arr).insert(17);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(obj.name.arr).events, "true",
-		'$.unobserve(object, "a.b.array", "a.b.array.length", cbWithoutArrayCallback) removes the arraychange handler and the propertychange handler');
-
-	// ................................ Act ..................................
-	reset();
-	$.observe(obj, "name.*", myListener);
-
-	$.observable(obj.name.arr).insert(18);
-
-	$.observable(obj.name).setProperty({
-		first: "1st",
-		notThereBefore: "2nd",
-		arr: initialArray
-	});
-	$.observable(obj.name.arr).insert(19);
-
-	// ............................... Assert .................................
-	equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name).events.propertyChange.length + " " + !$._data(altArray).events,
-		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: 1st, eventArgs.path: first|"
-		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2nd, eventArgs.path: notThereBefore|"
-		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,18] value: [1,2,10], eventArgs.path: arr|"
-		+ "regularCallbackCalls: 5, eventArgs: change: insert|1 1 true",
-		'$.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
-
-	// ................................ Act ..................................
-	reset();
-	$.unobserve(obj, "name.*", myListener);
-
-	$.observable(obj.name.arr).insert(17);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(obj.name.arr).events, "true",
-		'$.unobserve(object, "a.b.*", cbWithoutArrayCallback) removes the propertychange handler and any arraychange handlers');
-
-	// =============================== Arrange ===============================
-	obj = { name: { first: "n", arr: initialArray } };
-	var newArray1 = [1, 1],
-		newArray2 = [2, 2],
-		newArray3 = [3, 3];
-
-	reset();
-	$.observe(obj, "name.*", myListener);
-
-	$.observable(obj.name.arr).insert(18);
-
-	$.observable(obj.name).setProperty({
-		first: newArray1,
-		arrayNotThereBefore: newArray2,
-		arr: newArray3
-	});
-	$.observable(obj.name.first).insert(10);
-	$.observable(obj.name.arrayNotThereBefore).insert(11);
-	$.observable(obj.name.arr).insert(12);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(initialArray).events + " " + $._data(obj.name).events.propertyChange.length + " "
-		+ $._data(newArray1).events.arrayChange.length + " " + $._data(newArray2).events.arrayChange.length + " " + $._data(newArray3).events.arrayChange.length,
-		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		+ "calls: 2, ev.data: prop: *, eventArgs: oldValue: n value: [1,1], eventArgs.path: first|"
-		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: [2,2], eventArgs.path: arrayNotThereBefore|"
-		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [1,2,10,19,17,18] value: [3,3], eventArgs.path: arr|"
-		+ "regularCallbackCalls: 5, eventArgs: change: insert|"
-		+ "regularCallbackCalls: 6, eventArgs: change: insert|"
-		+ "regularCallbackCalls: 7, eventArgs: change: insert|"
-		+ "true 1 1 1 1",
-		'$.observe(object, "a.b.*", myListener) listens to array change on any array properties of object.a.b whether intially present, or added subsequently');
-
-	// ................................ Act ..................................
-	reset();
-	$.unobserve(obj, "name.*", myListener);
-
-	$.observable(obj.name.arr).insert(17);
-
-	// ............................... Assert .................................
-	equal(result + !$._data(obj.name.arr).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events, "true true true true",
-		'$.unobserve(object, "a.b.*", cbWithoutArrayCallback) removes the propertychange handler and any arraychange handlers');
-
-	// =============================== Arrange ===============================
-	// Using an array event handler
-	obj = { name: { first: "n", arr: [1, 2] } };
-
-	myListener.array = function(ev, eventArgs) {
-		result += "arrayListenerCalls: " + calls
-		+ ", eventArgs: change: " + eventArgs.change + "|";
-	};
-
-	$.observe(obj, "name.arr", myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(obj).setProperty("name.arr", [4, 3, 2, 1]);
-
-	// ............................... Assert .................................
-	equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2] value: [4,3,2,1], eventArgs.path: arr|",
-	'$.observe(object, "a.b.myArray", cbWithArrayCallback) listens to property change for swapping the array property');
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(obj.name.arr).insert(12);
-
-	// ............................... Assert .................................
-	equal(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
-	'$.observe(object, "a.b.myArray", cbWithArrayCallback) listens to array changes on leaf array property (array callback handler)');
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj.name.arr).events.arrayChange.length;
-	$.unobserve(obj, "name.arr", myListener);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj.name.arr).events,
-	'$.unobserve(object, "a.b.myArray") removes arrayChange event handler');
-
-	// =============================== Arrange ===============================
-	$.observe(obj.name.arr, myListener);
-
-	// ................................ Act ..................................
-	reset();
-	$.observable(obj.name.arr).insert(13);
-
-	// ............................... Assert .................................
-	equal(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
-	'$.observe(myArray, cbWithArrayCallback) listens to array changes (array callback handler)');
-	// ................................ Act ..................................
-	handlersCount = $._data(obj.name.arr).events.arrayChange.length;
-	$.unobserve(obj.name.arr, myListener);
-
-	// ............................... Assert .................................
-	ok(handlersCount === 1 && !$._data(obj.name.arr).events,
-	'$.unobserve(myArray) removes arrayChange event handler');
-	// -----------------------------------------------------------------------
+	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 	var people = [1, 2];
@@ -11812,10 +10009,10 @@ test("Array", function() {
 	$.unobserve(people, "length", onch2);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([$.views.sub._cbBnds, _jsv.bindings, $._data(people).events]), "[{},{},null]",
+	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(people).events]), "[{},{},null]",
 		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
 
-	$.views.settings.debugMode(false);
+	$.views.settings.advanced({_jsv: false});
 });
 
 test("MVVM", function() {
@@ -12149,16 +10346,25 @@ test("MVVM", function() {
 module("API - Settings");
 
 test("Settings, error handlers, onError", function() {
-	$.views.settings.debugMode();
+//	$.views.settings.debugMode(true);
 
 	// ................................ Act ..................................
-	$.views.settings.delimiters("@%", "%@");
-	var result = $.templates("A_@%if true%@yes@%/if%@_B").render();
-	$.views.settings.delimiters("{{", "}}");
-	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render();
+	// Delimiters
+
+	$.views.settings.delimiters("@%","%@");
+	var result = $.templates("A_@%if true%@yes@%/if%@_B").render()
+		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
+	$.views.settings.delimiters("<<",">>", "*");
+
+	result += "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
+	$.views.settings.delimiters("{{","}}", "^");
+	result += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render()
+		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
 	// ............................... Assert .................................
-	equal(result, "A_yes_B|A_YES_B", "Custom delimiters with render()");
+	equal(result, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// ................................ Act ..................................
 	var app = { choose: true, name: "Jo" };
@@ -12166,78 +10372,131 @@ test("Settings, error handlers, onError", function() {
 	$.templates('_*^if choose^_<div data-link="name"></div>_^else^_no<div data-link="name+2"></div>_^/if^_').link("#result", app);
 	result = $("#result").text();
 	$.observable(app).setProperty({ choose: false, name: "other" });
-	result += "|" + $("#result").text();
+	result += "|" + $("#result").text()
+		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+
 	$.views.settings.delimiters("{{", "}}", "^");
 	$.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div>{{/if}}').link("#result", app);
-	result += "|" + $("#result").text();
+	result += "|" + $("#result").text()
++ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
 	// ............................... Assert .................................
-	equal(result, "Jo|noother2|NOother2", "Custom delimiters with link()");
+	equal(result, "Jo|noother2|_^,^_,*|_^,^_,*|NOother2|{{,}},^|{{,}},^", "Custom delimiters with link()");
 
 	// =============================== Arrange ===============================
+		// Debug mode false
+
+	var oldDebugMode = $.views.settings.debugMode();
+
+	app = { choose: true, name: "Jo", onerr: "invalid'Jo'" };
+	$.views.settings.debugMode(false)
+
+	// ................................ Act ..................................
+	result = $.views.settings.debugMode();
+  $("#result").empty();
+
+	try {
+		$.templates('{{:missing.willThrow}}X').link("#result", app);
+	}
+	catch (e) {
+		result += " " + !!e.message;
+	}
+
+	result += " " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, 'false true ',
+		'Debug mode false: {{:missing.willThrow}} throws error - with link()');
+
+	// ................................ Act ..................................
+	result = $.views.settings.debugMode();
+  $("#result").empty();
+
+  try {
+		$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
+	}
+	catch (e) {
+		result += " " + !!e.message;
+	}
+
+	result += " " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, 'false true X',
+		'Debug mode false: - data-link="missing.willThrow" - throws error');
+
+	// ................................ Act ..................................
+	// Debug mode true
+
+	$.views.settings.debugMode(true)
+
+	result = $.views.settings.debugMode();
+  $("#result").empty();
+
+	$.templates('{{:missing.willThrow}}').link("#result", app);
+
+	result += " " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result.slice(0, 13), 'true {Error: ',
+		'Debug mode true: {{:missing.willThrow}} renders error - with link()');
+
+	// ................................ Act ..................................
+
+	result = $.views.settings.debugMode();
+  $("#result").empty();
+
+	$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
+
+	result += " " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result.slice(0, 13), 'true {Error: ',
+		'Debug mode true: - data-link="missing.willThrow" - renders error');
+
 	app = { choose: true, name: "Jo", onerr: "invalid'Jo'" };
 	result = "";
-	var oldOnError = $.views.settings.onError;
 
-	$.views.settings({
-		onError: function(e, view, fallback) {
+	// ................................ Act ..................................
+	// Debug mode 'onError' handler function with return value
+
+	$.views.settings.debugMode(function(e, fallback, view) {
 			// Can override using $.views.settings({onError: function(...) {...}});
-			if (view) { // Render error - can return rendered string or ""
-				if (fallback !== undefined) {
-					return $.isFunction(fallback) ? fallback(e, view) : 'Fallback: <<' + fallback + '>>';
-				}
-				return $.views.settings._dbgMode ? "{\n<<MyError>>: '" + e.message + "'\nstack: " + e.stack + "\ntemplate: " + view.tmpl.markup + "\n}" : "";
-			}
-			// return e; // Thrown error: can leave to be thrown unchanged, or can throw new Error, with modified message, etc.
-			throw new Error("<<" + e + ">>: override thrown error");
-		}
-	});
+			var data = this;
+			return "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("willThrow")>-1); // For syntax errors e is a string, and view is undefined
+		});
 
 	// ................................ Act ..................................
 	$.templates('{{:missing.willThrow}}').link("#result", app);
 	result = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result.slice(0, 14),
-		isIE8 ? "{ <<MyError>>:"
-			: "{\n<<MyError>>:", "Override onError() - with link()");
-
-	// ................................ Act ..................................
-	try {
-		$.templates('{{if}}').link("#result", app);
-	}
-	catch (e) {
-		result = e.message;
-	}
-
-	// ............................... Assert .................................
-	equal(result, '<<Syntax error\nUnmatched or missing {{/if}}, in template:\n{{if}}>>: override thrown error', "Override thrown error - with link()");
+	equal(result, "Override error - _Jo true",
+		"Debug mode 'onError' handler override - with link()");
 
 	// ................................ Act ..................................
 	$.templates('{{:missing.willThrow onError=onerr}} {^{if missing.willThrow onError=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="missing.willThrow onError=onerr + \' (in data-link)\'"></span>').link("#result", app);
 	result = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Fallback: <<invalid'Jo'>> Fallback: <<invalid'Jo' (in if tag)>>Fallback: <<invalid'Jo' (in data-link)>>", "onError fallback in tags and in data-link expression, with override onError()");
+	equal(result, "Override error - invalid'Jo'_Jo true Override error - invalid'Jo' (in if tag)_Jo trueOverride error - invalid'Jo' (in data-link)_Jo true",
+		"onError fallback in tags and in data-link expression, with debug mode 'onError' handler override");
 
 	// ................................ Act ..................................
 	$.templates('{{:missing.willThrow onError=~myErrFn}} {^{if missing.willThrow onError=~myErrFn}}inside{{/if}}<span data-link="missing.willThrow onError=~myErrFn"></span>').link("#result", app, {
 		myErrFn: function(e, view) {
-			return "myErrFn for <" + view.data.name + ">";
+			return "myErrFn for <" + this.name + ">";
 		}
 	});
 	result = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "myErrFn for <Jo> myErrFn for <Jo>myErrFn for <Jo>", "onError handler in tags and in data-link expression, with override onError()");
+	equal(result, "Override error - myErrFn for <Jo>_Jo true Override error - myErrFn for <Jo>_Jo trueOverride error - myErrFn for <Jo>_Jo true",
+		"onError handler in tags and in data-link expression, with debug mode 'onError' handler override ");
 
 	// ................................ Reset ..................................
 	$("#result").empty();
-	$.views.settings({
-		onError: oldOnError
-	});
-
-	$.views.settings.debugMode(false);
+	$.views.settings.debugMode(oldDebugMode);
 });
 
 module("API - Declarations");
@@ -14660,8 +12919,5 @@ test("Tag control events", function() {
 	$("#result").empty();
 
 	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
-
-$.views.settings.debugMode(false); // For using viewsAndBindings()
-
 });
 })(this, this.jQuery);
