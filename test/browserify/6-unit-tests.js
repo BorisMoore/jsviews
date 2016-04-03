@@ -2,12 +2,14 @@
 (function(undefined) {
 "use strict";
 
+browserify.done.six = true;
+
 QUnit.module("Browserify - client code");
 
 test("No jQuery global: require('jquery.views')", function() {
-	// ............................... Hide QUnit global jQuery .................................
-	var jQuery = global.jQuery;
-	global.jQuery = undefined;
+	// ............................... Hide QUnit global jQuery and any previous global jsrender.................................
+	var jQuery = global.jQuery, jsr = global.jsrender;
+	global.jQuery = global.jsrender = undefined;
 
 	// =============================== Arrange ===============================
 	var data = {name: "Jo"};
@@ -31,10 +33,11 @@ test("No jQuery global: require('jquery.views')", function() {
 	result += " " + ($jsr !== jQuery && $jsr === $jq);
 
 	// ............................... Assert .................................
-	equal(result, "Name: Jo (name-template.html) new name true", "result");
+	equal(result, "Name: Jo (name-template.html) new name true", "result: No jQuery global: require('jquery.views')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery
+	global.jsrender = jsr; // Replace any previous global jsrender
 });
 
 })();

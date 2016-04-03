@@ -1,4 +1,4 @@
-/*! JsRender v0.9.74 (Beta): http://jsviews.com/#jsrender */
+/*! JsRender v0.9.75 (Beta): http://jsviews.com/#jsrender */
 /*! **VERSION FOR WEB** (For NODE.JS see http://jsviews.com/download/jsrender-node.js) */
 /*
  * Best-of-breed templating in browser or on Node.js.
@@ -15,11 +15,7 @@
 	// global var is the this object, which is window when running in the usual browser environment
 	var $ = global.jQuery;
 
-	if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
-		define(function() {
-			return factory(global);
-		});
-	} else if (typeof exports === "object") { // CommonJS e.g. Browserify
+	if (typeof exports === "object") { // CommonJS e.g. Browserify
 		module.exports = $
 			? factory(global, $)
 			: function($) { // If no global jQuery, take optional jQuery passed as parameter: require('jsrender')(jQuery)
@@ -28,6 +24,10 @@
 				}
 				return factory(global, $);
 			};
+	} else if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
+		define(function() {
+			return factory(global);
+		});
 	} else { // Browser using plain <script> tag
 		factory(global, false);
 	}
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 
 $ = $ && $.fn ? $ : global.jQuery; // $ is jQuery passed in by CommonJS loader (Browserify), or global jQuery.
 
-var versionNumber = "v0.9.74",
+var versionNumber = "v0.9.75",
 	jsvStoreName, rTag, rTmplString, topView, $views,
 
 //TODO	tmplFnsCache = {},
@@ -1216,7 +1216,7 @@ function onRenderError(e, view, fallback) {
 		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
 
-	return view && !view.linkCtx && view.linked ? $converters.html(message) : message;
+	return view && !view.linkCtx ? $converters.html(message) : message;
 }
 
 function error(message) {
@@ -2065,4 +2065,4 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 	jsr.views.sub._jq($);
 }
 return $ || jsr;
-}, this));
+}, window));

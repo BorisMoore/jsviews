@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.74 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.75 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -16,16 +16,16 @@
 	// global var is the this object, which is window when running in the usual browser environment
 	var $ = global.jQuery;
 
-	if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
-		define(["jquery"], function($) {
-			return factory(global, $);
-		}); // Require jQuery
-	} else if (typeof exports === "object") { // CommonJS e.g. Browserify
+	if (typeof exports === "object") { // CommonJS e.g. Browserify
 		module.exports = $
 			? factory(global, $)
 			: function($) { // If no global jQuery, take jQuery passed as parameter: require("jsviews")(jQuery)
 				return factory(global, $);
 			};
+	} else if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
+		define(["jquery"], function($) {
+			return factory(global, $);
+		}); // Require jQuery
 	} else { // Browser using plain <script> tag
 		factory(global, false);
 	}
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.74",
+var versionNumber = "v0.9.75",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable,
 
@@ -1220,7 +1220,7 @@ function onRenderError(e, view, fallback) {
 		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
 
-	return view && !view.linkCtx && view.linked ? $converters.html(message) : message;
+	return view && !view.linkCtx ? $converters.html(message) : message;
 }
 
 function error(message) {
@@ -6008,4 +6008,4 @@ $viewsSettings.advanced({
 });
 
 return $;
-}, this));
+}, window));

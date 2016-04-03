@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.74 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.75 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -17,16 +17,16 @@
 	// global var is the this object, which is window when running in the usual browser environment
 	var $ = global.jQuery;
 
-	if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
-		define(["jquery", "./jsrender", "./jquery.observable"], function($, jsr, jso) {
-			return factory(global, $, jsr, jso);
-		}); // Require jQuery, JsRender, JsObservable
-	} else if (typeof exports === "object") { // CommonJS e.g. Browserify
+	if (typeof exports === "object") { // CommonJS e.g. Browserify
 		module.exports = $
 			? factory(global, $)
 			: function($) { // If no global jQuery, take jQuery passed as parameter (with JsRender and JsObservable): require("jquery.views")(jQuery)
 				return factory(global, $);
 			};
+	} else if (typeof define === "function" && define.amd) { // AMD script loader, e.g. RequireJS
+		define(["jquery", "./jsrender", "./jquery.observable"], function($, jsr, jso) {
+			return factory(global, $, jsr, jso);
+		}); // Require jQuery, JsRender, JsObservable
 	} else { // Browser using plain <script> tag
 		factory(global, false);
 	}
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v0.9.74",
+var versionNumber = "v0.9.75",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -3011,4 +3011,4 @@ $viewsSettings.advanced({
 });
 
 	return $;
-}, this));
+}, window));

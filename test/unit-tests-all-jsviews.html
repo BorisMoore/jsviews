@@ -19,6 +19,22 @@
 	<script src="unit-tests/tests-jsrender-amd-scriptloader.js"></script>
 	<script src="unit-tests/tests-jsviews-amd-scriptloader.js"></script>
 
+	<script>
+		window.browserify = {done: {}};
+	</script>
+	<script src="browserify/bundles/1-bundle.js"></script>
+	<script src="browserify/bundles/2-bundle.js"></script>
+	<script src="browserify/bundles/3-bundle.js"></script>
+	<script src="browserify/bundles/4-bundle.js"></script>
+	<script src="browserify/bundles/5-bundle.js"></script>
+	<script src="browserify/bundles/6-bundle.js"></script>
+	<script src="browserify/bundles/7-bundle.js"></script>
+	<script src="browserify/bundles/8-bundle.js"></script>
+	<script src="browserify/bundles/9-bundle.js"></script>
+	<script src="browserify/bundles/10-errors-bundle.js"></script>
+	<script src="browserify/bundles/11-errors-bundle.js"></script>
+	<script src="browserify/tests-browserify-completed.js"></script>
+
 	<script id="myTmpl" type="text/x-jsrender">A_{{:name}}_B</script>
 	<script id="my_tmpl" type="text/x-jsrender">A_{{:name}}_B</script>
 	<script id="my_tmpl2" type="text/x-jsrender">' " \ \' \"</script>

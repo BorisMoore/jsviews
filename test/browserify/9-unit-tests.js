@@ -2,6 +2,8 @@
 (function(undefined) {
 "use strict";
 
+browserify.done.nine = true;
+
 QUnit.module("Browserify - client code");
 
 test("jQuery global: require('jsviews')", function() {
@@ -30,7 +32,7 @@ test("jQuery global: require('jsviews')", function() {
 	result += " " + ($jsr === global.jQuery);
 
 	// ............................... Assert .................................
-	equal(result, "Name: Jo (name-template.html) new name true", "result");
+	equal(result, "Name: Jo (name-template.html) new name true", "result: jQuery global: require('jsviews')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery

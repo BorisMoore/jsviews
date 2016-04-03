@@ -1262,7 +1262,7 @@ test("Array", function() {
 
 	// ............................... Assert .................................
 	equal(JSON.stringify([_jsv.cbBindings, $._data(people).events]), "[{},null]",
-		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
+		"observe/unobserve array - API calls in different orders: all bindings removed when unobserve called");
 
 	$.views.settings.advanced({_jsv: false});
 });
@@ -4269,14 +4269,14 @@ $.unobserve("a.b.c");
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
 		+ "Handler observeAll._path : 'root.person.friend' Handler observeAll.path() : 'root.person.friend' Handler observeAll.parents() : '3' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
-		"call observeAll namesspaces");
+		'call observe with "**" - namesspaces');
 
 $.unobserve("a.b.c");
 
 // ................................ Act ..................................
 
 	reset();
-	var team = {person: {phones: []}};
+	team = {person: {phones: []}};
 
 	$.observe("a.b.c", team, "person^phones", "person^friend.name", myListener3);
 
@@ -4298,15 +4298,36 @@ $.unobserve("a.b.c");
 		"myListener3 change: 'set' Caller ns: 'a' Handler ns: 'a.b.c' Handler fullPath: 'person.phones' Handler paths: 'phones,friend.name' Handler prop: 'person' calls: 1|"
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: 'friend.name' Handler paths: '' Handler prop: 'name' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
-		"call observeAll namesspaces");
+		"call observe deep paths, with namesspaces");
 
 $.unobserve("a.b.c");
+
+// ................................ Act ..................................
+
+	reset();
+	team = {person: {phones: []}};
+
+	$.observable("a.b.c", team).observeAll(myListener3);
+
+	$.observable("a", team).setProperty({
+		person: {name: "Pete"}
+	});
+
+	$.unobserve("a.b.c", myListener3);
+
+	// ............................... Assert .................................
+	$.views.settings.advanced({_jsv: true});
+
+	equal(JSON.stringify([_jsv.cbBindings, $._data(team).events, $._data(team.person).events]), "[{},null,null]",
+		"observe/unobserve with namespaces - all bindings removed when unobserve called");
+
+	$.views.settings.advanced({_jsv: false});
+
+	reset();
 
 //TODO add test cases for filter with observe and observeAll, and DataMap etc.
 //function filter(allPath, object, parentObs) {
 // debugger;
 //}
-
-	reset();
 });
 })(this.jQuery);

@@ -2,6 +2,8 @@
 (function(undefined) {
 "use strict";
 
+browserify.done.five = true;
+
 QUnit.module("Browserify - client code");
 
 test("jQuery global: require('jquery.observable')", function() {
@@ -26,7 +28,7 @@ test("jQuery global: require('jquery.observable')", function() {
 	result += " " + ($jsr === global.jQuery);
 
 	// ............................... Assert .................................
-	equal(result, " new name true", "result");
+	equal(result, " new name true", "result: jQuery global: require('jquery.observable')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery

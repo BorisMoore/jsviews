@@ -10463,7 +10463,7 @@ test("Settings, error handlers, onError", function() {
 	$.views.settings.debugMode(function(e, fallback, view) {
 			// Can override using $.views.settings({onError: function(...) {...}});
 			var data = this;
-			return "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("willThrow")>-1); // For syntax errors e is a string, and view is undefined
+			return "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("undefined")>-1); // For syntax errors e is a string, and view is undefined
 		});
 
 	// ................................ Act ..................................
