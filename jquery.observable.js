@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.75 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.76 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -530,9 +530,9 @@ if (!$.observe) {
 				}
 				if (unobserve && !l && !root) { // unobserve() - unobserves all
 					for (p in cbBindingsStore) {
-						cbBindings = cbBindingsStore[p];
-						for (data in cbBindings) {
-							object = cbBindings[data];
+						p = cbBindingsStore[p];
+						for (data in p) {
+							object = p[data];
 							if ($isArray(object)) {
 								bindArray(object, unobserve, unobserve);
 							} else {
@@ -683,7 +683,7 @@ if (!$.observe) {
 			}
 
 			// Return the cbBindings to the top-level caller, along with the cbId
-			return { cbId: cbId, bnd: cbBindings, s: cbBindingsStore };
+			return {cbId: cbId, bnd: cbBindings, s: cbBindingsStore};
 		}
 
 		var initialNs,
@@ -823,8 +823,8 @@ if (!$.observe) {
 				// Date objects don't support != comparison. Treat as special case.
 				if (!(property instanceof Date) || property > value || property < value) {
 					if (setter) {
-						setter.call(leaf, value);	//set
-						value = getter.call(leaf);	//get updated value
+						setter.call(leaf, value);   //set
+						value = getter.call(leaf);  //get updated value
 					} else if (removeProp = value === remove) {
 						if (property !== undefined) {
 							delete leaf[path];

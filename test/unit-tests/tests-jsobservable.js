@@ -891,11 +891,11 @@ test("observe", function() {
 		return callback === callback1
 			? ["_first", "_last", "more"]
 			: ["_first", "_last"];
-	}
+	};
 
 	var out1 = "",
 		out2 = "",
-		app = {}
+		app = {};
 
 	// ................................ Act ..................................
 	$.observe(app, "person^fullName", "more", callback1);
@@ -909,7 +909,7 @@ test("observe", function() {
 		_first: "Jo",
 		_last: "Blow",
 		more: ""
-	})
+	});
 
 	result += out1 + " " + out2 + " " + cbs.length;
 
@@ -1463,7 +1463,7 @@ test("observe/unobserve alternative signatures", function() {
 		"unobserve for array works");
 
 	// ................................ Act ..................................
-	function notBound() {};
+	function notBound() {}
 
 	$.observe(person, "name", "address^street", "phones", myListener);
 	$.unobserve(person, person.address, person.phones, notBound);
@@ -2704,7 +2704,7 @@ test("dataMap", function() {
 	// ................................ Act ..................................
 	map.unmap();
 
-	var after = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map.tgt).events === undefined);
+	after = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map.tgt).events === undefined);
 
 	// ............................... Assert .................................
 	ok(map.src === undefined,
@@ -3113,7 +3113,7 @@ test("observeAll", function() {
 		person2: person2,
 		things: []
 	};
-	person1.home.address.street = "StreetOne",
+	person1.home.address.street = "StreetOne";
 	person1.home.address.ZIP = "111";
 });
 
@@ -3568,7 +3568,7 @@ test('observe(... "**" ...)', function() {
 		person2: person2,
 		things: []
 	};
-	person1.home.address.street = "StreetOne",
+	person1.home.address.street = "StreetOne";
 	person1.home.address.ZIP = "111";
 
 });
@@ -3609,7 +3609,7 @@ test("observeAll - cyclic graphs", function() {
 
 	// =============================== Arrange ===============================
 	// Test observeAll using data with cyclic graph - (children/parent cycle)
-	var data = { name: "Jo" };
+	data = { name: "Jo" };
 
 	data.children = [
 		{
@@ -3749,7 +3749,7 @@ test("observeAll - cyclic graphs", function() {
 	// Test observeAll using data with cyclic graph - (children/parent cycle and duplicate array - children/descendants)
 	data = { name: "Jo" };
 
-	var children = data.children = [
+	children = data.children = [
 		{
 			parent: data,
 			name: "Pete"
@@ -3794,7 +3794,7 @@ test("observeAll - cyclic graphs", function() {
 	// Test observeAll using data with cyclic graph - (children/parent cycle and duplicate array - children/descendants)
 	data = { name: "Jo" };
 
-	var children = data.children = [
+	children = data.children = [
 		{
 			parent: data,
 			name: "Pete"
@@ -3847,7 +3847,7 @@ test("observeAll - cyclic graphs", function() {
 	// Test observeAll using data with cyclic graph - (child/parent cycle and duplicate object property - child/descendant)
 	data = { name: "Jo" };
 
-	var child = data.child = data.descendant = {
+	child = data.child = data.descendant = {
 			parent: data,
 			name: "Pete"
 		};
@@ -4188,7 +4188,7 @@ test("observeAll/unobserveAll using namespaces", function() {
 		person2: person2,
 		things: []
 	};
-	person1.home.address.street = "StreetOne",
+	person1.home.address.street = "StreetOne";
 	person1.home.address.ZIP = "111";
 
 	// =============================== Arrange ===============================
@@ -4330,4 +4330,235 @@ $.unobserve("a.b.c");
 // debugger;
 //}
 });
+
+test("$.views.viewModels", function() {
+	// =============================== Arrange ===============================
+	var Constr = $.views.viewModels({getters: ["a", "b"]});
+	// ................................ Act ..................................
+	var vm = Constr("a1 ", "b1 ");
+	var result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
+		this.c(val + this.a() + this.b() + this.c());
+	}}});
+	// ................................ Act ..................................
+	vm = Constr("a1 ", "b1 ", "c1 ");
+	vm.add("before ");
+	result = vm.c();
+	// ............................... Assert .................................
+	equal(result, "before a1 b1 c1 ", "viewModels, two getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({extend: {add: function(val) {
+		this.foo = val;
+	}}});
+	// ................................ Act ..................................
+	vm = Constr();
+	vm.add("before");
+	result = vm.foo;
+	// ............................... Assert .................................
+	equal(result, "before", "viewModels, no getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: []});
+	// ................................ Act ..................................
+	vm = Constr();
+	result = JSON.stringify(vm);
+	// ............................... Assert .................................
+	equal(result, "{}", "viewModels, no getters, no methods");
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		}
+	});
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
+	var changes = "";
+	function observeAllHandler(ev, evArgs) {
+		changes += evArgs.value;
+	}
+	$.observable(vm).observeAll(observeAllHandler);
+
+	result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a1 b1 a2 b2 |a2 b2 ", "viewModels, two getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 "});
+
+	result = vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a3 b3 |a3 b3 ", "viewModels merge, two getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	var viewModels = $.views.viewModels({
+		T1: {
+			getters: ["a", {getter: "b"}, "c", "d", {getter: "e", type: undefined}, {getter: "f", type: null}, {getter: "g", type: "foo"}, {getter: "h", type: ""}]
+		}
+	}, {});
+	// ................................ Act ..................................
+	vm = viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 ", d: "d1 ", e: "e1 ", f: "f1 ", g: "g1 ", h: "h1 "});
+	$.observable(vm).observeAll(observeAllHandler);
+
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a1 b1 c1 d1 e1 f1 g1 h1 a2 b2 |a2 b2 ",
+		"viewModels, multiple unmapped getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 ", d: "d3 ", e: "e3 ", f: "f3 ", g: "g3 ", h: "h3 "});
+
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a3 b3 c3 d3 e3 f3 g3 h3 |a3 b3 c3 d3 e3 f3 g3 h3 ",
+		"viewModels merge, multiple unmapped getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"c3 ","d":"d3 ","e":"e3 ","f":"f3 ","g":"g3 ","h":"h3 "}',
+		"viewModels unmap, multiple unmapped getters, no methods");
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b", "c"],
+			extend : {
+				add: function(val) {
+					this.c(val + this.a() + this.b() + this.c());
+				}
+			}
+		}
+	});
+
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
+	$.observable(vm).observeAll(observeAllHandler);
+
+	vm.add("before ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "before a1 b1 c1 |before a1 b1 c1 ", "viewModels, getters and one method");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 "});
+	vm.add("updated ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "updated a3 b3 c3 |a3 b3 c3 updated a3 b3 c3 ", "viewModels merge, getters and one method");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"updated a3 b3 c3 "}', "viewModels unmap, getters and one method");
+	changes = "";
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		},
+		T2: {
+			getters: [{getter: "t1", type: "T1"}, {getter: "t1Arr", type: "T1"}, {getter: "t1OrNull", type: "T1", defaultVal: null}]
+		}
+	});
+	viewModels = $.views.viewModels;
+	// ................................ Act ..................................
+	var t1 = viewModels.T1.map({a: "a1 ", b: "b1 "}); // Create a T1
+	var t2 = viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: [t1.unmap(), {a: "a2 ", b: "b2 "}]}); // Create a T2 (using unmap to scrape values the T1: vm)
+
+	$.observable(t1).observeAll(observeAllHandler);
+	$.observable(t2).observeAll(observeAllHandler);
+
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t2.t1Arr()[0].merge({a: "a1x ", b: "b1x "}); // merge not the root, but a VM instance within hierarchy: vm2.t1Arr()[0] - leaving rest unchanged
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1x ","b":"b1x "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}|a1x b1x ',
+		"viewModels, merge deep node");
+	changes = "";
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// ................................ Act ..................................
+	var t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	var t2FromArr =  viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	t1Arr.push(viewModels.T1("a3 ", "b3 "));
+	t2FromArr = viewModels.T2.map({t1: {a: "a4 ", b: "b4 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a4 ","b":"b4 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "},{"a":"a3 ","b":"b3 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	var t2new = viewModels.T2(viewModels.T1("a3 ", "b3 "), [viewModels.T1("a1 ", "b1 "), viewModels.T1("a2 ", "b2 ")], viewModels.T1("a4 ", "b4 ") );
+	result = JSON.stringify(t2new.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
+		"viewModels, hierarchy");
+});
+
 })(this.jQuery);

@@ -568,7 +568,7 @@ test("Template validation", function() {
 	result = "";
 
 	// =============================== Arrange ===============================
-	var markupData = {markup: "<img/><img>"}
+	var markupData = {markup: "<img/><img>"};
 	$.templates('{^{:markup}}')
 		.link("#result", markupData);
 
@@ -585,7 +585,7 @@ test("Template validation", function() {
 	// =============================== Arrange ===============================
 	$.templates('<input {{if true}}id="last"{{/if}} {{if false}}id="first"{{/if}} data-link="lastName"/>')
 		.link("#result", { lastName: "Blow" });
-	
+
 	// ............................... Assert .................................
 	equal($("#result #last").val(), "Blow",
 		"{{if}} is supported within <input/> markup even when data-linking");
@@ -1152,7 +1152,7 @@ test("$.link() and $().link() variants", function() {
 
 	help.options.tmpl = $.templates(" NAME: {^{:lastName}}");
 	$.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
-	$.link("title{:person1.lastName} {:person1.lastName:}", "input.inner", model, help);
+	$.link("{:person1.lastName:} title{:person1.lastName}", "input.inner", model, help);
 
 	// ................................ Act ..................................
 	function getTitles(selector) {
@@ -2486,7 +2486,7 @@ test('data-link="attr{:expression}"', function() {
 	$.observable(person1).setProperty("lastName", "Two");
 	after = $("#result span")[0].getAttribute("data-foo");
 	var afterVal = $("#result span").data("foo");
-	
+
 	// ............................... Assert .................................
 	ok(before === 'One' && before === beforeVal && after === "Two" && after === afterVal,
 	'Data link using: <span data-link="data-foo{:lastName}"></span> sets data-foo attribute to lastName value and sets $(elem).data("foo") to the same value');
@@ -2503,12 +2503,12 @@ test('data-link="attr{:expression}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("data-foo");
-	var beforeVal = $("#result span").data("foo");
+	beforeVal = $("#result span").data("foo");
 	var crazyAddress = [1,2];
 	$.observable(person1.home).setProperty("address", crazyAddress);
 	after = $("#result span")[0].getAttribute("data-foo");
-	var afterVal = $("#result span").data("foo");
-	
+	afterVal = $("#result span").data("foo");
+
 	// ............................... Assert .................................
 	ok(before === originalAddress.toString() && beforeVal === originalAddress && after === crazyAddress.toString() && afterVal === crazyAddress,
 	'Data link using: <span data-link="data-foo{:home.address}"></span> sets data-foo attribute to address.toString() value and sets $(elem).data("foo") to address');
@@ -2549,7 +2549,7 @@ test('data-link="attr{:expression}"', function() {
 
 	// ............................... Assert .................................
 	ok(before === 'One' && after === "Two",
-	'Data link using: <span data-link="a-foo{:lastName}"></span> sets data-foo attribute to lastName value');
+	'Data link using: <span data-link="a-b_foo{:lastName}"></span> sets a-b_foo attribute to lastName value');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -2953,6 +2953,24 @@ test('data-link="{cvt:expression:cvtBack}"', function() {
 
 	// =============================== Arrange ===============================
 
+	$.templates('prop: <input id="twoWay" data-link="{:lastName:} data-foo{>23}"/>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	value = $("#twoWay").val();
+	$("#twoWay").val(value + "+").change();
+
+	// ............................... Assert .................................
+	equal(person1.lastName + $("#twoWay").data().foo,
+	"One+23",
+	'Data link using: <input data-link="{:expr:to}"/> with no convert. - convertBack called with tag as this pointer.');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
 	$.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>')
 		.link("#result", person1);
 
@@ -3030,7 +3048,6 @@ test('2-way binding', function() {
 
 	result = $("#result select option:selected").text() + "-" + $("#result select")[0].selectedIndex + "|";
 
-	
 	$.observable(model.people).insert({
 		name: newName
 	});
@@ -3794,8 +3811,8 @@ test("Computed observables in paths", function() {
 	app.index = 0;
 	people1 = [{ address: { street: "1 first street" } }];
 	people2 = [{ address: { street: "1 second street" } }, { address: { street: "2 second street" } }];
-	data1 = { value: "val1", people: people1, getValue: getValue },
-	data2 = { value: "val2", people: people2, getValue: getValue },
+	data1 = { value: "val1", people: people1, getValue: getValue };
+	data2 = { value: "val2", people: people2, getValue: getValue };
 
 	// ................................ Act ..................................
 	$.templates("{^{:getData()^getValue(22)}}").link("#result", app);
@@ -3899,7 +3916,7 @@ test("Computed observables in paths", function() {
 		"H: 1 first street--1 second street|" +
 		"I: bval2aval2val2_55--bval1aval1val1_55|" +
 		"J: aval1--aval2|" +
-		"K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33|" + 
+		"K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33|" +
 		"L: false false true",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new object or array, including complex expressions, wrapped in parens etc.");
 
@@ -3941,7 +3958,7 @@ test("Computed observables in paths", function() {
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("selected", "s2")
+	$.observable(model).setProperty("selected", "s2");
 
 	ret += $("#result").text();
 
@@ -3961,11 +3978,11 @@ test("Computed observables in paths", function() {
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("selected", "s2")
+	$.observable(model).setProperty("selected", "s2");
 
 	ret += $("#result").text() + "_";
 
-	$.observable(model).setProperty("colored", "c3")
+	$.observable(model).setProperty("colored", "c3");
 
 	ret += $("#result").text();
 
@@ -3986,7 +4003,7 @@ test("Computed observables in paths", function() {
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("enabled", "e2")
+	$.observable(model).setProperty("enabled", "e2");
 
 	ret += $("#result").text();
 
@@ -6221,7 +6238,7 @@ test("Chained computed observables in template expressions", function() {
 	(function() {
 		// =============================== Arrange ===============================
 		function setData() {
-			res = "",
+			res = "";
 
 			theB = {
 				a: "a"
@@ -6353,7 +6370,7 @@ test("Chained computed observables in template expressions", function() {
 		// =============================== Arrange ===============================
 
 		function setData2() {
-			res = "",
+			res = "";
 
 			theB = {
 				a1: {
@@ -7544,7 +7561,7 @@ test("{^{for}}", function() {
 
 	// =============================== Arrange ===============================
 
-	things1 = [{ thing: "box" }],
+	things1 = [{ thing: "box" }];
 	things2 = [{ thing: "triangle" }, { thing: "circle" }];
 	square = { thing: "square" };
 
@@ -9070,7 +9087,7 @@ test('data-link="{on ...', function() {
 
 	$.link(true, "#linkTgt", data);
 
-	events = $._data($("#linkTgt")[0]).events,
+	events = $._data($("#linkTgt")[0]).events;
 
 	// ................................ Act ..................................
 	$("#linkTgt").mousedown();
@@ -9907,7 +9924,7 @@ test("JsViews jsv-domchange", function() {
 	model.things = [{ thing: "Orig" }, { thing: "First" }, { thing: "Middle" }, { thing: "Last" }]; // reset Prop
 
 	$.templates(
-		'<div data-link=\'"{on "jsv-domchange" ~domchange 333 444}\'>'
+		'<div data-link=\'{on "jsv-domchange" ~domchange 333 444}\'>'
 			+ '{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span>'
 		+'</div>')
 		.link("#result", model, {
@@ -10343,6 +10360,236 @@ test("MVVM", function() {
 
 });
 
+test("$.views.viewModels", function() {
+	// =============================== Arrange ===============================
+	var Constr = $.views.viewModels({getters: ["a", "b"]});
+	// ................................ Act ..................................
+	var vm = Constr("a1 ", "b1 ");
+	var result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
+		this.c(val + this.a() + this.b() + this.c());
+	}}});
+	// ................................ Act ..................................
+	vm = Constr("a1 ", "b1 ", "c1 ");
+	vm.add("before ");
+	result = vm.c();
+	// ............................... Assert .................................
+	equal(result, "before a1 b1 c1 ", "viewModels, two getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({extend: {add: function(val) {
+		this.foo = val;
+	}}});
+	// ................................ Act ..................................
+	vm = Constr();
+	vm.add("before");
+	result = vm.foo;
+	// ............................... Assert .................................
+	equal(result, "before", "viewModels, no getters, one method");
+
+	// =============================== Arrange ===============================
+	Constr = $.views.viewModels({getters: []});
+	// ................................ Act ..................................
+	vm = Constr();
+	result = JSON.stringify(vm);
+	// ............................... Assert .................................
+	equal(result, "{}", "viewModels, no getters, no methods");
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		}
+	});
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
+	var changes = "";
+	function observeAllHandler(ev, evArgs) {
+		changes += evArgs.value;
+	}
+	$.observable(vm).observeAll(observeAllHandler);
+
+	result = vm.a() + vm.b();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a1 b1 a2 b2 |a2 b2 ", "viewModels, two getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 "});
+
+	result = vm.a() + vm.b();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a3 b3 |a3 b3 ", "viewModels merge, two getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	var viewModels = $.views.viewModels({
+		T1: {
+			getters: ["a", {getter: "b"}, "c", "d", {getter: "e", type: undefined}, {getter: "f", type: null}, {getter: "g", type: "foo"}, {getter: "h", type: ""}]
+		}
+	}, {});
+	// ................................ Act ..................................
+	vm = viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 ", d: "d1 ", e: "e1 ", f: "f1 ", g: "g1 ", h: "h1 "});
+	$.observable(vm).observeAll(observeAllHandler);
+
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+	vm.a("a2 ");
+	vm.b("b2 ");
+	result += vm.a() + vm.b();
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a1 b1 c1 d1 e1 f1 g1 h1 a2 b2 |a2 b2 ",
+		"viewModels, multiple unmapped getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 ", d: "d3 ", e: "e3 ", f: "f3 ", g: "g3 ", h: "h3 "});
+
+	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "a3 b3 c3 d3 e3 f3 g3 h3 |a3 b3 c3 d3 e3 f3 g3 h3 ",
+		"viewModels merge, multiple unmapped getters, no methods");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"c3 ","d":"d3 ","e":"e3 ","f":"f3 ","g":"g3 ","h":"h3 "}',
+		"viewModels unmap, multiple unmapped getters, no methods");
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b", "c"],
+			extend : {
+				add: function(val) {
+					this.c(val + this.a() + this.b() + this.c());
+				}
+			}
+		}
+	});
+
+	// ................................ Act ..................................
+	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
+	$.observable(vm).observeAll(observeAllHandler);
+
+	vm.add("before ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "before a1 b1 c1 |before a1 b1 c1 ", "viewModels, getters and one method");
+	changes = "";
+
+	// ................................ Act ..................................
+	vm.merge({a: "a3 ", b: "b3 ", c: "c3 "});
+	vm.add("updated ");
+	result = vm.c();
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, "updated a3 b3 c3 |a3 b3 c3 updated a3 b3 c3 ", "viewModels merge, getters and one method");
+	changes = "";
+
+	// ................................ Act ..................................
+	result = vm.unmap();
+	result = JSON.stringify(result);
+
+	// ............................... Assert .................................
+	equal(result, '{"a":"a3 ","b":"b3 ","c":"updated a3 b3 c3 "}', "viewModels unmap, getters and one method");
+	changes = "";
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// =============================== Arrange ===============================
+	$.views.viewModels({
+		T1: {
+			getters: ["a", "b"]
+		},
+		T2: {
+			getters: [{getter: "t1", type: "T1"}, {getter: "t1Arr", type: "T1"}, {getter: "t1OrNull", type: "T1", defaultVal: null}]
+		}
+	});
+	viewModels = $.views.viewModels;
+	// ................................ Act ..................................
+	var t1 = viewModels.T1.map({a: "a1 ", b: "b1 "}); // Create a T1
+	var t2 = viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: [t1.unmap(), {a: "a2 ", b: "b2 "}]}); // Create a T2 (using unmap to scrape values the T1: vm)
+
+	$.observable(t1).observeAll(observeAllHandler);
+	$.observable(t2).observeAll(observeAllHandler);
+
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t2.t1Arr()[0].merge({a: "a1x ", b: "b1x "}); // merge not the root, but a VM instance within hierarchy: vm2.t1Arr()[0] - leaving rest unchanged
+	result = JSON.stringify(t2.unmap());
+
+	// ............................... Assert .................................
+	equal(result + "|" + changes, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1x ","b":"b1x "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}|a1x b1x ',
+		"viewModels, merge deep node");
+	changes = "";
+
+	// ............................... Reset .................................
+	$.unobserve(observeAllHandler);
+
+	// ................................ Act ..................................
+	var t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	var t2FromArr =  viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
+	t1Arr.push(viewModels.T1("a3 ", "b3 "));
+	t2FromArr = viewModels.T2.map({t1: {a: "a4 ", b: "b4 "}, t1Arr: t1Arr.unmap()}); // Create a T2 (using unmap to scrape values the T1: vm)
+	result = JSON.stringify(t2FromArr.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a4 ","b":"b4 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "},{"a":"a3 ","b":"b3 "}],"t1OrNull":null}',
+		"viewModels, hierarchy");
+
+	// ................................ Act ..................................
+	var t2new = viewModels.T2(viewModels.T1("a3 ", "b3 "), [viewModels.T1("a1 ", "b1 "), viewModels.T1("a2 ", "b2 ")], viewModels.T1("a4 ", "b4 ") );
+	result = JSON.stringify(t2new.unmap());
+
+	// ............................... Assert .................................
+	equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
+		"viewModels, hierarchy");
+});
+
 module("API - Settings");
 
 test("Settings, error handlers, onError", function() {
@@ -10389,7 +10636,7 @@ test("Settings, error handlers, onError", function() {
 	var oldDebugMode = $.views.settings.debugMode();
 
 	app = { choose: true, name: "Jo", onerr: "invalid'Jo'" };
-	$.views.settings.debugMode(false)
+	$.views.settings.debugMode(false);
 
 	// ................................ Act ..................................
 	result = $.views.settings.debugMode();
@@ -10428,7 +10675,7 @@ test("Settings, error handlers, onError", function() {
 	// ................................ Act ..................................
 	// Debug mode true
 
-	$.views.settings.debugMode(true)
+	$.views.settings.debugMode(true);
 
 	result = $.views.settings.debugMode();
   $("#result").empty();
@@ -12920,4 +13167,5 @@ test("Tag control events", function() {
 
 	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
 });
+
 })(this, this.jQuery);

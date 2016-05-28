@@ -3,12 +3,12 @@
 
 **JsViews** builds on top of **[JsRender](http://www.jsviews.com/#jsrender)** templates, and adds data-binding and **[observable data](http://www.jsviews.com/#jsobservable)**, to provide a fully-fledged MVVM platform for easily creating interactive data-driven single-page apps and websites.
 
-<h3>Documentation and Downloads</h3>
+<h3>Documentation and downloads</h3>
 **[Documentation](http://www.jsviews.com/#jsviews)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsvapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsviews)**.
 
 The content of this ***ReadMe*** is available also as a *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*.
 
-<h2>JsViews Installation</h2>
+<h2>JsViews installation</h2>
 
 jsviews.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site.
 
@@ -17,7 +17,7 @@ CDN delivery is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnj
 Alternatively:
 - It can be installed with ***[Bower](http://bower.io/search/?q=jsviews)***, using `$ bower install jsviews` 
 - It can be loaded using an AMD script loader, such as RequireJS
-- For installation using *Node.js* (*npm*) -- and browser loading using *Browserify* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
+- For installation using *Node.js* (*npm*) -- and browser loading using *Browserify* or *webpack* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
 
 *Example HTML page:* [Loading JsViews](http://www.jsviews.com/#download/pages-jsv)
 
@@ -26,7 +26,7 @@ Alternatively:
 
 **[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
 
-<h2>JsViews Usage</h2>
+<h2>JsViews usage</h2>
 
 <h3><i>Data-linked templates</i></h3>
 

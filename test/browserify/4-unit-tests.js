@@ -6,6 +6,10 @@ browserify.done.four = true;
 
 QUnit.module("Browserify - client code");
 
+var isIE8 = window.attachEvent && !window.addEventListener;
+
+if (!isIE8) {
+
 test("No jQuery global: require('jquery.observable')", function() {
 	// ............................... Hide QUnit global jQuery .................................
 	var jQuery = global.jQuery;
@@ -34,5 +38,5 @@ test("No jQuery global: require('jquery.observable')", function() {
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery
 });
-
+}
 })();

@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.75 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.76 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v0.9.75",
+var versionNumber = "v0.9.76",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -847,7 +847,7 @@ function observeAndBind(linkCtx, source, target) { //TODO? linkFnArgs) {;
 			binding.to = [[], cvtBk];
 		}
 		if (linkedElem || cvtBk !== undefined) {
-			bindTo(binding, tag && tag.convertBack || cvtBk);
+			bindTo(binding, tag, linkedElem && linkedElem[0] || target, cvtBk);
 		}
 		if (tag) {
 			if (tag.onAfterBind) {
@@ -1649,14 +1649,13 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 				_noUpd : tokens[2] // Flag for data-link="^{...}" so on initial data-link call will bind, but not render)
 			};
 
+			convertBack = undefined;
 			if (tokens[6]) {
-				convertBack = tokens[10];
+				convertBack = tokens[10] || undefined;
 				linkCtx.convert = tokens[5] || "";
 				if (!attr && convertBack !== undefined && defaultAttr(node)) {
 					// Default target, so allow 2 way binding
 					linkCtx.convertBack = convertBack = convertBack.slice(1);
-				} else {
-					convertBack = undefined;
 				}
 			}
 			// Compile the linkFn expression which evaluates and binds a data-link expression
@@ -1823,7 +1822,7 @@ function callAfterLink(tag, eventArgs) {
 						// For data-linked tags, identify the linkedElem with the tag, for "to" binding
 						// (For data-linked elements, if not yet bound, we identify later when the linkCtx.elem is bound)
 						linkedElem._jsvLkEl = tag;
-						bindTo(bindingStore[tag._tgId], tag.convertBack);
+						bindTo(bindingStore[tag._tgId], tag, linkedElem);
 						linkedElem._jsvBnd = "&" + tag._tgId + "+"; // Add a "+" for cloned binding - so removing
 						// elems with cloned bindings will not remove the 'parent' binding from the bindingStore.
 					}
@@ -1864,16 +1863,6 @@ function callAfterLink(tag, eventArgs) {
 			$linkedElem.attr("name", props.name);
 		}
 	}
-	if (linkedElem = linkedElem || tag.tagName === ":" && linkCtx.elem) {
-		oldTrig = linkedElem._jsvTr;
-		newTrig = props.trigger || $subSettings.trigger;
-		if (oldTrig !== newTrig) {
-			linkedElem._jsvTr = newTrig;
-			$linkedElem = $linkedElem || $(linkedElem);
-			bindElChange($linkedElem, oldTrig, "off");
-			bindElChange($linkedElem, newTrig, "on");
-		}
-	}
 }
 
 function asyncElemChangeHandler(ev) {
@@ -1889,20 +1878,34 @@ function bindElChange($elem, trig, onoff) {
 	}
 }
 
-function bindTo(binding, cvtBk) {
+function bindTo(binding, tag, linkedElem, cvtBk) {
 	// Two-way binding.
 	// We set the binding.to[1] to be the cvtBack, and binding.to[0] to be either the path to the target, or [object, path] where the target is the path on the provided object.
 	// So for a computed path with an object call: a.b.getObject().d.e, then we set to[0] to be [exprOb, "d.e"], and we bind to the path on the returned object, exprOb.ob, as target
 	// Otherwise our target is the first path, paths[0], which we will convert with contextCb() for paths like ~a.b.c or #x.y.z
 
-	var bindto, pathIndex, path, lastPath, bindtoOb,
+	var bindto, pathIndex, path, lastPath, bindtoOb, $linkedElem, newTrig, oldTrig,
 		linkCtx = binding.linkCtx,
 		source = linkCtx.data,
 		paths = linkCtx.fn.paths;
+
 	if (binding && paths) {
+		oldTrig = linkedElem._jsvTr;
+		newTrig = $subSettings.trigger;
+		if (tag) {
+			cvtBk = tag.convertBack || cvtBk;
+			newTrig = tag.tagCtx.props.trigger || newTrig;
+		}
+		if (oldTrig !== newTrig) {
+			linkedElem._jsvTr = newTrig;
+			$linkedElem = $(linkedElem);
+			bindElChange($linkedElem, oldTrig, "off");
+			bindElChange($linkedElem, newTrig, "on");
+		}
+
 		paths = (bindto = paths._jsvto) || paths[0];
 		pathIndex = paths && paths.length;
-		if (pathIndex && (!linkCtx.tag || linkCtx.tag.tagCtx.args.length)) {
+		if (pathIndex && (!tag || tag.tagCtx.args.length)) {
 			lastPath = paths[pathIndex - 1];
 			if (lastPath._jsv) {
 				bindtoOb = lastPath;
@@ -2155,12 +2158,11 @@ $sub.onStore.template = function(name, item) {
 
 $sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 
- // Define JsViews version of delimiters(), and initialize
+// Define JsViews version of delimiters(), and initialize
 ($viewsSettings.delimiters = function() {
-	var ret = oldJsvDelimiters.apply(0, arguments), // Sets the subSettings.delimiters - plus
-	// delimOpenChar0 etc. in context of jsrender.js.
-	// This version is for the separate file: jquery.views.js, not the single file: jsviews.js
-	// Now set also delimOpenChar0 etc. in context of jquery.views.js...
+	// Run delimiters initialization in context of jsrender.js
+	var ret = oldJsvDelimiters.apply(0, arguments),
+		// Now set also delimOpenChar0 etc. in context of jquery.views.js...
 		delimChars = $subSettings.delimiters;
 
 	delimOpenChar0 = delimChars[0].charAt(0);
@@ -2169,6 +2171,7 @@ $sub.viewInfos = viewInfos; // Expose viewInfos() as public helper method
 	delimCloseChar1 = delimChars[1].charAt(1);
 	linkChar = delimChars[2];
 
+	// Data-linking must use new delimiters
 	rTagDatalink = new RegExp("(?:^|\\s*)([\\w-]*)(\\" + linkChar + ")?(\\" + delimOpenChar1 + $sub.rTag + "(:\\w*)?\\" + delimCloseChar0 + ")", "g");
 	return ret;
 })(); // jshint ignore:line
@@ -2621,7 +2624,7 @@ $tags("on", {
 						params.slice.call(arguments, 1) // If triggering event (e.g. jsv-domchange) has additional arguments after ev, pass them too
 					));
 					// for {on 'click' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs)
-					// for {on 'jsv-domchange' handler par1 par2} use hanlder(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
+					// for {on 'jsv-domchange' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
 				}
 			);
 		}
@@ -2748,7 +2751,7 @@ function observeProps(map, ev, eventArgs) {
 		}
 		if (l === -1) {
 			if (eventArgs.path && !eventArgs.remove) {
-				$observable(target).insert({ key: eventArgs.path, prop: eventArgs.value });
+				$observable(target).insert({key: eventArgs.path, prop: eventArgs.value});
 			}
 		} else if (eventArgs.remove) {
 			$observable(target).remove(l);
@@ -2953,7 +2956,7 @@ $.each([HTML, "replaceWith", "empty", "remove"], function(i, name) {
 
 addLinkMethods($extend(topView = $sub.topView, {tmpl: {links: {}}}));
 
-viewStore = { 0: topView }; // Top-level view
+viewStore = {0: topView}; // Top-level view
 
 //=========================
 // Extend $.views.settings
