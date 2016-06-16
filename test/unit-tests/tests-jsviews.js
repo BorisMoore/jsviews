@@ -6866,17 +6866,17 @@ test("{^{:expression}}", function() {
 	});
 
 	tmpl = $.templates(
-	'<input data-link="a().other last trigger=true convert=~upper convertBack=~lower" />'
-	+ '<input data-link=" convert=~upper convertBack=~lower last a().other trigger=true" />'
+	'<input data-link="a().other last convert=~upper convertBack=~lower" />'
+	+ '<input data-link=" convert=~upper convertBack=~lower last a().other" />'
 
-	+ '<input data-link="other trigger=true" />'
-	+ '<input data-link="last trigger=true" />'
+	+ '<input data-link="other" />'
+	+ '<input data-link="last" />'
 
 	+ '{^{:convert=~upper last a().other}}'
 	+ '{^{:a().other last convert=~upper}}'
 
-	+ '{^{textbox a().other last trigger=true convert=~upper convertBack=~lower/}}'
-	+ '{^{textbox convert=~upper convertBack=~lower last a().other trigger=true/}}');
+	+ '{^{textbox a().other last convert=~upper convertBack=~lower/}}'
+	+ '{^{textbox convert=~upper convertBack=~lower last a().other/}}');
 
 	$.link(tmpl, "#result", data, {
 		upper: function(val) { return val.toUpperCase(); },
@@ -12171,6 +12171,7 @@ test('two-way bound tag controls', function() {
 	// ................................ Act ..................................
 	$.observable(person).setProperty({ name: "ANewName" });
 
+	
 	// ............................... Assert .................................
 	equal(tag.linkedElem[0].value + "|" + tag.value,
 	"ANEWNAME|ANewName",
@@ -12187,6 +12188,7 @@ test('two-way bound tag controls', function() {
 
 	// =============================== Arrange ===============================
 	var res = "";
+	$.views.settings.trigger(false);
 
 	$.templates('{^{twoWayTag name trigger="keydown mouseup"/}}').link("#result", person);
 
@@ -12226,19 +12228,19 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(res,
 	" 1: FirstName|FirstName 2: SecondName|SecondName 3: ThirdName|ThirdName 4: FourthName|FourthName",
-	'Data link using: {^{twoWayTag name trigger="event1 event2"/}} triggers on specified events');
+	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}} triggers on specified events');
 
 	// ............................... Assert .................................
 	equal(handlers,
 	"|11|11|11",
-	'Data link using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
+	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
 	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -12280,19 +12282,19 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(res,
 	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
-	'Data link using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
+	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
 
 	// ............................... Assert .................................
 	equal(handlers,
 	"|11|11|11",
-	'Data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
+	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
 	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -12335,19 +12337,19 @@ test('two-way bound tag controls', function() {
 	equal(res,
 	isIE8 ? " 1: First <b>Name</b> 2: Second <B>Name2</B> 3: Third <B>Name3</B> 4: Fourth <B>Name4</B>"
 		: " 1: First <b>Name</b> 2: Second <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
-	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> triggers on specified events');
+	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> triggers on specified events');
 
 	// ............................... Assert .................................
 	equal(handlers,
 	"|11|11|11",
-	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
+	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
 	$.unlink("#result");
 
 	// ............................... Assert .................................
 	ok($._data(linkedElem).events === undefined,
-	'Data link using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -12390,12 +12392,12 @@ test('two-way bound tag controls', function() {
 	// ............................... Assert .................................
 	equal(res,
 	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
-	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
+	'Top-level data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
 
 	// ............................... Assert .................................
 	equal(handlers,
 	"|11|11|11",
-	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
+	'Top-level data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
 	$.unlink("#result");
@@ -12405,11 +12407,13 @@ test('two-way bound tag controls', function() {
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	$("#result").empty();
+
+	$.views.settings.trigger(true);
 });
 
-test("trigger=true - after keydown: <input/>", function(assert) {
+test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
-
+	$.views.settings.trigger(false);
 	var done = assert.async(),
 		res = "",
 		person = { name: "Jo" };
@@ -12432,6 +12436,7 @@ test("trigger=true - after keydown: <input/>", function(assert) {
 	linkedElem.value = "SecondName";
 
 	$(linkedElem).keydown();
+	$.views.settings.trigger(true);
 
 	setTimeout(function() {
 		res += " 2: " + person.name;
@@ -12459,7 +12464,198 @@ test("trigger=true - after keydown: <input/>", function(assert) {
 	}, 0);
 });
 
-test("trigger=true - after keydown: {^{twoWayTag}}", function(assert) {
+test("Global trigger=true local trigger=false - does not trigger after keydown: <input/>", function(assert) {
+	// =============================== Arrange ===============================
+	var done = assert.async(),
+		res = "",
+		person = { name: "Jo" };
+
+	$.templates('<input data-link="name trigger=false" />').link("#result", person);
+
+	var linkedElem = $("#result input")[0];
+
+	var events = $._data(linkedElem).events;
+
+	$.observable(person).setProperty({ name: "FirstName" });
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keydown();
+
+	setTimeout(function() {
+		res += " 2: " + person.name;
+
+		// ............................... Assert .................................
+		equal(res,
+		" 1: FirstName 2: FirstName",
+		'Data link using: <input data-link="name trigger=false" /> does not trigger after keydown');
+
+		// ............................... Assert .................................
+		equal(!events && !$._data(linkedElem).events,
+		true,
+		'Data link using: <input data-link=\'name trigger=false\' /> has no handlers after relinking');
+
+		// ................................ Act ..................................
+		$.unlink("#result");
+
+		// ............................... Assert .................................
+		ok($._data(linkedElem).events === undefined,
+		'Data link using: <input data-link="name trigger=false" />: No handlers after $.unlink(container)');
+
+		done();
+	}, 0);
+});
+
+test("Global trigger=true - triggers after keydown: <input/>", function(assert) {
+	// =============================== Arrange ===============================
+	var done = assert.async(),
+		res = "",
+		person = { name: "Jo" };
+
+	$.templates('<input data-link="name" />').link("#result", person);
+
+	var linkedElem = $("#result input")[0];
+
+	var events = $._data(linkedElem).events,
+		handlers = "|" + events.keydown.length;
+
+	$.observable(person).setProperty({ name: "FirstName" });
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keydown();
+
+	setTimeout(function() {
+		res += " 2: " + person.name;
+
+		handlers += "|" + events.keydown.length;
+
+		// ............................... Assert .................................
+		equal(res,
+		" 1: FirstName 2: SecondName",
+		'Data link using: <input data-link="name" /> triggers after keydown');
+
+		// ............................... Assert .................................
+		equal(handlers,
+		"|1|1|1",
+		'Data link using: <input data-link=\'name\' /> has no duplicate handlers after relinking');
+
+		// ................................ Act ..................................
+		$.unlink("#result");
+
+		// ............................... Assert .................................
+		ok($._data(linkedElem).events === undefined,
+		'Data link using: <input data-link="name" />: handlers are removed by $.unlink(container)');
+
+		done();
+	}, 0);
+});
+
+test("Global trigger=true - <input type='checkbox'/>", function(assert) {
+	// =============================== Arrange ===============================
+	var done = assert.async(),
+		res = "",
+		person = { member: true };
+
+	$.templates('<input type="checkbox" data-link="member" />').link("#result", person);
+
+	var linkedElem = $("#result input")[0];
+
+	var events = $._data(linkedElem).events;
+
+	$.observable(person).setProperty({ member: false });
+
+	events = $._data(linkedElem).events;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.member;
+
+	linkedElem.checked = true;
+
+	$(linkedElem).change();
+
+	setTimeout(function() {
+		res += " 2: " + person.member;
+
+		// ............................... Assert .................................
+		equal(res,
+		" 1: false 2: true",
+		'Data link using: <input type="checkbox" data-link="member" /> triggers after change');
+
+		// ............................... Assert .................................
+		equal(events,
+		undefined,
+		'Data link using: <input type="checkbox" data-link="member" /> has no events');
+
+		// ................................ Act ..................................
+		$.unlink("#result");
+
+		done();
+	}, 0);
+});
+
+test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) {
+	// =============================== Arrange ===============================
+
+	var done = assert.async(),
+		res = "",
+		person = { name: "Jo" };
+
+	$.templates('<input data-link="name trigger=\'keydown\'" />').link("#result", person);
+
+	var linkedElem = $("#result input")[0];
+
+	var events = $._data(linkedElem).events,
+		handlers = "|" + events.keydown.length;
+
+	$.observable(person).setProperty({ name: "FirstName" });
+
+	events = $._data(linkedElem).events;
+	handlers += "|" + events.keydown.length;
+
+	// ................................ Act ..................................
+	res += " 1: " + person.name;
+
+	linkedElem.value = "SecondName";
+
+	$(linkedElem).keydown();
+
+	setTimeout(function() {
+		res += " 2: " + person.name;
+
+		handlers += "|" + events.keydown.length;
+
+		// ............................... Assert .................................
+		equal(res,
+		" 1: FirstName 2: SecondName",
+		'Data link using: <input data-link="name trigger=\'keydown\'" /> triggers after keydown');
+
+		// ............................... Assert .................................
+		equal(handlers,
+		"|1|1|1",
+		'Data link using: <input data-link=\'name trigger=\'keydown\'\' /> has no duplicate handlers after relinking');
+
+		// ................................ Act ..................................
+		$.unlink("#result");
+
+		// ............................... Assert .................................
+		ok($._data(linkedElem).events === undefined,
+		'Data link using: <input data-link="name trigger=\'keydown\'" />: handlers are removed by $.unlink(container)');
+
+		done();
+	}, 0);
+});
+
+test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -12467,7 +12663,7 @@ test("trigger=true - after keydown: {^{twoWayTag}}", function(assert) {
 		person = { name: "Jo" };
 
 	$.templates({
-		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower trigger=true/}}',
+		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12495,27 +12691,27 @@ test("trigger=true - after keydown: {^{twoWayTag}}", function(assert) {
 		// ............................... Assert .................................
 		equal(before + "|" + person.name,
 		"JO|changethename",
-		'Data link using: {^{twoWayTag name convertBack=~lower trigger=true/}} - triggers after keydown, converts the data, and sets on data');
+		'Data link using: {^{twoWayTag name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events.keydown.length;
 
 		// ............................... Assert .................................
 		equal(handlers,
 		"|1|1",
-		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
+		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
 		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{twoWayTag name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("trigger=true - after keydown: {^{textbox}}", function(assert) {
+test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -12537,7 +12733,7 @@ test("trigger=true - after keydown: {^{textbox}}", function(assert) {
 	});
 
 	$.templates({
-		markup: '{^{textbox name convert="myupper" convertBack=~lower trigger=true/}}',
+		markup: '{^{textbox name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12565,27 +12761,27 @@ test("trigger=true - after keydown: {^{textbox}}", function(assert) {
 		// ............................... Assert .................................
 		equal(before + "|" + person.name,
 		"JO|changethename",
-		'Data link using: {^{textbox name convertBack=~lower trigger=true/}} - triggers after keydown, converts the data, and sets on data');
+		'Data link using: {^{textbox name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events.keydown.length;
 
 		// ............................... Assert .................................
 		equal(handlers,
 		"|1|1",
-		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
+		'Top-level data link using: {^{textbox name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
 		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{textbox name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{textbox name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("trigger=true - after keydown: {^{contentEditable}}", function(assert) {
+test("Global trigger=true - triggers after keydown: {^{contentEditable}}", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -12607,7 +12803,7 @@ test("trigger=true - after keydown: {^{contentEditable}}", function(assert) {
 	});
 
 	$.templates({
-		markup: '{^{contentEditable name convert="myupper" convertBack=~lower trigger=true/}}',
+		markup: '{^{contentEditable name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12646,21 +12842,21 @@ test("trigger=true - after keydown: {^{contentEditable}}", function(assert) {
 		equal(before + "|" + person.name,
 		isIE8 ? "JO <B>SMITH</B>|new <em>name</em>|new2 \r\n<p>name2</p>|new3 \r\n<div>name3</div>"
 			: "JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
-		'Data link using: {^{contentEditable name convertBack=~lower trigger=true/}} - triggers after keydown, converts the data, and sets on data');
+		'Data link using: {^{contentEditable name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events.keydown.length;
 
 		// ............................... Assert .................................
 		equal(handlers,
 		"|1|1",
-		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}} has no duplicate handlers after relinking');
+		'Top-level data link using: {^{contentEditable name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
 		$.unlink("#result");
 
 		// ............................... Assert .................................
 		ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{contentEditable name convertBack=~lower trigger=true/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{contentEditable name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);

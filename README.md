@@ -15,16 +15,20 @@ jsviews.js is available from [downloads](http://www.jsviews.com/#download) on th
 CDN delivery is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
 
 Alternatively:
-- It can be installed with ***[Bower](http://bower.io/search/?q=jsviews)***, using `$ bower install jsviews` 
-- It can be loaded using an AMD script loader, such as RequireJS
-- For installation using *Node.js* (*npm*) -- and browser loading using *Browserify* or *webpack* -- see *[JsRender Node.js Quickstart](http://www.jsviews.com/#jsr-node-quickstart)*
 
-*Example HTML page:* [Loading JsViews](http://www.jsviews.com/#download/pages-jsv)
+- It can be installed with ***[Bower](http://bower.io/search/?q=jsviews)***, using `$ bower install jsviews` 
+- It can be loaded using an *AMD script loader*, such as RequireJS
+- For installation using *Node.js* (*npm*), and loading using [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/), see *[JsViews as a Browserify module](http://www.jsviews.com/#node/browserify@jsviews)* and *[JsViews as a webpack module](http://www.jsviews.com/#node/webpack@jsviews)*
+
+(Note that *jsviews.js* includes all of *jsrender.js* code -- so *jsrender.js* does not need to be loaded first.)
 
 <h3>JsRender and JsViews</h3>
-**JsRender** is used for data-driven rendering of templates to strings, ready for insertion in the DOM. (See *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender GitHub repository](https://github.com/BorisMoore/jsrender)).
 
-**[JsRender](https://github.com/BorisMoore/jsrender)** and **[JsViews](https://github.com/BorisMoore/jsviews)** together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.
+*JsRender* is used for data-driven rendering of templates to strings, ready for insertion in the DOM. (See *[JsRender Quickstart](http://www.jsviews.com/#jsr-quickstart)* and [JsRender GitHub repository](https://github.com/BorisMoore/jsrender)). 
+
+*JsViews* incorporates *JsRender* templates, together with data-binding, *[observable data](http://www.jsviews.com/#jsoapi)* and MVVM support. It provides a powerful platform for building dynamic interactive websites and single-page apps. 
+
+(Note: *JsRender* and *JsViews* together provide the next-generation implementation of the official jQuery plugins *[JQuery Templates](https://github.com/BorisMoore/jquery-tmpl)*, and *[JQuery Data Link](https://github.com/BorisMoore/jquery-datalink)* -- and supersede those libraries.)
 
 <h2>JsViews usage</h2>
 

@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.76 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.77 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.76",
+var versionNumber = "v0.9.77",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable,
 
@@ -416,10 +416,10 @@ function convertVal(converter, view, tagCtx, onError) {
 
 		tagCtx.view = view;
 
-		tag.ctx = tagCtx.ctx || {};
+		tag.ctx = tagCtx.ctx || tag.ctx || {};
 		tagCtx.ctx = undefined;
 
-		value = tag.cvtArgs(tag.convert || converter !== "true" && converter)[0]; // If there is a convertBack but no convert, converter will be "true"
+		value = tag.cvtArgs(converter !== "true" && converter)[0]; // If there is a convertBack but no convert, converter will be "true"
 
 		// Call onRender (used by JsViews if present, to add binding annotations around rendered content)
 		value = boundTag && view._.onRender
@@ -435,7 +435,7 @@ function convertArgs(converter) {
 		view = tagCtx.view,
 		args = tagCtx.args;
 
-	converter = tag.convert || converter;
+	converter = converter || tag.convert;
 	converter = converter && ("" + converter === converter
 		? (view.getRsc("converters", converter) || error("Unknown converter: '" + converter + "'"))
 		: converter);
@@ -3355,6 +3355,7 @@ rFirstElem = /<(?!script)(\w+)[>\s]/;
 
 if ($.link) { return $; } // JsViews is already loaded
 
+$subSettings.trigger = true;
 var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet,
 	jsvAttrStr = "data-jsv",
 	elementChangeStr = "change.jsv",
@@ -3669,9 +3670,9 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 		view = linkCtx.view,
 		targetVal = linkCtx._val,
 		oldLinkCtx = view.linkCtx,
-		// If not a tag and not targeting HTML, we can use the ._val obtained from getTargetVal()
+		// If not a tag we can use the ._val obtained from getTargetVal()
 		// and only update when the new value (sourceValue) has changed from the previous one
-		change = tag || attr === HTML;
+		change = tag;
 
 	if (tag) {
 		// Initialize the tag with element references
@@ -3801,7 +3802,8 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 					// Insert and link new content
 					promise = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId, lazyLink: tag.tagCtx.props.lazyLink});
 				} else {
-					// data-linked value targeting innerHTML: data-link="html{:expr}"
+					// data-linked value targeting innerHTML: data-link="html{:expr}" or contenteditable="true"
+					renders = renders && targetVal !== sourceValue;
 					if (renders) {
 						$target.empty();
 					}
@@ -5157,17 +5159,22 @@ function bindTo(binding, tag, linkedElem, cvtBk) {
 		paths = linkCtx.fn.paths;
 
 	if (binding && paths) {
-		oldTrig = linkedElem._jsvTr;
-		newTrig = $subSettings.trigger;
+		oldTrig = linkedElem._jsvTr || false;
 		if (tag) {
 			cvtBk = tag.convertBack || cvtBk;
-			newTrig = tag.tagCtx.props.trigger || newTrig;
+			newTrig = tag.tagCtx.props.trigger;
 		}
+		newTrig = newTrig === undefined ? $subSettings.trigger : newTrig;
 		if (oldTrig !== newTrig) {
-			linkedElem._jsvTr = newTrig;
 			$linkedElem = $(linkedElem);
 			bindElChange($linkedElem, oldTrig, "off");
-			bindElChange($linkedElem, newTrig, "on");
+			bindElChange(
+				$linkedElem,
+				linkedElem._jsvTr
+					// Trigger is noop except for text box, textarea, contenteditable...
+					= (linkedElem.tagName === "INPUT" && linkedElem.type !== CHECKBOX && linkedElem.type !== RADIO || linkedElem.type === "textarea" || linkedElem.contentEditable === TRUE) && newTrig,
+				"on"
+			);
 		}
 
 		paths = (bindto = paths._jsvto) || paths[0];
@@ -5300,12 +5307,6 @@ function removeViewBinding(bindId, linkedElemTag, elem) {
 					}
 				}
 				$linkedElem = tag.linkedElem;
-				linkedElem = $linkedElem && $linkedElem[0] || linkCtx.elem;
-
-				if (trigger = linkedElem && linkedElem._jsvTr) {
-					bindElChange($linkedElem || $(linkedElem), trigger, "off");
-					linkedElem._jsvTr = undefined;
-				}
 
 				if (tag.onDispose) {
 					tag.onDispose();
@@ -5319,6 +5320,12 @@ function removeViewBinding(bindId, linkedElemTag, elem) {
 						tag._nxt.parentNode.removeChild(tag._nxt);
 					}
 				}
+			}
+			linkedElem = $linkedElem && $linkedElem[0] || linkCtx.elem;
+
+			if (trigger = linkedElem && linkedElem._jsvTr) {
+				bindElChange($linkedElem || $(linkedElem), trigger, "off");
+				linkedElem._jsvTr = undefined;
 			}
 			view = linkCtx.view;
 			if (view.type === "link") {
