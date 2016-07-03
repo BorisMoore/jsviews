@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.77 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.78 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -73,6 +73,7 @@ var versionNumber = "v0.9.74",
 	$subSettings = $sub.settings,
 	$subSettingsAdvanced = $subSettings.advanced,
 	$isFunction = $.isFunction,
+	$expando = $.expando,
 	$isArray = $.isArray,
 	OBJECT = "object";
 
@@ -82,7 +83,6 @@ if (!$.observe) {
 		slice = [].slice,
 		splice = [].splice,
 		concat = [].concat,
-		$expando = $.expando,
 		PARSEINT = parseInt,
 		rNotWhite = /\S+/g,
 		propertyChangeStr = $sub.propChng = $sub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
@@ -253,10 +253,6 @@ if (!$.observe) {
 					break;
 				case "remove":
 					observeArrayItems(eventArgs.items, true); // unobserveAll on removed items
-					break;
-				case "refresh":
-					observeArrayItems(eventArgs.oldItems, true); // unobserveAll on old items
-					observeArrayItems(ev.target); // observeAll on new items
 					break;
 				case "set":
 					newAllPath = allPath + "." + eventArgs.path;
@@ -864,7 +860,7 @@ if (!$.observe) {
 				index = _data.length;
 			}
 			index = PARSEINT(index);
-			if (index > -1 && index <= _data.length) {
+			if (index > -1) {
 				data = $isArray(data) ? data : [data];
 				// data can be a single item (including a null/undefined value) or an array of items.
 				// Note the provided items are inserted without being cloned, as direct references to the provided objects
@@ -879,6 +875,9 @@ if (!$.observe) {
 		_insert: function(index, data) {
 			var _data = this._data,
 				oldLength = _data.length;
+			if (index > oldLength) {
+				index = oldLength;
+			}
 			splice.apply(_data, [index, 0].concat(data));
 			this._trigger({change: "insert", index: index, items: data}, oldLength);
 		},
@@ -893,10 +892,9 @@ if (!$.observe) {
 
 			index = PARSEINT(index);
 			numToRemove = numToRemove ? PARSEINT(numToRemove) : numToRemove === 0 ? 0 : 1; // if null or undefined: remove 1
-			if (numToRemove > -1 && index > -1) {
+			if (numToRemove > 0 && index > -1) {
 				items = _data.slice(index, index + numToRemove);
-				numToRemove = items.length;
-				if (numToRemove) {
+				if (numToRemove = items.length) {
 					this._remove(index, numToRemove, items);
 				}
 			}
@@ -917,46 +915,91 @@ if (!$.observe) {
 			newIndex = PARSEINT(newIndex);
 
 			if (numToMove > 0 && oldIndex > -1 && newIndex > -1 && oldIndex !== newIndex) {
-				var items = this._data.slice(oldIndex, oldIndex + numToMove);
-				numToMove = items.length;
-				if (numToMove) {
-					this._move(oldIndex, newIndex, numToMove, items);
-				}
+				this._move(oldIndex, newIndex, numToMove);
 			}
 			return this;
 		},
 
-		_move: function(oldIndex, newIndex, numToMove, items) {
-			var _data = this._data,
-				oldLength = _data.length;
-			_data.splice(oldIndex, numToMove);
-			splice.apply(_data, [newIndex, 0].concat(items));
-			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+		_move: function(oldIndex, newIndex, numToMove) {
+			var items,
+				_data = this._data,
+				oldLength = _data.length,
+				excess = oldIndex + numToMove - oldLength;
+			if (excess > 0) {
+				numToMove -= excess;
+			}
+			if (numToMove) {
+				items = _data.splice(oldIndex, numToMove); // remove
+				if (newIndex > _data.length) {
+					newIndex = _data.length;
+				}
+				splice.apply(_data, [newIndex, 0].concat(items)); //re-insert
+				this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+			}
 		},
 
-		refresh: function(newItems) {
-			var oldItems = this._data.slice();
-			this._refresh(oldItems, newItems);
-			return this;
-		},
+		refresh: function(newItems, sort) {
+			function insertAdded() {
+				if (k) {
+					self.insert(j-k, addedItems); // Not found in original array - so insert
+					dataLength += k;
+					i += k;
+					k = 0;
+					addedItems = [];
+				}
+			}
 
-		_refresh: function(oldItems, newItems) {
-			var _data = this._data,
-				oldLength = _data.length;
-
-			splice.apply(_data, [0, _data.length].concat(newItems));
-			this._trigger({change: "refresh", oldItems: oldItems}, oldLength);
+			// For refresh operation we iteratively step through the target array and sort by move/add/remove operations on the source array until they match
+			var i, j, k, newItem, num,
+				self = this,
+				addedItems = [],
+				data = self._data,
+				oldItems = data.slice(),
+				oldLength = data.length,
+				dataLength = oldLength,
+				newLength = newItems.length;
+			self._srt = true; // Flag for sorting during refresh
+			for (j=k=0; j<newLength; j++) {
+				if ((newItem = newItems[j]) === data[j-k]) {
+						insertAdded();
+				} else {
+					for (i=j-k; i<dataLength; i++) {
+						if (newItem === data[i]) {
+							break;
+						}
+					}
+					if (i<dataLength) {
+						insertAdded();
+						num = 0;
+						while (num++ < newLength-i && newItems[j+num] === data[i+num]);
+						self.move(i, j, num); // Found newItem in original array - so move it to new position
+						j += num - 1;
+					} else {
+						k++;
+						addedItems.push(newItem); // Not found in original array - so insert
+					}
+				}
+			}
+			insertAdded();
+			if (dataLength > j) {
+				self.remove(j, dataLength - j);
+			}
+			self._srt = undefined; // We have finished sort operations during refresh
+			self._trigger({change: "refresh", oldItems: oldItems}, oldLength);
+			return self;
 		},
 
 		_trigger: function(eventArgs, oldLength) {
-			var _data = this._data,
+			var self = this,
+				_data = self._data,
 				length = _data.length,
 				$_data = $([_data]);
-
-			if (length !== oldLength) {
+			if (self._srt) {
+				eventArgs.refresh = true; // We are sorting during refresh
+			} else if (length !== oldLength) {  // We have finished sort operations during refresh
 				$_data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
-			$_data.triggerHandler(arrayChangeStr + (this._ns ? "." + /^\S+/.exec(this._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+			$_data.triggerHandler(arrayChangeStr + (self._ns ? "." + /^\S+/.exec(self._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
 		}
 	};
 

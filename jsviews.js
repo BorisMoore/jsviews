@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.77 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.78 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,9 +47,9 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.77",
+var versionNumber = "v0.9.78",
 
-	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable,
+	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 
 //TODO	tmplFnsCache = {},
 	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
@@ -993,7 +993,7 @@ function compileViewModel(name, type) {
 
 			ob = this.apply(this, arr); // Insantiate this View Model, passing getters args array to constructor
 			for (prop in data) { // Copy over any other properties. that are not get/set properties
-				if (!getterNames[prop]) {
+				if (prop !== $expando  && !getterNames[prop]) {
 					ob[prop] = data[prop];
 				}
 			}
@@ -1036,7 +1036,7 @@ function compileViewModel(name, type) {
 				}
 			}
 			if ($observable) {
-				$observable(model).refresh(newModArr);
+				$observable(model).refresh(newModArr, true);
 			} else {
 				model.splice.apply(model, [0, model.length].concat(newModArr));
 			}
@@ -1050,7 +1050,7 @@ function compileViewModel(name, type) {
 			}
 		});
 		for (prop in data) {
-			if (!getterNames[prop]) {
+			if (prop !== $expando && !getterNames[prop]) {
 				model[prop] = data[prop];
 			}
 		}
@@ -1080,7 +1080,7 @@ function compileViewModel(name, type) {
 				: value;
 		}
 		for (prop in model) {
-			if (prop !== "_is" && !getterNames[prop] && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$.isFunction(model[prop])) {
+			if (prop !== "_is" && !getterNames[prop] && prop !== $expando  && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$.isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
@@ -1639,7 +1639,7 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 	}
 	//==== /end of nested functions ====
 
-	var result, newNode, hasHandlers,
+	var i, result, newNode, hasHandlers, bindings,
 		allowCode = $subSettings.allowCode || tmpl && tmpl.allowCode
 			|| $viewsSettings.allowCode === true, // include direct setting of settings.allowCode true for backward compat only
 		astTop = [],
@@ -1680,7 +1680,12 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 
 	if (isLinkExpr) {
 		result = buildCode(astTop, markup, isLinkExpr);
-		setPaths(result, [astTop[0][7]]); // With data-link expressions, pathBindings array is astTop[0][7]
+		bindings = [];
+		i = astTop.length;
+		while (i--) {
+			bindings.unshift(astTop[i][7]);  // With data-link expressions, pathBindings array for tagCtx[i] is astTop[i][7]
+		}
+		setPaths(result, bindings);
 	} else {
 		result = buildCode(astTop, tmpl);
 	}
@@ -2020,7 +2025,8 @@ function buildCode(ast, tmpl, isLinkExpr) {
 							: "{" + tagCtx + "}") + ")")
 						: tagName === ">"
 							? (hasEncoder = true, "h(" + params[0] + ")")
-							: (getsVal = true, "((v=" + params[0] + ')!=null?v:"")') // Strict equality just for data-link="title{:expr}" so expr=null will remove title attribute
+							: (getsVal = true, "((v=" + params[0] + ')!=null?v:' + (isLinkExpr ? 'null)' : '"")'))
+							// Non strict equality so data-link="title{:expr}" with expr=null/undefined removes title attribute
 					)
 					: (hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
 						+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
@@ -2117,10 +2123,8 @@ function getTargetProps(source) {
 	if (typeof source === OBJECT) {
 		for (key in source) {
 			prop = source[key];
-			if (!prop || !prop.toJSON || prop.toJSON()) {
-				if (!$isFunction(prop)) {
-					props.push({key: key, prop: prop});
-				}
+			if (key !== $expando  && !$isFunction(prop)) {
+				props.push({key: key, prop: prop});
 			}
 		}
 	}
@@ -2170,7 +2174,7 @@ if (!(jsr || $ && $.render)) {
 		// jQuery (= $) is loaded
 
 		$.fn.render = $fnRender;
-
+		$expando = $.expando;
 		if ($.observable) {
 			$extend($sub, $.views.sub); // jquery.observable.js was loaded before jsrender.js
 			$views.map = $.views.map;
@@ -2205,12 +2209,12 @@ if (!(jsr || $ && $.render)) {
 				$ = jq;
 				$.fn.render = $fnRender;
 				delete $.jsrender;
+				$expando = $.expando;
 			}
 		};
 
 		$.jsrender = versionNumber;
 	}
-
 	$subSettings = $sub.settings;
 	$subSettings.allowCode = false;
 	$isFunction = $.isFunction;
@@ -2338,13 +2342,13 @@ $views = $.views;
 $sub = $views.sub;
 $isFunction = $.isFunction;
 $isArray = $.isArray;
+$expando = $.expando;
 if (!$.observe) {
 
 	var $eventSpecial = $.event.special,
 		slice = [].slice,
 		splice = [].splice,
 		concat = [].concat,
-		$expando = $.expando,
 		PARSEINT = parseInt,
 		rNotWhite = /\S+/g,
 		propertyChangeStr = $sub.propChng = $sub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
@@ -2515,10 +2519,6 @@ if (!$.observe) {
 					break;
 				case "remove":
 					observeArrayItems(eventArgs.items, true); // unobserveAll on removed items
-					break;
-				case "refresh":
-					observeArrayItems(eventArgs.oldItems, true); // unobserveAll on old items
-					observeArrayItems(ev.target); // observeAll on new items
 					break;
 				case "set":
 					newAllPath = allPath + "." + eventArgs.path;
@@ -3126,7 +3126,7 @@ if (!$.observe) {
 				index = _data.length;
 			}
 			index = PARSEINT(index);
-			if (index > -1 && index <= _data.length) {
+			if (index > -1) {
 				data = $isArray(data) ? data : [data];
 				// data can be a single item (including a null/undefined value) or an array of items.
 				// Note the provided items are inserted without being cloned, as direct references to the provided objects
@@ -3141,6 +3141,9 @@ if (!$.observe) {
 		_insert: function(index, data) {
 			var _data = this._data,
 				oldLength = _data.length;
+			if (index > oldLength) {
+				index = oldLength;
+			}
 			splice.apply(_data, [index, 0].concat(data));
 			this._trigger({change: "insert", index: index, items: data}, oldLength);
 		},
@@ -3155,10 +3158,9 @@ if (!$.observe) {
 
 			index = PARSEINT(index);
 			numToRemove = numToRemove ? PARSEINT(numToRemove) : numToRemove === 0 ? 0 : 1; // if null or undefined: remove 1
-			if (numToRemove > -1 && index > -1) {
+			if (numToRemove > 0 && index > -1) {
 				items = _data.slice(index, index + numToRemove);
-				numToRemove = items.length;
-				if (numToRemove) {
+				if (numToRemove = items.length) {
 					this._remove(index, numToRemove, items);
 				}
 			}
@@ -3179,46 +3181,91 @@ if (!$.observe) {
 			newIndex = PARSEINT(newIndex);
 
 			if (numToMove > 0 && oldIndex > -1 && newIndex > -1 && oldIndex !== newIndex) {
-				var items = this._data.slice(oldIndex, oldIndex + numToMove);
-				numToMove = items.length;
-				if (numToMove) {
-					this._move(oldIndex, newIndex, numToMove, items);
-				}
+				this._move(oldIndex, newIndex, numToMove);
 			}
 			return this;
 		},
 
-		_move: function(oldIndex, newIndex, numToMove, items) {
-			var _data = this._data,
-				oldLength = _data.length;
-			_data.splice(oldIndex, numToMove);
-			splice.apply(_data, [newIndex, 0].concat(items));
-			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+		_move: function(oldIndex, newIndex, numToMove) {
+			var items,
+				_data = this._data,
+				oldLength = _data.length,
+				excess = oldIndex + numToMove - oldLength;
+			if (excess > 0) {
+				numToMove -= excess;
+			}
+			if (numToMove) {
+				items = _data.splice(oldIndex, numToMove); // remove
+				if (newIndex > _data.length) {
+					newIndex = _data.length;
+				}
+				splice.apply(_data, [newIndex, 0].concat(items)); //re-insert
+				this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+			}
 		},
 
-		refresh: function(newItems) {
-			var oldItems = this._data.slice();
-			this._refresh(oldItems, newItems);
-			return this;
-		},
+		refresh: function(newItems, sort) {
+			function insertAdded() {
+				if (k) {
+					self.insert(j-k, addedItems); // Not found in original array - so insert
+					dataLength += k;
+					i += k;
+					k = 0;
+					addedItems = [];
+				}
+			}
 
-		_refresh: function(oldItems, newItems) {
-			var _data = this._data,
-				oldLength = _data.length;
-
-			splice.apply(_data, [0, _data.length].concat(newItems));
-			this._trigger({change: "refresh", oldItems: oldItems}, oldLength);
+			// For refresh operation we iteratively step through the target array and sort by move/add/remove operations on the source array until they match
+			var i, j, k, newItem, num,
+				self = this,
+				addedItems = [],
+				data = self._data,
+				oldItems = data.slice(),
+				oldLength = data.length,
+				dataLength = oldLength,
+				newLength = newItems.length;
+			self._srt = true; // Flag for sorting during refresh
+			for (j=k=0; j<newLength; j++) {
+				if ((newItem = newItems[j]) === data[j-k]) {
+						insertAdded();
+				} else {
+					for (i=j-k; i<dataLength; i++) {
+						if (newItem === data[i]) {
+							break;
+						}
+					}
+					if (i<dataLength) {
+						insertAdded();
+						num = 0;
+						while (num++ < newLength-i && newItems[j+num] === data[i+num]);
+						self.move(i, j, num); // Found newItem in original array - so move it to new position
+						j += num - 1;
+					} else {
+						k++;
+						addedItems.push(newItem); // Not found in original array - so insert
+					}
+				}
+			}
+			insertAdded();
+			if (dataLength > j) {
+				self.remove(j, dataLength - j);
+			}
+			self._srt = undefined; // We have finished sort operations during refresh
+			self._trigger({change: "refresh", oldItems: oldItems}, oldLength);
+			return self;
 		},
 
 		_trigger: function(eventArgs, oldLength) {
-			var _data = this._data,
+			var self = this,
+				_data = self._data,
 				length = _data.length,
 				$_data = $([_data]);
-
-			if (length !== oldLength) {
+			if (self._srt) {
+				eventArgs.refresh = true; // We are sorting during refresh
+			} else if (length !== oldLength) {  // We have finished sort operations during refresh
 				$_data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
-			$_data.triggerHandler(arrayChangeStr + (this._ns ? "." + /^\S+/.exec(this._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+			$_data.triggerHandler(arrayChangeStr + (self._ns ? "." + /^\S+/.exec(self._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
 		}
 	};
 
@@ -3855,7 +3902,7 @@ function arrayChangeHandler(ev, eventArgs) {
 			var action = eventArgs.change,
 				index = eventArgs.index,
 				items = eventArgs.items;
-
+			self._.srt = eventArgs.refresh; // true if part of a 'sort' on refresh
 			switch (action) {
 				case "insert":
 					self.addViews(index, items);
@@ -3864,11 +3911,12 @@ function arrayChangeHandler(ev, eventArgs) {
 					self.removeViews(index, items.length);
 					break;
 				case "move":
-					self.refresh(); // Could optimize this
+					self.removeViews(eventArgs.oldIndex, items.length, undefined, true); // remove
+					self.addViews(index, items); // re-insert
 					break;
 				case "refresh":
-					self.refresh();
-					break;
+					self._.srt = undefined;
+					self.fixIndex(0);
 					// Other cases: (e.g.undefined, for setProperty on observable object) etc. do nothing
 			}
 		}
@@ -5665,30 +5713,27 @@ function addLinkMethods(tagOrView, isTag) {
 	} else {
 		// This is a VIEW
 		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
-		tagOrView.addViews = function(index, dataItems, tmpl) {
+		tagOrView.addViews = function(index, dataItems) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
 				self = this,
 				itemsCount = dataItems.length,
 				views = self.views;
 
-			if (!self._.useKey && itemsCount && (tmpl = self.tmpl)) {
+			if (!self._.useKey && itemsCount) {
 				// view is of type "array"
-				// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
 				viewsCount = views.length + itemsCount;
 
 				if (viewsCount === self.data.length // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
-						&& renderAndLink(self, index, tmpl, views, dataItems, self.ctx) !== false) {
-					for (i = index + itemsCount; i < viewsCount; i++) {
-						$observable(views[i]).setProperty("index", i);
-						// This is fixing up index, but not key, and not index on child views. From child views, use view.getIndex()
+						&& renderAndLink(self, index, self.tmpl, views, dataItems, self.ctx) !== false) {
+					if (!self._.srt) { // Not part of a 'sort' on refresh
+						self.fixIndex(index + itemsCount);
 					}
 				}
 			}
-			return self;
 		};
 
-		tagOrView.removeViews = function(index, itemsCount, keepNodes) {
+		tagOrView.removeViews = function(index, itemsCount, keepNodes, isMove) {
 			// view.removeViews() removes all the child views
 			// view.removeViews(index) removes the child view with specified index or key
 			// view.removeViews(index, count) removes the specified nummber of child views, starting with the specified index
@@ -5772,22 +5817,18 @@ function addLinkMethods(tagOrView, isTag) {
 					}
 				}
 				if (isArray && itemsCount
-					&& viewsCount - itemsCount === self.data.length) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& (isMove || viewsCount - itemsCount === self.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
 					current = index + itemsCount;
 					// Remove indexed items (parentView is data array view);
 					while (current-- > index) {
 						removeView(current);
 					}
 					views.splice(index, itemsCount);
-					if (viewsCount = views.length) {
-						// Fixup index on following view items...
-						while (index < viewsCount) {
-							$observable(views[index]).setProperty("index", index++);
-						}
+					if (!self._.sort) {
+						self.fixIndex(index);
 					}
 				}
 			}
-			return this;
 		};
 
 		tagOrView.refresh = function() {
@@ -5798,7 +5839,18 @@ function addLinkMethods(tagOrView, isTag) {
 				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, undefined, true);
 				setArrayChangeLink(self);
 			}
-			return self;
+		};
+
+		tagOrView.fixIndex = function(fromIndex) {
+			// Fixup index on following view items...
+			var views = this.views,
+				index = views.length;
+			while (fromIndex < index--) {
+				if (views[index].index !== index) {
+					$observable(views[index]).setProperty("index", index);
+					// This is fixing up index, but not key, and not index on child views. From child views, use view.getIndex()
+				}
+			}
 		};
 
 		tagOrView.link = viewLink;
@@ -5835,18 +5887,33 @@ $converters.merge = function(val) {
 // JsViews-specific tags
 //========================
 
+function evHandler(ev, params, sourceValue) {
+	var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs, exprOb,
+		source = ev.target,
+		bindings = source._jsvBnd;
+	console.log("x");
+}
+
 $tags("on", {
 	attr: NONE,
 	init: function(tagCtx) {
-		var tag = this,
-			props = tagCtx.props,
-			content = tagCtx.content,
-			elemType = props.elem;
+		var props, elemProp, classProp, content,
+			tag = this,
+			i = 0,
+			args = tagCtx.args, // [events,] [selector,] handler
+			l = args.length;
 
+		for (; i<l && !$isFunction(args[i]); i++); // Handler is first arg of type function
+		tag._hi = l>i && i+1; // handler index
 		if (tag._.inline) {
 			tag.attr = HTML;
-			elemType = (elemType || "span") + ">";
-			tag.template = "<" + elemType + (props.label || content.markup || tagCtx.params.args[0]) + "</" + elemType;
+			content = tagCtx.content;
+			content = content && content.markup;
+			props = tagCtx.props;
+			elemProp = props.elem || "button";
+			classProp = props["class"];
+			tag.template = rFirstElem.exec(content) && content || "<" + elemProp + (classProp ? ' class="' + classProp + '">' : ">")
+				+ ($.trim(content) || props.label || tagCtx.params.args[i] || "noop") + "</" + elemProp + ">";
 		}
 	},
 	render: function() {
@@ -5856,7 +5923,7 @@ $tags("on", {
 	onAfterLink: function(tagCtx, linkCtx) {
 		var handler, params,
 			tag = this,
-			i = 0,
+			i = tag._hi,
 			args = tagCtx.args, // [events,] [selector,] handler
 			l = args.length,
 			props = tagCtx.props,
@@ -5864,13 +5931,14 @@ $tags("on", {
 			view = tagCtx.view,
 			contextOb = props.context; // Context ('this' pointer) for attached handler
 
-		tag.activeElem = tag.activeElem || $(tag._.inline ? (tag._elCnt && error('Use data-link="{on...}"'), tag.nodes()[0]) : linkCtx.elem);
-
-		while (i<l && !(params = $isFunction(handler = args[i++]))) {} // Handler is first arg of type function
-
-		if (params) { // There is a handler
+		if (i) { // There is a handler
+			handler = args[i-1];
 			params = args.slice(i); // Subsequent args are params
-			args = args.slice(0, i - 1); // Preceding args (if any) are events and selector
+			args = args.slice(0, i-1); // Preceding args (if any) are events and selector
+			tag._sel = args[1];
+			tag.activeElem = tag.activeElem || (tag._.inline
+				? (tag._elCnt && error('Use data-link="{on...}"'), tag._sel = undefined, tag.contents(true, args[1] || "*"))
+				: $(linkCtx.elem));
 
 			if (!contextOb) {
 				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
@@ -5885,7 +5953,7 @@ $tags("on", {
 
 			tag.activeElem.on(
 				tag._evs = args[0] || "click", // events defaults to "click"
-				tag._sel = args[1],
+				tag._sel,
 				data == undefined ? null : data,
 				tag._hlr = function(ev) {
 					return handler.apply(contextOb || linkCtx.data, [].concat(
@@ -5906,7 +5974,8 @@ $tags("on", {
 	onDispose: function() {
 		this.activeElem.off(this._evs, this._sel, this._hlr);
 	},
-	flow: true
+	flow: true,
+	dataBoundOnly: true
 });
 
 $extend($tags["for"], {
@@ -5930,7 +5999,6 @@ $extend($tags["for"], {
 			|| tag.tagCtxs[1] && ( // There is an {{else}}
 				change === "insert" && targetLength === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
 				|| change === "remove" && !targetLength // removing , and new length 0, so going from n to 0
-				|| change === "refresh" && !eventArgs.oldItems.length !== !targetLength // refreshing, and length is going from 0 to n or from n to 0
 			)) {
 			tag.refresh();
 		} else {
@@ -5991,12 +6059,12 @@ $extend($tags["for"], {
 $extend($tags["if"], {
 	onUpdate: function(ev, eventArgs, tagCtxs) {
 		var tci, prevArg, different;
-		for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
-			prevArg = prevArg.args[0];
-			different = !prevArg !== !tagCtxs[tci].args[0];
+		for (tci = 0; (prevArg = this.tagCtxs[tci]); tci++) {
+			different = prevArg.props.tmpl !== tagCtxs[tci].props.tmpl || prevArg.args.length && !(prevArg = prevArg.args[0]) !== !tagCtxs[tci].args[0];
 			if ((!this.convert && !!prevArg) || different) {
 				return different;
-				// If there is no converter, and newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
+				// If there is not a change of template, and there is no converter, and newArg and prevArg are both truthy, return false to cancel update.
+				// (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
 				// If newArg and prevArg are different, return true, to update
 				// If newArg and prevArg are both falsey, move to the next {{else ...}}
 			}
@@ -6041,8 +6109,7 @@ function observeMappedProps(map, ev, eventArgs) {
 		if (eventArgs.path === "prop") {
 			$observable(source).setProperty(ev.target.key, eventArgs.value);
 		} else { // path === "key"
-			$observable(source).setProperty(eventArgs.oldValue, null);
-			delete source[eventArgs.oldValue];
+			$observable(source).removeProperty(eventArgs.oldValue); // When key is modified observably, remove old one and set new one
 			$observable(source).setProperty(eventArgs.value, ev.target.prop);
 		}
 	} else if (change === "remove") {

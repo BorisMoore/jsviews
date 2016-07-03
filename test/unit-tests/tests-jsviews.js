@@ -2371,15 +2371,35 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", person1);
 
 	// ................................ Act ..................................
-	var html = $("#result span")[0].outerHTML;
 	before = $("#result span")[0].getAttribute("title");
 	$.observable(person1).setProperty("lastName", null);
 	after = $("#result span")[0].getAttribute("title");
-
+	var html = $("#result span")[0].outerHTML;
+	
 	// ............................... Assert .................................
-	ok(before === 'One' && after === null && html === isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
-		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>",
+	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to null - removes title attribute');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+	$.observable(person1).setProperty("lastName", undefined);
+	after = $("#result span")[0].getAttribute("title");
+	var html = $("#result span")[0].outerHTML;
+	
+	// ............................... Assert .................................
+	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
+	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to undefined - removes title attribute');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -2428,12 +2448,14 @@ test('data-link="attr{:expression}"', function() {
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", undefined);
+	$.observable(person1).removeProperty("lastName");
 	after = $("#result span")[0].getAttribute("title");
-
+	var html = $("#result span")[0].outerHTML;
+	
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
-	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to undefined - sets title to ""');
+	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
+	'Data link using: <span data-link="title{:lastName}"></span>, and removing lastName - removes title attribute');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -2441,17 +2463,89 @@ test('data-link="attr{:expression}"', function() {
 
 	// =============================== Arrange ===============================
 
+	$.templates('prop: <span data-link="{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span").html();
+	$.observable(person1).removeProperty("lastName");
+	after = $("#result span").html();
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	'Data link using: <span data-link="{:lastName}"></span>, and removing lastName - sets content to empty string');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	$.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span").html();
+	$.observable(person1).removeProperty("lastName");
+	after = $("#result span").html();
+
+	// ............................... Assert .................................
+	ok(before === 'One' && after === "",
+	"Data link using: <span data-link=\"html{:lastName||''}\"></span>, and removing lastName - sets content to empty string");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	person1.lastName = ""; // initialize
+
 	$.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", undefined);
-	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
-	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to undefined - sets title to ""');
+	ok(before === "",
+	'Data link using: <span data-link="title{:lastName}"></span>, with lastName "" - initializes with title attribute set to ""');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	person1.lastName = undefined; // initialize
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === null,
+	'Data link using: <span data-link="title{:lastName}"></span>, with lastName undefined - initializes with title attribute null');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	person1.lastName = "One"; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	person1.lastName = null; // initialize
+
+	$.templates('prop: <span data-link="title{:lastName}"></span>')
+		.link("#result", person1);
+
+	// ................................ Act ..................................
+	before = $("#result span")[0].getAttribute("title");
+
+	// ............................... Assert .................................
+	ok(before === null,
+	'Data link using: <span data-link="title{:lastName}"></span>, with lastName null - initializes with title attribute null');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -7685,7 +7779,7 @@ test("{^{for}}", function() {
 
 	// ............................... Assert .................................
 	equal(after, isIE8
-		? "|X box |X boxtable  |Xtree  boxtable  |Xtree  box  |X  box  ||Xpen lamp  |Xlamp pen  |"
+		? "|X box |X boxtable  |Xtree  boxtable  |Xtree  box  |X  box  ||X pen lamp |X lamppen  |"
 		: "|X box |X box table |X tree box table |X tree box |X box ||X pen lamp |X lamp pen |",
 	'{^{if things.length}}{^{for things}} content block bound to both array and array.length responds correctly to observable array changes');
 
@@ -7723,7 +7817,7 @@ test("{^{for}}", function() {
 
 	// ............................... Assert .................................
 	equal(after, isIE8
-		? "|box |box table |tree box table |tree box |box ||pen lamp  |lamp pen  |"
+		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen  |"
 		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length && things}} content block bound to both array and array.length responds correctly to observable array changes');
 
@@ -7761,7 +7855,7 @@ test("{^{for}}", function() {
 
 	// ............................... Assert .................................
 	equal(after, isIE8
-		? "|box |box table |tree box table |tree box |box ||pen lamp  |lamp pen  |"
+		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen  |"
 		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length}}{^{for ~root.things}} content bound to both array and array.length responds correctly to observable array changes');
 
@@ -9514,6 +9608,120 @@ test('Bound tag properties and contextual properties', function() {
 
 	// =============================== Arrange ===============================
 
+	var things = [
+		{
+			type: "shape",
+			form: "circle"
+		},
+		{
+			type: "line",
+			form: "square",
+			thickness: "1"
+		}
+	];
+	$.templates('Tag: {^{if true ^tmpl=~typeTemplates[type]/}} Elem: <div data-link="{if true ^tmpl=~typeTemplates[type]}"></div> ')
+		.link("#result", things, {
+			typeTemplates: {
+				shape: "Shape: {^{:form}}\n",
+				line: "Line: {^{:form}} {^{:thickness}}\n"
+			}
+		}
+		);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
+	$.observable(things[1]).removeProperty("thickness");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	'binding to ^tmpl=... :{^{if true ^tmpl=~typeTemplates[type]... and data-link="{if true ^tmpl=~typeTemplates[type]...');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+// =============================== Arrange ===============================
+
+	var things = [
+		{
+			type: "shape",
+			form: "circle"
+		},
+		{
+			type: "line",
+			form: "square",
+			thickness: "1"
+		}
+	];
+	$.templates('Tag: {^{if false}}{{else ^tmpl=~typeTemplates[type]}}{{/if}} Elem: <div data-link="{if false}{else ^tmpl=~typeTemplates[type]}"></div> ')
+		.link("#result", things, {
+			typeTemplates: {
+				shape: "Shape: {^{:form}}\n",
+				line: "Line: {^{:form}} {^{:thickness}}\n"
+			}
+		}
+		);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
+	$.observable(things[1]).removeProperty("thickness");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	'binding to ^tmpl=... :{^{if false}}{{else ^tmpl=~typeTemplates[type]... and data-link="{if false}{else ^tmpl=~typeTemplates[type]...');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+// =============================== Arrange ===============================
+
+	var things = [
+		{
+			type: "shape",
+			form: "circle"
+		},
+		{
+			type: "line",
+			form: "square",
+			thickness: "1"
+		}
+	];
+	$.templates('Tag: {^{for undefined}}{{else ^tmpl=~typeTemplates[type]}}{{/for}} Elem: <div data-link="{for undefined}{else ^tmpl=~typeTemplates[type]}"></div> ')
+		.link("#result", things, {
+			typeTemplates: {
+				shape: "Shape: {^{:form}}\n",
+				line: "Line: {^{:form}} {^{:thickness}}\n"
+			}
+		}
+		);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(things[0]).setProperty({ type: "line", thickness: 5 });
+	$.observable(things[1]).setProperty({ type: "shape" });
+	$.observable(things[1]).removeProperty("thickness");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	'binding to ^tmpl=... :{^{for undefined}}{{else ^tmpl=~typeTemplates[type]... and data-link="{for undefined}{else ^tmpl=~typeTemplates[type]...');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
 	things = [
 		{
 			type: "shape",
@@ -9913,6 +10121,8 @@ test("JsViews jsv-domchange", function() {
 		"jsv-domchange DIV things true insert | "
 		+ "jsv-domchange DIV things true move | "
 		+ "jsv-domchange DIV things true remove | "
+		+ "jsv-domchange DIV things true insert | "
+		+ "jsv-domchange DIV things true remove | "
 		+ "jsv-domchange DIV things true refresh | ",
 	'Correct behavior of $(...).on("jsv-domchange", domchangeHandler)');
 
@@ -9943,6 +10153,8 @@ test("JsViews jsv-domchange", function() {
 	equal(result,
 		"Params: 333, 444 | jsv-domchange DIV things true insert | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true move | "
+		+ "Params: 333, 444 | jsv-domchange DIV things true remove | "
+		+ "Params: 333, 444 | jsv-domchange DIV things true insert | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true remove | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true refresh | ",
 	'Correct behavior of data-link=\'{on "jsv-domchange" ~domchange param1 param2}\'');
@@ -10308,15 +10520,19 @@ test("MVVM", function() {
 	// ............................... Assert .................................
 	equal(message, '{\"change\":\"insert\",\"index\":2,\"items\":[{\"_number\":\"insertedPhone\"}]}\n\
 {\"change\":\"remove\",\"index\":0,\"items\":[{\"_number\":\"phone1\"}]}\n\
+{\"change\":\"insert\",\"index\":0,\"items\":[{\"_number\":\"replacedPhone1\"},{\"_number\":\"replacedPhone2\"}],\"refresh\":true}\n\
+{\"change\":\"remove\",\"index\":2,\"items\":[{\"_number\":\"phone2\"},{\"_number\":\"insertedPhone\"}],\"refresh\":true}\n\
 {\"change\":\"refresh\",\"oldItems\":[{\"_number\":\"phone2\"},{\"_number\":\"insertedPhone\"}]}\n\
 {\"change\":\"insert\",\"index\":1,\"items\":[{\"_number\":\"insertedPhone3a\"},{\"_number\":\"insertedPhone3b\"}]}\n\
-{\"change\":\"move\",\"oldIndex\":1,\"index\":3,\"items\":[{\"_number\":\"insertedPhone3a\"},{\"_number\":\"insertedPhone3b\"}]}\n\
+{\"change\":\"move\",\"oldIndex\":1,\"index\":2,\"items\":[{\"_number\":\"insertedPhone3a\"},{\"_number\":\"insertedPhone3b\"}]}\n\
 {\"change\":\"set\",\"path\":\"phones\",\"value\":[{\"_number\":\"replacedPhone1\"}],\"oldValue\":[{\"_number\":\"replacedPhone1\"},{\"_number\":\"replacedPhone2\"},{\"_number\":\"insertedPhone3a\"},{\"_number\":\"insertedPhone3b\"}]}\n\
 {\"change\":\"insert\",\"index\":1,\"items\":[{\"_number\":\"insertedPhoneX\"}]}\n\
 {\"change\":\"remove\",\"index\":0,\"items\":[{\"_number\":\"replacedPhone1\"}]}\n\
+{\"change\":\"insert\",\"index\":0,\"items\":[{\"_number\":\"replacedPhoneX1\"},{\"_number\":\"replacedPhoneX2\"}],\"refresh\":true}\n\
+{\"change\":\"remove\",\"index\":2,\"items\":[{\"_number\":\"insertedPhoneX\"}],\"refresh\":true}\n\
 {\"change\":\"refresh\",\"oldItems\":[{\"_number\":\"insertedPhoneX\"}]}\n\
 {\"change\":\"insert\",\"index\":1,\"items\":[{\"_number\":\"insertedPhoneX3a\"},{\"_number\":\"insertedPhoneX3b\"}]}\n\
-{\"change\":\"move\",\"oldIndex\":1,\"index\":3,\"items\":[{\"_number\":\"insertedPhoneX3a\"},{\"_number\":\"insertedPhoneX3b\"}]}\n\
+{\"change\":\"move\",\"oldIndex\":1,\"index\":2,\"items\":[{\"_number\":\"insertedPhoneX3a\"},{\"_number\":\"insertedPhoneX3b\"}]}\n\
 {\"change\":\"set\",\"path\":\"phones\",\"value\":[],\"oldValue\":[{\"_number\":\"replacedPhoneX1\"},{\"_number\":\"replacedPhoneX2\"},{\"_number\":\"insertedPhoneX3a\"},{\"_number\":\"insertedPhoneX3b\"}]}\n\
 {\"change\":\"insert\",\"index\":0,\"items\":[{\"_number\":\"insertedPhoneY\"}]}\n\
 {\"change\":\"set\",\"path\":\"number\",\"value\":\"newNumber\",\"oldValue\":\"insertedPhoneY\"}\n',

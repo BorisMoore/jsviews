@@ -154,16 +154,20 @@ updown.depends = function() {
 
 // =============== Callbacks for observeAll ===============
 function observeAllCb1(ev, eventArgs) {
-	result += "ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: ";
-	for (var key in eventArgs) {
-		result += key + ": " + JSON.stringify(eventArgs[key]) + "|";
+	if (!eventArgs.refresh) {
+		result += "ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: ";
+		for (var key in eventArgs) {
+			result += key + ": " + JSON.stringify(eventArgs[key]) + "|";
+		}
 	}
 }
 
 function observeAllCb2(ev, eventArgs) {
-	result += "ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: ";
-	for (var key in eventArgs) {
-		result += key + ": " + eventArgs[key] + "|";
+	if (!eventArgs.refresh) {
+		result += "ObserveAll Path: " + ev.data.observeAll.path() + " eventArgs: ";
+		for (var key in eventArgs) {
+			result += key + ": " + eventArgs[key] + "|";
+		}
 	}
 }
 
@@ -438,8 +442,8 @@ test("JsObservable: insert()", function() {
 	$.observable(things).insert(10, "a");
 
 	// ............................... Assert .................................
-	equal(things.join(" "), "1 2",
-	'insert(10, "a") (out of range) does nothing');
+	equal(things.join(" "), "1 2 a",
+	'insert(10, "a") (out of range) appends');
 });
 
 test("JsObservable: remove()", function() {
@@ -3425,9 +3429,11 @@ test('observe(... "**" ...)', function() {
 	model = {};
 
 	function observeAllCb4(ev, eventArgs) {
-		result += "ObserveAll Path: " + (ev.data.observeAll && ev.data.observeAll.path()) + " eventArgs: ";
-		for (var key in eventArgs) {
-			result += key + ": " + JSON.stringify(eventArgs[key]) + "|";
+		if (!eventArgs.refresh) {
+			result += "ObserveAll Path: " + (ev.data.observeAll && ev.data.observeAll.path()) + " eventArgs: ";
+			for (var key in eventArgs) {
+				result += key + ": " + JSON.stringify(eventArgs[key]) + "|";
+			}
 		}
 	}
 

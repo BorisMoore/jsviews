@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.77 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.78 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v0.9.77",
+var versionNumber = "v0.9.78",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -71,6 +71,7 @@ var document = global.document,
 	$subSettings = $sub.settings,
 	$extend = $sub.extend,
 	$isFunction = $.isFunction,
+	$expando = $.expando,
 	$converters = $views.converters,
 	$tags = $views.tags,
 	$subSettingsAdvanced = $subSettings.advanced,
@@ -588,7 +589,7 @@ function arrayChangeHandler(ev, eventArgs) {
 			var action = eventArgs.change,
 				index = eventArgs.index,
 				items = eventArgs.items;
-
+			self._.srt = eventArgs.refresh; // true if part of a 'sort' on refresh
 			switch (action) {
 				case "insert":
 					self.addViews(index, items);
@@ -597,11 +598,12 @@ function arrayChangeHandler(ev, eventArgs) {
 					self.removeViews(index, items.length);
 					break;
 				case "move":
-					self.refresh(); // Could optimize this
+					self.removeViews(eventArgs.oldIndex, items.length, undefined, true); // remove
+					self.addViews(index, items); // re-insert
 					break;
 				case "refresh":
-					self.refresh();
-					break;
+					self._.srt = undefined;
+					self.fixIndex(0);
 					// Other cases: (e.g.undefined, for setProperty on observable object) etc. do nothing
 			}
 		}
@@ -2401,30 +2403,27 @@ function addLinkMethods(tagOrView, isTag) {
 	} else {
 		// This is a VIEW
 		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
-		tagOrView.addViews = function(index, dataItems, tmpl) {
+		tagOrView.addViews = function(index, dataItems) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
 				self = this,
 				itemsCount = dataItems.length,
 				views = self.views;
 
-			if (!self._.useKey && itemsCount && (tmpl = self.tmpl)) {
+			if (!self._.useKey && itemsCount) {
 				// view is of type "array"
-				// Use passed-in template if provided, since self added view may use a different template than the original one used to render the array.
 				viewsCount = views.length + itemsCount;
 
 				if (viewsCount === self.data.length // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
-						&& renderAndLink(self, index, tmpl, views, dataItems, self.ctx) !== false) {
-					for (i = index + itemsCount; i < viewsCount; i++) {
-						$observable(views[i]).setProperty("index", i);
-						// This is fixing up index, but not key, and not index on child views. From child views, use view.getIndex()
+						&& renderAndLink(self, index, self.tmpl, views, dataItems, self.ctx) !== false) {
+					if (!self._.srt) { // Not part of a 'sort' on refresh
+						self.fixIndex(index + itemsCount);
 					}
 				}
 			}
-			return self;
 		};
 
-		tagOrView.removeViews = function(index, itemsCount, keepNodes) {
+		tagOrView.removeViews = function(index, itemsCount, keepNodes, isMove) {
 			// view.removeViews() removes all the child views
 			// view.removeViews(index) removes the child view with specified index or key
 			// view.removeViews(index, count) removes the specified nummber of child views, starting with the specified index
@@ -2508,22 +2507,18 @@ function addLinkMethods(tagOrView, isTag) {
 					}
 				}
 				if (isArray && itemsCount
-					&& viewsCount - itemsCount === self.data.length) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& (isMove || viewsCount - itemsCount === self.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
 					current = index + itemsCount;
 					// Remove indexed items (parentView is data array view);
 					while (current-- > index) {
 						removeView(current);
 					}
 					views.splice(index, itemsCount);
-					if (viewsCount = views.length) {
-						// Fixup index on following view items...
-						while (index < viewsCount) {
-							$observable(views[index]).setProperty("index", index++);
-						}
+					if (!self._.sort) {
+						self.fixIndex(index);
 					}
 				}
 			}
-			return this;
 		};
 
 		tagOrView.refresh = function() {
@@ -2534,7 +2529,18 @@ function addLinkMethods(tagOrView, isTag) {
 				renderAndLink(self, self.index, self.tmpl, parent.views, self.data, undefined, true);
 				setArrayChangeLink(self);
 			}
-			return self;
+		};
+
+		tagOrView.fixIndex = function(fromIndex) {
+			// Fixup index on following view items...
+			var views = this.views,
+				index = views.length;
+			while (fromIndex < index--) {
+				if (views[index].index !== index) {
+					$observable(views[index]).setProperty("index", index);
+					// This is fixing up index, but not key, and not index on child views. From child views, use view.getIndex()
+				}
+			}
 		};
 
 		tagOrView.link = viewLink;
@@ -2574,15 +2580,23 @@ $converters.merge = function(val) {
 $tags("on", {
 	attr: NONE,
 	init: function(tagCtx) {
-		var tag = this,
-			props = tagCtx.props,
-			content = tagCtx.content,
-			elemType = props.elem;
+		var props, elemProp, classProp, content,
+			tag = this,
+			i = 0,
+			args = tagCtx.args, // [events,] [selector,] handler
+			l = args.length;
 
+		for (; i<l && !$isFunction(args[i]); i++); // Handler is first arg of type function
+		tag._hi = l>i && i+1; // handler index
 		if (tag._.inline) {
 			tag.attr = HTML;
-			elemType = (elemType || "span") + ">";
-			tag.template = "<" + elemType + (props.label || content.markup || tagCtx.params.args[0]) + "</" + elemType;
+			content = tagCtx.content;
+			content = content && content.markup;
+			props = tagCtx.props;
+			elemProp = props.elem || "button";
+			classProp = props["class"];
+			tag.template = rFirstElem.exec(content) && content || "<" + elemProp + (classProp ? ' class="' + classProp + '">' : ">")
+				+ ($.trim(content) || props.label || tagCtx.params.args[i] || "noop") + "</" + elemProp + ">";
 		}
 	},
 	render: function() {
@@ -2592,7 +2606,7 @@ $tags("on", {
 	onAfterLink: function(tagCtx, linkCtx) {
 		var handler, params,
 			tag = this,
-			i = 0,
+			i = tag._hi,
 			args = tagCtx.args, // [events,] [selector,] handler
 			l = args.length,
 			props = tagCtx.props,
@@ -2600,13 +2614,14 @@ $tags("on", {
 			view = tagCtx.view,
 			contextOb = props.context; // Context ('this' pointer) for attached handler
 
-		tag.activeElem = tag.activeElem || $(tag._.inline ? (tag._elCnt && error('Use data-link="{on...}"'), tag.nodes()[0]) : linkCtx.elem);
-
-		while (i<l && !(params = $isFunction(handler = args[i++]))) {} // Handler is first arg of type function
-
-		if (params) { // There is a handler
+		if (i) { // There is a handler
+			handler = args[i-1];
 			params = args.slice(i); // Subsequent args are params
-			args = args.slice(0, i - 1); // Preceding args (if any) are events and selector
+			args = args.slice(0, i-1); // Preceding args (if any) are events and selector
+			tag._sel = args[1];
+			tag.activeElem = tag.activeElem || (tag._.inline
+				? (tag._elCnt && error('Use data-link="{on...}"'), tag._sel = undefined, tag.contents(true, args[1] || "*"))
+				: $(linkCtx.elem));
 
 			if (!contextOb) {
 				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
@@ -2621,7 +2636,7 @@ $tags("on", {
 
 			tag.activeElem.on(
 				tag._evs = args[0] || "click", // events defaults to "click"
-				tag._sel = args[1],
+				tag._sel,
 				data == undefined ? null : data,
 				tag._hlr = function(ev) {
 					return handler.apply(contextOb || linkCtx.data, [].concat(
@@ -2642,7 +2657,8 @@ $tags("on", {
 	onDispose: function() {
 		this.activeElem.off(this._evs, this._sel, this._hlr);
 	},
-	flow: true
+	flow: true,
+	dataBoundOnly: true
 });
 
 $extend($tags["for"], {
@@ -2666,7 +2682,6 @@ $extend($tags["for"], {
 			|| tag.tagCtxs[1] && ( // There is an {{else}}
 				change === "insert" && targetLength === eventArgs.items.length // inserting, and new length is same as inserted length, so going from 0 to n
 				|| change === "remove" && !targetLength // removing , and new length 0, so going from n to 0
-				|| change === "refresh" && !eventArgs.oldItems.length !== !targetLength // refreshing, and length is going from 0 to n or from n to 0
 			)) {
 			tag.refresh();
 		} else {
@@ -2727,12 +2742,12 @@ $extend($tags["for"], {
 $extend($tags["if"], {
 	onUpdate: function(ev, eventArgs, tagCtxs) {
 		var tci, prevArg, different;
-		for (tci = 0; (prevArg = this.tagCtxs[tci]) && prevArg.args.length; tci++) {
-			prevArg = prevArg.args[0];
-			different = !prevArg !== !tagCtxs[tci].args[0];
+		for (tci = 0; (prevArg = this.tagCtxs[tci]); tci++) {
+			different = prevArg.props.tmpl !== tagCtxs[tci].props.tmpl || prevArg.args.length && !(prevArg = prevArg.args[0]) !== !tagCtxs[tci].args[0];
 			if ((!this.convert && !!prevArg) || different) {
 				return different;
-				// If there is no converter, and newArg and prevArg are both truthy, return false to cancel update. (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
+				// If there is not a change of template, and there is no converter, and newArg and prevArg are both truthy, return false to cancel update.
+				// (Even if values on later elses are different, we still don't want to update, since rendered output would be unchanged)
 				// If newArg and prevArg are different, return true, to update
 				// If newArg and prevArg are both falsey, move to the next {{else ...}}
 			}
@@ -2777,8 +2792,7 @@ function observeMappedProps(map, ev, eventArgs) {
 		if (eventArgs.path === "prop") {
 			$observable(source).setProperty(ev.target.key, eventArgs.value);
 		} else { // path === "key"
-			$observable(source).setProperty(eventArgs.oldValue, null);
-			delete source[eventArgs.oldValue];
+			$observable(source).removeProperty(eventArgs.oldValue); // When key is modified observably, remove old one and set new one
 			$observable(source).setProperty(eventArgs.value, ev.target.prop);
 		}
 	} else if (change === "remove") {
