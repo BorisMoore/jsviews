@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.78 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.79 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking

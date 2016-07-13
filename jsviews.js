@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.78 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.79 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.78",
+var versionNumber = "v0.9.79",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 
@@ -262,7 +262,7 @@ function $viewsDelimiters(openChars, closeChars, link) {
 	// Default:  bind     tagName         cvt   cln html code    params            slash   bind2         closeBlk  comment
 	//      /(?:{(\^)?{(?:(\w+(?=[\/\s}]))|(\w+)?(:)|(>)|(\*))\s*((?:[^}]|}(?!}))*?)(\/)?|{(\^)?{(?:(?:\/(\w+))\s*|!--[\s\S]*?--))}}
 
-	rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
+	$sub.rTmpl = rTmplString = new RegExp("<.*>|([^\\\\]|^)[{}]|" + openChars + ".*" + closeChars);
 	// rTmplString looks for html tags or { or } char not preceded by \\, or JsRender tags {{xxx}}. Each of these strings are considered
 	// NOT to be jQuery selectors
 	return $viewsSettings;
@@ -4904,6 +4904,7 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 		tag = tag.linkCtx ? tag.linkCtx.tag : tag;
 
 		linkCtx = tag.linkCtx || {
+			type: "inline",
 			data: currentView.data,                   // source
 			elem: tag._elCnt ? tag.parentElem : node, // target
 			view: currentView,
@@ -4956,6 +4957,7 @@ function addDataBinding(linkMarkup, node, currentView, boundTagId, isLink, data,
 			params = tokens[9];
 
 			linkCtx = {
+				type: isLink ? "top" : "link",
 				data: data, // source
 				elem: node, // target
 				view: currentView,
@@ -5111,12 +5113,7 @@ function callAfterLink(tag, eventArgs) {
 		tagCtx = tag.tagCtx,
 		view = tagCtx.view,
 		props = tagCtx.props,
-		linkCtx = tag.linkCtx = tag.linkCtx || {
-			tag: tag,
-			data: view.data,
-			view: view,
-			ctx: view.ctx
-		};
+		linkCtx = tag.linkCtx;
 
 	if (tag.onAfterLink) {
 		tag.onAfterLink(tagCtx, linkCtx, eventArgs);
@@ -5887,17 +5884,10 @@ $converters.merge = function(val) {
 // JsViews-specific tags
 //========================
 
-function evHandler(ev, params, sourceValue) {
-	var setter, cancel, fromAttr, linkCtx, cvtBack, cnvtName, target, $source, view, binding, oldLinkCtx, onBeforeChange, onAfterChange, tag, to, eventArgs, exprOb,
-		source = ev.target,
-		bindings = source._jsvBnd;
-	console.log("x");
-}
-
 $tags("on", {
 	attr: NONE,
 	init: function(tagCtx) {
-		var props, elemProp, classProp, content,
+		var content,
 			tag = this,
 			i = 0,
 			args = tagCtx.args, // [events,] [selector,] handler
@@ -5906,14 +5896,13 @@ $tags("on", {
 		for (; i<l && !$isFunction(args[i]); i++); // Handler is first arg of type function
 		tag._hi = l>i && i+1; // handler index
 		if (tag._.inline) {
+			if (!$sub.rTmpl.exec(content = tagCtx.tmpl.markup)) {
+				// Inline {^{on}} tag with no content (or external template content) or with content containing
+				// no HTML or JsRender tags: We will wrap the (text) content, or the operation name in a <button> element
+				// (Otherwise we will attach the handler to the element content after data-linking)
+				tag.template = "<button>" + ($.trim(content) || tagCtx.params.args[i] || "noop") + "</button>";
+			}
 			tag.attr = HTML;
-			content = tagCtx.content;
-			content = content && content.markup;
-			props = tagCtx.props;
-			elemProp = props.elem || "button";
-			classProp = props["class"];
-			tag.template = rFirstElem.exec(content) && content || "<" + elemProp + (classProp ? ' class="' + classProp + '">' : ">")
-				+ ($.trim(content) || props.label || tagCtx.params.args[i] || "noop") + "</" + elemProp + ">";
 		}
 	},
 	render: function() {
@@ -5921,7 +5910,7 @@ $tags("on", {
 		return tagCtx.render(tagCtx.view, true); // no arg, so renders against parentView.data
 	},
 	onAfterLink: function(tagCtx, linkCtx) {
-		var handler, params,
+		var handler, params, find, activeElem,
 			tag = this,
 			i = tag._hi,
 			args = tagCtx.args, // [events,] [selector,] handler
@@ -5935,10 +5924,13 @@ $tags("on", {
 			handler = args[i-1];
 			params = args.slice(i); // Subsequent args are params
 			args = args.slice(0, i-1); // Preceding args (if any) are events and selector
-			tag._sel = args[1];
-			tag.activeElem = tag.activeElem || (tag._.inline
-				? (tag._elCnt && error('Use data-link="{on...}"'), tag._sel = undefined, tag.contents(true, args[1] || "*"))
-				: $(linkCtx.elem));
+			tag._sel = args[1]; // Selector for descendant elements - for delegated events on those elements, delegating to the activeElem
+
+			activeElem = tag.activeElem = tag.activeElem || $(tag._.inline
+				? (tag._sel = args[1] || "*", tag.parentElem)
+				// If inline, attach to child elements of tag parent element (filtered by selector argument if provided.
+				// (In handler we'll filter out events from sibling elements preceding or following tag.)
+				: linkCtx.elem);
 
 			if (!contextOb) {
 				// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
@@ -5951,19 +5943,33 @@ $tags("on", {
 				tag.onDispose();
 			}
 
-			tag.activeElem.on(
+			activeElem.on(
 				tag._evs = args[0] || "click", // events defaults to "click"
 				tag._sel,
 				data == undefined ? null : data,
-				tag._hlr = function(ev) {
-					return handler.apply(contextOb || linkCtx.data, [].concat(
-						params, // e.g. par1, par2
-						ev,
-						{change: ev.type, view: view, linkCtx: linkCtx},
-						params.slice.call(arguments, 1) // If triggering event (e.g. jsv-domchange) has additional arguments after ev, pass them too
-					));
-					// for {on 'click' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs)
-					// for {on 'jsv-domchange' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
+				tag._hlr = function hndlr(ev) {
+					var nodes, length,
+						found = !tag._.inline;
+
+					if (!found) { // If inline, filter out events from sibling elements preceding or following tag.
+						nodes = tag.contents("*");
+						l = nodes.length;
+						while (!found && l--) {
+							if (nodes[l].contains(ev.target)) {
+								found = true;
+							}
+						}
+					}
+					if (found) { // target elem is indeed within the tag, so call the {on} handler
+						return handler.apply(contextOb || linkCtx.data, [].concat(
+							params, // e.g. par1, par2
+							ev,
+							{change: ev.type, view: view, linkCtx: linkCtx},
+							params.slice.call(arguments, 1) // If triggering event (e.g. jsv-domchange) has additional arguments after ev, pass them too
+						));
+						// for {on 'click' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs)
+						// for {on 'jsv-domchange' handler par1 par2} use handler(par1, par2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs)
+					}
 				}
 			);
 		}
@@ -5972,7 +5978,10 @@ $tags("on", {
 		return false;
 	},
 	onDispose: function() {
-		this.activeElem.off(this._evs, this._sel, this._hlr);
+		var self = this;
+		if (self.activeElem) {
+			self.activeElem.off(self._evs, self._sel, self._hlr);
+		}
 	},
 	flow: true,
 	dataBoundOnly: true

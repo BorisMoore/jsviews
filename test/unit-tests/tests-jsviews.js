@@ -9226,6 +9226,412 @@ test('data-link="{on ...', function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
+test('{^{on}}', function() {
+
+	$.views.settings.advanced({_jsv: true}); // For using _jsv
+
+	// =============================== Arrange ===============================
+
+	function swap(ev, eventArgs) {
+		$.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
+	}
+	var thing = {
+		type: "shape",
+		swap: swap
+	};
+
+	$.templates('{^{on swap/}} {^{:type}}')
+		.link("#result", thing);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "swap shape|swapline"
+	  : "swap shape|swap line",
+	'{^{on swap/}} renders as button with label "swap", and calls swap method on click, with "this" pointer context on data object');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on missingMethod/}} {^{:type}}')
+		.link("#result", thing);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	"noop shape|noop shape",
+	'{^{on missingMethod/}} renders as button with label "noop", and is noop on click');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on swap}} clickme {{/on}} {^{:type}}')
+		.link("#result", thing);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "clickme shape|clickmeline"
+	  : "clickme shape|clickme line",
+	'{^{on swap}} clickme {{/on}} renders as button with label "clickme", and calls swap method on click');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on swap tmpl=~label}} clickme {{/on}} {^{:type}}')
+		.link("#result", thing, {label: "clickagain"});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "clickagain shape|clickagainline"
+	  : "clickagain shape|clickagain line",
+	'{^{on swap tmpl=stringValue renders as button with label stringValue, and calls swap method on click');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on swap}}<span>clickme</span>{{/on}} {^{:type}}')
+		.link("#result", thing);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result span").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "clickme shape|clickmeline"
+	  : "clickme shape|clickme line",
+	'{^{on swap}}<span>clickme</span>{{/on}} renders as span with label clickme, and calls swap method on click');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on ~swap/}} {^{:type}}')
+		.link("#result", thing, { swap: swap });
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "~swap shape|~swapline"
+	  : "~swap shape|~swap line",
+	'{^{on ~swap/}} calls swap helper method on click, with "this" pointer context defaulting to current data object');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on ~util.swap/}} {^{:type}} {^{:check}}')
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(this.data).setProperty({
+							type: this.data.type === "shape" ? "line" : "shape",
+							check: this.data === eventArgs.view.data
+						});
+					},
+					data: thing
+				}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
+	'{^{on ~util.swap/}} calls util.swap helper method on click, with ~util as this pointer');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+	delete thing.check;
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on ~util.swap context=#data/}} {^{:type}}')
+		.link("#result", thing, {
+			util:
+				{
+					swap: swap
+				}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "~util.swap shape|~util.swapline"
+	  : "~util.swap shape|~util.swap line",
+	'{^{on ~util.swap context=#data/}} calls util.swap helper method on click, with current data object as this pointer');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on ~util.swap context=~util.swapCtx/}} {^{:type}} {^{:check}}')
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(this.data).setProperty({
+							type: this.data.type === "shape" ? "line" : "shape",
+							check: this.data === eventArgs.view.data
+						});
+					},
+					data: thing,
+					swapCtx: {
+						data: thing
+					}
+				}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
+	'{^{on ~util.swap context=~util.swapCtx/}} calls util.swap helper method on click, with util.swapCtx as this pointer');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+	delete thing.check;
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on ~util.swap data=#data/}} {^{:type}} {^{:check}}')
+		.link("#result", thing, {
+			util:
+				{
+					swap: function(ev, eventArgs) {
+						$.observable(ev.data).setProperty({
+							type: ev.data.type === "shape" ? "line" : "shape",
+							check: ev.data === eventArgs.view.data
+						});
+					},
+					data: thing,
+					swapCtx: {
+						data: thing
+					}
+				}
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
+	'{^{on ~util.swap data=#data/}} calls util.swap helper method on click, and passes current data #data as ev.data');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+	delete thing.check;
+
+	// =============================== Arrange ===============================
+
+	$.templates('{^{on \'mouseup mousedown blur\' swap/}} {^{:type}}')
+		.link("#result", thing);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result button").mouseup();
+	after = $("#result").text();
+	$("#result button").mousedown();
+	after += $("#result").text();
+	$("#result button").blur();
+	after += $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after,
+	isIE8 ? "swap shape|swaplineswapshapeswapline"
+	  : "swap shape|swap lineswap shapeswap line",
+	"{^{on 'mouseup mousedown blur' swap/}} calls util method on mouseup, mousedown and blur");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+	delete thing.check;
+
+	// =============================== Arrange ===============================
+	var res = "1: ";
+	$.templates(
+		"<div id=\"divForOn\">{^{on 'keyup keydown' '.inputA' unbind}}{^{on 'keyup' '#inputB' unbind}}{^{on 'mouseup' 'input' test}}{^{on 'mousedown' '#inputB' refresh}}\">"
+			+ "<input class='inputA'/>"
+			+ "<input id='inputB' />"
+		+ "{{/on}}{{/on}}{{/on}}{{/on}}</div>")
+		.link("#result", {
+			unbind: function(ev, eventArgs) {
+				res += "unbind ";
+				eventArgs.linkCtx.tag.onDispose();
+			},
+			refresh: function(ev, eventArgs) {
+				res += "refresh ";
+				eventArgs.linkCtx.tag.refresh();
+			},
+			test: function() {
+				res += "test ";
+			}
+		});
+
+	// ................................ Act ..................................
+	var events = $._data($("#divForOn")[0]).events,
+		eventBindings = "before: " + events.keydown.length + events.keyup.length + events.mouseup.length + events.mousedown.length;
+
+	$("#divForOn #inputB").mouseup();
+
+	res += "2: ";
+	$("#divForOn .inputA").mouseup();
+
+	res += "3: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "4: ";
+	$("#divForOn #inputB").keyup();
+
+	res += "5: ";
+	$("#divForOn .inputA").keydown();
+
+	res += "6: ";
+	$("#divForOn .inputA").keyup();
+
+	res += "7: ";
+	$("#divForOn #inputB").mouseup();
+
+	res += "8: ";
+	$("#divForOn #inputB").mousedown();
+
+	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
+	"multiple {^{on events selector method}} bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"before: 1211 | after: undefinedundefined11",
+	"onDispose removes specific delegated events");
+
+	// ................................ Act ..................................
+	res = "1: ";
+	$("#divForOn #inputB").after("<input id='newlyAdded' />");
+
+	$("#divForOn #newlyAdded").mouseup();
+
+	res += "2: ";
+	$("#divForOn #newlyAdded").keyup();
+
+	// ............................... Assert .................................
+	equal(res,
+	"1: test 2: ",
+	"delegated {^{on events selector method}} binding allows additional elements added to content to bind correctly");
+
+	// ................................ Act ..................................
+	$("#result").empty();
+	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
+
+	// ............................... Assert .................................
+	equal(eventBindings,
+	"undefinedundefinedundefined[{},{}]",
+	"Removing the element removes all associated attached {on } handlers");
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates("{^{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}}\
+	<button id='doIt'>Do it</button>\
+	<span data-link='res'></span>\
+{{/on}}"),
+
+		data = {
+			name: "Jo",
+			role: "Advisor",
+			option: {
+				allow: true
+			},
+			thisIsTheMethod: function(role, text, isFoo, compile, amount, root, ev, eventArgs) {
+				if (compile) {
+					compile.call(root, role, text, isFoo, amount, ev.data.allow, eventArgs.linkCtx.tag.tagCtx.args[2]);
+				}
+			},
+			process: function(role, text, isFoo, amount, allow, extraParam) {
+				$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
+			},
+			res: ""
+		};
+
+	tmpl.link("#result", data);
+
+	// ................................ Act ..................................
+	$("#doIt").click();
+	data.option.allow = false;
+	$.observable(data).setProperty("role", "Follower");
+	$("#doIt").click();
+
+	// ............................... Assert .................................
+	equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
+	"{^{on 'click' selector otherParams... method params...}} : supports passing params to method, of any type, as well as setting data and context for the function call");
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	$.views.settings.advanced({_jsv: false});
+});
+
 test('data-link="{tag...} and {^{tag}} in same template"', function() {
 
 	// ................................ Reset ................................
