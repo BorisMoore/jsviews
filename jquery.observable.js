@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.79 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.80 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -562,9 +562,9 @@ if (!$.observe) {
 							depth = path.split(".").length - depth;
 							// if more than one ^ in the path, the first one determines depth
 						}
-						if (contextCb && (items = contextCb(path, root))) {
-							// If contextCb returns an array of objects and paths, we will insert them
-							// into the sequence, replacing the current item (path)
+						if (contextCb && (items = contextCb(path, root, depth))) {
+							// If the array of objects and paths returned by contextCb is non empty, insert them
+							// into the sequence, replacing the current item (path). Otherwise simply remove current item (path)
 							l += items.length - 1;
 							splice.apply(paths, [i--, 1].concat(items));
 							continue;
@@ -782,7 +782,7 @@ if (!$.observe) {
 					}
 				} else if (path !== $expando) {
 					// Simple single property case.
-					parts = path.split(".");
+					parts = path.split(/[.^]/);
 					while (object && parts.length > 1) {
 						object = object[parts.shift()];
 					}
