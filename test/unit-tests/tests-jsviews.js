@@ -170,7 +170,7 @@ $.views
 			depends: ["firstName", "~settings.width"]
 		},
 		twoWayTag: {
-			init: function(tagCtx, linkCtx) {
+			init: function(tagCtx, linkCtx, ctx) {
 				eventData += "init ";
 				if (this._.inline && !tagCtx.content) {
 					this.template = "<input/>";
@@ -180,21 +180,27 @@ $.views
 				eventData += "render ";
 				return renders ? (val + ' <input id="linkedEl"/> rendered') : undefined;
 			},
-			onBeforeLink: function(tagCtx, linkCtx) {
-				eventData += "onBeforeLink ";
-				//return false;
-			},
-			onAfterLink: function(tagCtx, linkCtx) {
+			onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onAfterLink ";
 				this.value = tagCtx.args[0];
 				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
-			onUpdate: function(ev, eventArgs, tagCtxs) {
+			onUpdate: function(ev, eventArgs, newTagCtxs) {
 				eventData += "onUpdate ";
 				return !noRenderOnUpdate;
 			},
+			onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+				eventData += "onBind ";
+			},
+			onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+				eventData += "onUnbind ";
+			},
 			onBeforeChange: function(ev, eventArgs) {
 				eventData += "onBeforeChange ";
+				return !cancelChange;
+			},
+			onAfterChange: function(ev, eventArgs) {
+				eventData += "onAfterChange ";
 				return !cancelChange;
 			},
 			onDispose: function() {
@@ -2878,7 +2884,7 @@ test('data-link="attr{:expression}"', function() {
 
 	function divProps() {
 		var div = $("#result div")[0];
-		return "title: " + div.title + " - innerHTML: " + div.innerHTML + " - display: " + div.style.display;
+		return "title: " + div.title + " - innerHTML: " + div.innerHTML.replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, "") + " - display: " + div.style.display;
 	}
 
 	// ................................ Act ..................................
@@ -2902,7 +2908,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"{chooseAttr tagAttr=\'html\'} overrides tag.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -2918,7 +2924,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr} has target 'html'");
 
 	// ................................ Act ..................................
@@ -2926,7 +2932,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr tagAttr =\'title\'} overrides tag.attr, but still has target 'html'");
 
 	// ................................ Act ..................................
@@ -2966,7 +2972,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: box" + (isIE8 ? "<BR>" : "<br>") + " - display: ",
+	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'} overrides tag.attr and linkCtx.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -3616,7 +3622,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, ""),
 	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link fnTagEl rendering <span>, using: <div data-link="{fnTagEl}"></div>');
 
@@ -7414,7 +7420,7 @@ test("{^{tag}}", function() {
 	after = $("#result div *")[1].outerHTML;
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
+	 isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link with: {^{fnTagEl/}} rendering <span>, updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -9023,7 +9029,7 @@ test('data-link="{on ...', function() {
 		.link("#result", {
 			unbind: function(ev, eventArgs) {
 				res += "unbind ";
-				eventArgs.linkCtx.tag.onDispose();
+				eventArgs.linkCtx.tag.onUnbind();
 			},
 			refresh: function(ev, eventArgs) {
 				res += "refresh ";
@@ -9140,7 +9146,7 @@ test('data-link="{on ...', function() {
 	$.link(true, "#result", {
 		unbind: function(ev, eventArgs) {
 			res += "unbind ";
-			eventArgs.linkCtx.tag.onDispose();
+			eventArgs.linkCtx.tag.onUnbind();
 		},
 		refresh: function(ev, eventArgs) {
 			res += "refresh ";
@@ -9252,7 +9258,7 @@ test('data-link="{on ...', function() {
 	data = {
 		unbind: function(ev, eventArgs) {
 			res += "unbind ";
-			eventArgs.linkCtx.tag.onDispose();
+			eventArgs.linkCtx.tag.onUnbind();
 		},
 		refresh: function(ev, eventArgs) {
 			res += "refresh ";
@@ -9604,7 +9610,7 @@ test('{^{on}}', function() {
 		.link("#result", {
 			unbind: function(ev, eventArgs) {
 				res += "unbind ";
-				eventArgs.linkCtx.tag.onDispose();
+				eventArgs.linkCtx.tag.onUnbind();
 			},
 			refresh: function(ev, eventArgs) {
 				res += "refresh ";
@@ -11423,6 +11429,7 @@ test("Settings, error handlers, onError", function() {
 	// ................................ Act ..................................
 	// Delimiters
 
+	var current = $.views.settings.delimiters();
 	$.views.settings.delimiters("@%","%@");
 	var res = $.templates("A_@%if true%@yes@%/if%@_B").render()
 		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
@@ -11431,7 +11438,8 @@ test("Settings, error handlers, onError", function() {
 
 	res += "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
-	$.views.settings.delimiters("{{","}}", "^");
+	$.views.settings.delimiters(current);
+
 	res += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render()
 		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
@@ -11439,21 +11447,31 @@ test("Settings, error handlers, onError", function() {
 	equal(res, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// ................................ Act ..................................
+	current = $.views.settings.delimiters();
 	var app = { choose: true, name: "Jo" };
-	$.views.settings.delimiters("_^", "^_", "*");
-	$.templates('_*^if choose^_<div data-link="name"></div>_^else^_no<div data-link="name+2"></div>_^/if^_').link("#result", app);
+	$.views.settings.delimiters("_^", "!@", "(");
+	$.templates('_(^if choose!@<div data-link="name"></div>_^else!@no<div data-link="name+2"></div><div data-link="^:name+3!"></div><input data-link="^:name:!"/>_^/if!@').link("#result", app);
 	res = $("#result").text();
 	$.observable(app).setProperty({ choose: false, name: "other" });
 	res += "|" + $("#result").text()
 		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
-	$.views.settings.delimiters("{{", "}}", "^");
-	$.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div>{{/if}}').link("#result", app);
+$("#result input").val("new").change();
+
+	res += "|" + $("#result").text();
+
+	$.views.settings.delimiters(current);
+
+	$.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div><div data-link="{:name+3}"></div><input data-link="{:name:}"/>{{/if}}').link("#result", app);
 	res += "|" + $("#result").text()
 + "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
+$("#result input").val("NEW").change();
+
+	res += "|" + $("#result").text();
+
 	// ............................... Assert .................................
-	equal(res, "Jo|noother2|_^,^_,*|_^,^_,*|NOother2|{{,}},^|{{,}},^", "Custom delimiters with link()");
+	equal(res, "Jo|noother2other3|_^,!@,(|_^,!@,(|nonew2new3|NOnew2new3|{{,}},^|{{,}},^|NONEW2NEW3", "Custom delimiters with link()");
 
 	// =============================== Arrange ===============================
 		// Debug mode false
@@ -12354,13 +12372,10 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 		markup: '<div data-link="{myWidget}"></div>',
 		tags: {
 			myWidget: {
-				init: function(tagCtx, linkCtx) {
+				init: function(tagCtx, linkCtx, ctx) {
 				},
 				render: function() {
 					return " render";
-				},
-				onBeforeLink: function() {
-					$(this.linkCtx.elem).append(" before");
 				},
 				onAfterLink: function() {
 					$(this.linkCtx.elem).append(" after");
@@ -12370,7 +12385,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result div").html(), isIE8 ? " beforerender after" : " before render after", 'A data-linked tag control allows setting of content on the data-linked element during render, onBeforeLink and onAfterLink');
+	equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
 
 	// =============================== Arrange ===============================
 
@@ -12379,11 +12394,8 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 		markup: '<div data-link="{myRenderInLinkEventsWidget}"></div>',
 		tags: {
 			myRenderInLinkEventsWidget: {
-				init: function(tagCtx, linkCtx) {
+				init: function(tagCtx, linkCtx, ctx) {
 					$(linkCtx.elem).append(" init");
-				},
-				onBeforeLink: function() {
-					$(this.linkCtx.elem).append(" before");
 				},
 				onAfterLink: function() {
 					$(this.linkCtx.elem).append(" after");
@@ -12393,7 +12405,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result div").html(), " init before after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init, onBeforeLink and onAfterLink');
+	equal($("#result div").html(), " init after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init and onAfterLink');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -12419,7 +12431,7 @@ test('two-way bound tag controls', function() {
 		linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onAfterLink ",
+	equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -12447,7 +12459,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUpdate render onAfterLink ",
+	equal(eventData, "onUpdate onUnbind render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
 	eventData = "";
 
@@ -12465,7 +12477,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUpdate render onAfterLink ",
+	equal(eventData, "onUpdate onUnbind render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
 	eventData = "";
 
@@ -12485,7 +12497,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onChange');
 	eventData = "";
 
@@ -12537,7 +12549,7 @@ test('two-way bound tag controls', function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onDispose ",
+	equal(eventData, "onUnbind onDispose ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onDispose');
 	eventData = "";
 
@@ -12656,7 +12668,7 @@ test('two-way bound tag controls', function() {
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBeforeLink onAfterLink ",
+	equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for init, render, link');
 	eventData = "";
 
@@ -12667,7 +12679,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate onBeforeLink onAfterLink true",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onAfterLink true",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
@@ -12683,7 +12695,7 @@ test('two-way bound tag controls', function() {
 	$.observable(person).setProperty({ name: "newName2" });
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onUnbind render onBind onAfterLink false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -12703,7 +12715,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onUnbind render onBind onAfterLink false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -12726,7 +12738,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onBeforeLink onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name}} - event order for onChange');
 	eventData = "";
 
@@ -12766,7 +12778,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onBeforeLink onAfterLink ",
+	equal(eventData, "render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
 	eventData = "";
 
@@ -12779,7 +12791,7 @@ test('two-way bound tag controls', function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onDispose ",
+	equal(eventData, "onUnbind onDispose ",
 	'Data link using: {^{twoWayTag name}} - event order for onDispose');
 	eventData = "";
 
@@ -12844,7 +12856,7 @@ test('two-way bound tag controls', function() {
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBeforeLink onAfterLink ",
+	equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for init, render, link');
 	eventData = "";
 
@@ -12856,7 +12868,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate onBeforeLink onAfterLink true",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onAfterLink true",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
@@ -12874,7 +12886,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onUnbind render onBind onAfterLink false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -12893,7 +12905,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onUpdate render onBeforeLink onAfterLink false",
+	equal(eventData + !!linkedEl.parentNode, "onUpdate onUnbind render onBind onAfterLink false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -12913,7 +12925,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onBeforeLink onAfterLink ",
+	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name/}} - event order for onChange');
 	eventData = "";
 
@@ -12952,7 +12964,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onBeforeLink onAfterLink ",
+	equal(eventData, "render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
 	eventData = "";
 
@@ -12965,7 +12977,7 @@ test('two-way bound tag controls', function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onDispose ",
+	equal(eventData, "onUnbind onDispose ",
 	'Data link using: {^{twoWayTag name/}} - event order for onDispose');
 	eventData = "";
 
@@ -13696,7 +13708,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	$.views.tags({
 		twoWayTag: {
-			init: function(tagCtx, linkCtx) {
+			init: function(tagCtx, linkCtx, ctx) {
 				eventData += "init ";
 				if (this._.inline && !tagCtx.content) {
 					this.template = "<input/>";
@@ -13705,23 +13717,27 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 			render: function(val) {
 				eventData += "render ";
 			},
-			onBeforeLink: function(tagCtx, linkCtx) {
-				eventData += "onBeforeLink ";
-			},
-			onAfterLink: function(tagCtx, linkCtx) {
+			onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onAfterLink ";
 				this.value = tagCtx.args[0];
 				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
-			onUpdate: function(ev, eventArgs, tagCtxs) {
+			onUpdate: function(ev, eventArgs, newTagCtxs) {
 				eventData += "onUpdate ";
 				return false;
 			},
+			onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+				eventData += "onBind ";
+			},
+			onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+				eventData += "onUnbind ";
+			},
 			onBeforeChange: function(ev, eventArgs) {
 				eventData += "onBeforeChange ";
-				if (!cancelChange) {
-					this.value = eventArgs.value;
-				}
+				return !cancelChange;
+			},
+			onAfterChange: function(ev, eventArgs) {
+				eventData += "onAfterChange ";
 				return !cancelChange;
 			},
 			onDispose: function() {
@@ -13861,7 +13877,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onAfterLink ",
+	equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -13888,13 +13904,13 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange ",
+	equal(eventData, "onBeforeChange onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newName name:newName name2:Jo2|value:newVal name:newName name2:newVal",
+	"value:newName name:newName name2:Jo2|value:newName name:newName name2:newVal",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds linkedElem back to "linkTo" target dataonChange');
 
 	// ................................ Act ..................................
@@ -13911,7 +13927,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newVal name:newName name2:newVal|value:newVal name:newName name2:newVal",
+	"value:newName name:newName name2:newVal|value:newName name:newName name2:newVal",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -13956,7 +13972,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
-	"name:ANewName name2:changethename value:changethename",
+	"name:ANewName name2:changethename value:ANewName",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ................................ Reset ..................................
@@ -13976,7 +13992,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	linkedEl = $("#linkedEl")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBeforeLink onAfterLink ",
+	equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for init, render, link');
 	eventData = "";
 
@@ -13987,7 +14003,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUpdate onBeforeLink onAfterLink ",
+	equal(eventData, "onUpdate onAfterLink ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onUpdate');
 	eventData = "";
 
@@ -14003,13 +14019,13 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange ",
+	equal(eventData, "onBeforeChange onAfterChange ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newName name:newName name2:Jo2|value:newVal name:newName name2:newVal",
+	"value:newName name:newName name2:Jo2|value:newName name:newName name2:newVal",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - binds linkedElem back to "linkTo" target data');
 
 	// ................................ Act ..................................
@@ -14026,7 +14042,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"value:newVal name:newName name2:newVal|value:newVal name:newName name2:newVal",
+	"value:newName name:newName name2:newVal|value:newName name:newName name2:newVal",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - if onBeforeChange returns false -> no change to data');
 
 	// ................................ Reset ..................................
@@ -14071,7 +14087,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ............................... Assert .................................
 	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
-	"name:ANewName name2:changethename value:changethename",
+	"name:ANewName name2:changethename value:ANewName",
 	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
 	// ............................... Reset .................................
@@ -14089,25 +14105,22 @@ test("Tag control events", function() {
 		markup: '<div>{^{myWidget person1.lastName things/}}</div>',
 		tags: {
 			myWidget: {
-				init: function(tagCtx, linkCtx) {
-					eventData += " init";
+				init: function(tagCtx, linkCtx, ctx) {
+					eventData += "init ";
 				},
 				render: function(name, things) {
-					eventData += " render";
+					eventData += "render ";
 					return "<span>" + name + "</span> <span>" + things.length + "</span> <span>" + this.getType() + "</span>";
 				},
-				onUpdate: function(ev, eventArgs, tagCtxs) {
-					eventData += " update";
-				},
-				onBeforeLink: function() {
-					eventData += " before";
+				onUpdate: function(ev, eventArgs, newTagCtxs) {
+					eventData += "update ";
 				},
 				onArrayChange: function(ev, eventArgs) {
-					eventData += " onArrayChange";
+					eventData += "onArrayChange ";
 				},
-				onAfterLink: function(ev, eventArgs) {
+				onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 					var tag = this,
-						data = tag.tagCtx.args[1];
+						data = tagCtx.args[1];
 					if (tag._boundArray && data !== tag._boundArray) {
 						$.unobserve(tag._boundArray, tag._arCh); // Different array, so remove handler from previous array
 						tag._boundArray = undefined;
@@ -14117,17 +14130,29 @@ test("Tag control events", function() {
 							tag.onArrayChange(ev, eventArgs);
 						});
 					}
-					eventData += " after";
+					eventData += "after ";
+				},
+				onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+					eventData += "onBind ";
+				},
+				onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+					eventData += "onUnbind ";
+				},
+				onBeforeChange: function(ev, eventArgs) {
+					eventData += "onBeforeChange ";
+				},
+				onAfterChange: function(ev, eventArgs) {
+					eventData += "onAfterChange ";
 				},
 				onDispose: function() {
 					var tag = this;
 					if (tag._boundArray) {
 						$.unobserve(tag._boundArray, tag._arCh); // Remove arrayChange handler from bound array
 					}
-					eventData += " dispose";
+					eventData += "dispose ";
 				},
 				getType: function() {
-					eventData += " getType";
+					eventData += "getType ";
 					return this.type;
 				},
 				type: "special"
@@ -14136,25 +14161,25 @@ test("Tag control events", function() {
 	}).link("#result", model);
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "One 1 special| init render getType before after", '{^{myWidget/}} - Events fire in order during rendering: render, onBeforeLink and onAfterLink');
+	equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ", '{^{myWidget/}} - Events fire in order during rendering: render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
+	equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after update onUnbind render getType onBind after ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(model.things).insert(0, { thing: "tree" });
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "Two 1 special| init render getType before after update render getType before after onArrayChange", '{^{myWidget/}} - Events fire in order during update: update, render, onBeforeLink and onAfterLink');
+	equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after update onUnbind render getType onBind after onArrayChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "| init render getType before after update render getType before after onArrayChange dispose", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
+	equal($("#result").text() + "|" + eventData, "|init render getType onBind after update onUnbind render getType onBind after onArrayChange onUnbind dispose ", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
 
 	// ................................ Reset ................................
 	person1.lastName = "One";
@@ -14168,21 +14193,30 @@ test("Tag control events", function() {
 		markup: '<div>{^{myNoRenderWidget/}}</div>',
 		tags: {
 			myNoRenderWidget: {
-				init: function(tagCtx, linkCtx) {
-					eventData += " init";
-				},
-				onBeforeLink: function() {
-					eventData += " before";
+				init: function(tagCtx, linkCtx, ctx) {
+					eventData += "init ";
 				},
 				onAfterLink: function() {
-					eventData += " after";
+					eventData += "after ";
+				},
+				onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+					eventData += "onBind ";
+				},
+				onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+					eventData += "onUnbind ";
+				},
+				onBeforeChange: function(ev, eventArgs) {
+					eventData += "onBeforeChange ";
+				},
+				onAfterChange: function(ev, eventArgs) {
+					eventData += "onAfterChange ";
 				}
 			}
 		}
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "| init before after", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init, onBeforeLink and onAfterLink');
+	equal($("#result").text() + "|" + eventData, "|init onBind after ", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init and onAfterLink');
 
 	$("#result").empty();
 
