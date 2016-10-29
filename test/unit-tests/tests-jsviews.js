@@ -178,12 +178,11 @@ $.views
 			},
 			render: function(val) {
 				eventData += "render ";
-				return renders ? (val + ' <input id="linkedEl"/> rendered') : undefined;
+				return renders ? (val + ' <input id="linkedElm"/> rendered') : undefined;
 			},
 			onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onAfterLink ";
 				this.value = tagCtx.args[0];
-				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
 			onUpdate: function(ev, eventArgs, newTagCtxs) {
 				eventData += "onUpdate ";
@@ -191,8 +190,10 @@ $.views
 			},
 			onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onBind ";
+				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
 			onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+				this.linkedElem = undefined; // remove, so newly rendered linkedElem gets created in onAfterLink
 				eventData += "onUnbind ";
 			},
 			onBeforeChange: function(ev, eventArgs) {
@@ -1813,7 +1814,7 @@ test("Helper overriding", 12, function() {
 		onAfterChange: function(ev, eventArgs) {
 			res += "globalAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 		},
-		onAfterCreate: function(ev, eventArgs) {
+		onAfterCreate: function(view) {
 			res += "globalAfterCreate ";
 		}
 	});
@@ -1851,7 +1852,7 @@ test("Helper overriding", 12, function() {
 		onAfterChange: function(ev, eventArgs) {
 			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 		},
-		onAfterCreate: function(ev, eventArgs) {
+		onAfterCreate: function(view) {
 			res += "optionsAfterCreate ";
 		}
 	});
@@ -1882,7 +1883,7 @@ test("Helper overriding", 12, function() {
 			onAfterChange: function(ev, eventArgs) {
 				res += "templateAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 			},
-			onAfterCreate: function(ev, eventArgs) {
+			onAfterCreate: function(view) {
 				res += "templateAfterCreate ";
 			}
 		}
@@ -1895,7 +1896,7 @@ test("Helper overriding", 12, function() {
 		onAfterChange: function(ev, eventArgs) {
 			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
 		},
-		onAfterCreate: function(ev, eventArgs) {
+		onAfterCreate: function(view) {
 			res += "optionsAfterCreate ";
 		}
 	});
@@ -3181,7 +3182,7 @@ test('Two-way binding', function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="name"></option>{{/for}}</select>');
+	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="name"></option>{{/for}}</select>');
 
 	var model = {
 			selected: "Jim",
@@ -3489,7 +3490,7 @@ test('Two-way binding', function() {
 		res += $("#result").text() + "|";
 	}
 
-	var tmpl = $.templates(
+	tmpl = $.templates(
 '<input data-link="foo"/>\
 <input data-link="#data.foo"/>\
 <input data-link="#view.data.foo"/>\
@@ -3512,6 +3513,483 @@ test('Two-way binding', function() {
 
 	equal(res, "FFFFFF|000000|111111|222222|",
 		'Two-way binding to foo, #data.foo #view.data.foo');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+});
+
+test('data-link="{radiogroup}"', function() {
+
+	// =============================== Arrange ===============================
+
+	var top =
+	'<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="Bob"/>:Bob</label>'
+		+ '<label><input type="radio" value="Jim"/>:Jim</label>'
+	+ '</div>'
++ '<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="Bob"/>:Bob</label>'
+		+ '<label><input type="radio" value="Jim"/>:Jim</label>'
+	+ '</div>';
+
+	$("#result").html(top);
+
+	// ............................... Act .................................
+
+	var model = {
+			selected: "Jim"
+		};
+
+	$.link(true, "#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", "Bob");
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input:eq(1)").prop("checked", true).change(); // Check first radio button
+
+	res += $("#result input:checked").parent().text() + "|" + model.selected;
+
+	// ............................... Assert .................................
+	equal(res, ":Jim:Jim|:Bob:Bob|:Jim:Jim|Jim",
+		'data-link="{radiogroup selected}" top-level');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	var top =
+	  '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>'
+	+ '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>',
+
+	tmpl = $.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
+
+	model = {
+			selected: "Jim",
+			people: [
+				{ name: "Bob" },
+				{ name: "Jim" }
+			]
+		},
+
+	newName = "new";
+
+	$("#result").html(top);
+
+	// ............................... Act .................................
+	$.link(true, "#result", model, {itemTmpl: tmpl});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input:eq(1)").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":Jim:Jim|:new:new||Jim-:Jim:Jim|",
+		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+			selected: "Jim",
+			people: [
+				{ name: "Bob" },
+				{ name: "Jim" }
+			]
+		},
+		newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":Jim|:new||Bob-:Bob|",
+		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM|:NEW||None-:NONE|",
+		'data-link="{radiogroup selected}" ... <input.../>...{^{for ...}}...<input ... data-link="name">');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... data-link="name"> - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({markup:
+		'<div data-link="{radiogroup selected convert=~lower convertBack=\'upper\' linkTo=selectedOut}">'
+		+ '<label><input type="radio" value="none"/>:none</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name}}</label>'
+		+ '{{/for}}'
+	+ '</div>',
+		converters: {
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+		selected: "JIM",
+		people: [
+			{ name: "bob" },
+			{ name: "jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":jim|:new||new-NONE-:none|",
+		'data-link="{radiogroup selected convert=... convertBack=... linkTo=...}"');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+		'data-link="{radiogroup selected convert=... convertBack=... linkTo=...}" - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected}">'
+		+ '<input type="radio" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
+		+ '{^{for people}}'
+			+ '<input type="radio" value="{{:name}}" data-link="value^{:name} id{:name + \'Id\'}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, "JIM|NEW||None-NONE|",
+		'data-link="{radiogroup selected}" with labels by for/id');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+		'data-link="{radiogroup selected}" with labels by for/id - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: "Jim",
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{ name: "Bob" },{ name: "Jim" },{ name: "newName" }]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{radiogroup selected name=\'rad1\'}">'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{radiogroup selected name=\'rad1\'}">'
+		+ '<label><input type="radio" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: "Jim",
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{ name: "Bob" },{ name: "Jim" },{ name: "newName" }]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
+
+	// ............................... Assert .................................
+	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
+		'data-link="{radiogroup selected}" - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -9317,6 +9795,728 @@ test('data-link="{on ...', function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
+test('{^{radiogroup}}', function() {
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates(
+		'{^{radiogroup selected}}'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	var model = {
+			selected: "Jim",
+			people: [
+				{ name: "Bob" },
+				{ name: "Jim" }
+			]
+		},
+		newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":Jim|:new||Bob-:Bob|",
+		'{^{radiogroup selected}}{^{for ...}}...<input ... value="{{:name}}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates(
+		'{^{radiogroup selected}}'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM|:NEW||None-:NONE|",
+		'{^{radiogroup selected}}...<input.../>...{^{for ...}}...<input ... data-link="name">');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+		'{^{radiogroup selected}}...{^{for ...}}...<input ... data-link="name"> - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({markup:
+		'{^{radiogroup selected convert=~lower convertBack="upper" linkTo=selectedOut}}'
+		+ '<label><input type="radio" value="none"/>:none</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}',
+		converters: {
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+		selected: "JIM",
+		people: [
+			{ name: "bob" },
+			{ name: "jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":jim|:new||new-NONE-:none|",
+		'{^{radiogroup selected convert=... convertBack=... linkTo=...}}');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+		'{^{radiogroup selected convert=... convertBack=... linkTo=...}} - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{radiogroup selected}}'
+		+ '<input type="radio" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
+		+ '{^{for people}}'
+			+ '<input type="radio" data-link="value{:name} id{:name + \'Id\'}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, "JIM|NEW||None-NONE|",
+		'{^{radiogroup selected}} with labels by for/id');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+		'{^{radiogroup selected}} with labels by for/id - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{radiogroup selected}}'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	+ '{^{radiogroup selected}}'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+		'{^{radiogroup selected}} - two radiogroups with same selected bindings');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+		'{^{radiogroup selected}} - two radiogroups with same selected bindings - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{radiogroup selected}}'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	+ '{^{radiogroup selected}}'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{ name: "Bob" },{ name: "Jim" },{ name: "newName" }]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+		'{^{radiogroup selected}} - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{radiogroup selected name="rad1"}}'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	+ '{^{radiogroup selected name="rad1"}}'
+		+ '<label><input type="radio" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{ name: "Bob" },{ name: "Jim" },{ name: "newName" }]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
+
+	// ............................... Assert .................................
+	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
+		'{^{radiogroup selected}} - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+});
+
+test('radio buttons without {{radiogroup}}', function() {
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates(
+		'{^{for people}}'
+		+ '<label><input type="radio" value="{{:name}}" name="rad1" data-link="~root.selected" />:{{:name}}</label>'
+	+ '{{/for}}'
+	);
+
+	var model = {
+			selected: "Jim",
+			people: [
+				{ name: "Bob" },
+				{ name: "Jim" }
+			]
+		},
+		newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":Jim|:new||Bob-:Bob|",
+		'{^{for ...}}...<input ... value="{{:name}}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+			'<label><input type="radio" name="rad1" value="None" data-link="selected"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM|:NEW||None-:NONE|",
+		'<input.../>...{^{for ...}}...<input ... data-link="name">');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+		'{^{for ...}}...<input ... data-link="name"> - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({markup:
+		'<label><input type="radio" name="rad1" value="none" data-link="selected convert=~lower convertBack=\'upper\' linkTo=selectedOut"/>:none</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected convert=~lower convertBack=\'upper\' linkTo=~root.selectedOut:}"/>:{^{:name}}</label>'
+		+ '{{/for}}',
+		converters: {
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+		selected: "JIM",
+		people: [
+			{ name: "bob" },
+			{ name: "jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":jim|:new||new-NONE-:none|",
+		'data-link="{:select convert=... convertBack=... linkTo=...:}"');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+		'data-link="{:select convert=... convertBack=... linkTo=...:}" - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<input type="radio" name="rad1" value="None" id="noneId" data-link="selected"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
+		+ '{^{for people}}'
+			+ '<input type="radio" name="rad1" data-link="value{:name} id{:name + \'Id\'} {:~root.selected:}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
+		+ '{{/for}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, "JIM|NEW||None-NONE|",
+		'data-link="selected" with labels by for/id');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+		'data-link="selected" with labels by for/id - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<label><input type="radio" name="rad1" value="None" data-link="selected"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+		+ '<label><input type="radio" name="rad2" value="None" data-link="selected"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" name="rad2" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: [
+			{ name: "Bob" },
+			{ name: "Jim" }
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+		'data-link="selected" - two radiogroups with same selected bindings');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+		'data-link="selected" - two radiogroups with same selected bindings - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{for people}}'
+			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+		+ '<label><input type="radio" name="rad2" value="None" data-link="selected"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" name="rad2" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	);
+
+	model = {
+		selected: "Jim",
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{ name: "Bob" },{ name: "Jim" },{ name: "newName" }]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first radio button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+		'data-link="selected" - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+});
+
 test('{^{on}}', function() {
 
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
@@ -10751,7 +11951,7 @@ test("JsViews jsv-domchange", function() {
 	$.templates(
 		'<div data-link=\'{on "jsv-domchange" ~domchange 333 444}\'>'
 			+ '{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span>'
-		+'</div>')
+	+ '</div>')
 		.link("#result", model, {
 			domchange: function(param1, param2, ev, domchangeEventArgs, tagCtx, linkCtx, observableEventArgs) {
 				res += "Params: " + param1 + ", " + param2 + " | ";
@@ -12424,11 +13624,11 @@ test('two-way bound tag controls', function() {
 	//TODO add tests for convert and convertBack declared on tag def or on tag instance and declared dependencies on tag and/or convert - either arrays or functions.
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT
 	// ................................ Act ..................................
-	$.templates('<input id="linkedEl" data-link="{twoWayTag name}"/>')
+	$.templates('<input id="linkedElm" data-link="{twoWayTag name}"/>')
 		.link("#result", person);
 
 	var tag = $("#result").view(true).childTags("twoWayTag")[0],
-		linkedEl = $("#linkedEl")[0];
+		linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(eventData, "init render onBind onAfterLink ",
@@ -12533,7 +13733,8 @@ test('two-way bound tag controls', function() {
 	linkedEl.value = "updatedVal";
 	before = tag.value + linkedEl.value;
 	tag.refresh();
-	after = tag.value + linkedEl.value;
+	linkedEl = $("#linkedElm")[0];
+	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
 	equal(eventData, "render onAfterLink ",
@@ -12542,7 +13743,7 @@ test('two-way bound tag controls', function() {
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newValupdatedVal|updatedNameupdatedName",
+	"newValupdatedVal|updatedNameupdatedNameupdatedName",
 	'Data link using: <input data-link="{twoWayTag name}"/> - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
 	// ................................ Act ..................................
@@ -12560,7 +13761,7 @@ test('two-way bound tag controls', function() {
 
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<input id="linkedEl" data-link="{twoWayTag name convert=\'myupper\' convertBack=~lower}"/>',
+		markup: '<input id="linkedElm" data-link="{twoWayTag name convert=\'myupper\' convertBack=~lower}"/>',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12573,7 +13774,7 @@ test('two-way bound tag controls', function() {
 	});
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -12617,7 +13818,7 @@ test('two-way bound tag controls', function() {
 
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<input id="linkedEl" data-link="{twoWayTag name ^convert=~options.cvt}"/>',
+		markup: '<input id="linkedElm" data-link="{twoWayTag name ^convert=~options.cvt}"/>',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12626,7 +13827,7 @@ test('two-way bound tag controls', function() {
 	}).link("#result", person, { options: options });
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -12661,11 +13862,11 @@ test('two-way bound tag controls', function() {
 	// =============================== Arrange ===============================
 	//INLINE DATA-LINKED TAGS ON INPUT
 	// ................................ Act ..................................
-	$.templates('{^{twoWayTag name}}<input id="linkedEl"/>{{/twoWayTag}}')
+	$.templates('{^{twoWayTag name}}<input id="linkedElm"/>{{/twoWayTag}}')
 		.link("#result", person);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(eventData, "init render onBind onAfterLink ",
@@ -12699,7 +13900,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 	after = tag.value + linkedEl.value;
 	// ............................... Assert .................................
 	equal(before + "|" + after,
@@ -12719,7 +13920,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -12774,18 +13975,18 @@ test('two-way bound tag controls', function() {
 	linkedEl.value = "updatedVal";
 	before = tag.value + linkedEl.value;
 	tag.refresh();
-	linkedEl = $("#linkedEl")[0];
-	after = tag.value + linkedEl.value;
+	linkedEl = $("#linkedElm")[0];
+	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onBind onAfterLink ",
+	equal(eventData, "render onUnbind onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
 	eventData = "";
 
 	// ............................... Assert .................................
 	equal(before + "|" + after,
-	"newValupdatedVal|updatedNameupdatedName",
-	'Data link using: {^{twoWayTag name}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
+	"newValupdatedVal|updatedNameupdatedNameupdatedName",
+	'Data link using: {^{twoWayTag name}} - tag.refresh() calls onUnbind, render, onBind and onAfterLink - reset to current data, and updates target (input value)');
 
 	// ................................ Act ..................................
 	$("#result").empty();
@@ -12800,7 +14001,7 @@ test('two-way bound tag controls', function() {
 
 	// =============================== Arrange ===============================
 	$.templates({
-		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower}}<input id="linkedEl"/>{{/twoWayTag}}',
+		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower}}<input id="linkedElm"/>{{/twoWayTag}}',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -12813,7 +14014,7 @@ test('two-way bound tag controls', function() {
 	});
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -12829,7 +14030,7 @@ test('two-way bound tag controls', function() {
 	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 	linkedEl.value = "ChangeTheName";
 	$(linkedEl).change();
 
@@ -12964,7 +14165,7 @@ test('two-way bound tag controls', function() {
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onBind onAfterLink ",
+	equal(eventData, "render onUnbind onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
 	eventData = "";
 
@@ -13747,10 +14948,10 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	});
 
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
-	$.templates('<input id="linkedEl" data-link="{:name linkTo=name2:}"/>')
+	$.templates('<input id="linkedElm" data-link="{:name linkTo=name2:}"/>')
 		.link("#result", person);
 
-	var linkedEl = $("#linkedEl")[0];
+	var linkedEl = $("#linkedElm")[0];
 
 	// ................................ Act ..................................
 	before = linkedEl.value;
@@ -13786,10 +14987,10 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	person.name = "Jo";
 	person.name2 = "Jo2";
 
-	$.templates('<input id="linkedEl" data-link="\'initialValue\' linkTo=name2"/>')
+	$.templates('<input id="linkedElm" data-link="\'initialValue\' linkTo=name2"/>')
 		.link("#result", person);
 
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ................................ Act ..................................
 	before = "value: " + linkedEl.value + " name:" + person.name + " name2:" + person.name2;
@@ -13807,10 +15008,10 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	person.name = "Jo";
 	person.name2 = "Jo2";
 
-	$.templates('<input id="linkedEl" data-link="linkTo=name2"/>')
+	$.templates('<input id="linkedElm" data-link="linkTo=name2"/>')
 		.link("#result", person);
 
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ................................ Act ..................................
 	before = "value: " + linkedEl.value + " name:" + person.name + " name2:" + person.name2;
@@ -13827,7 +15028,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<input id="linkedEl" data-link="{myupper:name linkTo=name2:mylower}"/>',
+		markup: '<input id="linkedElm" data-link="{myupper:name linkTo=name2:mylower}"/>',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -13838,7 +15039,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 		}
 	}).link("#result", person);
 
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value, "JO",
@@ -13870,11 +15071,11 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
 	// ................................ Act ..................................
-	$.templates('<input id="linkedEl" data-link="{twoWayTag name linkTo=name2}"/>')
+	$.templates('<input id="linkedElm" data-link="{twoWayTag name linkTo=name2}"/>')
 		.link("#result", person);
 
 	var tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(eventData, "init render onBind onAfterLink ",
@@ -13938,7 +15139,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// ................................ Act ..................................
 	$.templates({
-		markup: '<input id="linkedEl" data-link="{twoWayTag name linkTo=name2 convert=\'myupper\' convertBack=~lower}"/>',
+		markup: '<input id="linkedElm" data-link="{twoWayTag name linkTo=name2 convert=\'myupper\' convertBack=~lower}"/>',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -13951,7 +15152,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	});
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -13985,11 +15186,11 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	// =============================== Arrange ===============================
 	//INLINE DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
 	// ................................ Act ..................................
-	$.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedEl"/>{{/twoWayTag}}')
+	$.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedElm"/>{{/twoWayTag}}')
 		.link("#result", person);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(eventData, "init render onBind onAfterLink ",
@@ -14052,7 +15253,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 
 	// =============================== Arrange ===============================
 	$.templates({
-		markup: '{^{twoWayTag name linkTo=name2 convert="myupper" convertBack=~lower}}<input id="linkedEl"/>{{/twoWayTag}}',
+		markup: '{^{twoWayTag name linkTo=name2 convert="myupper" convertBack=~lower}}<input id="linkedElm"/>{{/twoWayTag}}',
 		converters: {
 			myupper: function(val) {
 				return val.toUpperCase();
@@ -14065,7 +15266,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	});
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
 	equal(linkedEl.value + "|" + tag.value,
@@ -14081,7 +15282,7 @@ test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', 
 	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"} - (tag.convert setting) - on data change: converts the value on the target input');
 
 	// ................................ Act ..................................
-	linkedEl = $("#linkedEl")[0];
+	linkedEl = $("#linkedElm")[0];
 	linkedEl.value = "ChangeTheName";
 	$(linkedEl).change();
 
