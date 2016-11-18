@@ -1014,7 +1014,7 @@ test("Top-level linking", function() {
 	// ............................... Assert .................................
 	equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
 							: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
-		"Top level bindings allow passing in new contextual variables to template: data-link=\"{for people ~team=#data tmpl=...");
+		"Top level bindings allow passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -11265,7 +11265,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	'$.unlink() removes all views and listeners from the page');
 });
 
-test('Bound tag properties and contextual properties', function() {
+test('Bound tag properties and contextual parameters', function() {
 	// =============================== Arrange ===============================
 
 	var things = [
@@ -11446,7 +11446,7 @@ test('Bound tag properties and contextual properties', function() {
 	equal(before + "|" + after,
 	isIE8 ? "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition:line false  Unbound condition: shape true Bound condition:shape true  Unbound condition: line false "
 		: "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition: line false Unbound condition: shape true Bound condition: shape true Unbound condition: line false ",
-	'Binding to contextual property {^{include ^~condition=... triggers update. Unbound contextual property {^{include ~condition=... does not trigger updated content');
+	'Binding to contextual parameter {^{include ^~condition=... triggers update. Unbound contextual parameter {^{include ~condition=... does not trigger updated content');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -11524,7 +11524,7 @@ test('Bound tag properties and contextual properties', function() {
 	// ............................... Assert .................................
 	equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
 	: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
-		"data-link allows passing in new contextual variables to template: data-link=\"{for people ~team=#data tmpl=...");
+		"data-link allows passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -11563,7 +11563,7 @@ test('Bound tag properties and contextual properties', function() {
 
 });
 
-test('Data-linking helpers and contextual properties', function() {
+test('Data-linking helpers and contextual parameters', function() {
 
 	// =============================== Arrange ===============================
 
@@ -11593,7 +11593,7 @@ test('Data-linking helpers and contextual properties', function() {
 	// ............................... Assert .................................
 	equal(res,
 	"Jo | new | changed | ",
-	'Contextual property two-way binding');
+	'contextual parameter two-way binding');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -11624,14 +11624,14 @@ test('Data-linking helpers and contextual properties', function() {
 	equal(before + "|" + after,
 	isIE8 ? "shape shape true line line false |shapelinefalse lineshapetrue "
 		: "shape shape true line line false |shape line false line shape true ",
-	'Contextual property {^{include ~condition=... does not trigger update but references are bound');
+	'contextual parameter {^{include ~condition=... does not trigger update but references are bound');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
 
-	function getContent() {
+	var getContent = function() {
 		$("#result input").each(function() {
 			res += this.value;
 		});
@@ -11678,6 +11678,125 @@ test('Data-linking helpers and contextual properties', function() {
 
 	// ................................ Reset ................................
 	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	getContent = function getContent() {
+		return $("#outerInput").val() + ":" + $("#innerInput").val() + ":" + $("#innerDiv").text();
+	}
+
+	var tmpl = $.templates(
+'{^{if true ~street=address(name)}}\
+  <input id="outerInput" data-link="~street^street"/>\
+  {^{for address ~street=~street^street}}\
+    <div id="innerDiv" data-link="~street"></div>\
+    <input id="innerInput" data-link="~street"/>\
+  {{/for}}\
+{{/if}}');
+
+	// ............................... Act .................................
+
+	var address = {street: "add"};
+	var altAddress = {street: "alt"};
+
+	function getAddress(name) {
+		return (name.length > 2 || data.alt) ? altAddress : address;
+	}
+
+	getAddress.depends = "alt";
+
+	var data = {name: "Jo", address: getAddress, alt: false };
+
+	tmpl.link("#result", data);
+
+	before = getContent();
+
+	$("#outerInput").val("addOuter").change();
+
+	after = before + "|" + getContent();
+
+	$("#innerInput").val("addInner").change();
+
+	after += "|" + getContent();
+
+	$.observable(data).setProperty("name", "John");
+
+	after += "|" + getContent();
+
+	$("#outerInput").val("altOuter").change();
+
+	after += "|" + getContent();
+
+	$("#innerInput").val("altInner").change();
+
+	after += "|" + getContent();
+
+	$.observable(data).setProperty("name", "Me");
+
+	after += "|" + getContent();
+
+	$.observable(data).setProperty("alt", true);
+
+	after += "|" + getContent();
+
+	equal(after, "add:add:add|addOuter:addOuter:addOuter|addInner:addInner:addInner"
+		+ "|alt:alt:alt|altOuter:altOuter:altOuter|altInner:altInner:altInner"
+		+ "|addInner:addInner:addInner|altInner:altInner:altInner",
+		'Two-way binding to contextual parameters with computed values');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	var tmpl = $.templates(
+'{^{for items}}\
+{{for 22 ~ind=#index}}\
+{{for 33 ~ind=~ind+1}}\
+{{for 33 ~ind=~ind*2}}\
+{{if true}}\
+{^{:~ind}}\
+{{/if}}\
+{{/for}}\
+{{/for}}\
+{{/for}}\
+{{/for}}'
+);
+
+	// ............................... Act .................................
+
+	var data = {items: [1,2,3]};
+
+	tmpl.link("#result", data);
+
+	before = $("#result").text();
+
+	$.observable(data.items).remove();
+
+	after = before + "|" + $("#result").text();
+
+	$.observable(data.items).remove();
+
+	after += "|" + $("#result").text();
+
+	$.observable(data.items).insert(4);
+
+	after += "|" + $("#result").text();
+
+	$.observable(data.items).insert(5);
+
+	after += "|" + $("#result").text();
+
+	$.observable(data.items).insert(6);
+
+	after += "|" + $("#result").text();
+
+	equal(after, "246|24|2|24|246|2468",
+		'Contextual parameter for index with array change');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
 });
 
 test("JsViews ArrayChange: insert()", function() {
