@@ -3617,7 +3617,7 @@ function propertyChangeHandler(ev, eventArgs, linkFn) {
 			if (linkFn._er) {
 				// data-link="exprUsingTagOrCvt with onerror=..." - e.g. {tag ... {cvt:... {:... convert='cvt'
 				try {
-					sourceValue = linkFn(source, view);
+					sourceValue = linkFn(source, view, $sub);
 				} catch (e) {
 					hasError = linkFn._er;
 					onError = onRenderError(e,view,(new Function("data,view", "return " + hasError + ";"))(source, view));
