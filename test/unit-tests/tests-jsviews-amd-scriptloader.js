@@ -19,7 +19,6 @@ test("Loading jquery.observable.js using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("4");
 
 	require(["./unit-tests/requirejs-config"], function() {
 		require(["jquery.observable"], function($) {
@@ -38,7 +37,7 @@ test("Loading jquery.views.js, plus dependencies, using RequireJS", function(ass
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("5");
+
 	require(["./unit-tests/requirejs-config"], function() {
 		require(["jquery.views"], function($) {
 			// Note: $ is a new instance of jQuery loaded by RequireJS, not the instance loaded by script block in page header, for QUnit.
@@ -57,7 +56,6 @@ test("Loading jsviews.js using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
-	console.log("6");
 
 	require(["./unit-tests/requirejs-config"], function() {
 		require(["jsviews"], function($) {

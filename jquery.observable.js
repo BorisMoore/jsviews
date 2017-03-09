@@ -1,9 +1,9 @@
-/*! JsObservable v0.9.83 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.84 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2016, Boris Moore
+ * Copyright 2017, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.83",
+var versionNumber = "v0.9.84",
 	$observe, $observable,
 
 	$views = $.views =
@@ -120,7 +120,8 @@ if (!$.observe) {
 			: data;
 	},
 
-	resolvePathObjects = function(paths, root, callback) {
+	dependsPaths = function(paths, root, callback) {
+		// Process depends = ... paths to resolve objects, and recursively process functions.
 		paths = paths
 			? $isArray(paths)
 				? paths
@@ -136,7 +137,7 @@ if (!$.observe) {
 		for (i = 0; i < l; i++) {
 			path = paths[i];
 			if ($isFunction(path)) {
-				out = out.concat(resolvePathObjects(path.call(root, root, callback), root));
+				out = out.concat(dependsPaths(path.call(root, root, callback), root, callback));
 				continue;
 			} else if ("" + path !== path) {
 				root = nextObj = path;
@@ -150,6 +151,10 @@ if (!$.observe) {
 			}
 			out.push(path);
 		}
+		if (out.length) {
+			out.unshift({_ar: 1}); // Switch on allowArray, for depends paths.
+			out.push({_ar: -1});
+		}
 		return out;
 	},
 
@@ -161,7 +166,7 @@ if (!$.observe) {
 		delete cbBindingsStore[cbBindingsId]; // This binding collection is empty, so remove from store
 	},
 
-	onObservableChange = function(ev, eventArgs) {
+	onDataChange = function(ev, eventArgs) {
 		function isOb(val) {
 			return typeof val === OBJECT && (paths[0] || allowArray && $isArray(val));
 		}
@@ -174,7 +179,7 @@ if (!$.observe) {
 				ctx = ev.data,
 				observeAll = ctx.observeAll,
 				cb = ctx.cb,
-				allowArray = !cb.noArray,
+				allowArray = ctx.arOk,
 				paths = ctx.paths,
 				ns = ctx.ns;
 
@@ -188,17 +193,17 @@ if (!$.observe) {
 					parentObs = [ev.target].concat(observeAll.parents());
 
 					if (isOb(oldValue)) {
-						observe_apply(allowArray, ns, [oldValue], paths, cb, true, filter, [parentObs], allPath); // unobserve
+						observe_apply(undefined, ns, [oldValue], paths, cb, true, filter, [parentObs], allPath); // unobserve
 					}
 					if (isOb(value)) {
-						observe_apply(allowArray, ns, [value], paths, cb, undefined, filter, [parentObs], allPath);
+						observe_apply(undefined, ns, [value], paths, cb, undefined, filter, [parentObs], allPath);
 					}
 				} else {
 					if (isOb(oldValue)) { // oldValue is an object, so unobserve
-						observe_apply(allowArray, ns, [oldValue], paths, cb, true); // unobserve
+						observe_apply(undefined, ns, [oldValue], paths, cb, true); // unobserve
 					}
 					if (isOb(value)) { // value is an object, so observe
-						observe_apply(allowArray, ns, [value], paths, cb);
+						observe_apply(undefined, ns, [value], paths, cb);
 					}
 				}
 				ctx.cb(ev, eventArgs);
@@ -262,6 +267,7 @@ if (!$.observe) {
 			updatedTgt = undefined;
 			cb.apply(this, arguments); // Observe this object (invoke the callback)
 		}
+		wrappedCb._wrp = 1;
 
 		var l, isObject, newAllPath, nextParentObs, updatedTgt, obId,
 			notRemoving = !objMap || objMap.un || !unobserve; // true unless it is an observeAll call (not unobserveAll) and we are removing a listener (not adding one)
@@ -329,7 +335,7 @@ if (!$.observe) {
 
 	$unobserve = function() {
 		[].push.call(arguments, true); // Add true as additional final argument
-		return $observe.apply(this, arguments);
+		return $observe.apply(undefined, arguments);
 	};
 
 	$observe = function() {
@@ -355,21 +361,22 @@ if (!$.observe) {
 						data = events[el] && events[el].data;
 						if (data && (off && data.ns !== initialNs
 							// When observing, don't unbind dups unless they have the same namespace
-							|| !off && data.ns === initialNs && data.cb && data.cb._cId === callback._cId))
-							// When observing and doing array binding, don't bind dups if they have the same namespace (Dups can happen e.g. with {^{for people ~foo=people}})
+							|| !off && data.ns === initialNs && data.cb && data.cb._cId === callback._cId && (!callback._wrp || data.cb._wrp)))
+							// When observing and doing array binding, don't bind dups if they have the same namespace (Dups can happen e.g. with {^{for people ^~foo=people}})
 						{
 							return;
 						}
 					}
 				}
 				if (unobserve || off) {
-					$(boundObOrArr).off(namespace, onObservableChange);
+					$(boundObOrArr).off(namespace, onDataChange);
 				} else {
 					evData = isArrayBinding ? {}
 						: {
 							fullPath: path,
 							paths: pathStr ? [pathStr] : [],
-							prop: prop
+							prop: prop,
+							arOk: allowArray
 						};
 					evData.ns = initialNs;
 					evData.cb = callback;
@@ -393,7 +400,7 @@ if (!$.observe) {
 							filter: filter
 						};
 					}
-					$(boundObOrArr).on(namespace, null, evData, onObservableChange);
+					$(boundObOrArr).on(namespace, null, evData, onDataChange);
 					if (cbBindings) {
 						// Add object to cbBindings
 						cbBindings[$data(object).obId || $data(object, "obId", observeObjKey++)] = object;
@@ -441,7 +448,8 @@ if (!$.observe) {
 
 			function bindArray(arr, unbind, isArray, relPath) {
 				if (allowArray) {
-					// This is a call to observe that does not come from observeAndBind (tag binding), so we allow arrayChange binding
+					// allowArray is 1 if this is a call to observe that does not come from observeAndBind (tag binding), or is from a `depends` path,
+					// so we allow arrayChange binding. Otherwise allowArray is zero.
 					var prevObj = object,
 						prevAllPath = allPath;
 
@@ -516,12 +524,12 @@ if (!$.observe) {
 
 			while (initNsArrLen--) {
 				initialNs = initNsArr[initNsArrLen];
-				if (root && (path = paths[0], !path || path + "" !== path)) {
+				if (root && !paths[0]) {
 					if ($isArray(root)) {
-						bindArray(root, unobserve, true);
-					} else if (unobserve) {
-						// remove onObservableChange handlers that wrap that callback
-						observeOnOff(ns, "");
+						bindArray(root, unobserve, true); // observe(array, handler)
+					}
+					if (unobserve) {
+						observeOnOff(ns, ""); // unobserve(objectOrArray[, handler])
 					}
 				}
 				if (unobserve && !l && !root) { // unobserve() - unobserves all
@@ -532,7 +540,6 @@ if (!$.observe) {
 							if ($isArray(object)) {
 								bindArray(object, unobserve, unobserve);
 							} else {
-								// remove onObservableChange handlers that wrap that callback
 								observeOnOff(ns, "");
 							}
 						}
@@ -544,9 +551,13 @@ if (!$.observe) {
 					if (path === "") {
 						continue;
 					}
+					if (path && path._ar) {
+						allowArray += path._ar; // Switch on allowArray for depends paths, and off, afterwards.
+						continue;
+					}
 					if (path && path._cp) { // Contextual parameter
-						contextCb = $sub._gccb(path[0]);   // getContextCb: Get context callback for the contextual view (where contextual param evaluated/assigned)
-						origRoot = root = path[0].data;    // Contextual data
+						contextCb = $sub._gccb(path[0]); // getContextCb: Get context callback for the contextual view (where contextual param evaluated/assigned)
+						origRoot = root = path[0].data;  // Contextual data
 						path = path[1];
 					}
 					object = root;
@@ -585,7 +596,6 @@ if (!$.observe) {
 								// This is a compiled function for binding to an object returned by a helper/data function.
 								// Set current object on exprOb.ob, and get innerCb for updating the object
 								innerCb = unobserve ? path.cb : getInnerCb(path);
-								innerCb.noArray = !allowArray;
 								// innerCb._ctx = callback._ctx; Could pass context (e.g. linkCtx) for use in a depends = function() {} call, so depends is different for different linkCtx's
 								innerCb._cId = callback._cId;
 								// Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
@@ -600,8 +610,6 @@ if (!$.observe) {
 								}
 								path = origRoot;
 								object = undefined;
-							} else {
-								object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
 							}
 						}
 						parts = [root = path];
@@ -664,23 +672,21 @@ if (!$.observe) {
 									allPath += "." + prop;
 								}
 								prop = object[prop];
+								if (!parts[0]) {
+									bindArray(prop, unobserve); // [un]observe(object, "arrayProperty") observes array changes on property of type array
+								}
 							}
 							if ($isFunction(prop)) {
 								if (dep = prop.depends) {
-									// This is a computed observable. We will observe any declared dependencies
-									innerObserve([object], resolvePathObjects(dep, object, callback), callback, contextCb, unobserve);
+									// This is a computed observable. We will observe any declared dependencies.
+									// Pass {_ar: ...} objects to switch on allowArray, for depends paths, then return to contextual allowArray value
+									innerObserve([object], dependsPaths(dep, object, callback), callback, contextCb, unobserve);
 								}
 								break;
 							}
 							object = prop;
-							if (unobserve && object === root && (i>l-2 || paths[i+1] + "" !== paths[i+1])) {
-								// unobserve all handlers of object, if not followed by string path.
-								// e.g.$.unobserve(object1, object2, "path", object3) will unobserve all from object1 and object3, and just "path" listener from object2
-								observeOnOff(ns, "");
-							}
 						}
 					}
-					bindArray(object, unobserve);
 				}
 			}
 			if (cbId) {
@@ -692,9 +698,9 @@ if (!$.observe) {
 		}
 
 		var initialNs,
-			allowArray = this != false, // If this === false, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
+			allowArray = this == 1 ? 0 : 1, // If this == 1, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
 			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
-			// Note deliberately using this != false, rather than this !== false because of IE<10 bug- see jsviews/issues/237
+			// Note deliberately using this == 1, rather than this === 1 because of IE<10 bug- see jsviews/issues/237
 			paths = slice.call(arguments),
 			origRoot = paths[0];
 
@@ -718,23 +724,6 @@ if (!$.observe) {
 	};
 
 	//========================== Initialize ==========================
-
-	$sub.getDeps = function() {
-		var args = arguments;
-		return function() {
-			var arg, dep,
-				deps = [],
-				l = args.length;
-			while (l--) {
-				arg = args[l--];
-				dep = args[l];
-				if (dep) {
-					deps = deps.concat($isFunction(dep) ? dep(arg, arg) : dep);
-				}
-			}
-			return deps;
-		};
-	};
 
 	$.observable = $observable;
 	$observable._fltr = function(allPath, object, parentObs, filter) {
@@ -824,25 +813,25 @@ if (!$.observe) {
 				}
 			}
 
-			if (property !== value || nonStrict && property != value) { // Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
+			if ((property !== value || nonStrict && property != value)
+				// Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
 				// Date objects don't support != comparison. Treat as special case.
-				if (!(property instanceof Date) || property > value || property < value) {
-					if (setter) {
-						setter.call(leaf, value);   //set
-						value = getter.call(leaf);  //get updated value
-					} else if (removeProp = value === remove) {
-						if (property !== undefined) {
-							delete leaf[path];
-							value = undefined;
-						} else {
-							path = undefined; // If value was already undefined, don't trigger handler for removeProp
-						}
-					} else if (path) {
-						leaf[path] = value;
+				&& (!(property instanceof Date && value instanceof Date) || property > value || property < value)) {
+				if (setter) {
+					setter.call(leaf, value);   //set
+					value = getter.call(leaf);  //get updated value
+				} else if (removeProp = value === remove) {
+					if (property !== undefined) {
+						delete leaf[path];
+						value = undefined;
+					} else {
+						path = undefined; // If value was already undefined, don't trigger handler for removeProp
 					}
-					if (path) {
-						this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
-					}
+				} else if (path) {
+					leaf[path] = value;
+				}
+				if (path) {
+					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property, remove: removeProp});
 				}
 			}
 		},
@@ -943,11 +932,13 @@ if (!$.observe) {
 					newIndex = _data.length;
 				}
 				splice.apply(_data, [newIndex, 0].concat(items)); //re-insert
-				this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+				if (newIndex !== oldIndex) {
+					this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
+				}
 			}
 		},
 
-		refresh: function(newItems, sort) {
+		refresh: function(newItems) {
 			function insertAdded() {
 				if (k) {
 					self.insert(j-k, addedItems); // Not found in original array - so insert
@@ -1005,7 +996,7 @@ if (!$.observe) {
 				$_data = $([_data]);
 			if (self._srt) {
 				eventArgs.refresh = true; // We are sorting during refresh
-			} else if (length !== oldLength) {  // We have finished sort operations during refresh
+			} else if (length !== oldLength) { // We have finished sort operations during refresh
 				$_data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
 			}
 			$_data.triggerHandler(arrayChangeStr + (self._ns ? "." + /^\S+/.exec(self._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
@@ -1061,7 +1052,7 @@ if (!$.observe) {
 							}
 						}, map.srcFlt);
 					}
-					if (mapDef.obsTgt ) {
+					if (mapDef.obsTgt) {
 						$observable(map.tgt).observeAll(map.obt = function(ev, eventArgs) {
 						if (!changing) {
 							changing = true;
@@ -1123,6 +1114,7 @@ if (!$.observe) {
 				}
 			: undefined; // In IE8 cannot do delete global._jsv
 	};
+	$sub._dp = dependsPaths;
 }
 
 return $;
