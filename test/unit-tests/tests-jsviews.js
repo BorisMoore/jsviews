@@ -774,6 +774,108 @@ test("jQuery cleanData integration", function() {
 	'One|last2|last3',
 	'Calling dequeue does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
 
+	// =============================== Arrange ===============================
+$.views.settings.trigger(false);
+
+var tmpl1 = $.templates(
+	'<button data-link="{on ~clicked} {:name}">click me</button>'
+	+ '<ul><li class="clickLi" data-link="{on ~clicked} {:name}">click me</li></ul>'
+	+ '<input data-link="name" />'
+	+ '<div><ul>{^{for things}}<li>inserted</li>{{/for}}</ul></div>'
+);
+
+var tmpl2 = $.templates(
+	'<li><button data-link="{on ~clicked} {:name}">click me</button></li>'
+	+ '<li class="clickLi" data-link="{on ~clicked} {:name}">click me</li>'
+	+ '<li><input data-link="name" /></li>'
+	+ '{^{for things}}<li>inserted</li>{{/for}}'
+),
+
+data = {name:"Jo", things:[]},
+clicked = 0,
+helpers = {
+	clicked: function() {
+		clicked += 1;
+	}
+};
+
+$("#result").html(
+	'<div id="toclone">'
+	+ '<button class="toplevel" data-link="{on ~clicked} {:name}">click me</button>'
+	+ '<ul class="toplevel"><li class="clickLi" data-link="{on ~clicked} {:name}">click me</li></ul>'
+	+ '<input class="toplevel" data-link="name" />'
+	+ '<div class="toplevel"><ul data-link="{for things tmpl=\'<li>inserted</li>\'}"></ul></div>'
+
+	+'<div class = "result"></div>'
+	+ '<ul class = "result2"></ul>'
++ '</div>'
+);
+
+$.link(true, "#toclone .toplevel",  data, helpers);
+
+tmpl1.link("#toclone .result", data, helpers);
+tmpl2.link("#toclone .result2", data, helpers);
+
+var inputs =  $("#result input"),
+	buttons =  $("#result button"),
+	lis =  $("#result .clickLi");
+
+	// ................................ Act ..................................
+var cloned = $("#toclone").clone().removeAttr( 'id' );
+cloned.empty();
+
+var res = $("#result").text();
+
+$.observable(data.things).insert(1);
+
+res += "|" + $("#result").text();
+
+$.observable(data).setProperty("name", "Bob");
+
+res += "|" + $("#result").text();
+
+$(inputs[0]).val("n0").change();
+
+res += "|" + $("#result").text();
+
+$(inputs[1]).val("n1").change();
+
+res += "|" + $("#result").text();
+
+$(inputs[2]).val("n2").change();
+
+res += "|" + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(res,
+	'JoJoJoJoJoJo|'
+	+ 'JoJoinsertedJoJoinsertedJoJoinserted|'
+	+ 'BobBobinsertedBobBobinsertedBobBobinserted|'
+	+ 'n0n0insertedn0n0insertedn0n0inserted|'
+	+ 'n1n1insertedn1n1insertedn1n1inserted|'
+	+ 'n2n2insertedn2n2insertedn2n2inserted',
+	'Cloning data-linked content then emptying clone does not remove original data bindings. (Issue https://github.com/BorisMoore/jsviews/issues/369)');
+
+	// ................................ Act ..................................
+
+res = clicked;
+
+$(buttons[0]).click();
+$(buttons[1]).click();
+$(buttons[2]).click();
+$(lis[0]).click();
+$(lis[1]).click();
+$(lis[2]).click();
+
+	// ............................... Assert .................................
+res += "|" + clicked;
+
+	equal(res,
+	'0|6',
+	'Cloning data-linked content then emptying clone does not remove click handlers. (Issue https://github.com/BorisMoore/jsviews/issues/369)');
+
+$.views.settings.trigger(true);
+
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	$.unlink();
@@ -8966,7 +9068,7 @@ test("{^{for}}", function() {
 	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.templates('<div><ul>{^{for things}}xxx{{/for}}</ul></div>')
+	$.templates('<div><ul>{^{for things}}<li>xxx</li>{{/for}}</ul></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -15076,6 +15178,68 @@ $.views.settings.trigger(false);
 	equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
+
+	// ................................ Reset ..................................
+	person.name = "Jo";
+	person.name2 = "Jo";
+
+	// =============================== Arrange ===============================
+	$.templates({
+		markup: '{^{textbox name /}} {^{textbox name2 convert="cvt" convertBack=~cvtBk/}}',
+		tags: {
+			textbox: {
+				linkedElement: "input",
+				template: "<input/>",
+				onUpdate: false, // No need to re-render whole tag, when content updates.
+				dataBoundOnly: true,
+				onAfterLink: function(tagCtx) {
+					this.value = tagCtx.args[0];
+				},
+				convert: function(val) {
+					return val.toUpperCase();
+				},
+				convertBack: function(val) {
+					return val.toLowerCase();
+				}
+			}
+		},
+		converters: {
+			cvt: function(val) {
+				return val + "cvt";
+			}
+		}
+	}).link("#result", person, {
+		cvtBk: function(val) {
+			return val + "cvtBk";
+		}
+	});
+
+	var tagWithDefaultConverters = $("#result").view(true).childTags("textbox")[0];
+	var tagWithOverrideConverters = $("#result").view(true).childTags("textbox")[1];
+
+	// ............................... Assert .................................
+	equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
+	"JO|Jo % Jocvt|Jo",
+	'Data linked tag with default convert and convertBack, on initial linking: {^{textbox/}} uses default convert and {^{textbox convert=.../}} uses overridden convert');
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({name: "ANewName", name2: "ANewName2"});
+
+	// ............................... Assert .................................
+	equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
+	"ANEWNAME|ANewName % ANewName2cvt|ANewName2",
+	'Data linked tag with default convert and convertBack, on data change: {^{textbox/}} uses default convert and {^{textbox convert=.../}} uses overridden convert');
+
+	// ................................ Act ..................................
+	tagWithDefaultConverters.linkedElem[0].value = "ChangeTheName";
+	tagWithOverrideConverters.linkedElem[0].value = "ChangeTheName2";
+	tagWithDefaultConverters.linkedElem.change();
+	tagWithOverrideConverters.linkedElem.change();
+
+	// ............................... Assert .................................
+	equal(person.name + "|" + tagWithDefaultConverters.value + " % " + person.name2 + "|" + tagWithOverrideConverters.value,
+	"changethename|changethename % ChangeTheName2cvtBk|ChangeTheName2cvtBk",
+	'Data linked tag with default convert and convertBack, on element change: {^{textbox/}}uses default convertBAck and {^{textbox convertBack=.../}} uses overridden convertBack');
 
 	// =============================== Arrange ===============================
 	var res = "";
