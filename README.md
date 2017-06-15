@@ -1,23 +1,24 @@
 ## JsViews: next-generation MVVM and MVP framework - bringing templates to life
+
 *The power of MVVM, the flexibility of JavaScript, the speed and ease of JsRender templates and jQuery*<br/>
 
 **JsViews** builds on top of **[JsRender](http://www.jsviews.com/#jsrender)** templates, and adds data-binding and **[observable data](http://www.jsviews.com/#jsobservable)**, to provide a fully-fledged MVVM platform for easily creating interactive data-driven single-page apps and websites.
 
-
 ### Documentation and downloads
+
 **[Documentation](http://www.jsviews.com/#jsviews)**, **[downloads](http://www.jsviews.com/#download)**, **[samples](http://www.jsviews.com/#samples)** and **[API docs and tutorials](http://www.jsviews.com/#jsvapi)** are available on the **[www.jsviews.com website](http://www.jsviews.com/#jsviews)**.
 
-The content of this ***ReadMe*** is available also as a *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*.
+The content of this **_ReadMe_** is available also as a *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*.
 
 ## JsViews installation
 
 jsviews.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site.
 
-CDN delivery is available from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
+CDN delivery is available from the **_[cdnjs](https://cdnjs.com)_** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
 
 Alternatively:
 
-- It can be installed with **[Bower](http://bower.io/search/?q=jsviews)**, using `$ bower install jsviews` 
+- It can be installed with **_[Bower](http://bower.io/search/?q=jsviews)_**, using `$ bower install jsviews` 
 - It can be loaded using an *AMD script loader*, such as RequireJS
 - For installation using *Node.js* (*npm*), and loading using [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/), see *[JsViews as a Browserify module](http://www.jsviews.com/#node/browserify@jsviews)* and *[JsViews as a webpack module](http://www.jsviews.com/#node/webpack@jsviews)*
 
@@ -33,7 +34,7 @@ Alternatively:
 
 ## JsViews usage
 
-### <i>Data-linked templates</i>
+### _Data-linked templates_
 
 JsViews provides *data-linking* - so that JsRender templates become data-bound:
 
@@ -67,7 +68,7 @@ HTML elements within 'top-level' page content can also be data-linked -- see [be
 
 [Learn more...](http://www.jsviews.com/#linked-elem-syntax)
 
-## <i>Render and link a template</i>
+## _Render and link a template_
 
 With *JsRender*, you call the `render()` method, then insert the resulting HTML in the DOM.
 
@@ -161,7 +162,7 @@ This will activate any declarative data-binding (`data-link="..."` expressions) 
 
 [Learn more...](http://www.jsviews.com/#toplink)
 
-### <i>Making "observable" changes to objects and arrays</i>
+### _Making "observable" changes to objects and arrays_
 
 In current JavaScript implementations, modifying objects or arrays does not raise any event, so there is no way for the change to be detected elsewhere. JsViews dynamic data-bound UI solves this through <em>data-linking</em>, using the <em>JsObservable observer pattern</em>.
 
@@ -185,7 +186,7 @@ $.observable(people).insert(newPerson);
 
 [Learn more...](http://www.jsviews.com/#$observable)
 
-### <i>Responding to data changes</i>
+### _Responding to data changes_
 
 JsViews uses the *<a href="http://www.jsviews.com/#onpropchange">property change</a>* or *<a href="http://www.jsviews.com/#onarrchange">array change</a>* events to make any <a href="http://www.jsviews.com/#linked-template-syntax">data-linked tags or elements</a> in your templates update automatically in response to each *observable* change in your underlying data. In addition, with two-way data-linking, it ensures that those events are raised when the user interacts with a data-linked template, and causes changes to the underlying data.
 
@@ -209,7 +210,7 @@ $.observable(person).observeAll(function(...) {
 
 [Learn more...](http://www.jsviews.com/#observeobjectsarrays)
 
-### <i>Accessing the view hierarchy</i>
+### _Accessing the view hierarchy_
 
 Each instance of a rendered template or a template block tag is associated with a JsViews *"view"* object -- so nested tags lead to a hierarchy of view objects. The [view hierarchy](http://www.jsviews.com/#views) shows how the underlying data objects map to the rendered UI.
 
@@ -247,7 +248,7 @@ $(".changeBtn").on("click", function() {
 
 [Learn more...](http://www.jsviews.com/#$view)
 
-### <i>Data-linked paths</i>
+### _Data-linked paths_
 
 JsViews data-linked templates (and the `$.observe()` API) use the same [paths and expressions](http://www.jsviews.com/#paths) as JsRender templates, but in addition provide *'leaf'* data-binding -- such as:
 
@@ -265,7 +266,7 @@ But data-linked paths have additional support, such as linking deeper into paths
 
 [Learn more...](http://www.jsviews.com/#linked-paths)
 
-### <i>Computed observables</i>
+### _Computed observables_
 
 JsViews also allows you to data-bind to computed values, such as:
 
@@ -276,11 +277,12 @@ JsViews also allows you to data-bind to computed values, such as:
 
 [Learn more...](http://www.jsviews.com/#computed)
 
-### <i>Documentation and APIs</i>
+### _Documentation and APIs_
 
-See the [www.jsviews.com](http://www.jsviews.com) site, including the *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*, [JsViews APIs](http://www.jsviews.com/#jsvapi) and [JsObservable APIs](http://www.jsviews.com/#jsoapi)topics.
+See the [www.jsviews.com](http://www.jsviews.com) site, including the *[JsViews Quickstart](http://www.jsviews.com/#jsv-quickstart)*, [JsViews APIs](http://www.jsviews.com/#jsvapi) and [JsObservable APIs](http://www.jsviews.com/#jsoapi) topics.
 
-### <i>Demos</i>
+### _Demos_
+
 Demos and samples can be found at [www.jsviews.com/#samples](http://www.jsviews.com/#samples), and throughout the [API documentation](http://www.jsviews.com/#jsvapi).
 
 (See also the [demos](https://github.com/BorisMoore/jsviews/tree/master/demos) folder of the GitHub repository - available [here](http://borismoore.github.io/jsviews/demos/index.html) as live samples).
