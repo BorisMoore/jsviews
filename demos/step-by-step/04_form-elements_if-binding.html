@@ -60,7 +60,7 @@
 			<div class="box">
 				<div class="subhead">Choose Currency:</div>
 				{{for ~currencies ~details=#data}}
-					<input type="radio" name="currencyPicker" value="{{:#index}}" data-link="~details.selectedCurrency" />{{:label}}<br/>
+						<label><input type="radio"  name="currencyPicker" value="{{:#index}}"  data-link="~details.selectedCurrency" /> {{:label}}</label><br/>
 				{{/for}}
 			</div>
 		{{/if}}
@@ -72,8 +72,8 @@
 <script type="text/javascript">
 	var currencies = [
 			{ name:"US", label:"US Dollar", rate: 1.0, symbol: "$" },
-			{ name:"EUR", label:"Euro", rate: 0.95, symbol: "€" },
-			{ name:"GB", label:"Pound", rate: 0.63, symbol: "£" }
+			{ name:"EUR", label:"Euro", rate: 0.95, symbol: "Euros: " },
+			{ name:"GB", label:"Pound", rate: 0.63, symbol: "Pounds: " }
 		],
 
 		orderDetails = {

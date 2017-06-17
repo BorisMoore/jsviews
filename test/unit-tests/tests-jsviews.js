@@ -128,12 +128,12 @@ $.views
 		},
 		fnTag: {
 			render: function() {
-				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width;
+				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width;
 			},
 			depends: ["firstName", "~settings.width"]
 		},
 		fnTagElNoInit: function() {
-			return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</span>";
+			return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width + "</span>";
 		},
 		tmplTagEl: {
 			template: "<span>Name: {{:firstName()}}. Width: {{:~settings.width}}</span>",
@@ -141,32 +141,32 @@ $.views
 		},
 		fnTagEl: {
 			render: function() {
-				return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</span>";
+				return "<span>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width + "</span>";
 			},
 			depends: ["firstName", "~settings.width"]
 		},
 		fnTagElCnt: {
 			render: function() {
-				return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</li>";
+				return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width + "</li>";
 			},
 			depends: ["firstName", "~settings.width"]
 		},
 		fnTagElCntNoInit: function() {
-			return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + "</li>";
+			return "<li>Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width + "</li>";
 		},
 		fnTagWithProps: {
 			render: function(data, val) {
-				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctx.settings.width + ". Value: " + val
-					+ ". Prop theTitle: " + this.tagCtx.props.theTitle + ". Prop ~street: " + $.views.getCtx(this.ctx.street);
+				return "Name: " + this.tagCtx.view.data.firstName() + ". Width: " + this.ctxPrm("settings").width + ". Value: " + val
+					+ ". Prop theTitle: " + this.tagCtx.props.theTitle + ". Prop ~street: " + this.ctxPrm("street");
 			},
 			depends: ["firstName", "~settings.width"]
 		},
 		tmplTagWithProps: {
 			render: function(val) {
-				this.ctx.theTitle = this.tagCtx.props.theTitle;
+				this.ctxPrm("theTitle", this.tagCtx.props.theTitle);
 			},
 			template: "Name: {{:firstName()}}. Width: {{:~settings.width}}. Value: {{:~settings.reverse}}. "
-				+ "Prop theTitle: {{:~theTitle}}. Prop ~street: {{:~street}}",
+				+ "Prop theTitle: {{dbg:~theTitle}}. Prop ~street: {{:~street}}",
 			depends: ["firstName", "~settings.width"]
 		},
 		twoWayTag: {
@@ -442,7 +442,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		var tmpl = $.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>');  // throws syntax error
+		var tmpl = $.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>'); // throws syntax error
 		tmpl.link("#result", {things: [{thing: "Orig"}]});
 	} catch (e) {
 		res = e.message;
@@ -811,14 +811,14 @@ $("#result").html(
 + '</div>'
 );
 
-$.link(true, "#toclone .toplevel",  data, helpers);
+$.link(true, "#toclone .toplevel", data, helpers);
 
 tmpl1.link("#toclone .result", data, helpers);
 tmpl2.link("#toclone .result2", data, helpers);
 
-var inputs =  $("#result input"),
-	buttons =  $("#result button"),
-	lis =  $("#result .clickLi");
+var inputs = $("#result input"),
+	buttons = $("#result button"),
+	lis = $("#result .clickLi");
 
 	// ................................ Act ..................................
 var cloned = $("#toclone").clone().removeAttr( 'id' );
@@ -3079,7 +3079,7 @@ test('data-link="attr{:expression}"', function() {
 
 	function divProps() {
 		var div = $("#result div")[0];
-		return "title: " + div.title + " - innerHTML: " + div.innerHTML.replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, "") + " - display: " + div.style.display;
+		return "title: " + div.title + " - innerHTML: " + div.innerHTML.replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, "") + " - display: " + div.style.display;
 	}
 
 	// ................................ Act ..................................
@@ -4293,7 +4293,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
-	equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, ""),
+	equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""),
 	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link fnTagEl rendering <span>, using: <div data-link="{fnTagEl}"></div>');
 
@@ -6812,7 +6812,7 @@ test("Chained computed observables in template expressions", function() {
 				markup: "{^{section 'A' ~mode ~sectionTypes=~root.sectionTypes[type].types/}}",
 				tags: {
 					section: function(setting, mode) {
-						return setting + mode + $.views.getCtx(this.tagCtx.ctx.sectionTypes)[0];
+						return setting + mode + this.ctxPrm("sectionTypes")[0];
 					}
 				}
 			});
@@ -6862,7 +6862,7 @@ test("Chained computed observables in template expressions", function() {
 				markup: "{^{section 'A' ~mode ^~sectionTypes=~root.sectionTypes[type].types/}}",
 				tags: {
 					section: function(setting, mode) {
-						return setting + mode + $.views.getCtx(this.tagCtx.ctx.sectionTypes)[0];
+						return setting + mode + this.ctxPrm("sectionTypes")[0];
 					}
 				}
 			});
@@ -8135,11 +8135,11 @@ test("{^{tag}}", function() {
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
-	before = $("#result div *")[1].outerHTML; // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
+	before = $("#result div span")[0].outerHTML; // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
 	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 	$.observable(settings).setProperty({title: "Sir", width: 40});
 	$.observable(person1).setProperty({fullName: "compFirst compLast"});
-	after = $("#result div *")[1].outerHTML;
+	after = $("#result div span")[0].outerHTML;
 	// ............................... Assert .................................
 	equal(before + "|" + after,
 	 isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
@@ -12500,6 +12500,259 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ................................ Reset ................................
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+	function findRed2() {
+		return " at: "
+			+ $(".wrap").find("span[style]").view().getIndex() + "/" +
+			+ $(".wrap2").find("li[style]").view().getIndex() + "/" +
+			+ $(".wrap3").find("li[style]").view().getIndex();
+	}
+
+	model.items = [0,1,2,3,4];
+
+	var cnt = 5;
+
+	$.templates({
+		tags: {
+			tag: function() {return this.tagCtx.render();}
+		},
+		markup:
+			'<div>Start <span>' +
+				'{^{for items}}' +
+					'{^{if true}}' +
+						'{^{if true}}' +
+							'{^{if false}}{{else}}' +
+								'{^{tag}}' +
+									'{^{:#getIndex()}} {{:}}|' +
+								'{{/tag}}' +
+							'{{/if}}' +
+						'{{/if}}' +
+					'{{/if}}' +
+				'{{/for}}' +
+			'</span>End</div>' +
+
+			'<div class="wrap">Start ' +
+				'{^{for items}}' +
+					'{^{if true}}' +
+						'{^{if true}}' +
+							'{^{if false}}{{else}}' +
+								'{^{tag}}' +
+									'<b data-link="#getIndex()"></b> <span>{{:}}</span>|' +
+								'{{/tag}}' +
+							'{{/if}}' +
+						'{{/if}}' +
+					'{{/if}}' +
+				'{{/for}}' +
+			'End</div>' +
+
+			'Start <ul class="wrap2">' +
+				'{^{for items}}' +
+					'{^{if true}}' +
+						'{^{if true}}' +
+							'{^{if false}}{{else}}' +
+								'{^{tag}}' +
+									'<li>{^{:#getIndex()}} <span data-link="#data"></span>|</li>' +
+								'{{/tag}}' +
+							'{{/if}}' +
+						'{{/if}}' +
+					'{{/if}}' +
+				'{{/for}}' +
+			'</ul>End' +
+
+			'<ul class="wrap3">' +
+				'<li>Start</li>' +
+				'{^{for items}}' +
+					'{^{if true}}' +
+						'{^{if true}}' +
+							'{^{if false}}{{else}}' +
+								'{^{tag}}' +
+									'<li data-link="#getIndex() + \' \' + #data + \'|\'"></li>' +
+								'{{/tag}}' +
+							'{{/if}}' +
+						'{{/if}}' +
+					'{{/if}}' +
+				'{{/for}}' +
+				'<li>End</li>' +
+			'</ul>'
+		}
+	).link("#result", model);
+
+	$(".wrap").find("span:first").css("color", "red");
+	$(".wrap2").find("li:first").css("color", "red");
+	$(".wrap3").find("li:nth-of-type(2)").css("color", "red");
+
+// ................................ Act ..................................
+	move(0, 1);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(1,0,2,3,4),
+		'Complex template: moved one item from 0 to 1');
+}
+
+// ................................ Act ..................................
+	move(0, 1);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(0,1,2,3,4),
+		'Complex template: moved one item from 0  to 1 again (actually swaps back to orginal positions');
+}
+
+// ................................ Act ..................................
+	move(1, 0);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(1,0,2,3,4),
+		'Complex template: moved one item back from 1 to 0');
+}
+
+// ................................ Act ..................................
+	move(1, 0); // Return to original position
+	move(1, 0, 0);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(0,1,2,3,4),
+		'Complex template: move(1, 0, 0) does nothing');
+}
+
+// ................................ Act ..................................
+	move(1, 1);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(0,1,2,3,4),
+		'Complex template: move(1, 1) does nothing');
+}
+
+// ................................ Act ..................................
+	move(0, 1, 2);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,0,1,3,4),
+		'Complex template: move(0, 1, 2) moves 2 items');
+}
+
+// ................................ Act ..................................
+	move(0, 1, 4);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(4,2,0,1,3),
+		'Complex template: move(0, 1, 4) moves 4 items');
+}
+
+// ................................ Act ..................................
+	move(1, 0, 4);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,0,1,3,4),
+		'Complex template: move(1, 0, 4) moves back 4 items');
+}
+
+// ................................ Act ..................................
+	move(0, 1, 5);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,0,1,3,4),
+		'Complex template: move(0, 1, 5): moving more than total items does nothing');
+}
+
+// ................................ Act ..................................
+	move(1, 2, 4);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,0,1,3,4),
+		'Complex template: move(1, 2, 4): moving up items beyond last item does nothing');
+}
+
+// ................................ Act ..................................
+	move(2, 1, 8);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,1,3,4,0),
+		'Complex template: move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
+}
+
+// ................................ Act ..................................
+	remove(1,1);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(2,3,4,0),
+		'Complex template: remove(1,1): works correctly');
+}
+
+// ................................ Act ..................................
+	remove(0);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(3,4,0),
+		'Complex template: remove(0): works correctly');
+}
+
+// ................................ Act ..................................
+	move(2, 0);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(0,3,4),
+		'Complex template: move(2, 0): works correctly');
+}
+
+// ................................ Act ..................................
+	remove(2);
+	move(0,1,2);
+	insert(0, 2);
+	move(2, 0);
+
+	// ............................... Assert .................................
+
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
+	equal($("#result").text() + findRed2(),
+		current(3,2,0),
+		'Complex template: multiple operations: works correctly - with the original item with style set to red still there');
+}
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
 });
 
 test("JsViews ArrayChange: refresh()", function() {
@@ -13342,7 +13595,7 @@ function testDepends(template) {
 	// =============================== Arrange ===============================
 	var summary = function() {
 		return this.itemsProp[0] + "-" + this.itemsProp.length + "-" + this.name;
-	}
+	};
 
 	summary.depends = ["itemsProp", "name"];
 
@@ -13711,7 +13964,7 @@ test("$.view() in regular content", function() {
 	var view = $.view("#1");
 
 	// ............................... Assert .................................
-	ok($.views.getCtx(view.ctx.val) === 1 && view.type === "myWrap", '$.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	ok(view.ctxPrm("val") === 1 && view.type === "myWrap", '$.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "root");
@@ -13909,6 +14162,430 @@ test("view.get() and view.getIndex() in regular content", function() {
 	$("#result").empty();
 });
 
+test("view.ctxPrm() tag.ctxPrm()", function() {
+
+	$.views.settings.trigger(false);
+
+	// =============================== Arrange ===============================
+	$.views.tags("myTag", {
+		bindTo: ["height", "width"],
+		linkedElement: [".ht", ".wd"],
+		linkedCtxParam: ["ht", "wd"],
+		mainElement: "div",
+		template: "<div class='mytag'>{{include tmpl=#content/}}</div><br/>",
+		setValue: function(val, index, tagElse) {
+			this.vals[tagElse][index] = val;
+		},
+		getValue: function(tagElse) {
+			return this.vals[tagElse];
+		},
+		onUpdate: false,
+		setSize: true,
+		vals: [[38, 48], [33, 44]]
+	});
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates('<input id="1" data-link="~foo" /> {^{:~foo}}');
+
+	tmpl.link("#result", {}, {});
+
+	var input = $("#1"),
+		view1 = input.view(),
+		content = $("#result"),
+		res = "1: " + (view1.ctxPrm("foo")||"") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+
+	res += "|2: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input.val("new1");
+	input.change();
+
+	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: -: { } |2: set1-set1: {set1 } |3: new1-new1: {new1 } "
+		: "1: -: { } |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+		"Uninitialized context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
+
+	// ................................ Act ..................................
+	tmpl.link("#result", {}, {foo: "instance"});
+
+	input = $("#1");
+	view1 = input.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("foo")||"") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+
+	res += "|2: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input.val("new1");
+	input.change();
+
+	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: instance-instance: { instance} |2: set1-set1: {set1} |3: new1-new1: {new1} "
+		: "1: instance-instance: { instance} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+		"Initialized instance context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
+
+	// ................................ Act ..................................
+	$.views.helpers("foo", "registered", tmpl);
+
+	tmpl.link("#result", {});
+
+	input = $("#1");
+	view1 = input.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("foo")||"") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+
+	res += "|2: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input.val("new1");
+	input.change();
+
+	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: registered-registered: { registered} |2: set1-set1: {set1} |3: new1-new1: {new1} "
+		: "1: registered-registered: { registered} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+		"Initialized registered helper param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		  '<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+		+ '{{if true}}, Inner: {^{:~foo}}'
+			+ '{{if true}}, Nested inner: {^{:~foo}}'
+			+ '{{/if}}'
+		+ '{{/if}}');
+
+	tmpl.link("#result", {});
+
+	input = $("#1");
+	view1 = input.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("foo")||"") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+
+	res += "|2: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input.val("new1");
+	input.change();
+
+	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: -: { Outer: , Inner: , Nested inner: }"
+		+ " |2: set1-set1: { Outer:set1 , Inner:set1 , Nested inner:set1 }"
+		+ " |3: new1-new1: { Outer:new1 , Inner:new1 , Nested inner:new1 } "
+		: "1: -: { Outer: , Inner: , Nested inner: }"
+		+ " |2: set1-set1: { Outer: set1, Inner: set1, Nested inner: set1}"
+		+ " |3: new1-new1: { Outer: new1, Inner: new1, Nested inner: new1} ",
+		"Observable contextual parameter is scoped to root view (view below top view)");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<input class="inp" data-link="~foo"/> {^{:~foo}}');
+
+	tmpl.link("#result", [0, 1]);
+
+	var input1 = $(".inp")[0],
+		input2 = $(".inp")[1],
+		view2 = $.view(input2);
+	view1 = $.view(input1);
+
+	content = $("#result");
+	res = "1: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+	view2.ctxPrm("foo", "set2");
+
+	res += "|2: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.value = "new1";
+	$(input1).change();
+	input2.value = "new2";
+	$(input2).change();
+
+	res += "|3: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: View1:- View2:-: {  }"
+		+ " |2: View1:set2-set2 View2:set2-set2: {set2 set2 }"
+		+ " |3: View1:new2-new2 View2:new2-new2: {new2 new2 } "
+		: "1: View1:- View2:-: {  }"
+		+ " |2: View1:set2-set2 View2:set2-set2: { set2 set2}"
+		+ " |3: View1:new2-new2 View2:new2-new2: { new2 new2} ",
+		"Observable contextual parameter is scoped to root view (view below top view) - which is array view, when rendering/linking an array");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+		+ '{^{myTag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
+			+ '{^{myTag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+			+ '{{/myTag}}'
+		+ '{{/myTag}}');
+
+	tmpl.link("#result", {cx: 22});
+
+	var input1 = $("#1"),
+		view1 = input1.view(),
+		input2 = $("#2"),
+		view2 = input2.view(),
+		input3 = $("#3"),
+		view3 = input3.view(),
+		input4 = $("#4"),
+		view4 = input4.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+	view2.ctxPrm("foo", "set2");
+	view3.ctxPrm("foo", "set3");
+	view4.ctxPrm("foo", "set4");
+
+	res += "|2: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.val("new1");
+	input1.change();
+	input2.val("new2");
+	input2.change();
+	input3.val("new3");
+	input3.change();
+	input4.val("new4");
+	input4.change();
+
+	res += "|3: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
+		: "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer: set1, Inner: set2, Nested inner: set4, Nested inner: set4}"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer: new1, Inner: new2, Nested inner: new4, Nested inner: new4} ",
+		"Observable contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
+	// ................................ Act ..................................
+
+	var innerTag = $.view().childTags(true, "myTag")[1];
+
+	res = "|1: " + (innerTag.ctxPrm("foo")||"");
+
+	innerTag.ctxPrm("foo", "tagFoo");
+	innerTag.ctxPrm("newPrm", "tagNewPrm");
+
+	res += " |2: " + (innerTag.ctxPrm("foo")||"") + "-" + (innerTag.ctxPrm("newPrm")||"")
+		+ "-" + (view1.ctxPrm("newPrm")||"") + "/" + (view2.ctxPrm("newPrm")||"") + "/" + (view3.ctxPrm("newPrm")||"") + "/" + (view4.ctxPrm("newPrm")||"")
+		+ "-" + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "|1: new4"
+		+ " |2: tagFoo-tagNewPrm-//tagNewPrm/tagNewPrm-new1/new2/tagFoo/tagFoo-new1/new2/tagFoo/tagFoo: { Outer:new1 , Inner:new2 , Nested inner:tagFoo , Nested inner:tagFoo } "
+		: "|1: new4"
+		+ " |2: tagFoo-tagNewPrm-//tagNewPrm/tagNewPrm-new1/new2/tagFoo/tagFoo-new1/new2/tagFoo/tagFoo: { Outer: new1, Inner: new2, Nested inner: tagFoo, Nested inner: tagFoo} ",
+		"tag.ctxPrm() gets/sets parameter scoped to tag view, shared across else blocks");
+
+	// ............................... Assert .................................
+
+	equal(innerTag.tagCtxs[0].nodes().length + "|" + innerTag.tagCtxs[1].nodes().length + "|" + innerTag.nodes().length
+		+ "-" + innerTag.tagCtxs[0].contents(true, "input").length + "|" + innerTag.tagCtxs[1].contents(true, "input").length + "|" + innerTag.contents(true, "input").length, "2|2|4-1|1|2",
+		"Multiple else blocks: tag.nodes() and tag.content() return content from all else blocks");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+		+ '{{myTag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
+			+ '{{myTag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+			+ '{{/myTag}}'
+		+ '{{/myTag}}');
+
+	tmpl.link("#result", {cx: 22});
+
+	var input1 = $("#1"),
+		view1 = input1.view(),
+		input2 = $("#2"),
+		view2 = input2.view(),
+		input3 = $("#3"),
+		view3 = input3.view(),
+		input4 = $("#4"),
+		view4 = input4.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set1");
+	view2.ctxPrm("foo", "set2");
+	view3.ctxPrm("foo", "set3");
+	view4.ctxPrm("foo", "set4");
+
+	res += "|2: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.val("new1");
+	input1.change();
+	input2.val("new2");
+	input2.change();
+	input3.val("new3");
+	input3.change();
+	input4.val("new4");
+	input4.change();
+
+	res += "|3: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"") + "/" + (view3.ctxPrm("foo")||"") + "/" + (view4.ctxPrm("foo")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
+		: "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer: set1, Inner: set2, Nested inner: set4, Nested inner: set4}"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer: new1, Inner: new2, Nested inner: new4, Nested inner: new4} ",
+		"Observable contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
+
+	// =============================== Arrange ===============================
+	$.views.tags.myTag.vals = [[38, 48], [33, 44]];
+
+	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
+		+ '{^{myTag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
+			+ '{^{myTag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+			+ '{{/myTag}}'
+		+ '{{/myTag}}');
+
+	tmpl.link("#result", {cx: 22});
+
+	var input1 = $("#1"),
+		view1 = input1.view(),
+		input2 = $("#2"),
+		view2 = input2.view(),
+		input3 = $("#3"),
+		view3 = input3.view(),
+		input4 = $("#4"),
+		view4 = input4.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("wd", "set1");
+	view2.ctxPrm("wd", "set2");
+	view3.ctxPrm("wd", "set3");
+	view4.ctxPrm("wd", "set4");
+
+	res += "|2: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.val("new1");
+	input1.change();
+	input2.val("new2");
+	input2.change();
+	input3.val("new3");
+	input3.change();
+	input4.val("new4");
+	input4.change();
+
+	res += "|3: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+
+	equal(res, isIE8
+		? "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner:48 , Nested inner: 22}"
+		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
+		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
+		: "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner: 48, Nested inner: 22}"
+		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
+		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
+		"Observable tag contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
+		+ '{{myTag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
+			+ '{{myTag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+			+ '{{/myTag}}'
+		+ '{{/myTag}}');
+
+	tmpl.link("#result", {cx: 22});
+
+	var input1 = $("#1"),
+		view1 = input1.view(),
+		input2 = $("#2"),
+		view2 = input2.view(),
+		input3 = $("#3"),
+		view3 = input3.view(),
+		input4 = $("#4"),
+		view4 = input4.view();
+	content = $("#result");
+	res = "1: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("wd", "set1");
+	view2.ctxPrm("wd", "set2");
+	view3.ctxPrm("wd", "set3");
+	view4.ctxPrm("wd", "set4");
+
+	res += "|2: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.val("new1");
+	input1.change();
+	input2.val("new2");
+	input2.change();
+	input3.val("new3");
+	input3.change();
+	input4.val("new4");
+	input4.change();
+
+	res += "|3: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
+		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
+		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
+		: "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
+		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
+		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
+		"Observable tag contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
+
+	// ............................... Reset .................................
+	$("#result").empty();
+});
+
 test("$.view() in element-only content", function() {
 
 	// =============================== Arrange ===============================
@@ -13918,7 +14595,7 @@ test("$.view() in element-only content", function() {
 	var view = $.view("#tr1");
 
 	// ............................... Assert .................................
-	ok($.views.getCtx(view.ctx.val) === 1 && view.type === "myWrapElCnt", 'Within element-only content, $.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'Within element-only content, $.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "root");
@@ -14133,7 +14810,7 @@ test("view.get() and view.getIndex() in element-only content", function() {
 	view = view1.get("myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok($.views.getCtx(view.ctx.val) === 1 && view.type === "myWrapElCnt", 'In element-only content, view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
+	ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'In element-only content, view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
 
 	// ............................... Assert .................................
 	ok($.view("#tr1").getIndex() === 0 && $.view("#tr1", "item").index === 0 && $.view("#tr2").getIndex() === 1 && $.view("#tr2", "item").index === 1,
@@ -14536,7 +15213,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
+	equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
 
 	// =============================== Arrange ===============================
 
@@ -16367,7 +17044,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 					this.contents(".nm").text(this.bndArgs()[0]); // Programmatically update span content
 				},
 				doupdate: function() {
-					this.update(this.bndArgs()[0] + this.cnt++).setValue(); // Programmatically call update() from within tag
+					this.updateValue(this.bndArgs()[0] + this.cnt++).setValue(); // Programmatically call update() from within tag
 				},
 				onUpdate: false,
 				cnt: 0 // Counter for programmatically updated content
@@ -16398,7 +17075,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	// ................................ Act ..................................
 	result = "" + myTag.bndArgs();
 
-	myTag.update("updatedFirst").setValue();
+	myTag.updateValue("updatedFirst").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
@@ -16413,7 +17090,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0Update"
 		: "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0 Update",
-	"With linkedElem set in onBind, myTag.bndArgs() and myTag.update().setValue() correctly access/update two-way bound values");
+	"With linkedElem set in onBind, myTag.bndArgs() and myTag.updateValue().setValue() correctly access/update two-way bound values");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
@@ -16424,9 +17101,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 			myTag: {
 				bindTo: [0, 1],
 				template: '<input id="linkedElm1"/><input id="linkedElm2"/> <span class="nm"></span>',
-				onBind: function() {
-					var inputs = this.contents("input");
-					this.linkedElems = [$(inputs[0]), $(inputs[1])]; // Programmatically set linkedElems
+				onBind: function(tagCtx) {
+					var inputs = tagCtx.contentView.contents("input");
+					tagCtx.linkedElems = [$(inputs[0]), $(inputs[1])]; // Programmatically set linkedElems
 				},
 				onAfterLink: function() {
 					this.contents(".nm").text(this.bndArgs()[0] + " " + this.bndArgs()[1]); // Programmatically update span content
@@ -16457,7 +17134,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: [0, 1], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.update().setValue() '
+	'With bindTo: [0, 1], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.updateValue().setValue() '
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -16499,7 +17176,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Jo--Bob|Bob| Bob--newFirst|newFirst| newFirst",
-	'With bindTo: 1, and linkedElem set in onBind, myTag.bndArgs() and myTag.update().setValue()'
+	'With bindTo: 1, and linkedElem set in onBind, myTag.bndArgs() and myTag.updateValue().setValue()'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -16511,9 +17188,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 			myTag: {
 				bindTo: ["name1", "name2"],
 				template: '<input id="linkedElm1"/><input id="linkedElm2"/> <span class="nm"></span>',
-				onBind: function() {
-					var inputs = this.contents("input");
-					this.linkedElems = [$(inputs[0]), $(inputs[1])]; // Programmatically set linkedElems
+				onBind: function(tagCtx) {
+					var inputs = tagCtx.contentView.contents("input");
+					tagCtx.linkedElems = [$(inputs[0]), $(inputs[1])]; // Programmatically set linkedElems
 				},
 				onAfterLink: function() {
 					this.contents(".nm").text(this.bndArgs()[0] + " " + this.bndArgs()[1]); // Programmatically update span content
@@ -16544,7 +17221,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.update().setValue()'
+	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.updateValue().setValue()'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -16577,7 +17254,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first;
 
-	myTag.update("updatedFirst").setValue();
+	myTag.updateValue("updatedFirst").setValue();
 
 	result += "--" + person.first + "|" + linkedEl.value;
 
@@ -16615,7 +17292,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first + "|" + $("#result").text();
 
-	myTag.update("updatedFirst").setValue();
+	myTag.updateValue("updatedFirst").setValue();
 
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
@@ -16654,7 +17331,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first + "|" + $("#result").text();
 
-	myTag.update("updatedFirst");
+	myTag.updateValue("updatedFirst");
 
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
@@ -16703,12 +17380,12 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	// ................................ Act ..................................
 	result = "" + myTag.bndArgs();
 
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	equal(result, "newLast,newFirst--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast|updatedFirst|updatedLast updatedFirst",
-	"myTag.bndArgs() and myTag.update().setValue() work correctly for accessing/updating two-way bound tag contextual parameters");
+	"myTag.bndArgs() and myTag.updateValues().setValue() work correctly for accessing/updating two-way bound tag contextual parameters");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
@@ -16734,12 +17411,13 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
+	// ............................... Assert .................................
 	equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
-	"myTag.bndArgs() and myTag.update().setValue() work correctly for accessing/updating two-way bound linkedElems");
+	"myTag.bndArgs() and myTag.updateValues().setValue() work correctly for accessing/updating two-way bound linkedElems");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
@@ -16773,10 +17451,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		+ linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
+	// ............................... Assert .................................
 	equal(result, "truetruetrueJo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
 	"Mixed declarative linkedElement and programmatic onBind approaches for defining linkedElems");
 
@@ -16810,10 +17489,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
+	// ............................... Assert .................................
 	equal(result, "Jo|Jo| Jo--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedFirst",
 	"Mixed declarative linkedElement and programmatic onBind approaches for defining linkedElems");
 
@@ -16839,10 +17519,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
+	// ............................... Assert .................................
 	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
 	"linkedCtxParam and linkedElem");
 
@@ -16856,9 +17537,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 				bindTo: [0, 1],
 				linkedCtxParam: ["foo", undefined],
 				template: '<input id="linkedElm1"/> <span id="linkedElm2" data-link="~foo"></span>',
-				onBind: function() {
-					var inputs = this.contents("input");
-					this.linkedElems = [undefined, $(inputs[0])]; // Programmatically set linkedElems
+				onBind: function(tagCtx) {
+					var inputs = tagCtx.contentView.contents("input");
+					tagCtx.linkedElems = [undefined, $(inputs[0])]; // Programmatically set linkedElems
 				},
 			}
 		}
@@ -16871,10 +17552,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
+	// ............................... Assert .................................
 	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
 	"linkedCtxParam plus programmatic setting of linkedElem");
 
@@ -16910,10 +17592,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = person.first + "|" + person.last;
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
+	// ............................... Assert .................................
 	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
 	"bindTo:1 with converters, using linkedElement with selector");
 
@@ -16946,10 +17629,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = person.first + "|" + person.last;
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
+	// ............................... Assert .................................
 	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
 	"linkedEl with converters (no bindTo), using linkedElement with selector");
 
@@ -16988,10 +17672,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + person.first + "," + person.last;
 
 	// ................................ Act ..................................
-	myTag.update("updatedFirst", "updatedLast").setValue();
+	myTag.updateValues("updatedFirst", "updatedLast").setValue();
 
 	result += "|" + myTag.bndArgs() + "|" + linkedEl1.innerText + "," + linkedEl2.value + "|" + person.first + "," + person.last;
 
+	// ............................... Assert .................................
 	equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
 	"bindTo with converters, using linkedElement and linkedCtxParam");
 
@@ -17014,9 +17699,10 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 							var moveToX  = ev2.clientX + addedWidth;
 							var moveToY  = ev2.clientY + addedHeight;
 //						setTimeout(function() {
-								tag.update(moveToY, moveToX);
+								tag.updateValues(moveToY, moveToX);
 //						});
-							tag.setValue(moveToY, moveToX);
+							tag.setValue(moveToY, 0);
+							tag.setValue(moveToX, 1);
 //					});
 					});
 				}
@@ -17025,13 +17711,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 				$(document.body).off("mousemove");
 			});
 		},
-		setValue: function(height, width) {
-			if (height !== undefined) {
-				this.mainElem.height(height || 0);
-			}
-			if (width !== undefined) {
-				this.mainElem.width(width || 0);
-			}
+		setValue: function(val, index) {
+			this.mainElem[index ? "width" : "height"](val || 0);
 		},
 		getValue: function() {
 			var mainElem = this.mainElem;
@@ -17061,6 +17742,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		&& linkedElHt.value === linkedCtxPrmHts[0].value && linkedElHt.value === linkedCtxPrmHts[1].value
 		&& linkedElWd.value === linkedCtxPrmWds[0].value && linkedElWd.value === linkedCtxPrmWds[1].value;
 
+	// ............................... Assert .................................
 	ok(result,
 	"linkedElement and linkedCtxParam for unset params are initialized by getValue");
 
@@ -17097,6 +17779,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|30,40",
 	"linkedElement and linkedCtxParam and tag.getValue() for static initial values initialize correctly");
 
@@ -17111,20 +17794,22 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 160);
-	myTag.update(140, 160);
+	myTag.setValues(140, 160);
+	myTag.updateValues(140, 160);
 
 	result = linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), myTag.update()");
+	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValues(), myTag.updateValues()");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
@@ -17148,6 +17833,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|30,40",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly");
 
@@ -17162,6 +17848,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value");
 
@@ -17176,20 +17863,22 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|50,70",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 160);
-	myTag.update(140, 160);
+	myTag.setValues(140, 160);
+	myTag.updateValues(140, 160);
 
 	result = linkedElCy.value === "140" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "160" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.update()");
+	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues()");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('{^{myTag convert=~plus convertBack=~minus}}'
@@ -17219,7 +17908,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		&& linkedElWd.value === linkedCtxPrmWds[0].value && linkedElWd.value === linkedCtxPrmWds[1].value
 		&& linkedElWd.value === "" + myTag.getValue()[1] && linkedElHt.value === "" + myTag.getValue()[0];
 
-ok(result,
+	// ............................... Assert .................................
+	ok(result,
 	"linkedElement and linkedCtxParam for unset params are initialized by getValue (with converters)");
 
 	// ................................ Act ..................................
@@ -17233,6 +17923,7 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue (with converters)");
 
@@ -17262,6 +17953,7 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|35,50",
 	"linkedElement and linkedCtxParam and tag.getValue() for static initial values initialize correctly (with converters)");
 
@@ -17276,20 +17968,23 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value (with converters)");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 160);
-	myTag.update(140, 160);
+	myTag.setValue(140, 0);
+	myTag.setValue(160, 1);
+	myTag.updateValues(140, 160);
 
 	result = linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), myTag.update() (with converters)");
+	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), myTag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
@@ -17320,6 +18015,7 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|35,50",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly (with converters)");
 
@@ -17334,6 +18030,7 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value (with converters)");
 
@@ -17348,20 +18045,23 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|55,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (with converters)");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 160);
-	myTag.update(140, 160);
+	myTag.setValue(140, 0);
+	myTag.setValue(160, 1);
+	myTag.updateValues(140, 160);
 
 	result = linkedElCy.value === "135" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "150" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.update() (with converters)");
+	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
@@ -17392,6 +18092,7 @@ ok(result,
 
 	result += "|" + myTag.getValue()[1];
 
+	// ............................... Assert .................................
 	equal(result, "true|50",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly (One bindTo param bound, other uninitialized. With converters)");
 
@@ -17406,6 +18107,7 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value (One bindTo param bound, other uninitialized. With converters)");
 
@@ -17420,20 +18122,420 @@ ok(result,
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|40,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (One bindTo param bound, other uninitialized. With converters)");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 160);
-	myTag.update(140, 160);
+	myTag.setValues(140, 160);
+	myTag.updateValues(140, 160);
 
 	result = linkedElCy.value === "50" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "150" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
 	result += "|" + myTag.getValue();
 
+	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.update() (One bindTo param bound, other uninitialized. With converters)");
+	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues() (One bindTo param bound, other uninitialized. With converters)");
+
+	// =============================== Arrange ===============================
+	person = {first: "Jo", middle: "Herbert", last: "Blow"};
+
+	$.templates({
+		markup: 
+			'{^{textbox first label="First"}} {^{child ~nm/}}'
+			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
+			+ '{{else last label="Last"}} {^{child ~nm/}}'
+		+ '{{/textbox}}'
+		+ '<input data-link="first" class="block"/>'
+		+ '<input data-link="middle" class="block"/>'
+		+ '<input data-link="last" class="block"/>: '
+		+ '{^{:first}} {^{:middle}} {^{:last}}',
+		tags: {
+			textbox: {
+				linkedCtxParam: "nm",
+				onBind: function() {
+					// Find input in contents
+					var l = this.tagCtxs.length;
+					while (l--) {
+						var tagCtx = this.tagCtxs[l];
+						tagCtx.linkedElems = [tagCtx.contents("input")];
+					}
+				},
+				template: "<em> {{:~tag.tagCtx.props.label}}</em><input id='{{:~tag.tagCtx.props.label}}' />{^{include tmpl=#content/}}",
+				onUpdate: false, // No need to re-render whole tag, when content updates.
+			},
+			child: function(val) {
+				return val;
+			}
+		}
+	}).link("#result", person);
+
+	var linkedElFirst = $("#First")[0],
+	linkedElMiddle = $("#Middle")[0],
+	linkedElLast = $("#Last")[0],
+	myTag = $.view(linkedElFirst).tag;
+
+	function getResult() {
+		return "Data: " + person.first + "-" + person.middle + "-" + person.last
+			+ " Inputs: " + linkedElFirst.value + "-" + linkedElMiddle.value + "-" + linkedElLast.value
+			+ " Text:" + $("#result").text() + "|";
+	}
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
+		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
+	"Two-way bound tag with multiple else blocks - initial render");
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
+		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
+	"Two-way bound tag with multiple else blocks - observable update");
+
+	// ................................ Act ..................................
+	linkedElFirst.value = "newJo"
+	linkedElMiddle.value = "newHerbert"
+	linkedElLast.value = "newBlow"
+	$(linkedElFirst).change();
+	$(linkedElMiddle).change();
+	$(linkedElLast).change();
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
+		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First newJo Middle newHerbert Last newBlow: newJo newHerbert newBlow|",
+	"Two-way bound tag with multiple else blocks - updated inputs");
+
+	// ................................ Act ..................................
+	myTag.updateValue("updatedFirst", 0, 0);
+	myTag.updateValue("updatedMiddle", 0, 1);
+	myTag.updateValue("updatedLast", 0, 2);
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
+		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First updatedFirst Middle updatedMiddle Last updatedLast: updatedFirst updatedMiddle updatedLast|",
+	"Two-way bound tag with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
+
+	// ................................ Act ..................................
+	myTag.updateValues("updatedFirst2");
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
+
+	// ................................ Act ..................................
+	myTag.setValue("changedFirst", 0, 0);
+	myTag.setValue("changedMiddle", 0, 1);
+	myTag.setValue("changedLast", 0, 2);
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag with multiple else blocks - tag.setValue() updates linkedElems only");
+
+	// ................................ Act ..................................
+	myTag.setValues("changedFirst2");
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems only");
+
+	// ............................... Assert .................................
+	ok(myTag.contents("input")[1] === myTag.tagCtxs[1].contents("input")[0]
+		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].nodes()[1]
+		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].contentView.nodes()[1]
+		&& myTag.childTags("child")[1] === myTag.tagCtxs[1].childTags("child")[0]
+		&& myTag.childTags("child").length === myTag.tagCtxs[0].childTags("child").length + myTag.tagCtxs[1].childTags("child").length +  myTag.tagCtxs[2].childTags("child").length,
+	"Two-way bound tag, multiple else blocks: calls tagCtx.contents() tagCtx.nodes() tagCtx.childTags() return from one else block."
+	+ " (Whereas tag.contents() etc returns from all else blocks)");
+
+	// =============================== Arrange ===============================
+	person = {first: "Jo", middle: "Herbert", last: "Blow"};
+
+	$.templates({
+		markup: 
+			'{^{textbox first label="First"}} {^{child ~nm/}}'
+			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
+			+ '{{else last label="Last"}} {^{child ~nm/}}'
+		+ '{{/textbox}}'
+		+ '<input data-link="first" class="block"/>'
+		+ '<input data-link="middle" class="block"/>'
+		+ '<input data-link="last" class="block"/>: '
+		+ '{^{:first}} {^{:middle}} {^{:last}}',
+		tags: {
+			textbox: {
+				render: function() {
+					return "<em> " + this.tagCtx.props.label + "</em><input id='" + this.tagCtx.props.label + "' />" + this.tagCtx.render();
+				},
+				linkedCtxParam: "nm",
+				onBind: function() {
+					// Find input in contents
+					var l = this.tagCtxs.length;
+					while (l--) {
+						var tagCtx = this.tagCtxs[l];
+						tagCtx.linkedElems = [tagCtx.contents("input")];
+					}
+				},
+				onUpdate: false, // No need to re-render whole tag, when content updates.
+			},
+			child: function(val) {
+				return val;
+			}
+		}
+	}).link("#result", person);
+
+	linkedElFirst = $("#First")[0];
+	linkedElMiddle = $("#Middle")[0];
+	linkedElLast = $("#Last")[0];
+	myTag = $.view(linkedElFirst).tag;
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
+		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
+	"Two-way bound tag (using render method) with multiple else blocks - initial render");
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
+		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
+	"Two-way bound tag (using render method) with multiple else blocks - observable update");
+
+	// ................................ Act ..................................
+	linkedElFirst.value = "newJo"
+	linkedElMiddle.value = "newHerbert"
+	linkedElLast.value = "newBlow"
+	$(linkedElFirst).change();
+	$(linkedElMiddle).change();
+	$(linkedElLast).change();
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
+		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First newJo Middle newHerbert Last newBlow: newJo newHerbert newBlow|",
+	"Two-way bound tag (using render method) with multiple else blocks - updated inputs");
+
+	// ................................ Act ..................................
+	myTag.updateValue("updatedFirst", 0, 0);
+	myTag.updateValue("updatedMiddle", 0, 1);
+	myTag.updateValue("updatedLast", 0, 2);
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
+		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First updatedFirst Middle updatedMiddle Last updatedLast: updatedFirst updatedMiddle updatedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
+
+	// ................................ Act ..................................
+	myTag.updateValues("updatedFirst2");
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|" 
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
+
+	// ................................ Act ..................................
+	myTag.setValue("changedFirst", 0, 0);
+	myTag.setValue("changedMiddle", 0, 1);
+	myTag.setValue("changedLast", 0, 2);
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.setValue() updates linkedElems only");
+
+	// ................................ Act ..................................
+	myTag.setValues("changedFirst2");
+
+	// ............................... Assert .................................
+	equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems only");
+
+	// ............................... Assert .................................
+	ok(myTag.contents("input")[1] === myTag.tagCtxs[1].contents("input")[0]
+		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].nodes()[1]
+		&& myTag.childTags("child")[1] === myTag.tagCtxs[1].childTags("child")[0],
+	"Two-way bound tag (using render method) with multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() tagCtx.childTags() work correctly");
+
+	// =============================== Arrange ===============================
+	var person = {first: "Jo", last: "Blow"};
+
+	$.templates({
+		markup: '{^{myTag 0 prop=first last}}{{else 0 prop=last first}}{{/myTag}} {^{:first}} {^{:last}}',
+		tags: {
+			myTag: {
+				bindTo: ["prop", 1],
+				template: '<input/><input/> <span class="nm"></span><br/>',
+				onBind: function() {
+					var tagCtx0 = this.tagCtxs[0];
+					var tagCtx1 = this.tagCtxs[1];
+					var inputs0 = tagCtx0.contents("input");
+					var inputs1 = tagCtx1.contents("input");
+					tagCtx0.linkedElems = [$(inputs0[0]), $(inputs0[1])]; // Programmatically set linkedElems
+					tagCtx1.linkedElems = [$(inputs1[0]), $(inputs1[1])]; // Programmatically set linkedElems
+				},
+				onAfterLink: function() {
+					var tagCtx0 = this.tagCtxs[0];
+					var tagCtx1 = this.tagCtxs[1];
+					var span0 = tagCtx0.contents(".nm");
+					var span1 = tagCtx1.contents(".nm");
+					span0.text(tagCtx0.bndArgs()[0] + " " + tagCtx0.bndArgs()[1]); // Programmatically update span content
+					span1.text(tagCtx1.bndArgs()[0] + " " + tagCtx1.bndArgs()[1]); // Programmatically update span content
+				},
+				onUpdate: false
+			}
+		}
+	}).link("#result", person);
+
+	myTag = $.view().childTags()[0];
+	var linkedElems0 = myTag.tagCtx.contents("input");
+	var linkedElems1 = myTag.tagCtxs[1].contents("input");
+
+	function getResult2() {
+		return "Data: " + person.first + "-" + person.last
+			+ " Inputs: " + linkedElems0[0].value + "-" + linkedElems0[1].value + "-" + linkedElems1[0].value + "-" + linkedElems1[1].value
+			+ " Text:" + $("#result").text() + "|";
+	}
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow JoJo Blow|"
+		: "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow Jo Jo Blow|",
+	"Two-way tag with multiple bindings and multiple else blocks - initial render");
+
+	// ................................ Act ..................................
+	$.observable(person).setProperty({first: "Bob", last: "Smith"});
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith BobBobSmith|"
+		: "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith Bob Bob Smith|",
+	"Two-way tag with multiple bindings and multiple else blocks - observable update");
+
+	// ................................ Act ..................................
+ // Change inputs of {{else}} block
+	linkedElems1[0].value = "newBlow"
+	linkedElems1[1].value = "newJo"
+	$(linkedElems1[0]).change();
+	$(linkedElems1[1]).change();
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJonewJonewBlow|"
+		: "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJo newJo newBlow|",
+	"Two-way tag with multiple bindings and multiple else blocks - updated inputs");
+
+	// ................................ Act ..................................
+ // Update each value for {{else}} block
+	myTag.updateValue("updatedLast", 0, 1);
+	myTag.updateValue("updatedFirst", 1, 1);
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst updatedLast updatedLast updatedFirstupdatedFirstupdatedLast|"
+		: "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst updatedLast updatedLast updatedFirst updatedFirst updatedLast|",
+	"Two-way tag with multiple bindings and multiple else blocks - tag.updateValue() updates outer bindings but not linkedElems");
+
+	// ................................ Act ..................................
+ // Update values for tag (main block)
+	myTag.updateValues("updatedFirst2", "updatedLast2");
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
+	"Two-way tag with multiple bindings and multiple else blocks - tag.updateValues() updates outer bindings but not linkedElems");
+
+	// ................................ Act ..................................
+ // Set each value for {{else}} block
+	myTag.setValue("changedLast", 0, 1);
+	myTag.setValue("changedFirst", 1, 1);
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
+	"Two-way tag with multiple bindings and multiple else blocks - tag.setValue() updates linkedElems only");
+
+	// ................................ Act ..................................
+ // Set values for {{else}} block
+	myTag.tagCtxs[1].setValues("changedLast2", "changedFirst2");
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
+	"Two-way tag with multiple bindings and multiple else blocks - tagCtx.setValues() updates linkedElems only");
+
+	// ................................ Act ..................................
+ // Set values for tag (main block)
+	myTag.setValues("changedFirst3", "changedLast3");
+
+	// ............................... Assert .................................
+	equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|" 
+		: "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
+	"Two-way tag with multiple bindings and multiple else blocks - tag.setValues() updates linkedElems only");
+
+	// ............................... Assert .................................
+	ok(myTag.contents("input")[3] === myTag.tagCtxs[1].contents("input")[1]
+		&& myTag.nodes()[6] === myTag.tagCtxs[1].nodes()[1],
+	"Two-way tag with multiple bindings and multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() work correctly");
+
+	// ............................... Assert .................................
+	equal("" + myTag.cvtArgs() + "|" + myTag.tagCtxs[0].cvtArgs() + "|" + myTag.tagCtxs[1].cvtArgs()
+		+ "--" + myTag.bndArgs() + "|" + myTag.tagCtxs[0].bndArgs() + "|" + myTag.tagCtxs[1].bndArgs(),
+		"0,updatedLast2|0,updatedLast2|0,updatedFirst2--updatedFirst2,updatedLast2|updatedFirst2,updatedLast2|updatedLast2,updatedFirst2",
+	"Two-way tag with multiple bindings and multiple else blocks - calls to tag.cvtArgs(), tagCtx.cvtArgs() tag.bndArgs() tagCtx.bndArgs() work correctly");
 
 // ............................... Reset .................................
 
