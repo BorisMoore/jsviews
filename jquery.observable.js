@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.86 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.87 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.86",
+var versionNumber = "v0.9.87",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -829,7 +829,8 @@ if (!$.observe) {
 					 || leaf;
 					getter = property;
 					setter = getter.set === true ? getter : getter.set;
-					property = getter.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
+					property = getter.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
+					// See unit tests 'Can observe properties of type function'.
 				}
 			}
 

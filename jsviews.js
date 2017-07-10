@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.86 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.87 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.86",
+var versionNumber = "v0.9.87",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
@@ -198,7 +198,7 @@ function getMethod(baseMethod, method) {
 
 function tagHandlersFromProps(tag, tagCtx) {
 	for (var prop in tagCtx.props) {
-		if (rHasHandlers.test(prop) && !(tag[prop] && tag[prop].fix)) { // Don't override handlers with fix expando
+		if (rHasHandlers.test(prop) && !(tag[prop] && tag[prop].fix)) { // Don't override handlers with fix expando (used in datepicker and spinner)
 			tag[prop] = getMethod(tag.constructor.prototype[prop], tagCtx.props[prop]);
 			// Copy over the onFoo props, convert and convertBack from tagCtx.props to tag (overrides values in tagDef).
 			// Note: unsupported scenario: if handlers are dynamically added ^onFoo=expression this will work, but dynamically removing will not work.
@@ -232,10 +232,12 @@ function JsViewsError(message) {
 }
 
 function $extend(target, source) {
-	for (var name in source) {
-		target[name] = source[name];
+	if (target) {
+		for (var name in source) {
+			target[name] = source[name];
+		}
+		return target;
 	}
-	return target;
 }
 
 (JsViewsError.prototype = new Error()).constructor = JsViewsError;
@@ -358,33 +360,18 @@ function contextParameter(key, value, isContextCb) {
 
 	if (key in store || key in (store = $helpers)) {
 		res = store && store[key];
-		if (res && $isFunction(res)) {
-			// If a helper is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
-			// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
-			// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
-			// For example, ~util.foo() will have the ~util object as 'this' pointer
-			wrapped = function() {
-				return res.apply((!this || this === global) ? storeView : this, arguments);
-			};
-			$extend(wrapped, res); // Attach same expandos (if any) to the wrapped function
-			wrapped._vw = storeView;
-			return wrapped;
-		}
 		if (key === "tag" || key === "root" || key === "parentTags" || storeView._.it === key ) {
 			return res;
 		}
 	} else {
 		store = undefined;
 	}
-	if (storeView.linked || storeView.tagCtx) { // Data-linked view, or tag instance
+	if (!res || !$isFunction(res) && storeView.linked || storeView.tagCtx) { // Data-linked view, or tag instance
 		if (!res || !res._cxp) {
 			// Not a contextual parameter
 			if (store !== $helpers) {
-				if (res === undefined || (storeView.tagCtx ? (storeView = storeView.tagCtx.view) : storeView).root.ctx[key] !== res) {
-					// This is not an instance parameter (passed in with tmpl.link() call)
-					// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view (view under top view)
-					storeView = storeView.ctx && storeView.ctx.tag || storeView.root;
-				}
+				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view (view under top view)
+				storeView = storeView.ctx && storeView.ctx.tag || storeView.root;
 				store = storeView._ocps;
 				res = store && store[key] || res;
 			}
@@ -410,7 +397,18 @@ function contextParameter(key, value, isContextCb) {
 				: res[0]._ocp; // Observable contextual parameter (uninitialized, or initialized as static expression, so no path dependencies)
 		}
 	}
-	return res;
+	if (res && $isFunction(res)) {
+		// If a helper is of type function, and not already wrapped, we will wrap it, so if called with no this pointer it will be called with the
+		// view as 'this' context. If the helper ~foo() was in a data-link expression, the view will have a 'temporary' linkCtx property too.
+		// Note that helper functions on deeper paths will have specific this pointers, from the preceding path.
+		// For example, ~util.foo() will have the ~util object as 'this' pointer
+		wrapped = function() {
+			return res.apply((!this || this === global) ? storeView : this, arguments);
+		};
+		$extend(wrapped, res); // Attach same expandos (if any) to the wrapped function
+		wrapped._vw = storeView;
+	}
+	return wrapped || res;
 }
 
 function getTemplate(tmpl) {
@@ -518,9 +516,7 @@ function convertArgs(converter, bound, tagElse) { // tag.cvtArgs()
 		bindTo = bindTo || [0];
 		converter = converter.apply(tag, boundArgs || args);
 		l = bindTo.length;
-		if (l < 2) {
-			converter = [converter];
-		}
+		converter = l < 2 ? [converter] : converter || [];
 		if (bound) {        // Call to bndArgs convertBoundArgs() - so apply converter to all boundArgs
 			args = converter; // The array of values returned from the converter
 		} else {            // Call to cvtArgs()
@@ -562,7 +558,7 @@ function getResource(resourceType, itemName) {
 function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 	parentView = parentView || topView;
 	var tag, tag_, tagDef, template, tags, attr, parentTag, l, m, n, itemRet, tagCtx, tagCtxCtx, ctxPrm, bindTo,
-		content, callInit, mapDef, thisMap, args, props, initialTmpl, tagDataMap, contentCtx, key,
+		content, callInit, mapDef, thisMap, args, props, tagDataMap, contentCtx, key,
 		i = 0,
 		ret = "",
 		linkCtx = parentView.linkCtx || 0,
@@ -667,7 +663,6 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 
 			if (!i) {
 				if (callInit) {
-					initialTmpl = tag.template;
 					tag.init(tagCtx, linkCtx, tag.ctx);
 					callInit = undefined;
 				}
@@ -711,12 +706,13 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 					// to provide a contentView for the tag, which will correctly dispose bindings if deleted. The 'tmpl' for this view will
 					// be a dumbed down template which will always return the  itemRet string (no matter what the data is). The itemRet string
 					// is not compiled as template markup, so can include "{{" or "}}" without triggering syntax errors
-					itemRet = renderWithViews({
-						fn: function() { // 'Dumbed down' template which always renders 'static' itemRet string
-							return itemRet;
-						},
-						links: []},
-						parentView.data, undefined, true, parentView, undefined, undefined, tag);
+					tmpl = { // 'Dumbed down' template which always renders 'static' itemRet string
+						links: []
+					};
+					tmpl.render = tmpl.fn = function() {
+						return itemRet;
+					};
+					itemRet = renderWithViews(tmpl, parentView.data, undefined, true, parentView, undefined, undefined, tag);
 				}
 			}
 			if (!args.length) {
@@ -3249,7 +3245,8 @@ if (!$.observe) {
 					 || leaf;
 					getter = property;
 					setter = getter.set === true ? getter : getter.set;
-					property = getter.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
+					property = getter.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
+					// See unit tests 'Can observe properties of type function'.
 				}
 			}
 
@@ -3645,8 +3642,8 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 // Observably update data values targeted by bindTo
 // Called when linkedElem changes: called as updateValues(sourceValues, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValues(val1, val2, val3, ...) - this: tag
-	var cancel, linkCtx, cvtBack, cnvtName, target, view, binding, sourceValue, origVals, sourceElem, sourceEl,
-		oldLinkCtx, onBeforeChange, onAfterChange, tos, to, tcpTag, eventArgs, exprOb, contextCb, l, srcVals, tag;
+	var linkCtx, cvtBack, cnvtName, target, view, binding, sourceValue, origVals, sourceElem, sourceEl,
+		oldLinkCtx, tos, to, tcpTag, exprOb, contextCb, l, tag;
 
 	if (bindId && bindId._tgId) {
 		tag = bindId;
@@ -3659,6 +3656,7 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 			// The binding has a 'to' field, which is of the form [tosForElse0, tosForElse1, ...]
 			// where tosForElseX is of the form [[[targetObject, toPath], [targetObject, toPath], ...], cvtBack]
 			linkCtx = binding.linkCtx;
+			linkCtx.ev = ev;
 			sourceElem = linkCtx.elem;
 			view = linkCtx.view;
 			tag = linkCtx.tag;
@@ -3668,8 +3666,6 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 				sourceValues = [];
 				sourceValues[tos._cxp.ind] = sourceValue;
 			}
-			onBeforeChange = changeHandler(view, onBeforeChangeStr);
-			onAfterChange = changeHandler(view, onAfterChangeStr);
 
 			if (cnvtName = tag && tag.convertBack) {
 				if ($isFunction(cnvtName)) {
@@ -3689,7 +3685,7 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 			origVals = sourceValues;
 			if (cvtBack) {
 				sourceValues = cvtBack.apply(tag, sourceValues);
-				sourceValues = tos.length>1 ? sourceValues : [sourceValues];
+				sourceValues = tos.length>1 ? sourceValues || []: [sourceValues];
 			}
 
 			// Set linkCtx on view, dynamically, just during this handler call
@@ -3707,17 +3703,16 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 						// binding to tag.ctx.foo._ocp - and we use original values, without applying cvtBack converter
 						: sourceValues // Otherwise use the converted value
 					)[l];
-					eventArgs = {
-						change: "change",
-						data: tcpTag || target, // For tag contextual parameter, this is the tag
-						path: to[1] || to.ind, // For tag contextual parameter, this is the index of the parameter in tag.bindTo
-						value: sourceValue
-					};
-					if ((!onBeforeChange || !(cancel = onBeforeChange.call(linkCtx, ev, eventArgs) === false)) &&
-							(!tag || !tag.onBeforeChange || !(cancel = tag.onBeforeChange(ev, eventArgs) === false))) {
-
-						if (tcpTag) {
-							tcpTag.updateValue(sourceValue, to.ind, to.tagElse);
+					if (sourceValue !== undefined && (!ev || !tag || !tag.onBeforeUpdateVal || tag.onBeforeUpdateVal(ev, {
+							change: "change",
+							data: target,
+							path: to[1],
+							index: l,
+							tagElse: tagElse,
+							value: sourceValue
+						}) !== false)) {
+						if (tcpTag) { // We are modifying a tag contextual parameter ~foo (e.g. from within block) so update 'owner' tag: tcpTag
+							tcpTag.updateValue(sourceValue, to.ind, to.tagElse, undefined, ev);
 							if (tcpTag.setValue) {
 								tcpTag.setValue(sourceValue, to.ind, to.tagElse);
 							}
@@ -3740,17 +3735,11 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 								}
 							}
 							$observable(target).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
-							if (onAfterChange) {
-								onAfterChange.call(linkCtx, ev, eventArgs);
-							}
-						}
-						if (tag && tag.onAfterChange) {
-							tag.onAfterChange(ev, eventArgs);
 						}
 					}
 				}
 			}
-			sourceElem._jsvChg = undefined; // Clear marker
+			sourceElem._jsvChg = linkCtx.ev = undefined; // Clear marker
 			view.linkCtx = oldLinkCtx;
 		}
 	}
@@ -3840,11 +3829,11 @@ function onDataLinkedTagChange(ev, eventArgs) {
 		parentElem = target.parentNode,
 		view = linkCtx.view,
 		oldLinkCtx = view.linkCtx,
-		onEvent = changeHandler(view, onBeforeChangeStr);
+		onEvent = eventArgs && changeHandler(view, onBeforeChangeStr, tag);
 
 	// Set linkCtx on view, dynamically, just during this handler call
 	view.linkCtx = linkCtx;
-	if (parentElem && (!onEvent || !(eventArgs && onEvent.call(linkCtx, ev, eventArgs) === false))
+	if (parentElem && (!onEvent || onEvent.call(linkCtx, ev, eventArgs) !== false)
 			// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
 			&& (!eventArgs || ev.data.prop === "*" || ev.data.prop === eventArgs.path)) {
 
@@ -3896,6 +3885,9 @@ function onDataLinkedTagChange(ev, eventArgs) {
 						observeAndBind(linkCtx, source, target);
 					}
 					view.linkCtx = oldLinkCtx;
+					if (eventArgs && (onEvent = changeHandler(view, onAfterChangeStr, tag))) {
+						onEvent.call(linkCtx, ev, eventArgs);
+					}
 					return;
 				}
 
@@ -3923,9 +3915,7 @@ function onDataLinkedTagChange(ev, eventArgs) {
 				// will trigger the parent tags before the child tags.
 				observeAndBind(linkCtx, source, target);
 			}
-			if (updateContent(sourceValue, linkCtx, attr, tag) && eventArgs && (onEvent = changeHandler(view, onAfterChangeStr))) {
-				onEvent.call(linkCtx, ev, eventArgs);
-			}
+			updateContent(sourceValue, linkCtx, attr, tag);
 			linkCtx._noUpd = 0; // For data-link="^{...}" remove _noUpd flag so updates on subsequent calls
 
 			if (tag) {
@@ -3940,6 +3930,9 @@ function onDataLinkedTagChange(ev, eventArgs) {
 			observeAndBind(linkCtx, source, target);
 		}
 
+		if (eventArgs && (onEvent = changeHandler(view, onAfterChangeStr, tag))) {
+			onEvent.call(linkCtx, ev, eventArgs);
+		}
 		// Remove dynamically added linkCtx from view
 		view.linkCtx = oldLinkCtx;
 	}
@@ -4126,8 +4119,8 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 
 function arrayChangeHandler(ev, eventArgs) {
 	var self = this,
-		onBeforeChange = changeHandler(self, onBeforeChangeStr),
-		onAfterChange = changeHandler(self, onAfterChangeStr);
+		onBeforeChange = changeHandler(self, onBeforeChangeStr, self.tag),
+		onAfterChange = changeHandler(self, onAfterChangeStr, self.tag);
 	if (!onBeforeChange || onBeforeChange.call(self, ev, eventArgs) !== false) {
 		if (eventArgs) {
 			// This is an observable action (not a trigger/handler call from pushValues, or similar, for which eventArgs will be null)
@@ -5576,9 +5569,7 @@ function resolveDataTargetPath(targetPath, source, contextCb) {
 		targetPath = to[1];
 	}
 	to = to || [source, path];
-	if (obsCtxPrm) {
-		to._cxp = obsCtxPrm;
-	}
+	to._cxp = topCp;
 	return to;
 }
 
@@ -5757,9 +5748,9 @@ function inputAttrib(elem) {
 	return elem.type === CHECKBOX ? elem[CHECKED] : elem.value;
 }
 
-function changeHandler(view, name) {
+function changeHandler(view, name, tag) {
 	// Get onBeforeChange, onAfterChange, onAfterCreate handler - if there is one;
-	return view.ctx[name] || $views.helpers[name];
+	return tag && tag[name] || view.ctx[name] && view.ctxPrm(name) || $views.helpers[name];
 }
 
 //========================== Initialize ==========================
@@ -6931,7 +6922,7 @@ $sub._gccb = function(view) { // Return a callback for accessing the context of 
 	return function(path, object, depth) {
 		// TODO consider only calling the contextCb on the initial token in path '~a.b.c' and not calling again on
 		// the individual tokens, 'a', 'b', 'c'... Currently it is called multiple times
-		var tokens, tag, items, helper, last, nextPath, l, obsCtxPrm, addedTagCpDep, key;
+		var tokens, tag, items, helper, last, nextPath, l, obsCtxPrm, addedTagCpDep, key, bindTo;
 		if (view && path) {
 			if (path._cpfn) {
 				return path._cpfn.call(view.tmpl, object, view, $sub); // exprOb for computed property
@@ -6970,10 +6961,11 @@ $sub._gccb = function(view) { // Return a callback for accessing the context of 
 						items = [helper]; // Contextual parameter
 						if ((tag = obsCtxPrm.tag) && tag.convert) {
 							// If there is a converter, it might mix inputs, so tag contextual param needs to depends on all bound args/props.
-							l = tag.bindTo.length;
+							bindTo = tag.bindTo || [0];
+							l = bindTo.length;
 							while (l--) {
 								if (depth !== undefined && l !== obsCtxPrm.ind) {
-									key = tag.bindTo[l];
+									key = bindTo[l];
 									addedTagCpDep = [helper[0], tag.tagCtx.params[+key === key ? "args" : "props"]];
 									addedTagCpDep._cxp = obsCtxPrm;
 									items.push(addedTagCpDep); // Added dependency for tag contextual parameter
