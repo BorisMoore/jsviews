@@ -3577,7 +3577,7 @@ if ($.link) { return $; } // JsViews is already loaded
 $subSettings.trigger = true;
 var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet,
 	jsvAttrStr = "data-jsv",
-	elementChangeStr = "change.jsv",
+	elementChangeStr = "input.jsv", //"change.jsv", To work out an input event when you move text with your mouse.
 	onBeforeChangeStr = "onBeforeChange",
 	onAfterChangeStr = "onAfterChange",
 	onAfterCreateStr = "onAfterCreate",
