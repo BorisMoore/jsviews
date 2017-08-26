@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.87 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v0.9.88 (Beta): http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.87",
+var versionNumber = "v0.9.88",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -473,7 +473,7 @@ if (!$.observe) {
 			}
 
 			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, inId, el, data, events, contextCb, innerContextCb,
-				items, cbBindings, depth, innerCb, parentObs, allPath, filter, initNsArr, initNsArrLen, view,
+				items, cbBindings, depth, innerCb, parentObs, allPath, filter, initNsArr, initNsArrLen, view, cbItemCount,
 				ns = observeStr,
 				paths = this != 1 // Using != for IE<10 bug- see jsviews/issues/237
 					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
@@ -551,7 +551,14 @@ if (!$.observe) {
 					}
 				}
 				depth = 0;
+				cbItemCount = 0;
 				for (i = 0; i < l; i++) {
+					if (cbItemCount) {
+						cbItemCount--; // contextCb was moved to a contextual parameter outer context. Needs to revert after cbItemCount
+					} else {
+						contextCb = innerContextCb;
+					}
+
 					path = paths[i];
 					if (path === "" || path === root) {
 						continue;
@@ -586,7 +593,7 @@ if (!$.observe) {
 					} else if (path && path._cxp) { // contextual parameter
 						view = path.shift();  // Contextual data
 						if (_ocp in view) {
-							root = view;
+							root = view; // observable contextual parameter
 							contextCb = 0;
 						} else {
 							contextCb = $sub._gccb(view); // getContextCb: Get context callback for the contextual view (where contextual param evaluated/assigned)
@@ -594,6 +601,7 @@ if (!$.observe) {
 						}
 						items = path;
 						items.push(origRoot);
+						cbItemCount = items.length;
 					} else {
 						if (!$isFunction(path)) {
 							if (path && path._cpfn) {

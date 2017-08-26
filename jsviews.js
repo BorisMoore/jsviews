@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.87 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v0.9.88 (Beta) single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.87",
+var versionNumber = "v0.9.88",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
@@ -1575,7 +1575,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			result += newView._.onRender ? newView._.onRender(itemResult, childView) : itemResult;
 		}
 	} else {
-		// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "myTag" except for
+		// Create a view for singleton data object. The type of the view will be the tag name, e.g. "if" or "mytag" except for
 		// "item", "array" and "data" views. A "data" view is from programmatic render(object) against a 'singleton'.
 		if (itemVar) {
 			setItemVar(data);
@@ -2889,7 +2889,7 @@ if (!$.observe) {
 			}
 
 			var i, p, skip, parts, prop, path, dep, unobserve, callback, cbId, inId, el, data, events, contextCb, innerContextCb,
-				items, cbBindings, depth, innerCb, parentObs, allPath, filter, initNsArr, initNsArrLen, view,
+				items, cbBindings, depth, innerCb, parentObs, allPath, filter, initNsArr, initNsArrLen, view, cbItemCount,
 				ns = observeStr,
 				paths = this != 1 // Using != for IE<10 bug- see jsviews/issues/237
 					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
@@ -2967,7 +2967,14 @@ if (!$.observe) {
 					}
 				}
 				depth = 0;
+				cbItemCount = 0;
 				for (i = 0; i < l; i++) {
+					if (cbItemCount) {
+						cbItemCount--; // contextCb was moved to a contextual parameter outer context. Needs to revert after cbItemCount
+					} else {
+						contextCb = innerContextCb;
+					}
+
 					path = paths[i];
 					if (path === "" || path === root) {
 						continue;
@@ -3002,7 +3009,7 @@ if (!$.observe) {
 					} else if (path && path._cxp) { // contextual parameter
 						view = path.shift();  // Contextual data
 						if (_ocp in view) {
-							root = view;
+							root = view; // observable contextual parameter
 							contextCb = 0;
 						} else {
 							contextCb = $sub._gccb(view); // getContextCb: Get context callback for the contextual view (where contextual param evaluated/assigned)
@@ -3010,6 +3017,7 @@ if (!$.observe) {
 						}
 						items = path;
 						items.push(origRoot);
+						cbItemCount = items.length;
 					} else {
 						if (!$isFunction(path)) {
 							if (path && path._cpfn) {
@@ -3575,7 +3583,7 @@ rFirstElem = /<(?!script)(\w+)[>\s]/;
 if ($.link) { return $; } // JsViews is already loaded
 
 $subSettings.trigger = true;
-var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet,
+var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet, useInput,
 	jsvAttrStr = "data-jsv",
 	elementChangeStr = "change.jsv",
 	onBeforeChangeStr = "onBeforeChange",
@@ -4470,10 +4478,10 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 
 		if (!activeBody) {
 			activeBody = document.body;
+			useInput = "oninput" in activeBody;
 			$(activeBody)
 				.on(elementChangeStr, onElemChange)
-				.on('input', 'input[type="number"]', onElemChange)
-				.on('blur', '[contenteditable]', onElemChange);
+				.on('blur.jsv', '[contenteditable]', onElemChange);
 		}
 
 		var i, k, html, vwInfos, view, placeholderParent, targetEl, refresh, topLevelCall, late,
@@ -5200,11 +5208,11 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 			rTagIndex = rTagDatalink.lastIndex;
 			attr = tokens[1];
 			tagExpr = tokens[3];
-			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {someTag...} and is followed by an {else...} add to tagExpr
+			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {sometag...} and is followed by an {else...} add to tagExpr
 				tagExpr += delimCloseChar1 + delimOpenChar0 + linkExpressions.shift()[3];
 				hasElse = true;
 			}
-			if (hasElse) { // If an {else} has been added, need also to add closing {{/someTag}}
+			if (hasElse) { // If an {else} has been added, need also to add closing {{/sometag}}
 				tagExpr += delimCloseChar1 + delimOpenChar0 + delimOpenChar1 + "/" + tokens[4] + delimCloseChar0;
 			}
 			linkCtx = {
@@ -5432,7 +5440,10 @@ function asyncOnElemChange(ev) {
 function bindTriggerEvent($elem, trig, onoff) {
 	// Bind keydown, or other trigger - (rather than use the default change event bubbled to activeBody)
 	if (trig) {
-		trig = "" + trig === trig ? trig : "keydown"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
+		if (useInput) {
+			$elem[onoff]("input.jsv", onElemChange); // For HTML5 browser with "oninput" support - for mouse editing of text
+		}
+		trig = "" + trig === trig ? trig : "keydown.jsv"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
 		$elem[onoff](trig, trig.indexOf("keydown") >= 0 ? asyncOnElemChange : onElemChange); // Get 'keydown' with async
 	}
 }
@@ -5731,8 +5742,7 @@ function $unlink(to) {
 		if (activeBody) {
 			$(activeBody)
 				.off(elementChangeStr, onElemChange)
-				.off('input', 'input[type="number"]', onElemChange)
-				.off('blur', '[contenteditable]', onElemChange);
+				.off('blur.jsv', '[contenteditable]', onElemChange);
 			activeBody = undefined;
 		}
 		topView.removeViews();

@@ -1,4 +1,4 @@
-/*! jquery.views.js v0.9.87 (Beta): http://jsviews.com/ */
+/*! jquery.views.js v0.9.88 (Beta): http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v0.9.87",
+var versionNumber = "v0.9.88",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -91,7 +91,7 @@ var document = global.document,
 if ($.link) { return $; } // JsViews is already loaded
 
 $subSettings.trigger = true;
-var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet,
+var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet, useInput,
 	jsvAttrStr = "data-jsv",
 	elementChangeStr = "change.jsv",
 	onBeforeChangeStr = "onBeforeChange",
@@ -986,10 +986,10 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 
 		if (!activeBody) {
 			activeBody = document.body;
+			useInput = "oninput" in activeBody;
 			$(activeBody)
 				.on(elementChangeStr, onElemChange)
-				.on('input', 'input[type="number"]', onElemChange)
-				.on('blur', '[contenteditable]', onElemChange);
+				.on('blur.jsv', '[contenteditable]', onElemChange);
 		}
 
 		var i, k, html, vwInfos, view, placeholderParent, targetEl, refresh, topLevelCall, late,
@@ -1716,11 +1716,11 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 			rTagIndex = rTagDatalink.lastIndex;
 			attr = tokens[1];
 			tagExpr = tokens[3];
-			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {someTag...} and is followed by an {else...} add to tagExpr
+			while (linkExpressions[0] && linkExpressions[0][4] === "else") { // If this is {sometag...} and is followed by an {else...} add to tagExpr
 				tagExpr += delimCloseChar1 + delimOpenChar0 + linkExpressions.shift()[3];
 				hasElse = true;
 			}
-			if (hasElse) { // If an {else} has been added, need also to add closing {{/someTag}}
+			if (hasElse) { // If an {else} has been added, need also to add closing {{/sometag}}
 				tagExpr += delimCloseChar1 + delimOpenChar0 + delimOpenChar1 + "/" + tokens[4] + delimCloseChar0;
 			}
 			linkCtx = {
@@ -1948,7 +1948,10 @@ function asyncOnElemChange(ev) {
 function bindTriggerEvent($elem, trig, onoff) {
 	// Bind keydown, or other trigger - (rather than use the default change event bubbled to activeBody)
 	if (trig) {
-		trig = "" + trig === trig ? trig : "keydown"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
+		if (useInput) {
+			$elem[onoff]("input.jsv", onElemChange); // For HTML5 browser with "oninput" support - for mouse editing of text
+		}
+		trig = "" + trig === trig ? trig : "keydown.jsv"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
 		$elem[onoff](trig, trig.indexOf("keydown") >= 0 ? asyncOnElemChange : onElemChange); // Get 'keydown' with async
 	}
 }
@@ -2247,8 +2250,7 @@ function $unlink(to) {
 		if (activeBody) {
 			$(activeBody)
 				.off(elementChangeStr, onElemChange)
-				.off('input', 'input[type="number"]', onElemChange)
-				.off('blur', '[contenteditable]', onElemChange);
+				.off('blur.jsv', '[contenteditable]', onElemChange);
 			activeBody = undefined;
 		}
 		topView.removeViews();

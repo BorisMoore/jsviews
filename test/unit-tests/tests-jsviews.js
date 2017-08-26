@@ -8329,13 +8329,13 @@ test("{^{tag}}", function() {
 
 	// =============================== Arrange ===============================
 	$.views.tags({
-		myTag: {
+		mytag: {
 			template: "<span>{{:~tag.tagCtx.args[0]}}</span>",
 			attr: "html"
 		}
 	});
 
-	$.templates("{^{myTag foo(\"w\\x\'y\").b/}} <div data-link=\"{myTag foo('w\\x').b}\" ></div>")
+	$.templates("{^{mytag foo(\"w\\x\'y\").b/}} <div data-link=\"{mytag foo('w\\x').b}\" ></div>")
 		.link("#result", {
 			foo: function(val) {
 				return { b: val};
@@ -8344,9 +8344,9 @@ test("{^{tag}}", function() {
 
 	// ............................... Assert .................................
 	equal($("#result span")[0].outerHTML, isIE8 ? "<SPAN>w\\x\'y</SPAN>" : "<span>w\\x\'y</span>",
-	"{^{myTag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
+	"{^{mytag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 	equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
-	"<div data-link=\"{myTag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
+	"<div data-link=\"{mytag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -11399,8 +11399,8 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	// =============================== Arrange ===============================
 
 	$.views.tags({
-		myTag1: function(val) {return val + " from my tag1"; },
-		myTag2: {
+		mytag1: function(val) {return val + " from my tag1"; },
+		mytag2: {
 			template: "{{:}} from my tag2"
 		}
 	}).converters({
@@ -11418,10 +11418,10 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 		+ "{^{>a.b^c.val onError=~error + 'C '}} "
 		+ "{^{if a.b^c onError=~error + 'D '}}<i>{{:a.b.c.val}}</i>{{/if}} "
 		+ "{^{for a.b^c onError=~error + 'E ' ~foo='foo'}}<b>{{:val + ~foo}}</b>{{/for}} "
-		+ "{^{myTag1 a.b^c.val onError=~error + 'F '/}} "
-		+ "{^{myTag2 a.b^c.val onError=~error + 'G '/}} "
+		+ "{^{mytag1 a.b^c.val onError=~error + 'F '/}} "
+		+ "{^{mytag2 a.b^c.val onError=~error + 'G '/}} "
 		+ "<span data-link=\"a.b^c.val onError=~error + 'H '\"></span> "
-		+ "<span data-link=\"{myTag1 a.b^c.val onError=~error + 'I '}\"></span> "
+		+ "<span data-link=\"{mytag1 a.b^c.val onError=~error + 'I '}\"></span> "
 		+ "<span data-link=\"{upper:a.b^c.val onError=~error + 'J '}\"></span> "
 		+ "<span data-link=\"{:a.b^c.val convert='upper' onError=~error + 'K '}\"></span> ")
 			.link("#result", initial, {error: "err:"});
@@ -14004,7 +14004,7 @@ test("$.view() in regular content", function() {
 	view = $.view("#sp1", "myWrap");
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", '$.view(elem, "myTagName") gets nearest view for content of that tag');
+	ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", '$.view(elem, "mytagName") gets nearest view for content of that tag');
 
 	view = $.view("#sp1");
 
@@ -14171,7 +14171,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
-	$.views.tags("myTag", {
+	$.views.tags("mytag", {
 		bindTo: ["height", "width"],
 		linkedElement: [".ht", ".wd"],
 		linkedCtxParam: ["ht", "wd"],
@@ -14342,11 +14342,11 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
-		+ '{^{myTag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
-			+ '{^{myTag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+		+ '{^{mytag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
+			+ '{^{mytag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
 			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
-			+ '{{/myTag}}'
-		+ '{{/myTag}}');
+			+ '{{/mytag}}'
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 22});
 
@@ -14395,7 +14395,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		"Observable contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
 	// ................................ Act ..................................
 
-	var innerTag = $.view().childTags(true, "myTag")[1];
+	var innerTag = $.view().childTags(true, "mytag")[1];
 
 	res = "|1: " + (innerTag.ctxPrm("foo")||"");
 
@@ -14424,11 +14424,11 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
-		+ '{{myTag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
-			+ '{{myTag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
+		+ '{{mytag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
+			+ '{{mytag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
 			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
-			+ '{{/myTag}}'
-		+ '{{/myTag}}');
+			+ '{{/mytag}}'
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 22});
 
@@ -14477,14 +14477,14 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		"Observable contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
 
 	// =============================== Arrange ===============================
-	$.views.tags.myTag.vals = [[38, 48], [33, 44]];
+	$.views.tags.mytag.vals = [[38, 48], [33, 44]];
 
 	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
-		+ '{^{myTag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
-			+ '{^{myTag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+		+ '{^{mytag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
+			+ '{^{mytag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
 			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
-			+ '{{/myTag}}'
-		+ '{{/myTag}}');
+			+ '{{/mytag}}'
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 22});
 
@@ -14535,11 +14535,11 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
-		+ '{{myTag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
-			+ '{{myTag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
+		+ '{{mytag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
+			+ '{{mytag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
 			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
-			+ '{{/myTag}}'
-		+ '{{/myTag}}');
+			+ '{{/mytag}}'
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 22});
 
@@ -14642,7 +14642,7 @@ test("$.view() in element-only content", function() {
 	view = $.view("#sp1", "myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, $.view(elem, "myTagName") gets nearest view for content of that tag');
+	ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, $.view(elem, "mytagName") gets nearest view for content of that tag');
 
 	// ................................ Act ..................................
 	view = $.view("#td1");
@@ -14666,7 +14666,7 @@ test("$.view() in element-only content", function() {
 	view = $.view("#tr1", true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "myTagName") gets the first (depth first) nested view of that type');
+	ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1").get(true);
@@ -14678,7 +14678,7 @@ test("$.view() in element-only content", function() {
 	view = $.view("#tr1").get(true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "myTagName") gets the first (depth first) nested view of that type');
+	ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1");
@@ -14872,7 +14872,7 @@ test("view.childTags() and tag.childTags()", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 2 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
-		'view.childTags("myTagName") returns all top-level tags of the given name within the view - in document order');
+		'view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2");
@@ -14884,7 +14884,7 @@ test("view.childTags() and tag.childTags()", function() {
 		&& tags[2].tagName === "myWrap2"
 		&& tags[3].tagName === "myWrap2"
 		&& tags[0].tagCtx.view.getIndex() === 0,
-		'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+		'view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2");
@@ -14892,7 +14892,7 @@ test("view.childTags() and tag.childTags()", function() {
 	// ............................... Assert .................................
 	ok(tags.length === 1
 		&& tags[0].tagName === "myWrap2",
-		'view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+		'view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrap").childTags(); // Get first myWrap view and look for its top-level child tags
@@ -14965,7 +14965,7 @@ test("view.childTags() in element-only content", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags("myTagName") returns all top-level bound tags of the given name within the view - in document order');
+		'In element-only content, view.childTags("mytagName") returns all top-level bound tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2ElCnt");
@@ -14976,7 +14976,7 @@ test("view.childTags() in element-only content", function() {
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[0].tagCtx.view.getIndex() === 0,
-		'In element-only content, view.childTags(true, "myTagName") returns all bound tags of the given name within the view - in document order');
+		'In element-only content, view.childTags(true, "mytagName") returns all bound tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myFlow");
@@ -15001,7 +15001,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags("myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1, 'In element-only content, view.childTags("myTagName") returns all top-level tags of the given name within the view - in document order');
+	ok(tags.length === 1, 'In element-only content, view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrapElCnt").childTags(); // Get first myWrapElCnt view and look for its top-level child tags
@@ -15050,7 +15050,7 @@ test("view.childTags() in element-only content", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 1 && tags[0].tagName === "myWrap2",
-		'tag.childTags(true, "myTagName") returns descendant tags of chosen name, and skips any unbound tags');
+		'tag.childTags(true, "mytagName") returns descendant tags of chosen name, and skips any unbound tags');
 
 	// =============================== Arrange ===============================
 	$.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", {row: {}});
@@ -15092,20 +15092,20 @@ test("view.childTags() in element-only content, using data-link", function() {
 
 	// ............................... Assert .................................
 	ok(tags.length === 1 && tags[0].tagName === "myWrapElCnt" && view1.childTags("inexistantTag").length === 0,
-		'In element-only content, view.childTags("myTagName") returns all top-level tags of the given name within the view - in document order');
+		'In element-only content, view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2ElCnt");
 
 	// ............................... Assert .................................
 	ok(tags.length === 1 && tags[0].tagName === "myWrap2ElCnt",
-		'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+		'In element-only content, view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 0, 'In element-only content, view.childTags(true, "myTagName") returns all tags of the given name within the view - in document order');
+	ok(tags.length === 0, 'In element-only content, view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -15119,26 +15119,26 @@ test("lateRender - for deferred API calls", function() {
 	$.templates({
 		markup:
 // These calls are before the targeted instance, so need lateRender=true
-'<div data-link="{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true}"></div>' +
-'<div data-link="{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true}"></div>' +
-'/<div data-link="#childTags(\'myTag\')[0].value lateRender=true"></div>' +
-'{^{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'{^{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'/{^{:#childTags(\'myTag\')[0].value lateRender=true}}' +
+'<div data-link="{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true}"></div>' +
+'<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true}"></div>' +
+'/<div data-link="#childTags(\'mytag\')[0].value lateRender=true"></div>' +
+'{^{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'{^{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}' +
 
 // This is the targeted instance
-'=<div data-link="{myTag}"></div>' +
+'=<div data-link="{mytag}"></div>' +
 
 // These calls are after the targeted instance, so don't need lateRender=true
-'<div data-link="{for #get(true, \'myTag\').tag.value tmpl=\'showVal\'}"></div>' +
-'<div data-link="{for #childTags(\'myTag\')[0].value tmpl=\'showVal\'}"></div>' +
-'/<div data-link="#childTags(\'myTag\')[0].value"></div>' +
+'<div data-link="{for #get(true, \'mytag\').tag.value tmpl=\'showVal\'}"></div>' +
+'<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\'}"></div>' +
+'/<div data-link="#childTags(\'mytag\')[0].value"></div>' +
 // But these following tags still need lateRender=true, so the rendering is also deferred to after linking has been completed
-'{^{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'{^{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'/{^{:#childTags(\'myTag\')[0].value lateRender=true}}',
+'{^{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'{^{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}',
 		tags: {
-			myTag: {
+			mytag: {
 					template: 'MyTag',
 					value: 'tagVal'
 			}
@@ -15156,26 +15156,26 @@ test("lateRender - for deferred API calls", function() {
 	$.templates({
 		markup:
 // These calls are before the targeted instance, so need lateRender=true
-'<div data-link="{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true}"></div>' +
-'<div data-link="{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true}"></div>' +
-'/<div data-link="#childTags(\'myTag\')[0].value lateRender=true"></div>' +
-'{^{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'{^{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'/{^{:#childTags(\'myTag\')[0].value lateRender=true}}' +
+'<div data-link="{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true}"></div>' +
+'<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true}"></div>' +
+'/<div data-link="#childTags(\'mytag\')[0].value lateRender=true"></div>' +
+'{^{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'{^{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}' +
 
 // This is the targeted instance
-'={^{myTag/}}' +
+'={^{mytag/}}' +
 
 // These calls are after the targeted instance
-'<div data-link="{for #get(true, \'myTag\').tag.value tmpl=\'showVal\'}"></div>' +
-'<div data-link="{for #childTags(\'myTag\')[0].value tmpl=\'showVal\'}"></div>' +
-'/<div data-link="#childTags(\'myTag\')[0].value"></div>' +
+'<div data-link="{for #get(true, \'mytag\').tag.value tmpl=\'showVal\'}"></div>' +
+'<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\'}"></div>' +
+'/<div data-link="#childTags(\'mytag\')[0].value"></div>' +
 // But these following tags still need lateRender=true, so the rendering is also deferred to after linking has been completed
-'{^{for #get(true, \'myTag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'{^{for #childTags(\'myTag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'/{^{:#childTags(\'myTag\')[0].value lateRender=true}}',
+'{^{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'{^{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
+'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}',
 		tags: {
-			myTag: {
+			mytag: {
 					template: 'MyTag',
 					value: 'tagVal'
 			}
@@ -15242,7 +15242,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 
 	// ............................... Reset .................................
 	$("#result").empty();
-	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
+	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{mytag}} inline data binding.
 });
 
 test('two-way bound tag controls', function(assert) {
@@ -17028,9 +17028,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	var person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first/}}',
+		markup: '{^{mytag first/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				template: '<input id="linkedElm"/><span class="nm"></span> {^{on ~tag.doupdate id="updateBtn"}}Update{{/on}}',
 				onBind: function() {
 					this.linkedElem = this.contents("input").first(); // Programmatically set linkedElem
@@ -17047,53 +17047,53 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	var myTag = $.view().childTags("myTag")[0];
+	var mytag = $.view().childTags("mytag")[0];
 	var linkedEl = $("#linkedElm")[0];
 
-	var result = myTag.bndArgs() + "|" + linkedEl.value;
+	var result = mytag.bndArgs() + "|" + linkedEl.value;
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob"});
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl.value;
+	result += "--" + mytag.bndArgs() + "|" + linkedEl.value;
 
 	linkedEl.value = "newName"
 
 	$(linkedEl).change();
 
-	result += "--" + myTag.bndArgs() + "|" + person.first;
+	result += "--" + mytag.bndArgs() + "|" + person.first;
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Jo--Bob|Bob--newName|newName",
 	"linkedElem set in onBind");
 
 	// ................................ Act ..................................
-	result = "" + myTag.bndArgs();
+	result = "" + mytag.bndArgs();
 
-	myTag.updateValue("updatedFirst").setValue();
+	mytag.updateValue("updatedFirst").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
 	// ................................ Act ..................................
 
 	$("#updateBtn").click();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
 	equal(result, 
 		isIE8 ? "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirstUpdate"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0Update"
 		: "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0 Update",
-	"With linkedElem set in onBind, myTag.bndArgs() and myTag.updateValue().setValue() correctly access/update two-way bound values");
+	"With linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue().setValue() correctly access/update two-way bound values");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first last/}}',
+		markup: '{^{mytag first last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: [0, 1],
 				template: '<input id="linkedElm1"/><input id="linkedElm2"/> <span class="nm"></span>',
 				onBind: function(tagCtx) {
@@ -17108,16 +17108,16 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	var linkedEl1 = $("#linkedElm1")[0];
 	var linkedEl2 = $("#linkedElm2")[0];
 
-	result = myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
+	result = mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob", last: "Puff"});
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
 	linkedEl1.value = "newFirst"
 	linkedEl2.value = "newLast"
@@ -17125,20 +17125,20 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$(linkedEl1).change();
 	$(linkedEl2).change();
 
-	result += "--" + myTag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: [0, 1], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.updateValue().setValue() '
+	'With bindTo: [0, 1], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue().setValue() '
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag 1 first/}}',
+		markup: '{^{mytag 1 first/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: 1,
 				template: '<input id="linkedElm1"/> <span class="nm"></span>',
 				onBind: function() {
@@ -17153,34 +17153,34 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 
-	result = myTag.bndArgs() + "|" + linkedEl1.value ;
+	result = mytag.bndArgs() + "|" + linkedEl1.value ;
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob"});
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + $("#result").text();
 
 	linkedEl1.value = "newFirst"
 
 	$(linkedEl1).change();
 
-	result += "--" + myTag.bndArgs() + "|" + person.first + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Jo--Bob|Bob| Bob--newFirst|newFirst| newFirst",
-	'With bindTo: 1, and linkedElem set in onBind, myTag.bndArgs() and myTag.updateValue().setValue()'
+	'With bindTo: 1, and linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue().setValue()'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag name1=first name2=last/}}',
+		markup: '{^{mytag name1=first name2=last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "name2"],
 				template: '<input id="linkedElm1"/><input id="linkedElm2"/> <span class="nm"></span>',
 				onBind: function(tagCtx) {
@@ -17195,16 +17195,16 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
-	result = myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
+	result = mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob", last: "Puff"});
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
 	linkedEl1.value = "newFirst"
 	linkedEl2.value = "newLast"
@@ -17212,20 +17212,20 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$(linkedEl1).change();
 	$(linkedEl2).change();
 
-	result += "--" + myTag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, myTag.bndArgs() and myTag.updateValue().setValue()'
+	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue().setValue()'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first/}}',
+		markup: '{^{mytag first/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				linkedElement: "input",
 				template: '<input id="linkedElm"/>',
 				onUpdate: false
@@ -17233,7 +17233,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value;
@@ -17249,7 +17249,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first;
 
-	myTag.updateValue("updatedFirst").setValue();
+	mytag.updateValue("updatedFirst").setValue();
 
 	result += "--" + person.first + "|" + linkedEl.value;
 
@@ -17261,9 +17261,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first/}}',
+		markup: '{^{mytag first/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				linkedCtxParam: "frst",
 				template: '<input id="linkedElm" data-link="~frst"/>{^{:~frst}}',
 				onUpdate: false
@@ -17271,7 +17271,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value + "|" + $("#result").text();
@@ -17287,7 +17287,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first + "|" + $("#result").text();
 
-	myTag.updateValue("updatedFirst").setValue();
+	mytag.updateValue("updatedFirst").setValue();
 
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
@@ -17299,9 +17299,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first/}}',
+		markup: '{^{mytag first/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: [0],
 				linkedCtxParam: ["frst"],
 				template: '<input id="linkedElm" data-link="~frst"/>{^{:~frst}}',
@@ -17310,7 +17310,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value + "|" + $("#result").text();
@@ -17326,7 +17326,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + person.first + "|" + $("#result").text();
 
-	myTag.updateValue("updatedFirst");
+	mytag.updateValue("updatedFirst");
 
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
@@ -17338,9 +17338,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first last/}}',
+		markup: '{^{mytag first last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: [1, 0],
 				linkedCtxParam: ["lst", "frst"],
 				template: '<input id="linkedElm1" data-link="~frst"/>{^{:~frst}} <input id="linkedElm2" data-link="~lst"/>{^{:~lst}}',
@@ -17349,7 +17349,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -17373,22 +17373,22 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"bindTo and linkedCtxParam as arrays, declaring tag contextual parameters");
 
 	// ................................ Act ..................................
-	result = "" + myTag.bndArgs();
+	result = "" + mytag.bndArgs();
 
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	equal(result, "newLast,newFirst--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast|updatedFirst|updatedLast updatedFirst",
-	"myTag.bndArgs() and myTag.updateValues().setValue() work correctly for accessing/updating two-way bound tag contextual parameters");
+	"mytag.bndArgs() and mytag.updateValues().setValue() work correctly for accessing/updating two-way bound tag contextual parameters");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag name1=first 1 last/}}',
+		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "1"],
 				linkedElement: ["input", "#linkedElm2"],
 				template: '<input id="linkedElm1"/> <span id="linkedElm2"></span>',
@@ -17399,28 +17399,28 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
-	"myTag.bndArgs() and myTag.updateValues().setValue() work correctly for accessing/updating two-way bound linkedElems");
+	"mytag.bndArgs() and mytag.updateValues().setValue() work correctly for accessing/updating two-way bound linkedElems");
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag name1=first 1 last/}}',
+		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "1"],
 				linkedElement: [undefined, "#linkedElm2"],
 				template: '<input id="linkedElm1"/> <span id="linkedElm2"></span>',
@@ -17435,20 +17435,20 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = ""
-		+ (linkedEl1 === myTag.linkedElems[0][0])
-		+ (linkedEl2 === myTag.linkedElems[1][0])
-		+ (linkedEl1 === myTag.linkedElem[0])
+		+ (linkedEl1 === mytag.linkedElems[0][0])
+		+ (linkedEl2 === mytag.linkedElems[1][0])
+		+ (linkedEl1 === mytag.linkedElem[0])
 		+ linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "truetruetrueJo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
@@ -17458,9 +17458,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag name1=first 1 last/}}',
+		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "1"],
 				linkedElement: [undefined, "#linkedElm2"],
 				template: '<input id="linkedElm1"/> <span id="linkedElm2"></span>',
@@ -17475,18 +17475,18 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Jo| Jo--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedFirst",
@@ -17496,9 +17496,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag name1=first 1 last/}}',
+		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "1"],
 				linkedElement: [undefined, "input"],
 				linkedCtxParam: ["foo", undefined],
@@ -17507,16 +17507,16 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
@@ -17526,9 +17526,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag first last/}}',
+		markup: '{^{mytag first last/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: [0, 1],
 				linkedCtxParam: ["foo", undefined],
 				template: '<input id="linkedElm1"/> <span id="linkedElm2" data-link="~foo"></span>',
@@ -17540,16 +17540,16 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
+	mytag = $.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = linkedEl1.value + "|" + linkedEl2.innerText + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
+	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
 	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
@@ -17566,9 +17566,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	};
 
 	$.templates({
-		markup: '{^{myTag 1 first convert=cvt convertBack=cvtbk/}}',
+		markup: '{^{mytag 1 first convert=cvt convertBack=cvtbk/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: 1,
 				linkedElement: ["input"],
 				template: '<input id="linkedElm"/>',
@@ -17576,20 +17576,20 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedEl = myTag.linkedElem[0];
+	mytag = $.view().childTags("mytag")[0];
+	linkedEl = mytag.linkedElem[0];
 
 	result = linkedEl.value;
 
 	linkedEl.value += "+";
-	myTag.linkedElem.change();
+	mytag.linkedElem.change();
 
 	result = person.first + "|" + person.last;
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
+	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
 	// ............................... Assert .................................
 	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
@@ -17606,27 +17606,27 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	};
 
 	$.templates({
-		markup: '{^{myTag first convert=cvt convertBack=cvtbk/}}',
+		markup: '{^{mytag first convert=cvt convertBack=cvtbk/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				linkedElement: ["input"],
 				template: '<input id="linkedElm"/>',
 			}
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedEl = myTag.linkedElem[0];
+	mytag = $.view().childTags("mytag")[0];
+	linkedEl = mytag.linkedElem[0];
 
 	linkedEl.value += "+";
-	myTag.linkedElem.change();
+	mytag.linkedElem.change();
 
 	result = person.first + "|" + person.last;
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "--" + myTag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
+	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
 	// ............................... Assert .................................
 	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
@@ -17643,9 +17643,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	};
 
 	$.templates({
-		markup: '{^{myTag name1=first 1 last convert=cvt convertBack=cvtbk/}}',
+		markup: '{^{mytag name1=first 1 last convert=cvt convertBack=cvtbk/}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["name1", "1"],
 				linkedElement: [undefined, "input"],
 				linkedCtxParam: ["foo", undefined],
@@ -17654,29 +17654,29 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedEl1 = myTag.contents("#linkedElm1")[0];
-	linkedEl2 = myTag.linkedElems[1][0];
+	mytag = $.view().childTags("mytag")[0];
+	linkedEl1 = mytag.contents("#linkedElm1")[0];
+	linkedEl2 = mytag.linkedElems[1][0];
 
 	result = linkedEl1.innerText + "," + linkedEl2.value;
 
 
 	linkedEl2.value += "+";
-	myTag.linkedElems[1].change();
+	mytag.linkedElems[1].change();
 
 	result += "|" + person.first + "," + person.last;
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst", "updatedLast").setValue();
+	mytag.updateValues("updatedFirst", "updatedLast").setValue();
 
-	result += "|" + myTag.bndArgs() + "|" + linkedEl1.innerText + "," + linkedEl2.value + "|" + person.first + "," + person.last;
+	result += "|" + mytag.bndArgs() + "|" + linkedEl1.innerText + "," + linkedEl2.value + "|" + person.first + "," + person.last;
 
 	// ............................... Assert .................................
 	equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
 	"bindTo with converters, using linkedElement and linkedCtxParam");
 
 	// =============================== Arrange ===============================
-	$.views.tags("myTag", {
+	$.views.tags("mytag", {
 		bindTo: ["height", "width"],
 		linkedElement: [".ht", ".wd"],
 		linkedCtxParam: ["ht", "wd"],
@@ -17717,21 +17717,21 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		setSize: true
 	});
 
-	var tmpl = $.templates('{^{myTag}}'
+	var tmpl = $.templates('{^{mytag}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	// ................................ Act ..................................
 	tmpl.link("#result");
 
-	myTag = $.view().childTags("myTag")[0];
-	var linkedElHt = myTag.contents(true, ".ht")[0];
-	var linkedElHt2 = myTag.linkedElems[0][0];
-	var linkedElWd = myTag.contents(true, ".wd")[0];
-	var linkedElWd2 = myTag.linkedElems[1][0];
-	var linkedCtxPrmHts = myTag.contents(true, ".htc");
-	var linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	var linkedElHt = mytag.contents(true, ".ht")[0];
+	var linkedElHt2 = mytag.linkedElems[0][0];
+	var linkedElWd = mytag.contents(true, ".wd")[0];
+	var linkedElWd2 = mytag.linkedElems[1][0];
+	var linkedCtxPrmHts = mytag.contents(true, ".htc");
+	var linkedCtxPrmWds = mytag.contents(true, ".wdc");
 
 	result = linkedElHt === linkedElHt2 && linkedElWd === linkedElWd2
 		&& linkedElHt.value === linkedCtxPrmHts[0].value && linkedElHt.value === linkedCtxPrmHts[1].value
@@ -17750,29 +17750,29 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{myTag height=30 width=40}}'
+	tmpl = $.templates('{^{mytag height=30 width=40}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result");
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedElHt = myTag.contents(true, ".ht")[0];
-	linkedElWd = myTag.contents(true, ".wd")[0];
-	linkedCtxPrmHts = myTag.contents(true, ".htc");
-	linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	linkedElHt = mytag.contents(true, ".ht")[0];
+	linkedElWd = mytag.contents(true, ".wd")[0];
+	linkedCtxPrmHts = mytag.contents(true, ".htc");
+	linkedCtxPrmWds = mytag.contents(true, ".wdc");
 
 	result = linkedElHt.value === "30" && linkedCtxPrmHts[0].value === "30" && linkedCtxPrmHts[1].value === "30"
 		&& linkedElWd.value === "40" && linkedCtxPrmWds[0].value === "40" && linkedCtxPrmWds[1].value === "40";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|30,40",
@@ -17787,46 +17787,46 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value");
 
 	// ................................ Act ..................................
-	myTag.setValues(140, 160);
-	myTag.updateValues(140, 160);
+	mytag.setValues(140, 160);
+	mytag.updateValues(140, 160);
 
 	result = linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValues(), myTag.updateValues()");
+	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValues(), mytag.updateValues()");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
-	+ '{^{myTag height=cy width=cx}}'
+	+ '{^{mytag height=cy width=cx}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 40, cy: 30});
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedElHt = myTag.contents(true, ".ht")[0];
-	linkedElWd = myTag.contents(true, ".wd")[0];
-	linkedCtxPrmHts = myTag.contents(true, ".htc");
-	linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	linkedElHt = mytag.contents(true, ".ht")[0];
+	linkedElWd = mytag.contents(true, ".wd")[0];
+	linkedCtxPrmHts = mytag.contents(true, ".htc");
+	linkedCtxPrmWds = mytag.contents(true, ".wdc");
 	var linkedElCx = $(".cx")[0],
 		linkedElCy = $(".cy")[0];
 
 	result = linkedElCy.value === "30" && linkedElHt.value === "30" && linkedCtxPrmHts[0].value === "30" && linkedCtxPrmHts[1].value === "30"
 		 && linkedElCx.value === "40" && linkedElWd.value === "40" && linkedCtxPrmWds[0].value === "40" && linkedCtxPrmWds[1].value === "40";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|30,40",
@@ -17841,7 +17841,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "40" && linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElCx.value === "60" && linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
@@ -17856,30 +17856,30 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "50" && linkedElHt.value === "50" && linkedCtxPrmHts[0].value === "50" && linkedCtxPrmHts[1].value === "50"
 		&& linkedElCx.value === "70" && linkedElWd.value === "70" && linkedCtxPrmWds[0].value === "70" && linkedCtxPrmWds[1].value === "70";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|50,70",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes");
 
 	// ................................ Act ..................................
-	myTag.setValues(140, 160);
-	myTag.updateValues(140, 160);
+	mytag.setValues(140, 160);
+	mytag.updateValues(140, 160);
 
 	result = linkedElCy.value === "140" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "160" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues()");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{myTag convert=~plus convertBack=~minus}}'
+	tmpl = $.templates('{^{mytag convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 100, cy: 200}, {
 	plus: function(height, width) {
@@ -17890,18 +17890,18 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	});
 
-	myTag = $.view().childTags("myTag")[0];
-	var linkedElHt = myTag.contents(true, ".ht")[0];
-	var linkedElHt2 = myTag.linkedElems[0][0];
-	var linkedElWd = myTag.contents(true, ".wd")[0];
-	var linkedElWd2 = myTag.linkedElems[1][0];
-	var linkedCtxPrmHts = myTag.contents(true, ".htc");
-	var linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	var linkedElHt = mytag.contents(true, ".ht")[0];
+	var linkedElHt2 = mytag.linkedElems[0][0];
+	var linkedElWd = mytag.contents(true, ".wd")[0];
+	var linkedElWd2 = mytag.linkedElems[1][0];
+	var linkedCtxPrmHts = mytag.contents(true, ".htc");
+	var linkedCtxPrmWds = mytag.contents(true, ".wdc");
 
 	result = linkedElHt === linkedElHt2 && linkedElWd === linkedElWd2
 		&& linkedElHt.value === linkedCtxPrmHts[0].value && linkedElHt.value === linkedCtxPrmHts[1].value
 		&& linkedElWd.value === linkedCtxPrmWds[0].value && linkedElWd.value === linkedCtxPrmWds[1].value
-		&& linkedElWd.value === "" + myTag.getValue()[1] && linkedElHt.value === "" + myTag.getValue()[0];
+		&& linkedElWd.value === "" + mytag.getValue()[1] && linkedElHt.value === "" + mytag.getValue()[0];
 
 	// ............................... Assert .................................
 	ok(result,
@@ -17916,17 +17916,17 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue (with converters)");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{myTag height=30 width=40 convert=~plus convertBack=~minus}}'
+	tmpl = $.templates('{^{mytag height=30 width=40 convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {}, {
 	plus: function(height, width) {
@@ -17937,16 +17937,16 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	});
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedElHt = myTag.contents(true, ".ht")[0];
-	linkedElWd = myTag.contents(true, ".wd")[0];
-	linkedCtxPrmHts = myTag.contents(true, ".htc");
-	linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	linkedElHt = mytag.contents(true, ".ht")[0];
+	linkedElWd = mytag.contents(true, ".wd")[0];
+	linkedCtxPrmHts = mytag.contents(true, ".htc");
+	linkedCtxPrmWds = mytag.contents(true, ".wdc");
 
 	result = linkedElHt.value === "35" && linkedCtxPrmHts[0].value === "35" && linkedCtxPrmHts[1].value === "35"
 		&& linkedElWd.value === "50" && linkedCtxPrmWds[0].value === "50" && linkedCtxPrmWds[1].value === "50";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|35,50",
@@ -17961,32 +17961,32 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value (with converters)");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 0);
-	myTag.setValue(160, 1);
-	myTag.updateValues(140, 160);
+	mytag.setValue(140, 0);
+	mytag.setValue(160, 1);
+	mytag.updateValues(140, 160);
 
 	result = linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|140,160",
-	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), myTag.updateValues() (with converters)");
+	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), mytag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
-	+ '{^{myTag height=cy width=cx convert=~plus convertBack=~minus}}'
+	+ '{^{mytag height=cy width=cx convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 40, cy: 30}, {
 	plus: function(height, width) {
@@ -17997,18 +17997,18 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	});
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedElHt = myTag.contents(true, ".ht")[0];
-	linkedElWd = myTag.contents(true, ".wd")[0];
-	linkedCtxPrmHts = myTag.contents(true, ".htc");
-	linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	linkedElHt = mytag.contents(true, ".ht")[0];
+	linkedElWd = mytag.contents(true, ".wd")[0];
+	linkedCtxPrmHts = mytag.contents(true, ".htc");
+	linkedCtxPrmWds = mytag.contents(true, ".wdc");
 	linkedElCx = $(".cx")[0];
 	linkedElCy = $(".cy")[0];
 
 	result = linkedElCy.value === "30" && linkedElHt.value === "35" && linkedCtxPrmHts[0].value === "35" && linkedCtxPrmHts[1].value === "35"
 		 && linkedElCx.value === "40" && linkedElWd.value === "50" && linkedCtxPrmWds[0].value === "50" && linkedCtxPrmWds[1].value === "50";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|35,50",
@@ -18023,7 +18023,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "35" && linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElCx.value === "50" && linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
@@ -18038,21 +18038,21 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "50" && linkedElHt.value === "55" && linkedCtxPrmHts[0].value === "55" && linkedCtxPrmHts[1].value === "55"
 		&& linkedElCx.value === "70" && linkedElWd.value === "80" && linkedCtxPrmWds[0].value === "80" && linkedCtxPrmWds[1].value === "80";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|55,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (with converters)");
 
 	// ................................ Act ..................................
-	myTag.setValue(140, 0);
-	myTag.setValue(160, 1);
-	myTag.updateValues(140, 160);
+	mytag.setValue(140, 0);
+	mytag.setValue(160, 1);
+	mytag.updateValues(140, 160);
 
 	result = linkedElCy.value === "135" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "150" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|140,160",
@@ -18060,10 +18060,10 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
 	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
-	+ '{^{myTag width=cx convert=~plus convertBack=~minus}}'
+	+ '{^{mytag width=cx convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
-		+ '{{/myTag}}');
+		+ '{{/mytag}}');
 
 	tmpl.link("#result", {cx: 40, cy: 30}, {
 	plus: function(height, width) {
@@ -18074,18 +18074,18 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	});
 
-	myTag = $.view().childTags("myTag")[0];
-	linkedElHt = myTag.contents(true, ".ht")[0];
-	linkedElWd = myTag.contents(true, ".wd")[0];
-	linkedCtxPrmHts = myTag.contents(true, ".htc");
-	linkedCtxPrmWds = myTag.contents(true, ".wdc");
+	mytag = $.view().childTags("mytag")[0];
+	linkedElHt = mytag.contents(true, ".ht")[0];
+	linkedElWd = mytag.contents(true, ".wd")[0];
+	linkedCtxPrmHts = mytag.contents(true, ".htc");
+	linkedCtxPrmWds = mytag.contents(true, ".wdc");
 	linkedElCx = $(".cx")[0];
 	linkedElCy = $(".cy")[0];
 
-	result = linkedElHt.value === linkedCtxPrmHts[0].value && linkedElHt.value === linkedCtxPrmHts[1].value && linkedElHt.value === "" + myTag.getValue()[0]
+	result = linkedElHt.value === linkedCtxPrmHts[0].value && linkedElHt.value === linkedCtxPrmHts[1].value && linkedElHt.value === "" + mytag.getValue()[0]
 		 && linkedElCx.value === "40" && linkedElWd.value === "50" && linkedCtxPrmWds[0].value === "50" && linkedCtxPrmWds[1].value === "50";
 
-	result += "|" + myTag.getValue()[1];
+	result += "|" + mytag.getValue()[1];
 
 	// ............................... Assert .................................
 	equal(result, "true|50",
@@ -18100,7 +18100,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "30" && linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElCx.value === "50" && linkedElWd.value === "60" && linkedCtxPrmWds[0].value === "60" && linkedCtxPrmWds[1].value === "60";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,60",
@@ -18115,20 +18115,20 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result = linkedElCy.value === "50" && linkedElHt.value === "40" && linkedCtxPrmHts[0].value === "40" && linkedCtxPrmHts[1].value === "40"
 		&& linkedElCx.value === "70" && linkedElWd.value === "80" && linkedCtxPrmWds[0].value === "80" && linkedCtxPrmWds[1].value === "80";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|40,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (One bindTo param bound, other uninitialized. With converters)");
 
 	// ................................ Act ..................................
-	myTag.setValues(140, 160);
-	myTag.updateValues(140, 160);
+	mytag.setValues(140, 160);
+	mytag.updateValues(140, 160);
 
 	result = linkedElCy.value === "50" && linkedElHt.value === "140" && linkedCtxPrmHts[0].value === "140" && linkedCtxPrmHts[1].value === "140"
 		&& linkedElCx.value === "150" && linkedElWd.value === "160" && linkedCtxPrmWds[0].value === "160" && linkedCtxPrmWds[1].value === "160";
 
-	result += "|" + myTag.getValue();
+	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
 	equal(result, "true|140,160",
@@ -18170,7 +18170,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	var linkedElFirst = $("#First")[0],
 	linkedElMiddle = $("#Middle")[0],
 	linkedElLast = $("#Last")[0],
-	myTag = $.view(linkedElFirst).tag;
+	mytag = $.view(linkedElFirst).tag;
 
 	function getResult() {
 		return "Data: " + person.first + "-" + person.middle + "-" + person.last
@@ -18210,9 +18210,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - updated inputs");
 
 	// ................................ Act ..................................
-	myTag.updateValue("updatedFirst", 0, 0);
-	myTag.updateValue("updatedMiddle", 0, 1);
-	myTag.updateValue("updatedLast", 0, 2);
+	mytag.updateValue("updatedFirst", 0, 0);
+	mytag.updateValue("updatedMiddle", 0, 1);
+	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18223,7 +18223,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst2");
+	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18234,9 +18234,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
 	// ................................ Act ..................................
-	myTag.setValue("changedFirst", 0, 0);
-	myTag.setValue("changedMiddle", 0, 1);
-	myTag.setValue("changedLast", 0, 2);
+	mytag.setValue("changedFirst", 0, 0);
+	mytag.setValue("changedMiddle", 0, 1);
+	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18247,7 +18247,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - tag.setValue() updates linkedElems only");
 
 	// ................................ Act ..................................
-	myTag.setValues("changedFirst2");
+	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18258,11 +18258,11 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(myTag.contents("input")[1] === myTag.tagCtxs[1].contents("input")[0]
-		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].nodes()[1]
-		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].contentView.nodes()[1]
-		&& myTag.childTags("child")[1] === myTag.tagCtxs[1].childTags("child")[0]
-		&& myTag.childTags("child").length === myTag.tagCtxs[0].childTags("child").length + myTag.tagCtxs[1].childTags("child").length +  myTag.tagCtxs[2].childTags("child").length,
+	ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].contentView.nodes()[1]
+		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0]
+		&& mytag.childTags("child").length === mytag.tagCtxs[0].childTags("child").length + mytag.tagCtxs[1].childTags("child").length +  mytag.tagCtxs[2].childTags("child").length,
 	"Two-way bound tag, multiple else blocks: calls tagCtx.contents() tagCtx.nodes() tagCtx.childTags() return from one else block."
 	+ " (Whereas tag.contents() etc returns from all else blocks)");
 
@@ -18304,7 +18304,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	linkedElFirst = $("#First")[0];
 	linkedElMiddle = $("#Middle")[0];
 	linkedElLast = $("#Last")[0];
-	myTag = $.view(linkedElFirst).tag;
+	mytag = $.view(linkedElFirst).tag;
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18338,9 +18338,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - updated inputs");
 
 	// ................................ Act ..................................
-	myTag.updateValue("updatedFirst", 0, 0);
-	myTag.updateValue("updatedMiddle", 0, 1);
-	myTag.updateValue("updatedLast", 0, 2);
+	mytag.updateValue("updatedFirst", 0, 0);
+	mytag.updateValue("updatedMiddle", 0, 1);
+	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18351,7 +18351,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
 	// ................................ Act ..................................
-	myTag.updateValues("updatedFirst2");
+	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18362,9 +18362,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
 	// ................................ Act ..................................
-	myTag.setValue("changedFirst", 0, 0);
-	myTag.setValue("changedMiddle", 0, 1);
-	myTag.setValue("changedLast", 0, 2);
+	mytag.setValue("changedFirst", 0, 0);
+	mytag.setValue("changedMiddle", 0, 1);
+	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18375,7 +18375,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - tag.setValue() updates linkedElems only");
 
 	// ................................ Act ..................................
-	myTag.setValues("changedFirst2");
+	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
 	equal(getResult(), isIE8
@@ -18386,18 +18386,18 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(myTag.contents("input")[1] === myTag.tagCtxs[1].contents("input")[0]
-		&& myTag.nodes()[isIE8 ? 4 : 5] === myTag.tagCtxs[1].nodes()[1]
-		&& myTag.childTags("child")[1] === myTag.tagCtxs[1].childTags("child")[0],
+	ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
+		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0],
 	"Two-way bound tag (using render method) with multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() tagCtx.childTags() work correctly");
 
 	// =============================== Arrange ===============================
 	var person = {first: "Jo", last: "Blow"};
 
 	$.templates({
-		markup: '{^{myTag 0 prop=first last}}{{else 0 prop=last first}}{{/myTag}} {^{:first}} {^{:last}}',
+		markup: '{^{mytag 0 prop=first last}}{{else 0 prop=last first}}{{/mytag}} {^{:first}} {^{:last}}',
 		tags: {
-			myTag: {
+			mytag: {
 				bindTo: ["prop", 1],
 				template: '<input/><input/> <span class="nm"></span><br/>',
 				onBind: function() {
@@ -18421,9 +18421,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		}
 	}).link("#result", person);
 
-	myTag = $.view().childTags()[0];
-	var linkedElems0 = myTag.tagCtx.contents("input");
-	var linkedElems1 = myTag.tagCtxs[1].contents("input");
+	mytag = $.view().childTags()[0];
+	var linkedElems0 = mytag.tagCtx.contents("input");
+	var linkedElems1 = mytag.tagCtxs[1].contents("input");
 
 	function getResult2() {
 		return "Data: " + person.first + "-" + person.last
@@ -18461,8 +18461,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
  // Update each value for {{else}} block
-	myTag.updateValue("updatedLast", 0, 1);
-	myTag.updateValue("updatedFirst", 1, 1);
+	mytag.updateValue("updatedLast", 0, 1);
+	mytag.updateValue("updatedFirst", 1, 1);
 
 	// ............................... Assert .................................
 	equal(getResult2(), isIE8
@@ -18474,7 +18474,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
  // Update values for tag (main block)
-	myTag.updateValues("updatedFirst2", "updatedLast2");
+	mytag.updateValues("updatedFirst2", "updatedLast2");
 
 	// ............................... Assert .................................
 	equal(getResult2(), isIE8
@@ -18486,8 +18486,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
  // Set each value for {{else}} block
-	myTag.setValue("changedLast", 0, 1);
-	myTag.setValue("changedFirst", 1, 1);
+	mytag.setValue("changedLast", 0, 1);
+	mytag.setValue("changedFirst", 1, 1);
 
 	// ............................... Assert .................................
 	equal(getResult2(), isIE8
@@ -18499,7 +18499,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
  // Set values for {{else}} block
-	myTag.tagCtxs[1].setValues("changedLast2", "changedFirst2");
+	mytag.tagCtxs[1].setValues("changedLast2", "changedFirst2");
 
 	// ............................... Assert .................................
 	equal(getResult2(), isIE8
@@ -18511,7 +18511,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ................................ Act ..................................
  // Set values for tag (main block)
-	myTag.setValues("changedFirst3", "changedLast3");
+	mytag.setValues("changedFirst3", "changedLast3");
 
 	// ............................... Assert .................................
 	equal(getResult2(), isIE8
@@ -18522,13 +18522,13 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way tag with multiple bindings and multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(myTag.contents("input")[3] === myTag.tagCtxs[1].contents("input")[1]
-		&& myTag.nodes()[6] === myTag.tagCtxs[1].nodes()[1],
+	ok(mytag.contents("input")[3] === mytag.tagCtxs[1].contents("input")[1]
+		&& mytag.nodes()[6] === mytag.tagCtxs[1].nodes()[1],
 	"Two-way tag with multiple bindings and multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() work correctly");
 
 	// ............................... Assert .................................
-	equal("" + myTag.cvtArgs() + "|" + myTag.tagCtxs[0].cvtArgs() + "|" + myTag.tagCtxs[1].cvtArgs()
-		+ "--" + myTag.bndArgs() + "|" + myTag.tagCtxs[0].bndArgs() + "|" + myTag.tagCtxs[1].bndArgs(),
+	equal("" + mytag.cvtArgs() + "|" + mytag.tagCtxs[0].cvtArgs() + "|" + mytag.tagCtxs[1].cvtArgs()
+		+ "--" + mytag.bndArgs() + "|" + mytag.tagCtxs[0].bndArgs() + "|" + mytag.tagCtxs[1].bndArgs(),
 		"0,updatedLast2|0,updatedLast2|0,updatedFirst2--updatedFirst2,updatedLast2|updatedFirst2,updatedLast2|updatedLast2,updatedFirst2",
 	"Two-way tag with multiple bindings and multiple else blocks - calls to tag.cvtArgs(), tagCtx.cvtArgs() tag.bndArgs() tagCtx.bndArgs() work correctly");
 
@@ -18668,7 +18668,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	$("#result").empty();
 
-	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{myTag}} inline data binding.
+	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{mytag}} inline data binding.
 
 });
 
