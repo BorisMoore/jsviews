@@ -4,7 +4,17 @@
 
 /* Setup */
 var isIE8 = window.attachEvent && !window.addEventListener;
+var useinput = "oninput" in document;
+var inputOrKeydown = useinput ? "input" : "keydown";
 
+function keydown(elem) {
+	if (useinput) {
+		elem.trigger("input");
+	} else {
+		elem.keydown();
+	}
+}
+ 
 // =============== Model ===============
 function fullName(reverse, upper) {
 	var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
@@ -173,7 +183,7 @@ $.views
 		twoWayTag: {
 			init: function(tagCtx, linkCtx, ctx) {
 				eventData += "init ";
-				if (this._.inline && !tagCtx.content) {
+				if (this.inline && !tagCtx.content) {
 					this.template = "<input/>";
 				}
 			},
@@ -195,10 +205,10 @@ $.views
 			},
 			onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onBind ";
-				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+				this.linkedElem = this.linkedElem || (this.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
 			onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
-				this.linkedElem = undefined; // remove, so newly rendered linkedElem gets created in onAfterLink
+				this.linkedElem = undefined; // remove, so newly rendered linkedElem gets created in onBind
 				eventData += "onUnbind ";
 			},
 			onBeforeChange: function(ev, eventArgs) {
@@ -677,7 +687,7 @@ test("Template validation", function() {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div class="{{attr:\'myClass\'}}">a</div>') // throws syntax error
+		$.templates('<div class="{{attr:\'myClass\'}}">a</div>') // does not throw syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -686,6 +696,19 @@ test("Template validation", function() {
 	// ............................... Assert .................................
 	equal(res, "",
 		"Validation - {{attr:...}} within element markup is OK");
+	res = "";
+
+	// =============================== Arrange ===============================
+	try {
+		$.templates('<input data-link="value{:foo:}"/>') // throws syntax error
+		.link("#result", {thing: "Orig"});
+	} catch (e) {
+		res = e.message;
+	}
+
+	// ............................... Assert .................................
+	equal(res, "Syntax error\n{:foo:}- Remove target: value",
+		"Validation - value{:foo:}");
 	res = "";
 
 	// ................................ Reset ................................
@@ -1236,7 +1259,7 @@ test("$.link() and $().link() variants", function(assert) {
 	before = $("#result").text() + $("#result input").val();
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val();
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
@@ -1268,7 +1291,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val();
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val();
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
@@ -1310,7 +1333,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
@@ -1347,7 +1370,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
@@ -1390,7 +1413,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
@@ -1428,7 +1451,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
@@ -1466,7 +1489,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
@@ -1504,7 +1527,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
@@ -1542,7 +1565,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
@@ -1637,7 +1660,7 @@ setTimeout(function() {
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	$.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
@@ -1697,7 +1720,7 @@ setTimeout(function() {
 	after = $("#result").text();
 	$.observable(model2.person1).setProperty("lastName", "newLast2");
 	after += "|" + $("#result").text();
-	$("#result input").val("modLast").keydown();
+	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text();
@@ -1715,7 +1738,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner");
 	$.observable(model.person1).setProperty("lastName", "last1A");
 	after += "|" + $("#result").text() + getTitles("#inner");
-	$("#result input").val("modMoreLast").keydown();
+	keydown($("#result input").val("modMoreLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner");
@@ -1765,7 +1788,7 @@ setTimeout(function() {
 
 	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$("#result input").val("modLast4").keydown();
+	keydown($("#result input").val("modLast4"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
@@ -1776,7 +1799,7 @@ setTimeout(function() {
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$("#result input").val("modLast6").keydown();
+	keydown($("#result input").val("modLast6"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
@@ -1788,7 +1811,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
 setTimeout(function() {
-	$("#result input").val("modLast8").keydown();
+	keydown($("#result input").val("modLast8"));
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
 
@@ -1831,7 +1854,7 @@ setTimeout(function() {
 
 	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$("#result input").val("modLast4").keydown();
+	keydown($("#result input").val("modLast4"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
@@ -1842,7 +1865,7 @@ setTimeout(function() {
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$("#result input").val("modLast6").keydown();
+	keydown($("#result input").val("modLast6"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
@@ -1853,7 +1876,7 @@ setTimeout(function() {
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$("#result input").val("modLast8").keydown();
+	keydown($("#result input").val("modLast8"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
@@ -2020,7 +2043,7 @@ var done = assert.async();
 
 	res = '';
 
-	$("#result input").val("editedName").keydown();
+	keydown($("#result input").val("editedName"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -2050,7 +2073,7 @@ setTimeout(function() {
 
 	res = '';
 
-	$("#result input").val("editedName").keydown();
+	keydown($("#result input").val("editedName"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -2095,7 +2118,7 @@ setTimeout(function() {
 
 	res = '';
 
-	$("#result input").val("editedName").keydown();
+	keydown($("#result input").val("editedName"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -2163,7 +2186,7 @@ var done = assert.async();
 	'Data link using: <input data-link="lastName"/> binds from data');
 
 	// ................................ Act ..................................
-	$("#result input").val("editedName").keydown();
+	keydown($("#result input").val("editedName"));
 
 setTimeout(function() {
 	after = $("#result").html() + $("#last").val();
@@ -3243,7 +3266,7 @@ var done = assert.async();
 
 	// ................................ Act ..................................
 	var value = $("#twoWay").val();
-	$("#twoWay").val(value + "+").keydown();
+	keydown($("#twoWay").val(value + "+"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -3262,7 +3285,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	value = $("#twoWay").val();
-	$("#twoWay").val(value + "+").keydown();
+	keydown($("#twoWay").val(value + "+"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -3281,7 +3304,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	value = $("#twoWay").val();
-	$("#twoWay").val(value + "+").keydown();
+	keydown($("#twoWay").val(value + "+"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -3314,7 +3337,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	value = $("#twoWay").val();
-	$("#twoWay").val(value + "+").keydown();
+	keydown($("#twoWay").val(value + "+"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -3324,7 +3347,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	value = $("#twoWayInner").val();
-	$("#twoWayInner").val(value + "+").keydown();
+	keydown($("#twoWayInner").val(value + "+"));
 
 setTimeout(function() {
 	// ............................... Assert .................................
@@ -3360,7 +3383,7 @@ var done = assert.async();
 
 	res = $("#result").text() + " | ";
 
-	$("#result input").val('1st Ave').keydown();
+	keydown($("#result input").val('1st Ave'));
 
 setTimeout(function() {
 	res += $("#result").text() + " | " + model.address.street;
@@ -3698,7 +3721,7 @@ setTimeout(function() {
 	getContent();
 
 	$("#result input").each(function() {
-		$("#result input").val(cnt++).keydown();
+		keydown($("#result input").val(cnt++));
 	});
 
 setTimeout(function() {
@@ -5237,7 +5260,7 @@ var done = assert.async();
 
 	res += "|" + $("#result").text() + $("#full").val();
 
-	$("#full").val("2wayFirst 2wayLast").keydown();
+	keydown($("#full").val("2wayFirst 2wayLast"));
 
 setTimeout(function() {
 	res += "|" + $("#result").text() + $("#full").val();
@@ -5309,7 +5332,7 @@ setTimeout(function() {
 
 	res += "|" + $("#result").text() + $("#full").val();
 
-	$("#full").val("2wayFirst 2wayLast").keydown();
+	keydown($("#full").val("2wayFirst 2wayLast"));
 
 setTimeout(function() {
 	res += "|" + $("#result").text() + $("#full").val();
@@ -5368,7 +5391,7 @@ setTimeout(function() {
 
 	res += "|" + $("#result").text() + ":" + $("#full0").val();
 
-	$("#full0").val("2wayFirst 2wayLast").keydown();
+	keydown($("#full0").val("2wayFirst 2wayLast"));
 
 setTimeout(function() {
 	res += "|" + $("#result").text() + ":" + $("#full0").val();
@@ -5441,12 +5464,12 @@ setTimeout(function() {
 
 	getResult();
 
-	input1.val('onechange').keydown();
+	keydown(input1.val('onechange'));
 
 setTimeout(function() {
 	getResult();
 
-	input2.val('twochange').keydown();
+	keydown(input2.val('twochange'));
 
 setTimeout(function() {
 	getResult();
@@ -5520,22 +5543,22 @@ setTimeout(function() {
 
 	getResult();
 
-	nameInput0.val('n0new').keydown();
+	keydown(nameInput0.val('n0new'));
 
 setTimeout(function() {
 	getResult();
 
-	nameInput1.val('n1new').keydown();
+	keydown(nameInput1.val('n1new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput0.val('s0new').keydown();
+	keydown(streetInput0.val('s0new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput1.val('s1new').keydown();
+	keydown(streetInput1.val('s1new'));
 
 setTimeout(function() {
 	getResult();
@@ -5645,22 +5668,22 @@ setTimeout(function() {
 
 	getResult();
 
-	nameInput0.val('n0new').keydown();
+	keydown(nameInput0.val('n0new'));
 
 setTimeout(function() {
 	getResult();
 
-	nameInput1.val('n1new').keydown();
+	keydown(nameInput1.val('n1new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput0.val('s0new').keydown();
+	keydown(streetInput0.val('s0new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput1.val('s1new').keydown();
+	keydown(streetInput1.val('s1new'));
 
 setTimeout(function() {
 	getResult();
@@ -5767,22 +5790,22 @@ setTimeout(function() {
 
 	getResult();
 
-	nameInput0.val('n0new').keydown();
+	keydown(nameInput0.val('n0new'));
 
 setTimeout(function() {
 	getResult();
 
-	nameInput1.val('n1new').keydown();
+	keydown(nameInput1.val('n1new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput0.val('s0new').keydown();
+	keydown(streetInput0.val('s0new'));
 
 setTimeout(function() {
 	getResult();
 
-	streetInput1.val('s1new').keydown();
+	keydown(streetInput1.val('s1new'));
 
 setTimeout(function() {
 	getResult();
@@ -5932,42 +5955,42 @@ setTimeout(function() {
 	people[1].ob().change();
 	getResult(8);
 
-	toStreet1_0.val("new1").keydown();
+	keydown(toStreet1_0.val("new1"));
 
 setTimeout(function() {
 	getResult(9);
 
-	toStreet2_0.val("new2").keydown();
+	keydown(toStreet2_0.val("new2"));
 
 setTimeout(function() {
 	getResult(10);
 
-	toStreetA_0.val("new3").keydown();
+	keydown(toStreetA_0.val("new3"));
 
 setTimeout(function() {
 	getResult(11);
 
-	toStreetB_0.val("new4").keydown();
+	keydown(toStreetB_0.val("new4"));
 
 setTimeout(function() {
 	getResult(12);
 
-	toStreet1_1.val("new5").keydown();
+	keydown(toStreet1_1.val("new5"));
 
 setTimeout(function() {
 	getResult(13);
 
-	toStreet2_1.val("new6").keydown();
+	keydown(toStreet2_1.val("new6"));
 
 setTimeout(function() {
 	getResult(14);
 
-	toStreetA_1.val("new7").keydown();
+	keydown(toStreetA_1.val("new7"));
 
 setTimeout(function() {
 	getResult(15);
 
-	toStreetB_1.val("new8").keydown();
+	keydown(toStreetB_1.val("new8"));
 
 setTimeout(function() {
 	getResult(16);
@@ -8725,6 +8748,74 @@ test("{^{for}}", function() {
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'tree',
+	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'trianglecircle',
+	'{^{for things}}{{else}}{{/for}} binds to property change on path');
+
+	// ................................ Act ..................................
+	$.observable(model).setProperty({things: {thing: "square"}});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'square',
+	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
+
+	// ................................ Act ..................................
+	$.observable(model).removeProperty("things");
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'None',
+	'{^{for things}}{{else}}{{/for}} binds to removeProperty change on path - and renders {{else}} block');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	model.things = []; // reset Prop
+
+	// =============================== Arrange ===============================
+
+	model.things = [{thing: "box"}]; // reset Prop
+	$.templates('<ul>{^{for things}}<li>{{:thing}}</li>{{else}}<li>None</li>{{/for}}</ul>')
+		.link("#result", model);
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'box|treebox',
+	'{^{for things}}{{else}}{{/for}} binds to array changes on leaf array');
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$.observable(model.things).remove(0, 2);
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(before + "|" + after, 'treebox|None',
+	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
+
+	// ................................ Act ..................................
+	$.observable(model.things).insert(0, {thing: "tree"});
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	equal(after, 'tree',
+	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
+
+	// ................................ Act ..................................
 	$.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
 	after = $("#result").text();
 
@@ -9395,7 +9486,7 @@ var done = assert.async();
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$(".changePropInput").val("newValue").keydown();
+	keydown($(".changePropInput").val("newValue"));
 
 setTimeout(function() {
 	after = $("#result").text();
@@ -9406,7 +9497,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$(".changeKeyInput").val("newKey").keydown();
+	keydown($(".changeKeyInput").val("newKey"));
 
 setTimeout(function() {
 	after = $("#result").text();
@@ -11257,7 +11348,7 @@ var done = assert.async();
 	'Data link using: {^{:lastName}} <span data-link="lastName"></span> <input id="last" data-link="lastName"/> {^{:fullName()}}<span data-link="fullName()"></span> <input data-link="fullName()"/> {^{tmplTag/}} <span data-link="{tmplTag}"></span>');
 
 	// ................................ Act ..................................
-	$("#full").val("newFirst newLast").keydown();
+	keydown($("#full").val("newFirst newLast"));
 
 setTimeout(function() {
 	after = $("#result").text() + $("#last").val() + $("#full").val();
@@ -14561,7 +14652,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	view3.ctxPrm("wd", "set3");
 	view4.ctxPrm("wd", "set4");
 
-	res += "|2: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+	res += "\n|2: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ................................ Act ..................................
@@ -14574,18 +14665,146 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	input4.val("new4");
 	input4.change();
 
-	res += "|3: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
+	res += "\n|3: " + (view1.ctxPrm("wd")||"") + "/" + (view2.ctxPrm("wd")||"") + "/" + (view3.ctxPrm("wd")||"") + "/" + (view4.ctxPrm("wd")||"")
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
 	equal(res, isIE8
 		? "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
-		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
-		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
+		+ " \n|2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
+		+ " \n|3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
 		: "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
-		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
-		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
+		+ " \n|2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
+		+ " \n|3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
 		"Observable tag contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
+
+	tmpl.link("#result", [1,2], {foo: "val1"});
+
+	input1 = $("#a1");
+	view1 = input1.view();
+	input2 = $("#a2");
+	view2 = input2.view();
+	content = $("#result");
+
+	res = "1: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input1.val("new1");
+	input1.change();
+
+	res += "\n2: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view2.ctxPrm("foo", "set2");
+
+	res += "\n3: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	// Replace and verify context params are scoped within "#result", so re-initialized
+	tmpl.link("#result", [1,2], {foo: "val2"});
+
+	input1 = $("#a1");
+	view1 = input1.view();
+	input2 = $("#a2");
+	view2 = input2.view();
+
+	res += "\n4: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	view1.ctxPrm("foo", "set3");
+
+	res += "\n5: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	input2.val("new3");
+	input2.change();
+
+	res += "\n6: " + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: val1/val1-val1/val1: { val1 val1}" 
+		+ " \n2: new1/new1-new1/new1: {new1new1}"
+		+ " \n3: set2/set2-set2/set2: {set2set2}"
+		+ " \n4: val2/val2-val2/val2: { val2 val2}"
+		+ " \n5: set3/set3-set3/set3: {set3set3}"
+		+ " \n6: new3/new3-new3/new3: {new3new3} "
+		: "1: val1/val1-val1/val1: { val1 val1}"
+		+ " \n2: new1/new1-new1/new1: { new1 new1}"
+		+ " \n3: set2/set2-set2/set2: { set2 set2}"
+		+ " \n4: val2/val2-val2/val2: { val2 val2}"
+		+ " \n5: set3/set3-set3/set3: { set3 set3}"
+		+ " \n6: new3/new3-new3/new3: { new3 new3} ",
+		"link() will initialize contextual parameters, which are scoped to the newly linked view - so re-initialize on relinking");
+
+	// =============================== Arrange ===============================
+	var outerTmpl = $.templates('<input id="outer" data-link="~foo"/> {^{:~foo}} <div id="main"></div>');
+
+	outerTmpl.link("#result", {}, {foo: "outer"});
+	content = $("#result");
+
+	var inputOuter = $("#outer");
+	var viewOuter = inputOuter.view();
+
+	res = "1: " + (viewOuter.ctxPrm("foo")||"")
+	+ "-" + inputOuter.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	// Link to "#main" within linked templated content, and ensure context params are scoped within "#main", independent
+	// of context params in outer views under "#result"
+	tmpl = $.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
+	tmpl.link("#main", [1,2], {foo: "val1"});
+
+	input1 = $("#a1");
+	view1 = input1.view();
+	input2 = $("#a2");
+	view2 = input2.view();
+
+	res += "\n2: " + (viewOuter.ctxPrm("foo")||"") + "/" + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + inputOuter.val() + "/" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	viewOuter.ctxPrm("foo", "newouter");
+	view1.ctxPrm("foo", "new1");
+	input2.val("new2");
+	input2.change();
+
+	res += "\n3: " + (viewOuter.ctxPrm("foo")||"") + "/" + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + inputOuter.val() + "/" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ................................ Act ..................................
+	// Link to "#main" within linked templated content, and ensure context params are scoped within "#main", independent
+	// of context params in outer views under "#result"
+	tmpl.link("#main", [1,2], {foo: "val2"});
+
+	input1 = $("#a1");
+	view1 = input1.view();
+	input2 = $("#a2");
+	view2 = input2.view();
+
+	res += "\n4: " + (viewOuter.ctxPrm("foo")||"") + "/" + (view1.ctxPrm("foo")||"") + "/" + (view2.ctxPrm("foo")||"")
+	+ "-" + inputOuter.val() + "/" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
+
+	// ............................... Assert .................................
+	equal(res, isIE8
+		? "1: outer-outer: { outer }"
+		+ " \n2: outer/val1/val1-outer/val1/val1: { outer  val1 val1}"
+		+ " \n3: newouter/new2/new2-newouter/new2/new2: {newouter new2new2}"
+		+ " \n4: newouter/val2/val2-newouter/val2/val2: {newouter  val2 val2} "
+		: "1: outer-outer: { outer }"
+		+ " \n2: outer/val1/val1-outer/val1/val1: { outer  val1 val1}"
+		+ " \n3: newouter/new2/new2-newouter/new2/new2: { newouter  new2 new2}"
+		+ " \n4: newouter/val2/val2-newouter/val2/val2: { newouter  val2 val2} ",
+		"link() will initialize contextual parameters, scoped to the newly linked view (within target container), even when the target container is within data-linked content");
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -15394,7 +15613,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onAfterLink ",
+	equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for tag.refresh');
 	eventData = "";
 
@@ -15637,7 +15856,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onUnbind onBind onAfterLink ",
+	equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
 	eventData = "";
 
@@ -15823,7 +16042,7 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "render onUnbind onBind onAfterLink ",
+	equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
 	eventData = "";
 
@@ -16207,25 +16426,25 @@ test("Global trigger=false local trigger=true - triggers after keydown: <input/>
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events,
-		handlers = "|" + events.keydown.length;
+		handlers = "|" + events[inputOrKeydown].length;
 
 	$.observable(person).setProperty({name: "FirstName"});
 
 	events = $._data(linkedElem).events;
-	handlers += "|" + events.keydown.length;
+	handlers += "|" + events[inputOrKeydown].length;
 
 	// ................................ Act ..................................
 	res += " 1: " + person.name;
 
 	linkedElem.value = "SecondName";
 
-	$(linkedElem).keydown();
+	keydown($(linkedElem));
 	$.views.settings.trigger(true);
 
 	setTimeout(function() {
 		res += " 2: " + person.name;
 
-		handlers += "|" + events.keydown.length;
+		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
 		equal(res,
@@ -16267,7 +16486,7 @@ test("Global trigger=true local trigger=false - does not trigger after keydown: 
 
 	linkedElem.value = "SecondName";
 
-	$(linkedElem).keydown();
+	keydown($(linkedElem));
 
 	setTimeout(function() {
 		res += " 2: " + person.name;
@@ -16304,24 +16523,24 @@ test("Global trigger=true - triggers after keydown: <input/>", function(assert) 
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events,
-		handlers = "|" + events.keydown.length;
+		handlers = "|" + events[inputOrKeydown].length;
 
 	$.observable(person).setProperty({name: "FirstName"});
 
 	events = $._data(linkedElem).events;
-	handlers += "|" + events.keydown.length;
+	handlers += "|" + events[inputOrKeydown].length;
 
 	// ................................ Act ..................................
 	res += " 1: " + person.name;
 
 	linkedElem.value = "SecondName";
 
-	$(linkedElem).keydown();
+	keydown($(linkedElem));
 
 	setTimeout(function() {
 		res += " 2: " + person.name;
 
-		handlers += "|" + events.keydown.length;
+		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
 		equal(res,
@@ -16463,13 +16682,13 @@ test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(as
 
 		linkedElem = tag.linkedElem[0],
 		events = $._data(linkedElem).events,
-		handlers = "|" + events.keydown.length;
+		handlers = "|" + events[inputOrKeydown].length;
 
 	// ................................ Act ..................................
 	before = linkedElem.value;
 	linkedElem.value = "ChangeTheName";
 
-	tag.linkedElem.keydown();
+	keydown(tag.linkedElem);
 
 	setTimeout(function() {
 		// ............................... Assert .................................
@@ -16477,7 +16696,7 @@ test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(as
 		"JO|changethename",
 		'Data link using: {^{twoWayTag name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
-		handlers += "|" + events.keydown.length;
+		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
 		equal(handlers,
@@ -16533,13 +16752,13 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 
 	var linkedElem = tag.linkedElem[0],
 		events = $._data(linkedElem).events,
-		handlers = "|" + events.keydown.length;
+		handlers = "|" + events[inputOrKeydown].length;
 
 	// ................................ Act ..................................
 	before = linkedElem.value;
 	linkedElem.value = "ChangeTheName";
 
-	tag.linkedElem.keydown();
+	keydown(tag.linkedElem);
 
 	setTimeout(function() {
 		// ............................... Assert .................................
@@ -16547,7 +16766,7 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 		"JO|changethename",
 		'Data link using: {^{textbox name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
-		handlers += "|" + events.keydown.length;
+		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
 		equal(handlers,
@@ -16604,25 +16823,25 @@ $.views.settings.trigger(true);
 
 		linkedElem = tag.linkedElem[0],
 		events = $._data(linkedElem).events,
-		handlers = "|" + events.keydown.length;
+		handlers = "|" + events[inputOrKeydown].length;
 
 	// ................................ Act ..................................
 	before = linkedElem.innerHTML;
 	linkedElem.innerHTML = "New <em>Name</em>";
 
-	tag.linkedElem.keydown();
+	keydown(tag.linkedElem);
 
 setTimeout(function() {
 	before += "|" + person.name;
 	linkedElem.innerHTML = "New2 <p>Name2</p>";
 
-	tag.linkedElem.keydown();
+	keydown(tag.linkedElem);
 
 setTimeout(function() {
 	before += "|" + person.name;
 	linkedElem.innerHTML = "New3 <div>Name3</div>";
 
-	tag.linkedElem.keydown();
+	keydown(tag.linkedElem);
 
 setTimeout(function() {
 		// ............................... Assert .................................
@@ -16631,7 +16850,7 @@ setTimeout(function() {
 			: "JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
 		'Data link using: {^{contentEditable name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
-		handlers += "|" + events.keydown.length;
+		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
 		equal(handlers,
@@ -16666,7 +16885,7 @@ $.views.settings.trigger(false);
 		twoWayTag: {
 			init: function(tagCtx, linkCtx, ctx) {
 				eventData += "init ";
-				if (this._.inline && !tagCtx.content) {
+				if (this.inline && !tagCtx.content) {
 					this.template = "<input/>";
 				}
 			},
@@ -16676,7 +16895,7 @@ $.views.settings.trigger(false);
 			onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 				eventData += "onAfterLink ";
 				this.value = tagCtx.args[0];
-				this.linkedElem = this.linkedElem || (this._.inline ? this.contents("input,div") : $(linkCtx.elem));
+				this.linkedElem = this.linkedElem || (this.inline ? this.contents("input,div") : $(linkCtx.elem));
 			},
 			onBeforeUpdateVal: function(ev, eventArgs) {
 				eventData += "onBeforeUpdateVal ";
