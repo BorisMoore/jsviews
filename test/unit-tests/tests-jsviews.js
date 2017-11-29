@@ -2016,10 +2016,10 @@ var done = assert.async();
 	// =============================== Arrange ===============================
 	$.views.helpers({
 		onBeforeChange: function(ev, eventArgs) {
-			res += "globalBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "globalBeforeChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterChange: function(ev, eventArgs) {
-			res += "globalAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "globalAfterChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterCreate: function(view) {
 			res += "globalAfterCreate ";
@@ -2055,10 +2055,10 @@ setTimeout(function() {
 	// =============================== Arrange ===============================
 	tmpl.link("#result", pson, {
 		onBeforeChange: function(ev, eventArgs) {
-			res += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterChange: function(ev, eventArgs) {
-			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterCreate: function(view) {
 			res += "optionsAfterCreate ";
@@ -2087,10 +2087,10 @@ setTimeout(function() {
 		markup: "<input data-link='name'/> {^{:name}}",
 		helpers: {
 			onBeforeChange: function(ev, eventArgs) {
-				res += "templateBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+				res += "templateBeforeChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 			},
 			onAfterChange: function(ev, eventArgs) {
-				res += "templateAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+				res += "templateAfterChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 			},
 			onAfterCreate: function(view) {
 				res += "templateAfterCreate ";
@@ -2100,10 +2100,10 @@ setTimeout(function() {
 
 	tmpl.link("#result", pson, {
 		onBeforeChange: function(ev, eventArgs) {
-			res += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "optionsBeforeChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterChange: function(ev, eventArgs) {
-			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tag ? this.tag.tagName : this.elem.tagName) + " ";
+			res += "optionsAfterChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
 		onAfterCreate: function(view) {
 			res += "optionsAfterCreate ";
@@ -3769,7 +3769,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$("#result input:eq(1)").prop("checked", true).change(); // Check first radio button
+	$("#result input").eq(1).prop("checked", true).change(); // Check second radio button
 
 	res += $("#result input:checked").parent().text() + "|" + model.selected;
 
@@ -3817,7 +3817,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$("#result input:eq(1)").first().prop("checked", true).change(); // Check first radio button
+	$("#result input").eq(1).prop("checked", true).change(); // Check first radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -3919,7 +3919,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -3986,7 +3986,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -4044,7 +4044,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -4108,7 +4108,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -5357,8 +5357,8 @@ setTimeout(function() {
 			: person.firstName + " " + person.lastName;
 	}
 
-	fullName.depends = function() {
-		return [this, "firstName", "lastName"];
+	fullName.depends = function(data) {
+		return [this, "firstName", data, "lastName"]; // this and data are both contextual data object
 	};
 
 	fullName.set = function(val) {
@@ -10240,7 +10240,7 @@ test('{^{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -10307,7 +10307,7 @@ test('{^{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -10365,7 +10365,7 @@ test('{^{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -10429,7 +10429,7 @@ test('{^{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -10629,7 +10629,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -10694,7 +10694,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -10750,7 +10750,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -10810,7 +10810,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res = $("#result").text() + "|";
 
-	$("#result input:eq(2)").prop("checked", true).change(); // Check third radio button
+	$("#result input").eq(2).prop("checked", true).change(); // Check third radio button
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -11289,7 +11289,7 @@ test('{^{on}}', function() {
 
 	// ............................... Assert .................................
 	equal(res, "100|100|doIt|red",
-	"{^{on 'click' selector otherParams... method params...}} : supports passing params to method, of any type, as well as setting data and context for the function call");
+	"{^{on ... id=... class=... width=... height=...}} : supports setting id, class, height and width");
 
 	// ................................ Act ..................................
 	$("#result").empty();
@@ -13710,17 +13710,22 @@ function testDepends(template) {
 		'Computed observable with depends function programmatically observing array, with the callback provided as parameter. Works equivalently to the declarative depends for an array');
 
 	// =============================== Arrange ===============================
-	summary.depends = function() {
-		return function () {
-			return [function () {
+	var test;
+	summary.depends = function(data1) {
+		var this1 = this;
+		return function (data2) {
+			var this2 = this;
+			return [function (data3) {
+				var this3 = this;
+				test = this1 === data1 && this1 === data2 && this1 === data3 && this1 === this2 && this1 === this3;
 				return "itemsProp"; 
 			}, "name"]; 
 		};
 	};
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
-		'Computed observable with depends including several nested function calls returning (finally) "itemsProp" updates for both array change and property change');
+	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}") && test,
+		'Computed observable with depends including several nested function calls returning (finally) "itemsProp" updates for both array change and property change, and has correct this pointers and data arguments');
 
 	// =============================== Arrange ===============================
 	summary.depends = function() {
@@ -13833,6 +13838,629 @@ function testDepends(template) {
 
 	$.observable(app).setProperty("name", "Jim");
 
+	// =============================== Arrange ===============================
+$.views.settings.trigger(false);
+
+	function fullName() {
+		var person = this.ctxPrm ? this.ctxPrm("prson") : this;
+		return person.title + " " + person.name + " " + person.address.street;
+	}
+
+	fullName.depends = function(data) {
+		return [this, "title", "name", "address^street"];
+	};
+
+	fullName.set = function(val) {
+		var parts = val.split(" ");
+		$.observable(this).setProperty({
+			title: parts.shift(),
+			name: parts.shift(),
+			address: {street: parts.join(" ")}
+		});
+	};
+
+	var prson = {
+		title: "Sir",
+		name: "Jo",
+		address: {street: "1st Ave"},
+		fullName: fullName,
+	};
+
+	$.views.templates({
+		markup: '{^{:~prson.title}} <input data-link="~prson.title" />'
+	+ '{^{:~prson.name}} <input data-link="~prson.name" />'
+	+ '{^{:~prson.address^street}} <input data-link="~prson.address^street" /> '
+	+ 'Full: {^{:~prson.fullName()}} <input data-link="~prson.fullName()" />'
+	+ '{^{mytag ~prson.fullName}}'
+		+ ' CTP: {^{:~ctp()}}'
+		+ '<input data-link="~ctp()" />'
+	+ '{{/mytag}}'
+	+ ' FULLNAMETAG: {^{fullName ~prson/}}',
+		tags: {
+			mytag: {
+				linkedCtxParam: "ctp",
+				onUpdate: false // Could also be true
+			},
+			fullName: {
+				linkedCtxParam: ["prsn"],
+				render: function(person) {
+					return person.title + " " + person.name + " " + person.address.street + " <input id='intag' data-link='~prsn.fullName()'/>";
+				},
+				depends: function(data) {
+					return [this.tagCtx.args[0], "title", "name", "address^street"];
+				}
+			}
+		}
+	}).link("#result", 1, {
+		prson: prson
+	});
+	var input,
+		result = $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(prson).setProperty("address", {street: "2nd St"});
+	result += "\nADDRESS: " + $("#result").text();
+
+	input = $("input")[0];
+	$(input).val(input.value + "+").change();
+	result += "\nTITLE: " + $("#result").text();
+
+	input = $("input")[1];
+	$(input).val(input.value + "+").change();
+	result += "\nNAME: " + $("#result").text();
+
+	input = $("input")[2];
+	$(input).val(input.value + "+").change();
+	result += "\nSTREET: " + $("#result").text();
+
+	input = $("input")[3];
+	$(input).val("Mr Bob FullSt").change();
+	result += "\nFULL: " + $("#result").text();
+
+	input = $("input")[4];
+	$(input).val("Lady Jane CtpSt").change();
+	result += "\nCTP: " + $("#result").text();
+
+	input = $("input")[5];
+	$(input).val("Ms Anne TagSt").change();
+	result += "\nTAG: " + $("#result").text();
+
+	// ............................... Assert .................................
+
+	var expected = isIE8 ?
+		"Sir Jo 1st Ave  Full: Sir Jo 1st Ave  CTP: Sir Jo 1st Ave FULLNAMETAG: Sir Jo 1st Ave \n"
+		+ "ADDRESS: Sir Jo 2nd St  Full:Sir Jo 2nd St  CTP:Sir Jo 2nd St FULLNAMETAG:Sir Jo 2nd St \n"
+		+ "TITLE: Sir+ Jo 2nd St  Full:Sir+ Jo 2nd St  CTP:Sir+ Jo 2nd St FULLNAMETAG:Sir+ Jo 2nd St \n"
+		+ "NAME: Sir+ Jo+ 2nd St  Full:Sir+ Jo+ 2nd St  CTP:Sir+ Jo+ 2nd St FULLNAMETAG:Sir+ Jo+ 2nd St \n"
+		+ "STREET: Sir+ Jo+ 2nd St+  Full:Sir+ Jo+ 2nd St+  CTP:Sir+ Jo+ 2nd St+ FULLNAMETAG:Sir+ Jo+ 2nd St+ \n"
+		+ "FULL: Mr Bob FullSt  Full:Mr Bob FullSt  CTP:Mr Bob FullSt FULLNAMETAG:Mr Bob FullSt \n"
+		+ "CTP: Lady Jane CtpSt  Full:Lady Jane CtpSt  CTP:Lady Jane CtpSt FULLNAMETAG:Lady Jane CtpSt \n"
+		+ "TAG: Ms Anne TagSt  Full:Ms Anne TagSt  CTP:Ms Anne TagSt FULLNAMETAG:Ms Anne TagSt "
+			: "Sir Jo 1st Ave  Full: Sir Jo 1st Ave  CTP: Sir Jo 1st Ave FULLNAMETAG: Sir Jo 1st Ave \n"
+		+ "ADDRESS: Sir Jo 2nd St  Full: Sir Jo 2nd St  CTP: Sir Jo 2nd St FULLNAMETAG: Sir Jo 2nd St \n"
+		+ "TITLE: Sir+ Jo 2nd St  Full: Sir+ Jo 2nd St  CTP: Sir+ Jo 2nd St FULLNAMETAG: Sir+ Jo 2nd St \n"
+		+ "NAME: Sir+ Jo+ 2nd St  Full: Sir+ Jo+ 2nd St  CTP: Sir+ Jo+ 2nd St FULLNAMETAG: Sir+ Jo+ 2nd St \n"
+		+ "STREET: Sir+ Jo+ 2nd St+  Full: Sir+ Jo+ 2nd St+  CTP: Sir+ Jo+ 2nd St+ FULLNAMETAG: Sir+ Jo+ 2nd St+ \n"
+		+ "FULL: Mr Bob FullSt  Full: Mr Bob FullSt  CTP: Mr Bob FullSt FULLNAMETAG: Mr Bob FullSt \n"
+		+ "CTP: Lady Jane CtpSt  Full: Lady Jane CtpSt  CTP: Lady Jane CtpSt FULLNAMETAG: Lady Jane CtpSt \n"
+		+ "TAG: Ms Anne TagSt  Full: Ms Anne TagSt  CTP: Ms Anne TagSt FULLNAMETAG: Ms Anne TagSt ";
+
+	equal(result, expected,
+	"Custom tag control {{fullName ...}} using render, with linkedCtxParam, depends, onUpdate not false");
+
+	// =============================== Arrange ===============================
+	prson = {
+		title: "Sir",
+		name: "Jo",
+		fullName: fullName,
+		address: {street: "1st Ave"}
+	};
+
+	$.views.templates({
+		markup: '{^{:~prson.title}} <input data-link="~prson.title" />'
+	+ '{^{:~prson.name}} <input data-link="~prson.name" />'
+	+ '{^{:~prson.address^street}} <input data-link="~prson.address^street" /> '
+	+ 'Full: {^{:~prson.fullName()}} <input data-link="~prson.fullName()" />'
+	+ '{^{mytag ~prson.fullName}}'
+		+ ' CTP: {^{:~ctp()}}'
+		+ '<input data-link="~ctp()" />'
+	+ '{{/mytag}}'
+	+ ' FULLNAMETAG: {^{fullName ~prson/}}',
+		tags: {
+			mytag: {
+				linkedCtxParam: "ctp",
+				onUpdate: false
+			},
+			fullName: {
+				linkedCtxParam: ["prsn"],
+				template: "{{:~prsn.title}} {{:~prsn.name}} {{:~prsn.address.street}} <input id='intag' data-link='~prsn.fullName()'/>",
+				depends: function(data) {
+					return [this.tagCtx.args[0], "title", "name", "address^street"];
+				}
+			}
+		}
+	}).link("#result", 1, {
+		prson: prson
+	});
+	var input,
+		result = $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(prson).setProperty("address", {street: "2nd St"});
+	result += "\nADDRESS: " + $("#result").text();
+
+	input = $("input")[0];
+	$(input).val(input.value + "+").change();
+	result += "\nTITLE: " + $("#result").text();
+
+	input = $("input")[1];
+	$(input).val(input.value + "+").change();
+	result += "\nNAME: " + $("#result").text();
+
+	input = $("input")[2];
+	$(input).val(input.value + "+").change();
+	result += "\nSTREET: " + $("#result").text();
+
+	input = $("input")[3];
+	$(input).val("Mr Bob FullSt").change();
+	result += "\nFULL: " + $("#result").text();
+
+	input = $("input")[4];
+	$(input).val("Lady Jane CtpSt").change();
+	result += "\nCTP: " + $("#result").text();
+
+	input = $("input")[5];
+	$(input).val("Ms Anne TagSt").change();
+	result += "\nTAG: " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, expected,
+	"Custom tag control {{fullName ...}} using template, with linkedCtxParam, depends, onUpdate not false - works correctly");
+
+	// =============================== Arrange ===============================
+	prson = {
+		title: "Sir",
+		name: "Jo",
+		fullName: fullName,
+		address: {street: "1st Ave"}
+	};
+
+	$.views.templates({
+		markup: 'Title: {^{:person.title}} '
+	+ 'Name: {^{:person.name}} '
+	+ 'Street: {^{:person^address.street}} '
+	+ 'Full: {^{:person.fullName()}} '
+	+ 'TAG: {^{mytag person.fullName ~prson=person}}' // Bind to function itself
+		+ '{^{:~ctp()}}'
+		+ ' <input data-link="~ctp()" />'
+	+ '{{/mytag}}'
+	+ 'TAG2: {^{mytag person.fullName() ~prson=person}}' // Bind to evaluated function
+		+ '{^{:~ctp}}'
+		+ ' <input data-link="~ctp" />'
+	+ '{{/mytag}}',
+		tags: {
+			mytag: {
+				linkedCtxParam: "ctp",
+				onUpdate: false
+			}
+		}
+	}).link("#result", {
+		person: prson
+	});
+	var input,
+		result = $("#result").text();
+
+	// ................................ Act ..................................
+	$.observable(prson).setProperty("title","Sir2");
+	result += "\nTITLE: " + $("#result").text();
+
+	$.observable(prson).setProperty("name","Jo2");
+	result += "\nNAME: " + $("#result").text();
+
+	$.observable(prson).setProperty("address", {street: "2nd St"});
+	result += "\nADDRESS: " + $("#result").text();
+
+	input = $("input")[0];
+	$(input).val("Mr Bob FullSt").change();
+	result += "\nCTP FUNCTION: " + $("#result").text();
+
+	input = $("input")[1];
+	$(input).val("Mr Bob FullSt").change();
+	result += "\nCTP EVALUATED FUNCTION: " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, isIE8 ? "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
+	+ "TITLE: Title:Sir2 Name: Jo Street: 1st Ave Full:Sir2 Jo 1st Ave TAG:Sir2 Jo 1st Ave TAG2:Sir2 Jo 1st Ave \n"
+	+ "NAME: Title:Sir2 Name:Jo2 Street: 1st Ave Full:Sir2 Jo2 1st Ave TAG:Sir2 Jo2 1st Ave TAG2:Sir2 Jo2 1st Ave \n"
+	+ "ADDRESS: Title:Sir2 Name:Jo2 Street:2nd St Full:Sir2 Jo2 2nd St TAG:Sir2 Jo2 2nd St TAG2:Sir2 Jo2 2nd St \n"
+	+ "CTP FUNCTION: Title:Mr Name:Bob Street:FullSt Full:Mr Bob FullSt TAG:Mr Bob FullSt TAG2:Mr Bob FullSt \n"
+	+ "CTP EVALUATED FUNCTION: Title:Mr Name:Bob Street:FullSt Full:Mr Bob FullSt TAG:Mr Bob FullSt TAG2:Mr Bob FullSt "
+		: "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
+	+ "TITLE: Title: Sir2 Name: Jo Street: 1st Ave Full: Sir2 Jo 1st Ave TAG: Sir2 Jo 1st Ave TAG2: Sir2 Jo 1st Ave \n"
+	+ "NAME: Title: Sir2 Name: Jo2 Street: 1st Ave Full: Sir2 Jo2 1st Ave TAG: Sir2 Jo2 1st Ave TAG2: Sir2 Jo2 1st Ave \n"
+	+ "ADDRESS: Title: Sir2 Name: Jo2 Street: 2nd St Full: Sir2 Jo2 2nd St TAG: Sir2 Jo2 2nd St TAG2: Sir2 Jo2 2nd St \n"
+	+ "CTP FUNCTION: Title: Mr Name: Bob Street: FullSt Full: Mr Bob FullSt TAG: Mr Bob FullSt TAG2: Mr Bob FullSt \n"
+	+ "CTP EVALUATED FUNCTION: Title: Mr Name: Bob Street: FullSt Full: Mr Bob FullSt TAG: Mr Bob FullSt TAG2: Mr Bob FullSt ",
+		"Custom tag control {{fullName ...}} with linkedCtxParam 2-way binding to computed property - either the function itself, or the evaluated function result");
+
+	// =============================== Arrange ===============================
+	$.views.templates({
+		markup:
+			'{^{personname person ~psn2=person/}}' // binding to person
+		+ '{{for person}}'
+			+ '{^{personname #data ~psn2=#data/}}' // binding to #data as default argument
+			+ '{^{personname ~psn2=#data/}}' // binding to #data as default argument
+		+ '{{/for}}',
+		tags: {
+			personname: {
+				template: "<input data-link='~psn.name'/><input data-link='~psn2.name'/>",
+				linkedCtxParam: "psn"
+			}
+		}
+	}).link("#result", {person:{name: "Jo"}});
+
+	// ................................ Act ..................................
+	var inputs = $("input");
+
+	result = inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[0]).val("Jo2").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[1]).val("Jo3").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[2]).val("Jo4").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[3]).val("Jo5").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[4]).val("Jo6").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	$(inputs[5]).val("Jo7").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo Jo Jo Jo Jo\n"
++ "Jo2 Jo2 Jo2 Jo2 Jo2 Jo2\n"
++ "Jo3 Jo3 Jo3 Jo3 Jo3 Jo3\n"
++ "Jo4 Jo4 Jo4 Jo4 Jo4 Jo4\n"
++ "Jo5 Jo5 Jo5 Jo5 Jo5 Jo5\n"
++ "Jo6 Jo6 Jo6 Jo6 Jo6 Jo6\n"
++ "Jo7 Jo7 Jo7 Jo7 Jo7 Jo7\n",
+	"Custom tag control {{personname ...}} using template, with linkedCtxParam and tag contextual parameter, binding to #data, and with 2-way binding to person.name - works correctly");
+
+	// =============================== Arrange ===============================
+	$.views.templates({
+		markup:
+			'{^{textbox path=person/}}'
+		+ '<div data-link="{textbox path=person}"></div><br/>'
+
+		+ '{^{textbox2 path=person.name/}}'
+		+ '<div data-link="{textbox2 path=person.name}"></div><br/>'
+
+		+ '{^{textbox3 path=person.name/}}'
+		+ '<div data-link="{textbox3 path=person.name}"></div>'
+		+ '<input data-link="{textbox3 path=person.name}"/><br/>'
+		+ '<input data-link="person.name"/><br/>',
+		tags: {
+			textbox: {
+				bindTo: "path",
+				linkedCtxParam: "psn",
+				template:"<input data-link='~psn.name'/>",
+				onUpdate: false
+			},
+			textbox2: {
+				bindTo: "path",
+				linkedCtxParam: "nm",
+				template:"<input data-link='~nm'/>",
+				onUpdate: false
+			},
+			textbox3: {
+				bindTo: "path",
+				linkedElement: "input",
+				template:"<input/>",
+				onUpdate: false
+			}
+		}
+	}).link("#result", {person:{name: "Jo"}});
+
+	// ................................ Act ..................................
+	var inputs = $("input");
+
+	result = inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[0]).val("Jo0").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[1]).val("Jo1").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[2]).val("Jo2").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[3]).val("Jo3").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[4]).val("Jo4").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[5]).val("Jo5").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[6]).val("Jo6").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[7]).val("Jo7").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo Jo Jo Jo Jo Jo Jo\n"
++ "Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0\n"
++ "Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1\n"
++ "Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2\n"
++ "Jo3 Jo3 Jo3 Jo3 Jo3 Jo3 Jo3 Jo3\n"
++ "Jo4 Jo4 Jo4 Jo4 Jo4 Jo4 Jo4 Jo4\n"
++ "Jo5 Jo5 Jo5 Jo5 Jo5 Jo5 Jo5 Jo5\n"
++ "Jo6 Jo6 Jo6 Jo6 Jo6 Jo6 Jo6 Jo6\n"
++ "Jo7 Jo7 Jo7 Jo7 Jo7 Jo7 Jo7 Jo7\n",
+	"Custom tag control {{texbox ...}} with linkedCtxParam or linkedElement, data-linked as (1) inline tag, (2) data-linked input or (3) data-linked div");
+
+	// =============================== Arrange ===============================
+	$.views.templates({
+		markup:
+			'{^{textbox path=person/}}'
+		+ '<div data-link="{textbox path=person}"></div><br/>'
+
+		+ '{^{textbox2 path=person.name/}}'
+		+ '<div data-link="{textbox2 path=person.name}"></div><br/>'
+
+		+ '{^{textbox3 path=person.name/}}'
+		+ '<div data-link="{textbox3 path=person.name}"></div>'
+		+ '<input data-link="{textbox3 path=person.name}"/><br/>'
+		+ '<input data-link="person.name"/><br/>',
+		tags: {
+			textbox: {
+				bindTo: "path",
+				linkedCtxParam: "psn",
+				template:"<input data-link='~psn.name'/>",
+				onUpdate: false
+			},
+			textbox2: {
+				bindTo: "path",
+				linkedCtxParam: "nm",
+				template:"<input data-link='~nm'/>",
+				onUpdate: false
+			},
+			textbox3: {
+				bindTo: "path",
+				linkedElement: "input",
+				template:"<input/>",
+				onUpdate: false
+			}
+		}
+	}).link("#result", {person:{name: "Jo"}});
+
+	// ................................ Act ..................................
+	var inputs = $("input");
+
+	result = inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[0]).val("Jo0").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[1]).val("Jo1").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[2]).val("Jo2").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[3]).val("Jo3").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[4]).val("Jo4").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[5]).val("Jo5").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[6]).val("Jo6").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	$(inputs[7]).val("Jo7").change();
+
+	result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo Jo Jo Jo Jo Jo Jo\n"
++ "Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0\n"
++ "Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1\n"
++ "Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2\n"
++ "Jo3 Jo3 Jo3 Jo3 Jo3 Jo3 Jo3 Jo3\n"
++ "Jo4 Jo4 Jo4 Jo4 Jo4 Jo4 Jo4 Jo4\n"
++ "Jo5 Jo5 Jo5 Jo5 Jo5 Jo5 Jo5 Jo5\n"
++ "Jo6 Jo6 Jo6 Jo6 Jo6 Jo6 Jo6 Jo6\n"
++ "Jo7 Jo7 Jo7 Jo7 Jo7 Jo7 Jo7 Jo7\n",
+	"Custom tag control {{texbox ...}} with linkedCtxParam or linkedElement, data-linked as (1) inline tag, (2) data-linked input or (3) data-linked div");
+
+	// =============================== Arrange ===============================
+	$.views.templates({
+		markup: '{^{textbox path=name edit=editable/}}'
+		+ '<div data-link="{textbox path=name edit=editable}"></div>',
+		tags: {
+			textbox: {
+				bindTo: "path",
+				linkedCtxParam: "val",
+				init: function() {
+					this.edit = this.tagCtx.props.edit; // Initialize textbox state
+				},
+				template:"<input data-link='~tag.edit' type='checkbox'/>"
+				+ "{^{if ~tag.edit}}" // observable textbox state
+					+ "<input class='edit' data-link='~val'/>"
+				+ "{{else}}"
+					+ "<span data-link='~val'></span>"
+				+ "{{/if}}",
+				onUpdate: false
+			}
+		}
+	}).link("#result", {name: "Jo", editable: true});
+
+	// ................................ Act ..................................
+	var container = $("#result")[0];
+	result = $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	$("input:text").eq(0).val("Fred").change(); // Modify text
+
+	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+
+	for (var i=0; i<textBoxes.length; i++) {
+		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+	}
+
+	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(1).text();
+
+	$("input:checkbox", container).eq(0).prop("checked", true).change(); // User clicks on checkbox and flips state of this textbox
+
+	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
+	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Template linking to observable state, \"~tag.edit\"");
+
+	// =============================== Arrange ===============================
+	$.views.templates({
+		markup: '{^{textbox path=name edit=editable/}}'
+		+ '<div data-link="{textbox path=name edit=editable}"></div>',
+		tags: {
+			textbox: {
+				bindTo: "path",
+				linkedCtxParam: "val",
+				init: function() {
+					this.edit = this.tagCtx.props.edit; // Initialize textbox state
+				},
+				render: function() {
+					this.template = "<input data-link='~tag.edit' type='checkbox'/>"   // Checkbox to toggle edit
+					+ (this.edit // not bound, so driven by 'depends'
+						? "<input class='edit' data-link='~val'/>"// <input> for editing
+						: "<span data-link='~val'></span>");      // <span> for rendering
+				},
+				depends: function(data) {
+					return [this, "edit"]; // depends on textbox state
+				}
+			}
+		}
+	}).link("#result", {name: "Jo", editable: true});
+
+	// ................................ Act ..................................
+	var container = $("#result")[0];
+	result = $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	$("input:text").eq(0).val("Fred").change(); // Modify text
+
+	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+
+	for (var i=0; i<textBoxes.length; i++) {
+		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+	}
+
+	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(0).text();
+
+	$("input:checkbox", container).eq(0).prop("checked", true).change(); // User clicks on checkbox and flips state of this textbox
+
+	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
+	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Render method, and depends to bind to observable state, this.edit");
+
+	// =============================== Arrange ===============================
+	var data = {name: "Jo", editable: true};
+
+	$.views.templates({
+		markup: '{^{textbox path=name ^edit=editable/}}'
+		+ '<div data-link="{textbox path=name ^edit=editable}"></div>',
+		tags: {
+			textbox: {
+				bindTo: "path",
+				linkedCtxParam: "val",
+				init: function() {
+					this.edit = this.tagCtx.props.edit; ; // Initialize textbox state through edit property
+				},
+				render: function() {
+					this.template = "<input data-link='~tag.edit' type='checkbox'/>"   // Checkbox to toggle edit
+					+ (this.edit
+						? "<input class='edit' data-link='~val'/>" // <input> for editing
+						: "<span data-link='~val'></span>");       // <span> for rendering
+				},
+				onUpdate: function(ev, eventArgs, tagCtxs) {
+					this.edit = tagCtxs[0].props.edit; // Respond to changed data-linked edit property.
+				},
+				onBind: function() {
+					$.observe(this, "edit", $.proxy(this.refresh, this));
+				},
+				onUnbind: function() {
+					$.unobserve(this, "edit");
+				}
+			}
+		}
+	}).link("#result", data);
+
+	// ................................ Act ..................................
+	var container = $("#result")[0];
+	result = $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	$("input:text").eq(0).val("Fred").change(); // Modify text
+
+	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
+
+	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+
+	for (var i=0; i<textBoxes.length; i++) {
+		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+	}
+
+	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(0).text();
+
+	$("input:checkbox", container).eq(0).prop("checked", true).change(); // User clicks on checkbox and flips state of this textbox
+
+	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
+
+	$.observable(data).setProperty("editable", false); // User clicks on checkbox and flips state of this textbox
+
+	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(1).text();
+
+	// ............................... Assert .................................
+	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred|Fred Fred",
+	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Render method, and programmatic observe state, this.edit");
+
+$.views.settings.trigger(true);
 });
 
 module("API - Settings");
@@ -15050,6 +15678,96 @@ test("view.get() and view.getIndex() in element-only content", function() {
 
 module("API - Tag Controls");
 
+test("Wrapping", function() {
+	// =============================== Arrange ===============================
+	$.templates({
+			markup: '{{mytag}}{{:name}}{{/mytag}}'
+		+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
+			tags: {
+				mytag: {
+					render: function(val) {
+						return "DefaultArg:" + this.tagCtx.args[0].name + "TMPL:" + this.tagCtx.render(val) + "CNT:" + this.tagCtx.content.render(val);
+					}
+				}
+			}
+		}).link("#result", {name: "Jo"});
+
+	// ............................... Assert .................................
+	equal($("#result").text(), 
+			"DefaultArg:JoTMPL:JoCNT:Jo"
+		+ "DefaultArg:JoTMPL:JoCNT:Jo",
+		"If tag has no template, tagCtx.render() and tagCtx.content.render() both render content. arg[0] defaults to current data context.");
+
+	// =============================== Arrange ===============================
+	$.templates({
+			markup: '{{mytag}}{{:name}}{{/mytag}}'
+		+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
+			tags: {
+				mytag: {
+					render: function(val) {
+						return "TMPL:" + this.tagCtx.render(val) + "CNT:" + this.tagCtx.content.render(val);
+					},
+					template: "1{{include tmpl=#content/}} 2{{include tmpl=~tag.tagCtx.content/}} 3{{:~tag.tagCtx.args[0].name}} "
+				}
+			}
+		}).link("#result", {name: "Jo"});
+
+	// ............................... Assert .................................
+	equal($("#result").text(), 
+			"TMPL:1Jo 2Jo 3Jo CNT:Jo"
+		+ "TMPL:1Jo 2Jo 3Jo CNT:Jo",
+		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content");
+
+	// =============================== Arrange ===============================
+	$.templates({
+			markup: '{{mytag}}a{{:name}}{{else #data}}b{{:name}}{{/mytag}}'
+		+ '<div data-link="{mytag tmpl=\'a{{:name}}\'}{else #data tmpl=\'b{{:name}}\'}"></div>',
+			tags: {
+				mytag: {
+					render: function(val) {
+						return "TMPL:" + this.tagCtx.render(val) + "CNT:" + this.tagCtx.content.render(val);
+					},
+					template: "1{{include tmpl=#content/}} 2{{include tmpl=~tag.tagCtx.content/}} 3{{:~tag.tagCtx.args[0].name}}{{:~tag.tagCtx.index}} "
+				}
+			}
+		}).link("#result", {name: "Jo"});
+
+	// ............................... Assert .................................
+	equal($("#result").text(), 
+
+			"TMPL:1aJo 2aJo 3Jo0 CNT:aJo"
+		+ "TMPL:1bJo 2bJo 3Jo1 CNT:bJo"
+		+ "TMPL:1aJo 2aJo 3Jo0 CNT:aJo"
+		+ "TMPL:1bJo 2bJo 3Jo1 CNT:bJo",
+		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content - also for else blocks");
+
+	// =============================== Arrange ===============================
+	$.templates({
+			markup: '{{mytag}}{{:name}}{{/mytag}}'
+				+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
+			tags: {
+				mytag: {
+					render: function(val) {
+						var val = this.tagCtx.view.data;
+						return "DefaultArg:" + !!this.tagCtx.args[0] + "TMPL:" + this.tagCtx.render(val) + "CNT:" + this.tagCtx.content.render(val);
+					},
+					init: function() {
+						this.argDefault = false;
+					}
+				}
+			}
+		}).link("#result", {name: "Jo"});
+
+	// ............................... Assert .................................
+	equal($("#result").text(), 
+			"DefaultArg:falseTMPL:JoCNT:Jo"
+		+ "DefaultArg:falseTMPL:JoCNT:Jo",
+		"If argDefault is false, arg[0] does not default to current data context. But can programmatically pass in data to tagCtx.render() or tagCtx.content.render()");
+
+	// ............................... Reset .................................
+	$("#result").empty();
+});
+
 test("view.childTags() and tag.childTags()", function() {
 
 	// =============================== Arrange ===============================
@@ -15355,11 +16073,19 @@ test("lateRender - for deferred API calls", function() {
 // But these following tags still need lateRender=true, so the rendering is also deferred to after linking has been completed
 '{^{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true/}}<br/>' +
 '{^{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=true/}}<br/>' +
-'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}',
+'/{^{:#childTags(\'mytag\')[0].value lateRender=true}}' +
+'/{^{mylaterendertag \'mytag\'/}}' +
+'/{^{mylaterendertag \'mytag\' lateRender=false/}}',
 		tags: {
 			mytag: {
 					template: 'MyTag',
 					value: 'tagVal'
+			},
+			mylaterendertag: {
+				render: function() {
+					return this.tagCtx.view.childTags(this.tagCtx.args[0]) .length;
+				},
+				lateRender: 1 // This will render late, unless lateRender=false on the instance markup
 			}
 		},
 		templates: {
@@ -15368,7 +16094,7 @@ test("lateRender - for deferred API calls", function() {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal=MyTag-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal",
+	equal($("#result").text(), "-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal=MyTag-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal/1/0",
 	"When using APIs such as #childTags() and #get() within binding expressions, to return tag instances, use lateRender=true to defer the API call until linking is complete" );
 
 	// ................................ Act ..................................
@@ -15769,7 +16495,6 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	noRenderOnUpdate = false;
 	before = tag.value + linkedEl.value;
-
 	$.observable(person).setProperty({name: "newName2"});
 
 	// ............................... Assert .................................
@@ -16164,6 +16889,108 @@ $.views.settings.trigger(false);
 	'Data linked tag with default convert and convertBack, on element change: {^{textbox/}}uses default convertBAck and {^{textbox convertBack=.../}} uses overridden convertBack');
 
 	// =============================== Arrange ===============================
+	function conv1(val) {
+		return "ONE(" + val + " " + this.tagCtx.props.type + ")";
+	}
+	conv1.depends = function(data) {
+		return [data, "foo"];
+	}
+
+	function conv2(val) {
+		return "TWO(" + val + " " + this.tagCtx.props.type + ")";
+	}
+	conv2.depends = function(data) {
+		return [data, "foo"];
+	}
+
+	function conv3(val) {
+		return "THREE(" + val + " " + this.tagCtx.props.type + ")";
+	}
+	conv3.depends = function(data) {
+		return [data, "foo"];
+	}
+	var person = {name: "Jo", foo: "foo1", bar: "bar1"};
+
+	$.templates({
+		markup: '{^{:name type=foo convert=~cvt}} {^{:name type=foo convert="cvt"}} {^{cvt:name type=foo }}',
+		converters: {
+			cvt: conv1
+		}
+	}).link("#result", person, {
+		cvt: conv2
+	});
+
+	// ................................ Act ..................................
+	var result = $("#result").text();
+	$.observable(person).setProperty({name: "Jo2"});
+	result += "\nChangeData-name: " + $("#result").text();
+
+	$.observable(person).setProperty({foo: "foo2"});
+	result += "\nChangeConverterDepends-foo: " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, isIE8 ? "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
+		"ChangeData-name: TWO(Jo2 foo1)ONE(Jo2 foo1)ONE(Jo2 foo1)\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2)ONE(Jo2 foo2)ONE(Jo2 foo2)"
+			: "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
+		"ChangeData-name: TWO(Jo2 foo1) ONE(Jo2 foo1) ONE(Jo2 foo1)\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2) ONE(Jo2 foo2) ONE(Jo2 foo2)",
+		'{^{:...}} tag with converters with depends - updates correctly in response to dependent observable change');
+
+	// =============================== Arrange ===============================
+	var person = {name: "Jo", foo: "foo1", bar: "bar1"};
+
+	$.templates({
+		markup: '{^{textbox name type=foo convert=~cvt/}} {^{textbox name type=foo convert="cvt"/}} {^{textbox name type=foo /}}',
+		tags: {
+			textbox: {
+				state: "state1",
+				template: "{{:}} {{:#parent.data.bar}} {{:~tag.state}} {{:~tag.tagCtx.props.type}}",
+				convert: conv3,
+				depends: function(data) {
+					return [data, "bar", this, "state" ];
+				}
+			}
+		},
+		converters: {
+			cvt: conv1
+		}
+	}).link("#result", person, {
+		cvt: conv2
+	});
+
+	var textbox2 = $("#result").view().childTags("textbox")[1];
+
+	// ................................ Act ..................................
+	result = $("#result").text();
+
+	result = $("#result").text();
+	$.observable(person).setProperty({name: "Jo2"});
+	result += "\nChangeData-name: " + $("#result").text();
+
+	$.observable(person).setProperty({foo: "foo2"});
+	result += "\nChangeConverterDepends-foo: " + $("#result").text();
+
+	$.observable(person).setProperty({bar: "bar2"});
+	result += "\nChangeTagDependsData-bar: " + $("#result").text();
+
+	$.observable(textbox2).setProperty({state: "state2"});
+	result += "\nChangeTagDependsState-state: " + $("#result").text();
+
+	// ............................... Assert .................................
+	equal(result, isIE8 ? "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
+		"ChangeData-name: TWO(Jo2 foo1) bar1 state1 foo1ONE(Jo2 foo1) bar1 state1 foo1THREE(Jo2 foo1) bar1 state1 foo1\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2) bar1 state1 foo2ONE(Jo2 foo2) bar1 state1 foo2THREE(Jo2 foo2) bar1 state1 foo2\n" +
+		"ChangeTagDependsData-bar: TWO(Jo2 foo2) bar2 state1 foo2ONE(Jo2 foo2) bar2 state1 foo2THREE(Jo2 foo2) bar2 state1 foo2\n" +
+		"ChangeTagDependsState-state: TWO(Jo2 foo2) bar2 state1 foo2ONE(Jo2 foo2) bar2 state2 foo2THREE(Jo2 foo2) bar2 state1 foo2"
+			: "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
+		"ChangeData-name: TWO(Jo2 foo1) bar1 state1 foo1 ONE(Jo2 foo1) bar1 state1 foo1 THREE(Jo2 foo1) bar1 state1 foo1\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2) bar1 state1 foo2 ONE(Jo2 foo2) bar1 state1 foo2 THREE(Jo2 foo2) bar1 state1 foo2\n" +
+		"ChangeTagDependsData-bar: TWO(Jo2 foo2) bar2 state1 foo2 ONE(Jo2 foo2) bar2 state1 foo2 THREE(Jo2 foo2) bar2 state1 foo2\n" +
+		"ChangeTagDependsState-state: TWO(Jo2 foo2) bar2 state1 foo2 ONE(Jo2 foo2) bar2 state2 foo2 THREE(Jo2 foo2) bar2 state1 foo2",
+		'{^{textbox}} tag with depends, and with converters with depends - updates correctly in response to dependent observable changes');
+
+	// =============================== Arrange ===============================
 	var res = "";
 
 	$.templates('{^{twoWayTag name trigger="keydown mouseup"/}}').link("#result", person);
@@ -16411,7 +17238,324 @@ done();
 }, 0);
 }, 0);
 }, 0);
+});
 
+test("Tag options versus setting in init()", function() {
+	$.views.settings.trigger(false);
+
+	// =============================== Arrange ===============================
+	function getValues() {
+		result += "{{mytag}}: " + inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value
+		+ " {{else}}: " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value
+		+ " |data: " + inputs[8].value + " " + inputs[9].value + " " + inputs[10].value + " |text: " + $("#result").text() + "\n";
+	}
+
+	var person = {first: "Jo", last: "Blow", title: "Sir"};
+	$.views.templates({
+		markup: '{^{mytag 0 prop=first last title=title}}{{else 0 prop=last first title=title}}{{/mytag}}'
+		+ '<input data-link="first"/><input data-link="last"/><input data-link="title"/>',
+		tags: {
+			mytag: {
+				init: function(tagCtx) {
+					this.bindTo = ["prop", 1];
+					this.linkedElement = [".a", ".b"];
+					this.linkedCtxParam = ["a", "b"];
+					this.template = '<input class="a"/><input class="b"/><input data-link="~a"/><input data-link="~b"/>{^{:~tag.tagCtx.props.title}}';
+					this.boundProps = ["title"];
+					//this.depends = "title";
+				},
+				onUpdate: false
+			}
+		}
+	}).link("#result", person);
+
+		// ................................ Act ..................................
+	var container = $("#result")[0],
+		inputs = $("input:text", container),
+		result = "";
+
+	getValues();
+
+	$(inputs[0]).val("Jo0").change();
+	getValues();
+
+	$(inputs[1]).val("Blow1").change();
+	getValues();
+
+	$(inputs[2]).val("Jo2").change();
+	getValues();
+
+	$(inputs[3]).val("Blow3").change();
+	getValues();
+
+	$(inputs[4]).val("Blow4").change();
+	getValues();
+
+	$(inputs[5]).val("Jo5").change();
+	getValues();
+
+	$(inputs[8]).val("Jo8").change();
+	getValues();
+
+	$(inputs[9]).val("Blow9").change();
+	getValues();
+
+	$(inputs[10]).val("Sir10").change();
+	getValues();
+
+	// ............................... Assert .................................
+	equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo0 Blow Jo0 Blow {{else}}: Blow Jo Blow Jo0 |data: Jo0 Blow Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo0 Blow1 Jo0 Blow1 {{else}}: Blow Jo Blow1 Jo0 |data: Jo0 Blow1 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow1 Jo2 Blow1 {{else}}: Blow Jo Blow1 Jo2 |data: Jo2 Blow1 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo2 Blow3 {{else}}: Blow Jo Blow3 Jo2 |data: Jo2 Blow3 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo2 Blow4 {{else}}: Blow4 Jo Blow4 Jo2 |data: Jo2 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo5 Blow4 {{else}}: Blow4 Jo5 Blow4 Jo5 |data: Jo5 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow4 Jo8 Blow4 {{else}}: Blow4 Jo8 Blow4 Jo8 |data: Jo8 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow9 Jo8 Blow9 {{else}}: Blow9 Jo8 Blow9 Jo8 |data: Jo8 Blow9 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow9 Jo8 Blow9 {{else}}: Blow9 Jo8 Blow9 Jo8 |data: Jo8 Blow9 Sir10 |text: Sir10Sir10\n",
+	"Setting bindTo, linkedElement, linkedCtxParam, template and boundProps in init(), and using two-way binding"
+	+ " including on {{else}}, works correctly (onUpdate set to false)");
+
+	// =============================== Arrange ===============================
+	person = {first: "Jo", last: "Blow", title: "Sir"};
+	$.views.templates({
+		markup: '{^{mytag 0 prop=first last title=title}}{{else 0 prop=last first title=title}}{{/mytag}}'
+		+ '<input data-link="first"/><input data-link="last"/><input data-link="title"/>',
+		tags: {
+			mytag: {
+				init: function(tagCtx) {
+					this.bindTo = ["prop", 1];
+					this.linkedElement = [".a", ".b"];
+					this.linkedCtxParam = ["a", "b"];
+					this.template = '<input class="a"/><input class="b"/><input data-link="~a"/><input data-link="~b"/>{{:~tag.tagCtx.props.title}}';
+					//this.boundProps = ["title"];
+					this.depends = "title";
+				}
+				//onUpdate: false
+			}
+		}
+	}).link("#result", person);
+
+		// ................................ Act ..................................
+	container = $("#result")[0];
+	inputs = $("input:text", container);
+	result = "";
+
+	getValues();
+
+	$(inputs[0]).val("Jo0").change();
+	inputs = $("input:text", container); // Refresh inputs array, since onUpdate is true, so input will have been rerendered
+	getValues();
+
+	$(inputs[1]).val("Blow1").change();
+	inputs = $("input:text", container);
+	getValues();
+
+	$(inputs[2]).val("Jo2").change();
+	inputs = $("input:text", container);
+	getValues();
+
+	$(inputs[3]).val("Blow3").change();
+	inputs = $("input:text", container);
+	getValues();
+	inputs = $("input:text", container);
+
+	$(inputs[4]).val("Blow4").change();
+	inputs = $("input:text", container);
+	getValues();
+
+	$(inputs[5]).val("Jo5").change();
+	inputs = $("input:text", container);
+	getValues();
+window.good=true
+	$(inputs[8]).val("Jo8").change();
+	inputs = $("input:text", container);
+	getValues();
+window.good=false
+
+	$(inputs[9]).val("Blow9").change();
+	inputs = $("input:text", container);
+	getValues();
+
+	$(inputs[10]).val("Sir10").change();
+	inputs = $("input:text", container);
+	getValues();
+
+	// ............................... Assert .................................
+	equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo0 Blow Jo0 Blow {{else}}: Blow Jo Blow Jo0 |data: Jo0 Blow Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo0 Blow1 Jo0 Blow1 {{else}}: Blow Jo Blow1 Jo0 |data: Jo0 Blow1 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow1 Jo2 Blow1 {{else}}: Blow Jo Blow1 Jo2 |data: Jo2 Blow1 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo2 Blow3 {{else}}: Blow Jo Blow3 Jo2 |data: Jo2 Blow3 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo2 Blow4 {{else}}: Blow4 Jo Blow4 Jo2 |data: Jo2 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo2 Blow3 Jo5 Blow4 {{else}}: Blow4 Jo5 Blow4 Jo5 |data: Jo5 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow4 Jo8 Blow4 {{else}}: Blow4 Jo8 Blow4 Jo8 |data: Jo8 Blow4 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow9 Jo8 Blow9 {{else}}: Blow9 Jo8 Blow9 Jo8 |data: Jo8 Blow9 Sir |text: SirSir\n"
+	+ "{{mytag}}: Jo8 Blow9 Jo8 Blow9 {{else}}: Blow9 Jo8 Blow9 Jo8 |data: Jo8 Blow9 Sir10 |text: Sir10Sir10\n",
+	"Setting bindTo, linkedElement, linkedCtxParam, template and depends in init(), and using two-way binding including on {{else}},"
+	+ " works correctly (onUpdate set to true)");
+
+	// =============================== Arrange ===============================
+	person = {heading: "HEAD"};
+
+	$.views.templates({
+		markup: '<div data-link=\'prop-foo{mytag attr="title"}\'>One</div>'
+					+ '<div data-link=\'{mytag attr="title"}\'>Two</div>'
+					+ '<div data-link=\'{mytag attr="prop-bar"}\'>Two</div>'
+					+ '<div data-link=\'{mytag}\'>Three</div>',
+		tags: {
+			mytag: {
+				init: function(tagCtx, linkCtx) {
+					this.template = (linkCtx.attr||tagCtx.props.attr||this.attr) + ': {{:heading}}';
+					if (tagCtx.props.attr) {
+						this.attr = tagCtx.props.attr;
+					}
+				},
+				onUpdate: false,
+				attr: "data-foo" // Default
+			}
+		},
+	}).link("#result", person);
+
+	// ............................... Assert .................................
+	equal(
+		$("#result div").eq(0).prop("foo") + " "
+	+ $("#result div").eq(1).attr("title") + " "
+	+ $("#result div").eq(2).prop("bar") + " "
+	+ $("#result div").eq(3).attr("data-foo"),
+	"prop-foo: HEAD title: HEAD prop-bar: HEAD data-foo: HEAD",
+	"Setting attr in init() works correctly - including specifying prop - to set a property as target");
+
+	// =============================== Arrange ===============================
+	person = {first: "Jo", width: 32};
+
+	$.views.templates({
+		markup: '{^{mytag first width=width height=66 class="box" id="a"}}' 
+			+ '{{else first id="b"}}'
+			+ '{{else first width=width-10 height=46 id="c"}}{{/mytag}}',
+		tags: {
+			mytag: {
+				init: function(tagCtx) {
+					this.boundProps = ["width"];
+					this.linkedElement = "input";
+					this.displayElement = ".foot";
+					this.mainElement = ".head"; //
+					this.template = '<div class="top"><div class="head">head</div><input/><div class="foot">foot</div></div>';
+//					this.width = 55; // We set this in onBind instead - either will work
+//					this.className = "myclass"; // We set this in onBind instead - either will work
+					this.setSize = true;
+				},
+				onBind: function(tagCtx) {
+					this.tagCtxs[2].mainElem = this.tagCtxs[2].contents(true, ".foot");
+					this.tagCtxs[0].props.width = 102;
+					this.width = 300;
+					this.className = "myclass";
+				},
+				width: "155px",
+				height: "10em",
+				onUpdate: true,
+			}
+		}
+	}).link("#result", person);
+
+	// ............................... Assert .................................
+	var result = "";
+
+	$("#result div").each(function(i, elem) {
+		result += " |" + i + ": "
+			+ (elem.id ? " id: " + elem.id : "")
+			+ (elem.className ? " class: " + elem.className : "")
+			+ (elem.style.width ? " width: " + elem.style.width : "")
+			+ (elem.style.height ? " height: " + elem.style.height : "");
+	})
+	equal(result,
+	 " |0:  class: top |1:  id: a class: head width: 102px height: 66px |2:  class: foot box"
++ " |3:  class: top |4:  id: b class: head width: 300px height: 10em |5:  class: foot myclass"
++ " |6:  class: top |7:  class: head |8:  id: c class: foot myclass width: 22px height: 46px",
+	"Setting width, height, class, setSize, as tag options or in init()/onBind(),"
+	+ " or setting width height or class as props, or setting displayElement or mainElemet as tag option or in init() all work correctly");
+
+	// =============================== Arrange ===============================
+	person = {first: "Jo", width: 32};
+
+	$.views.templates({
+		markup: '<div data-link=\'{mytag first width=width height=66 class="box" id="a"}'
+				+ '{else first id="b"}'
+			+ '{else first width=width-10 height=46 id="c"}\'></div>',
+		tags: {
+			mytag: {
+				init: function(tagCtx) {
+					this.boundProps = ["width"];
+					this.linkedElement = "input";
+					this.displayElement = ".foot";
+					this.mainElement = ".head"; //
+					this.template = '<div class="top"><div class="head">head</div><input/><div class="foot">foot</div></div>';
+//					this.width = 55; // We set this in onBind instead - either will work
+//					this.className = "myclass"; // We set this in onBind instead - either will work
+					this.setSize = true;
+				},
+				onBind: function(tagCtx) {
+					this.tagCtxs[2].mainElem = this.tagCtxs[2].contents(true, ".foot");
+					this.tagCtxs[0].props.width = 102;
+					this.width = 300;
+					this.className = "myclass";
+				},
+				width: "155px",
+				height: "10em",
+				onUpdate: true,
+			}
+		}
+	}).link("#result", person);
+
+	// ............................... Assert .................................
+	result = "";
+
+	$("#result div div").each(function(i, elem) {
+		result += " |" + i + ": "
+			+ (elem.id ? " id: " + elem.id : "")
+			+ (elem.className ? " class: " + elem.className : "")
+			+ (elem.style.width ? " width: " + elem.style.width : "")
+			+ (elem.style.height ? " height: " + elem.style.height : "");
+	})
+	equal(result,
+	 " |0:  class: top |1:  id: a class: head width: 102px height: 66px |2:  class: foot box"
++ " |3:  class: top |4:  id: b class: head width: 300px height: 10em |5:  class: foot myclass"
++ " |6:  class: top |7:  class: head |8:  id: c class: foot myclass width: 22px height: 46px",
+	"Setting width, height, class, setSize, as tag options or in init()/onBind(),"
+	+ " or setting width height or class as props, or setting displayElement as tag option or in init() all work correctly. (With data-linked div)");
+
+// =============================== Arrange ===============================
+	person = {first: "Jo"};
+
+	$.views.templates({
+		markup: '1 <div data-link="{mytag useData=false}"></div>{^{mytag useData=false/}}'
+		+ '2 <div data-link="{mytag useData=true}"></div>{^{mytag useData=true/}}'
+		+ '3 <div data-link="{mytag ~person2 useOuterCtx=false}{else ~person2 useOuterCtx=false}"></div>{^{mytag ~person2 useOuterCtx=false}}{{else ~person2 useOuterCtx=false}}{{/mytag}}'
+		+ '4 <div data-link="{mytag ~person2 useOuterCtx=true}{else ~person2 useOuterCtx=true}"></div>{^{mytag ~person2 useOuterCtx=true}}{{else ~person2 useOuterCtx=true}}{{/mytag}}',
+		tags: {
+			mytag: {
+				init: function(tagCtx) {
+					this.argDefault = tagCtx.props.useData;
+					this.contentCtx = tagCtx.props.useOuterCtx;
+				},
+				onUpdate: false,
+				template: '{{:!!~tag.tagCtx.args[0] && ~tag.tagCtx.args[0].first}} {{:first}} '
+			}
+		}
+	}).link("#result", {first: "Jo"}, {person2: {first: "Fred"}});
+
+	// ............................... Assert .................................
+	result = "";
+
+	equal($("#result").text(),
+		"1 false Jo false Jo "
+	+ "2 Jo Jo Jo Jo "
+	+ "3 Fred Fred Fred Fred Fred Fred Fred Fred "
+	+ "4 Fred Jo Fred Jo Fred Jo Fred Jo ",
+	"Setting argDefault or contentCtx in init() work correctly.");
+
+	$.views.settings.trigger(true);
 });
 
 test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
@@ -16782,6 +17926,65 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 
 		done();
 	}, 0);
+
+});
+
+test("Custom tag trigger:... option", function(assert) {
+	// =============================== Arrange ===============================
+
+	var done = assert.async(),
+		before = "",
+		person = {name: "Jo", trig:true};
+
+	$.views.tags({
+		textbox: {
+			linkedElement: "input",
+			onUpdate: false,
+			template: "<input/>",
+			trigger: false,
+		}
+	});
+
+	$.templates({
+		markup: '{^{textbox name/}} {^{textbox name trigger=true/}}',
+	}).link("#result", person);
+
+	var tags = $("#result").view(true).childTags("textbox");
+
+	var linkedElem1 = $("#result input")[0];
+	var linkedElem2 = $("#result input")[1];
+
+	// ................................ Act ..................................
+	before = person.name;
+
+	linkedElem1.value = "NewName1";
+	keydown($(linkedElem1));
+
+	setTimeout(function() {
+
+	before += "|" + person.name;
+
+	linkedElem2.value = "NewName2";
+	keydown($(linkedElem2));
+
+	setTimeout(function() {
+
+	before += "|" + person.name;
+
+	linkedElem1.value = "AnotherNewName1";
+	$(linkedElem1).change();
+
+	before += "|" + person.name;
+
+		// ............................... Assert .................................
+		equal(before,
+		"Jo|Jo|NewName2|AnotherNewName1",
+		'{^{textbox/}} with option trigger:false - triggers after change, not after keydown. But {^{textbox trigger=true/}} overrides option and triggers on keydown');
+
+		done();
+	}, 0);
+	}, 0);
+
 });
 
 test("Global trigger=true - triggers after keydown: {^{contentEditable}}", function(assert) {
@@ -17348,7 +18551,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: [0, 1], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue().setValue() '
+	'With bindTo: [0, 1], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue() '
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -17390,7 +18593,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo|Jo--Bob|Bob| Bob--newFirst|newFirst| newFirst",
-	'With bindTo: 1, and linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue().setValue()'
+	'With bindTo: 1, and linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue()'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -17435,7 +18638,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	// ............................... Assert .................................
 	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
-	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue().setValue()'
+	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue())'
 	+ 'correctly access/update two-way bound values');
 
 	// =============================== Arrange ===============================
@@ -17894,6 +19097,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
 	"bindTo with converters, using linkedElement and linkedCtxParam");
 
+
+
 	// =============================== Arrange ===============================
 	$.views.tags("mytag", {
 		bindTo: ["height", "width"],
@@ -17909,15 +19114,9 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 					addedHeight = tag.mainElem.height() - ev.clientY;
 				if (document.elementFromPoint(ev.clientX, ev.clientY) === mainElem) {
 					$(document.body).mousemove(function(ev2) {
-//					setTimeout(function() { // Don't use timeout here since test is not async
-							var moveToX  = ev2.clientX + addedWidth;
-							var moveToY  = ev2.clientY + addedHeight;
-//						setTimeout(function() {
-								tag.updateValues(moveToY, moveToX);
-//						});
-							tag.setValue(moveToY, 0);
-							tag.setValue(moveToX, 1);
-//					});
+						var moveToX  = ev2.clientX + addedWidth;
+						var moveToY  = ev2.clientY + addedHeight;
+						tag.updateValues(moveToY, moveToX);
 					});
 				}
 			});
@@ -18099,8 +19298,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
 		+ '{{/mytag}}');
-
-	tmpl.link("#result", {cx: 100, cy: 200}, {
+	var data = {cx: 100, cy: 200};
+	tmpl.link("#result", data, {
 	plus: function(height, width) {
 		return [height !== undefined ? parseInt(height)+5 : height, width !== undefined ? parseInt(width)+10 : width];
 	},
@@ -18892,5 +20091,3 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 });
 
 })(this, this.jQuery);
-
-
