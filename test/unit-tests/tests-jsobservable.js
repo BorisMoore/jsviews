@@ -50,7 +50,6 @@ function myListener(ev, eventArgs) {
 	}
 }
 
-
 // =============== Model ===============
 function fullName(reverse, upper) {
 	var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
@@ -906,7 +905,7 @@ test("JsObservable: move()", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-module("API - $.observe()");
+module("API - $.observe() (jso)");
 
 test("depends, for computed observables", function() {
 
@@ -1054,8 +1053,8 @@ test("Array", function() {
 
 	// ............................... Assert .................................
 	equal(result + !$._data(myArray).events.arrayChange + " " + $._data(myArray).events.propertyChange.length,
-		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|true 1",
-		'$.observe(myArray, myArray, "length", myListener) listens to length propertyChange on the array, but not to array change on the array');
+		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|regularCallbackCalls: 2, eventArgs: change: insert|false 1",
+		'$.observe(myArray, myArray, "length", myListener) listens to length propertyChange on the array, and to array change on the array');
 
 	// ................................ Reset ..................................
 	reset();
@@ -1069,8 +1068,8 @@ test("Array", function() {
 	$.observable(myArray).insert(15);
 
 	// ............................... Assert .................................
-	equal(result + !$._data(myArray).events, "regularCallbackCalls: 1, eventArgs: change: insert|false",
-		'$.unobserve(myArray, myArray, "length", myListener) removes the propertychange handler, but not the array handler');
+	equal(result + !$._data(myArray).events, "true",
+		'$.unobserve(myArray, myArray, "length", myListener) removes the propertychange handler and the array handler');
 
 	// ................................ Reset ..................................
 	reset();
@@ -1514,12 +1513,11 @@ test("observe/unobserve alternative signatures", function() {
 	// ................................ Act ..................................
 	$.observe(person, "name", "address^street", "phones", myListener);
 
-	var bindingsData = JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]);
 	$.unobserve(person, person.address, person.phones);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), bindingsData,
-		"unobserve(object1, object2) does nothing");
+	equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
+		"unobserve(object1, object2) removes handlers from each object");
 
 	// ................................ Act ..................................
 	$.unobserve(person);
@@ -2297,7 +2295,7 @@ test("observe context helper", function() {
 	function observeCtxHelper(val, currentRoot) {
 		if (val) {
 			if (val.charAt(0) === "%") {
-				return [obj, val.slice(1), currentRoot || {}];
+				return [obj, val.slice(1)];
 			}
 		}
 	}
@@ -2541,29 +2539,29 @@ test("dataMap", function() {
 	}
 
 	// ................................ Act ..................................
-	var map = sortMap.map(data.rows, {sortby: "name"});
+	var map1 = sortMap.map(data.rows, {sortby: "name"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name"), "Jeff,Ariel,Pete|ARIEL,JEFF,PETE",
+	equal(viewSrcTgt(map1, "name"), "Jeff,Ariel,Pete|ARIEL,JEFF,PETE",
 		'map = sortMap.map(data.rows, {sortby: "name"}) creates a map with sorted target');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "name",
+	equal(map1.options.sortby, "name",
 		'map.options is the initial options passed to .map(source, options)');
 
 	// ............................... Assert .................................
-	ok(map.src === data.rows,
+	ok(map1.src === data.rows,
 		'map.src is the source');
 
 	// ................................ Act ..................................
-	map.update({sortby: "role"});
+	map1.update({sortby: "role"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant|ASSISTANT,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant|ASSISTANT,CONSULTANT,GOALIE",
 		'map.update({sortby: "role"}) re-sorts target');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "role",
+	equal(map1.options.sortby, "role",
 		'map.options is the current options - as passed to .update(options)');
 
 	// ................................ Act ..................................
@@ -2574,14 +2572,14 @@ test("dataMap", function() {
 	});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,CONSULTANT,GOALIE",
 		'If map has no obsSrc method, target does not update observably');
 
 	// ................................ Act ..................................
-	map.update({sortby: "role"});
+	map1.update({sortby: "role"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
 		'map.update({sortby: "role"}) re-sorts target based on current source');
 
 	// ................................ Act ..................................
@@ -2600,43 +2598,43 @@ test("dataMap", function() {
 	$.observable(data.rows).remove();
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role") + "/" + viewSrcTgt(map2, "name"),
+	equal(viewSrcTgt(map1, "role") + "/" + viewSrcTgt(map2, "name"),
 		"Goalie,Consultant,Assistant|ASSISTANT,BROKER,CONSULTANT,GOALIE/Jeff,Ariel,Pete|ARIEL,JEFF,MARY,PETE",
 		'If map has no obsSrc method, target does not update observably');
 
-	map.update();
+	map1.update();
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role") + "/" + viewSrcTgt(map2, "name"),
+	equal(viewSrcTgt(map1, "role") + "/" + viewSrcTgt(map2, "name"),
 		"Goalie,Consultant,Assistant|ASSISTANT,CONSULTANT,GOALIE/Jeff,Ariel,Pete|ARIEL,JEFF,MARY,PETE",
 		'map.update() will update target to current source using current options (sortby is now "role")');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "role",
+	equal(map1.options.sortby, "role",
 		'map.options is still the current options - as passed previously to .map(source, options) or .update(options)');
 
-	var tgt = map.tgt;
+	var tgt = map1.tgt;
 
 	// ................................ Act ..................................
-	map.unmap();
+	map1.unmap();
 
 	// ............................... Assert .................................
-	ok(map.src === undefined, 'map.unmap() removes src');
+	ok(map1.src === undefined, 'map.unmap() removes src');
 
 	// ................................ Act ..................................
-	map.map(data.rows, {sortby: "id"}, tgt);
+	map1.map(data.rows, {sortby: "id"}, tgt);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "id"), "id1,id2,id3|ID1,ID2,ID3",
+	equal(viewSrcTgt(map1, "id"), "id1,id2,id3|ID1,ID2,ID3",
 		'map.map(source, options, target) will remap to chosen source, options, and target');
 
 	// ................................ Act ..................................
-	map.map(data.rows, {sortby: "name"});
+	map1.map(data.rows, {sortby: "name"});
 
-	after = (map.tgt === tgt);
+	after = (map1.tgt === tgt);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name") + " " + after, "Jeff,Ariel,Pete|ARIEL,JEFF,PETE true",
+	equal(viewSrcTgt(map1, "name") + " " + after, "Jeff,Ariel,Pete|ARIEL,JEFF,PETE true",
 		'map.map(source, options) will remap to chosen source and options, and keep target');
 
 	// ................................ Act ..................................
@@ -2653,18 +2651,18 @@ test("dataMap", function() {
 			}
 		];
 
-	tgt = map.tgt;
+	tgt = map1.tgt;
 
-	map.map(otherRows);
+	map1.map(otherRows);
 
-	after = (tgt === map.tgt);
+	after = (tgt === map1.tgt);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name") + " " + after, "OtherGuy,Abel|ABEL,OTHERGUY true",
+	equal(viewSrcTgt(map1, "name") + " " + after, "OtherGuy,Abel|ABEL,OTHERGUY true",
 		'map.map(newSource) will remap new source, using current options and target');
 
 	// ................................ Act ..................................
-	map.unmap();
+	map1.unmap();
 	map2.unmap();
 
 	// =============================== Arrange ===============================
@@ -2692,29 +2690,29 @@ test("dataMap", function() {
 	});
 
 	// ................................ Act ..................................
-	map = observableSortMap.map(data.rows, {sortby: "name"});
+	var map1 = observableSortMap.map(data.rows, {sortby: "name"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name"), "Jeff,Ariel,Pete|ARIEL,JEFF,PETE",
+	equal(viewSrcTgt(map1, "name"), "Jeff,Ariel,Pete|ARIEL,JEFF,PETE",
 		'map = observableSortMap.map(data.rows, {sortby: "name"}) creates a map with sorted target');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "name",
+	equal(map1.options.sortby, "name",
 		'map.options is the initial options passed to .map(source, options)');
 
 	// ............................... Assert .................................
-	ok(map.src === data.rows,
+	ok(map1.src === data.rows,
 		'map.src is the source');
 
 	// ................................ Act ..................................
-	map.update({sortby: "role"});
+	map1.update({sortby: "role"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant|ASSISTANT,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant|ASSISTANT,CONSULTANT,GOALIE",
 		'map.update({sortby: "role"}) re-sorts target');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "role",
+	equal(map1.options.sortby, "role",
 		'map.options is the current options - as passed to .update(options)');
 
 	// ................................ Act ..................................
@@ -2725,14 +2723,14 @@ test("dataMap", function() {
 	});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
 		'If map has an obsSrc method, observable changes to source trigger observable target updates too');
 
 	// ................................ Act ..................................
-	map.update({sortby: "role"});
+	map1.update({sortby: "role"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
+	equal(viewSrcTgt(map1, "role"), "Goalie,Consultant,Assistant,Broker|ASSISTANT,BROKER,CONSULTANT,GOALIE",
 		'map.update({sortby: "role"}) re-sorts target based on current source');
 
 	// ................................ Act ..................................
@@ -2751,7 +2749,7 @@ test("dataMap", function() {
 	$.observable(data.rows).remove(2, 2);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role") + "/" + viewSrcTgt(map2, "name"),
+	equal(viewSrcTgt(map1, "role") + "/" + viewSrcTgt(map2, "name"),
 		"Goalie,Consultant|CONSULTANT,GOALIE/Jeff,Ariel|ARIEL,JEFF",
 		'If map has an obsSrc method, observable changes to source trigger observable target updates too');
 
@@ -2761,10 +2759,10 @@ test("dataMap", function() {
 		name: "Amadeus",
 		role: "Musician"
 	});
-	map.update();
+	map1.update();
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "role"),
+	equal(viewSrcTgt(map1, "role"),
 		"Goalie,Musician,Consultant|CONSULTANT,GOALIE,MUSICIAN",
 		'map.update() will update target to current source using current options (sortby is now "role")');
 
@@ -2779,19 +2777,19 @@ test("dataMap", function() {
 		'map2.update() will update target to current source using current options (sortby is now "name")');
 
 	// ............................... Assert .................................
-	equal(map.options.sortby, "role",
+	equal(map1.options.sortby, "role",
 		'map.options is still the current options - as passed previously to .map(source, options) or .update(options)');
 
-	tgt = map.tgt;
-	before = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map.tgt).events === undefined);
+	tgt = map1.tgt;
+	before = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map1.tgt).events === undefined);
 
 	// ................................ Act ..................................
-	map.unmap();
+	map1.unmap();
 
-	after = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map.tgt).events === undefined);
+	after = $._data(data.rows).events.arrayChange.length + "-" + ($._data(map1.tgt).events === undefined);
 
 	// ............................... Assert .................................
-	ok(map.src === undefined,
+	ok(map1.src === undefined,
 		'map.unmap() removes src');
 
 	// ............................... Assert .................................
@@ -2799,22 +2797,22 @@ test("dataMap", function() {
 		'map.unmap() removes dataMap observe bindings from src. (Note: map.tgt has no bindings since obsTgt not defined for this dataMap)');
 
 	// ................................ Act ..................................
-	map.map(data.rows, {sortby: "id"}, tgt);
+	map1.map(data.rows, {sortby: "id"}, tgt);
 
 	after = $._data(data.rows).events.arrayChange.length;
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "id") + " events: " + after, "id1,inserted,id2|ID1,ID2,INSERTED events: 2",
+	equal(viewSrcTgt(map1, "id") + " events: " + after, "id1,inserted,id2|ID1,ID2,INSERTED events: 2",
 		'map.map(source, options, target) will remap to chosen source, options, and target');
 
 	// ................................ Act ..................................
 
-	map.map(data.rows, {sortby: "name"});
+	map1.map(data.rows, {sortby: "name"});
 
-	after = $._data(data.rows).events.arrayChange.length + "-" + (map.tgt === tgt);
+	after = $._data(data.rows).events.arrayChange.length + "-" + (map1.tgt === tgt);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name") + " events: " + after, "Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF events: 2-true",
+	equal(viewSrcTgt(map1, "name") + " events: " + after, "Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF events: 2-true",
 		'map.map(source, options) will remap to chosen source and options, keep target - and remove previous bindings');
 
 	// ................................ Act ..................................
@@ -2831,9 +2829,9 @@ test("dataMap", function() {
 			}
 		];
 
-	tgt = map.tgt;
+	tgt = map1.tgt;
 
-	map.map(otherRows);
+	map1.map(otherRows);
 
 	$.observable(otherRows).insert(1, [
 		{
@@ -2849,11 +2847,11 @@ test("dataMap", function() {
 	]);
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name") + " " + after, "OtherGuy,Isabel,Xavier,Abel|ABEL,ISABEL,OTHERGUY,XAVIER 2-true",
+	equal(viewSrcTgt(map1, "name") + " " + after, "OtherGuy,Isabel,Xavier,Abel|ABEL,ISABEL,OTHERGUY,XAVIER 2-true",
 		'map.map(newSource) will remap new source, using current options and target');
 
 	// ................................ Act ..................................
-	map.unmap();
+	map1.unmap();
 	map2.unmap();
 
 	// =============================== Arrange ===============================
@@ -2882,13 +2880,13 @@ test("dataMap", function() {
 	});
 
 	// ................................ Act ..................................
-	map = observableSortMap2.map(data.rows, {sortby: "name"});
+	map1 = observableSortMap2.map(data.rows, {sortby: "name"});
 
 	// ............................... Assert .................................
-	equal(viewSrcTgt(map, "name"), "Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF",
+	equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF",
 		'map = observableSortMap2.map(data.rows, {sortby: "name"}) with obsTgt creates a map with sorted target');
 
-	$.observable(map.tgt).insert(1, [
+	$.observable(map1.tgt).insert(1, [
 		{
 			id: "new",
 			name: "Mary",
@@ -2901,15 +2899,15 @@ test("dataMap", function() {
 		}
 	]);
 
-	equal(viewSrcTgt(map, "name"), "Jeff,Amadeus,Ariel,Mary,Jane|AMADEUS,ARIEL,JANE,JEFF,MARY",
+	equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Ariel,Mary,Jane|AMADEUS,ARIEL,JANE,JEFF,MARY",
 		'If map has an obsTgt method, observable changes to target trigger observable source updates too');
 
-	$.observable(map.tgt).remove(1, 2);
+	$.observable(map1.tgt).remove(1, 2);
 
-	equal(viewSrcTgt(map, "name"), "Jeff,Amadeus,Mary|AMADEUS,JEFF,MARY",
+	equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Mary|AMADEUS,JEFF,MARY",
 		'If map has an obsTgt method, observable changes to target trigger observable source updates too');
 
-	map.unmap();
+	map1.unmap();
 });
 
 test("observeAll", function() {
@@ -3659,6 +3657,440 @@ test('observe(... "**" ...)', function() {
 
 });
 
+test('observe(... "[]" ...)', function() {
+		$.views.settings.advanced({_jsv: true});
+
+	// =============================== Arrange ===============================
+	var cb = function cb(ev, eventArgs) {
+		var val = eventArgs.value;
+		result += eventArgs.path + ": " + ($.isArray(val) ? val.length : val) + ", "; 
+	},
+
+	reset = function() {
+		result = "",
+		data = {
+			list: [
+				{a: "0a", b: "0b"},
+				{a: "1a", b: "1b"}
+			]
+		};
+	},
+
+	observablyChange = function(list) {
+		result += "|Set01| ";
+		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		result += "|Insert23| ";
+		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		result += "|Set0123| ";
+		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+	},
+
+	result = "",
+	data;
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data, 'list.[].*', cb);
+
+	observablyChange(data.list);
+	result += !!$._data(data.list).events;
+
+	$.unobserve(data, 'list.[].*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, false{}",
+	"observe '[].*' unobserve '[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'list.[]^*', cb);
+
+	observablyChange(data.list);
+	result += $._data(data.list).events.arrayChange.length;
+
+	$.unobserve(data, 'list.[]^*', cb);
+
+	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, a: 2a3, b: 2b3, a: 3a3, b: 3b3, 1false{}",
+	"observe '[]^*' unobserve '[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'list.[]^a', cb);
+
+	observablyChange(data.list);
+	result += $._data(data.list).events.arrayChange.length;
+
+	$.unobserve(data, 'list.[]^*', cb);
+
+	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 1false{}",
+	"observe '[]^a' unobserve '[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data, 'list.[].a', cb);
+
+	observablyChange(data.list);
+	result += !!$._data(data.list).events;
+
+	$.unobserve(data, 'list.[]^*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, false{}",
+	"observe '[].a' unobserve '[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'list.[]^a', cb);
+
+	observablyChange(data.list);
+	result += $._data(data.list).events.arrayChange.length;
+
+	$.unobserve(data, 'list.[].*', cb);
+
+	result += $._data(data.list).events.arrayChange.length;
+
+	$.unobserve(data, 'list.[]', cb);
+
+	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 11false{}",
+	"observe '[]^a' unobserve '[].*' unobserve '[]' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'list^[].a', cb);
+
+	result += "|setList| ";
+
+	$.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	observablyChange(data.list);
+	result += $._data(data.list).events.arrayChange.length + $._data(data).events.propertyChange.length;
+
+	$.unobserve(data, 'list^[].*', cb);
+
+	result += !!$._data(data.list).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|setList| list: 2, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 2falsefalse{}",
+	"observe 'list^[].a' unobserve 'list^[].*' works correctly");
+
+	// =============================== Arrange ===============================
+	reset = function() {
+		result = "",
+		data = {
+			deeplist: [
+				{sublist:[
+					{a: "0a", b: "0b"},
+					{a: "1a", b: "1b"}
+				]}
+			]
+		};
+	};
+
+	observablyChange = function(list) {
+		result += "|Set01| ";
+		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		result += "|Insert23| ";
+		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		result += "|Set0123| ";
+		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+	};
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data.deeplist, '[].sublist.[].*', cb);
+
+	observablyChange(data.deeplist[0].sublist);
+	result += !!$._data(data.deeplist[0].sublist).events;
+
+	$.unobserve(data.deeplist, '[].sublist.[].*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, false{}",
+	"observe '[].sublist.[].*' unobserve '[].sublist.[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.deeplist, '[].sublist.[]^*', cb);
+
+	observablyChange(data.deeplist[0].sublist);
+	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
+
+	$.unobserve(data.deeplist, '[].sublist.[]^*', cb);
+
+	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, a: 2a3, b: 2b3, a: 3a3, b: 3b3, 1false{}",
+	"observe '[].sublist.[]^*' unobserve '[].sublist.[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'deeplist.[].sublist.[]^a', cb);
+
+	observablyChange(data.deeplist[0].sublist);
+	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
+
+	$.unobserve(data, 'deeplist.[].sublist.[]^*', cb);
+
+	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 1false{}",
+	"observe '[].sublist.[].a' unobserve '[].sublist.[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data.deeplist, '[].sublist.[].a', cb);
+
+	observablyChange(data.deeplist[0].sublist);
+	result += !!$._data(data.deeplist[0].sublist).events;
+
+	$.unobserve(data.deeplist, '[].sublist.[]^*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, false{}",
+	"observe '[].sublist.[].a' unobserve '[].sublist.[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.deeplist, '[].sublist.[]^a', cb);
+
+	observablyChange(data.deeplist[0].sublist);
+	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
+
+	$.unobserve(data.deeplist, '[].sublist.[].*', cb);
+
+	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
+
+	$.unobserve(data.deeplist, '[].sublist.[]', cb);
+
+	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 11false{}",
+	"observe '[].sublist.[]^a' unobserve '[].sublist.[].*' unobserve '[].sublist.[]' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.deeplist, '[].sublist^[].a', cb);
+
+	result += "|setList| ";
+
+	$.observable(data.deeplist[0]).setProperty({sublist: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	observablyChange(data.deeplist[0].sublist);
+	result += $._data(data.deeplist[0].sublist).events.arrayChange.length + $._data(data.deeplist[0]).events.propertyChange.length;
+
+	$.unobserve(data.deeplist, '[].sublist^[].*', cb);
+
+	result += !!$._data(data.deeplist[0].sublist).events + "" + !!$._data(data.deeplist[0]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|setList| sublist: 2, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 2falsefalse{}",
+	"observe '[].sublist^[].a' unobserve '[].sublist^[].*' works correctly");
+
+	// ................................ Act ..................................
+
+	reset();
+	$.observe(data.deeplist, '[]^sublist.[].a', cb);
+
+	result += "|insertDeepList| ";
+
+	$.observable(data.deeplist).insert(0, {sublist: [{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]});
+	observablyChange(data.deeplist[0].sublist);
+	observablyChange(data.deeplist[1].sublist);
+	result += $._data(data.deeplist).events.arrayChange.length + $._data(data.deeplist[0].sublist).events.arrayChange.length + $._data(data.deeplist[0]).events.propertyChange.length;
+
+	$.unobserve(data.deeplist, '[]^sublist.[].a', cb);
+
+	result += !!$._data(data.deeplist).events + "" + !!$._data(data.deeplist[0]).events + "" + !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|insertDeepList| |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 3falsefalsefalse{}",
+	"observe '[]^sublist.[].a'' unobserve '[]^sublist.[].a'' works correctly");
+
+	// =============================== Arrange ===============================
+
+	reset = function() {
+		result = "",
+		data = {
+			listoflist: [
+				[
+					{a: "0a", b: "0b"},
+					{a: "1a", b: "1b"}
+				]
+			]
+		};
+	};
+
+	observablyChange = function(list) {
+		result += "|Set01| ";
+		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		result += "|Insert23| ";
+		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		result += "|Set0123| ";
+		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+	};
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data.listoflist, '[].[].*', cb);
+
+	observablyChange(data.listoflist[0]);
+	result += !!$._data(data.listoflist[0]).events;
+
+	$.unobserve(data.listoflist, '[].[].*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, false{}",
+	"observe '[].[].*' unobserve '[].[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.listoflist, '[].[]^*', cb);
+
+	observablyChange(data.listoflist[0]);
+	result += $._data(data.listoflist[0]).events.arrayChange.length;
+
+	$.unobserve(data.listoflist, '[].[]^*', cb);
+
+	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, a: 2a3, b: 2b3, a: 3a3, b: 3b3, 1false{}",
+	"observe '[].[]^*' unobserve '[].[]^*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'listoflist.[].[]^a', cb);
+
+	observablyChange(data.listoflist[0]);
+	result += $._data(data.listoflist[0]).events.arrayChange.length;
+
+	$.unobserve(data, 'listoflist.[].[]^*', cb);
+
+	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 1false{}",
+	"observe '[].[].a' unobserve '[].[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+	$.observe(data.listoflist, '[].[].a', cb);
+
+	observablyChange(data.listoflist[0]);
+	result += !!$._data(data.listoflist[0]).events;
+
+	$.unobserve(data.listoflist, '[].[]^*', cb);
+
+	result += JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, false{}",
+	"observe '[].[].a' unobserve '[].[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.listoflist, '[].[]^a', cb);
+
+	observablyChange(data.listoflist[0]);
+	result += $._data(data.listoflist[0]).events.arrayChange.length;
+
+	$.unobserve(data.listoflist, '[].[].*', cb);
+
+	result += $._data(data.listoflist[0]).events.arrayChange.length;
+
+	$.unobserve(data.listoflist, '[].[]', cb);
+
+	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 11false{}",
+	"observe '[].[]^a' unobserve '[].[].*' unobserve '[].[]' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.listoflist, '[]^[].a', cb);
+
+	result += "|setList| ";
+
+	$.observable(data.listoflist[0]).refresh([{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]);
+	observablyChange(data.listoflist[0]);
+	result += $._data(data.listoflist[0]).events.arrayChange.length;
+
+	$.unobserve(data.listoflist, '[]^[].*', cb);
+
+	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|setList| |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 1false{}",
+	"observe '[]^[].a' unobserve '[]^[].*' works correctly");
+
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data.listoflist, '[]^[].a', cb);
+
+	result += "|insertDeepList| ";
+
+	$.observable(data.listoflist).insert(0, [[{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]]);
+	observablyChange(data.listoflist[0]);
+	observablyChange(data.listoflist[1]);
+	result += $._data(data.listoflist).events.arrayChange.length + $._data(data.listoflist[0]).events.arrayChange.length + $._data(data.listoflist[1]).events.arrayChange.length;
+
+	$.unobserve(data.listoflist, '[]^[].a', cb);
+
+	result += !!$._data(data.listoflist).events + "" + !!$._data(data.listoflist[0]).events + "" + !!$._data(data.listoflist[1]).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	equal(result, "|insertDeepList| |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 3falsefalsefalse{}",
+	"observe '[]^[].a' unobserve '[]^[].a' works correctly");
+
+		$.views.settings.advanced({_jsv: false});
+});
+
 test("observeAll - cyclic graphs", function() {
 	reset();
 
@@ -4325,7 +4757,7 @@ test("observeAll/unobserveAll using namespaces", function() {
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
 		+ "Handler observeAll._path : 'root.person.friend' Handler observeAll.path() : 'root.person.friend' Handler observeAll.parents() : '3' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
-		"call observeAll namesspaces");
+		"call observeAll namespaces");
 
 $.unobserve("a.b.c");
 
@@ -4355,7 +4787,7 @@ $.unobserve("a.b.c");
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
 		+ "Handler observeAll._path : 'root.person.friend' Handler observeAll.path() : 'root.person.friend' Handler observeAll.parents() : '3' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
-		'call observe with "**" - namesspaces');
+		'call observe with "**" - namespaces');
 
 $.unobserve("a.b.c");
 
@@ -4384,7 +4816,7 @@ $.unobserve("a.b.c");
 		"myListener3 change: 'set' Caller ns: 'a' Handler ns: 'a.b.c' Handler fullPath: 'person.phones' Handler paths: 'phones,friend.name' Handler prop: 'person' calls: 1|"
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: 'friend.name' Handler paths: '' Handler prop: 'name' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
-		"call observe deep paths, with namesspaces");
+		"call observe deep paths, with namespaces");
 
 $.unobserve("a.b.c");
 
