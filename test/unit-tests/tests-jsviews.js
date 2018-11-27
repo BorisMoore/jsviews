@@ -438,9 +438,9 @@ function reset() {
 //test("TEST", function() {
 //});
 //return;
-module("Template structure");
+QUnit.module("Template structure");
 
-test("Template validation", function() {
+QUnit.test("Template validation", function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using window._jsv
 
@@ -456,7 +456,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "xyxyegg", "Validation - self-closing tags are allowed within svg or math content (foreign elements)");
+	assert.equal(res, "xyxyegg", "Validation - self-closing tags are allowed within svg or math content (foreign elements)");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -468,7 +468,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Parent of <tr> must be <tbody>"), 0, "Validation - missing closing tag");
+	assert.equal(res.indexOf("Parent of <tr> must be <tbody>"), 0, "Validation - missing closing tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -480,7 +480,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing closing tag");
+	assert.equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing closing tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -492,7 +492,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - missing opening tag");
+	assert.equal(res.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - missing opening tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -504,7 +504,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - extra closing tag");
+	assert.equal(res.indexOf("Syntax error\nMismatch: '</span>'"), 0, "Validation - extra closing tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -516,7 +516,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - extra closing tag");
+	assert.equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - extra closing tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -528,7 +528,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\n'<span.../>'"), 0, "Validation - self-closing tag is not a void element");
+	assert.equal(res.indexOf("Syntax error\n'<span.../>'"), 0, "Validation - self-closing tag is not a void element");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -540,7 +540,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatched '<div...>'"), 0, "Validation - missing closing tag");
+	assert.equal(res.indexOf("Syntax error\nMismatched '<div...>'"), 0, "Validation - missing closing tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -552,7 +552,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing opening tag");
+	assert.equal(res.indexOf("Syntax error\nMismatch: '</div>'"), 0, "Validation - missing opening tag");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -564,7 +564,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\n'<div.../>'"), 0, "Validation - self-closing tag is not a void element");
+	assert.equal(res.indexOf("Syntax error\n'<div.../>'"), 0, "Validation - self-closing tag is not a void element");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -576,7 +576,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res.indexOf("Syntax error\n'</input>'"), 0, "Validation - closing tag for a void element");
+	assert.equal(res.indexOf("Syntax error\n'</input>'"), 0, "Validation - closing tag for a void element");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -590,7 +590,7 @@ test("Template validation", function() {
 	res += $("#result input")[0].value + $("#result input")[1].value;
 
 	// ............................... Assert .................................
-	equal(res, "OneOneTwoTwo", "Validation - void elements can have self-close slashes, or not...");
+	assert.equal(res, "OneOneTwoTwo", "Validation - void elements can have self-close slashes, or not...");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -605,7 +605,7 @@ test("Template validation", function() {
 	res += "|" + ($("#result").html().indexOf(isIE8 ? "<BR><BR>": "<br><br>")>60);
 
 	// ............................... Assert .................................
-	equal(res, "true|true", "Validation - void elements inserted from data can have self-close slashes, or not...");
+	assert.equal(res, "true|true", "Validation - void elements inserted from data can have self-close slashes, or not...");
 	res = "";
 
 	// =============================== Arrange ===============================
@@ -613,7 +613,7 @@ test("Template validation", function() {
 		.link("#result", {lastName: "Blow"});
 
 	// ............................... Assert .................................
-	equal($("#result #last").val(), "Blow",
+	assert.equal($("#result #last").val(), "Blow",
 		"{{if}} is supported within <input/> markup even when data-linking");
 	res = "";
 
@@ -622,7 +622,7 @@ test("Template validation", function() {
 		.link("#result", {lastName: "Blow"});
 
 	// ............................... Assert .................................
-	equal($("#result #last").val(), "Blow",
+	assert.equal($("#result #last").val(), "Blow",
 		"{{if}} wrapping closing delimiter of <input/> markup is supported even when data-linking");
 	res = "";
 
@@ -635,7 +635,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
+	assert.equal(res, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
 		"Validation - {^{if}} within <input markup");
 	res = "";
 
@@ -648,7 +648,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
+	assert.equal(res, "Syntax error\n{^{ within elem markup (<input ). Use data-link=\"...\"",
 		"Validation - {^{if}} wrapping closing delimiter of <input/> markup");
 
 	// =============================== Arrange ===============================
@@ -660,7 +660,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "Syntax error\n{^{ within elem markup (<span ). Use data-link=\"...\"",
+	assert.equal(res, "Syntax error\n{^{ within elem markup (<span ). Use data-link=\"...\"",
 		"Validation - {^{if}} within <span> markup");
 	res = "";
 
@@ -673,7 +673,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "Syntax error\n{^{ within elem markup (<div ). Use data-link=\"...\"",
+	assert.equal(res, "Syntax error\n{^{ within elem markup (<div ). Use data-link=\"...\"",
 		"Validation - {^{:...}} within element markup");
 	res = "";
 
@@ -686,7 +686,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "",
+	assert.equal(res, "",
 		"Validation - {{:...}} within element markup is OK");
 	res = "";
 
@@ -699,7 +699,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "",
+	assert.equal(res, "",
 		"Validation - {{attr:...}} within element markup is OK");
 	res = "";
 
@@ -712,7 +712,7 @@ test("Template validation", function() {
 	}
 
 	// ............................... Assert .................................
-	equal(res, "Syntax error\n{:foo:}- Remove target: value",
+	assert.equal(res, "Syntax error\n{:foo:}- Remove target: value",
 		"Validation - value{:foo:}");
 	res = "";
 
@@ -739,9 +739,9 @@ test("Template validation", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-module("data-link scenarios");
+QUnit.module("data-link scenarios");
 
-test("jQuery cleanData integration", function() {
+QUnit.test("jQuery cleanData integration", function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
@@ -760,7 +760,7 @@ test("jQuery cleanData integration", function() {
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	'One|last2|last3',
 	'Removing jQuery handlers does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
 
@@ -781,7 +781,7 @@ test("jQuery cleanData integration", function() {
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	'One|last2|last3',
 	'Adding and removing jQuery data does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
 
@@ -802,7 +802,7 @@ test("jQuery cleanData integration", function() {
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	'One|last2|last3',
 	'Calling dequeue does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
 
@@ -879,7 +879,7 @@ $(inputs[2]).val("n2").change();
 res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	'JoJoJoJoJoJo|'
 	+ 'JoJoinsertedJoJoinsertedJoJoinserted|'
 	+ 'BobBobinsertedBobBobinsertedBobBobinserted|'
@@ -902,7 +902,7 @@ $(lis[2]).click();
 	// ............................... Assert .................................
 res += "|" + clicked;
 
-	equal(res,
+	assert.equal(res,
 	'0|6',
 	'Cloning data-linked content then emptying clone does not remove click handlers. (Issue https://github.com/BorisMoore/jsviews/issues/369)');
 
@@ -913,9 +913,9 @@ $.views.settings.trigger(true);
 	$.unlink();
 });
 
-module("API - data-link");
+QUnit.module("API - data-link");
 
-test("Basic $.link(expression, container, data) and $.link(tmpl, container, data)", function() {
+QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container, data)", function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
@@ -932,7 +932,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|newLast',
 	'$.link("fieldName", "#target", data) links field to content of target element (equivalent to data-link="fieldName")');
 
@@ -943,7 +943,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -961,7 +961,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One StreetOne|newLast StreetTwo',
 	'$.link(expression, "#target", data) links expression to target element (equivalent to data-link="expression")');
 
@@ -972,7 +972,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -990,7 +990,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|newLast',
 	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data)');
 
@@ -1009,7 +1009,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|newLast',
 	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data). Example 2.');
 
@@ -1020,7 +1020,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -1030,7 +1030,7 @@ test("Basic $.link(expression, container, data) and $.link(tmpl, container, data
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("Top-level linking", function() {
+QUnit.test("Top-level linking", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
@@ -1042,19 +1042,19 @@ test("Top-level linking", function() {
 	$.link(true, "#result", {name: "Jo"}, {b: " B"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "Jo A B", 'Passing in data to top-level linking');
+	assert.equal($("#result").text(), "Jo A B", 'Passing in data to top-level linking');
 
 	// ............................... Act .................................
 	$.link(true, "#result div", {name: "Jo2"}, {b: " newB"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "Jo2 A newB", 'Top-level linking directly to the linked element');
+	assert.equal($("#result").text(), "Jo2 A newB", 'Top-level linking directly to the linked element');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -1068,32 +1068,32 @@ test("Top-level linking", function() {
 	$.link(true, "#result", data, {b: " B"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "Jo A B", 'Top-level data-link="{include tmpl=...}" passes in model and context');
+	assert.equal($("#result").text(), "Jo A B", 'Top-level data-link="{include tmpl=...}" passes in model and context');
 
 	// ............................... Act .................................
 	$.observable(data).setProperty("name", "JoChanged");
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "JoChanged A B", 'Top-level data-link="{include tmpl=...}" binds correctly within {{include}} template');
+	assert.equal($("#result").text(), "JoChanged A B", 'Top-level data-link="{include tmpl=...}" binds correctly within {{include}} template');
 
 	// ............................... Act .................................
 	data = {name: "Jo2"};
 	$.link(true, "#result", data, {b: " newB"});
 
 	// ............................... Assert .................................
-	equal($("#result div").text(), "Jo2 A newB", 'Top-level linking directly to the linked element with data-link="{include... ');
+	assert.equal($("#result div").text(), "Jo2 A newB", 'Top-level linking directly to the linked element with data-link="{include... ');
 
 	// ............................... Act .................................
 	$.observable(data).setProperty("name", "Jo2Changed");
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "Jo2Changed A newB", 'Top-level linking directly to the linked element with data-link="{include... binds correctly within {{include}} template');
+	assert.equal($("#result").text(), "Jo2Changed A newB", 'Top-level linking directly to the linked element with data-link="{include... binds correctly within {{include}} template');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -1133,14 +1133,14 @@ test("Top-level linking", function() {
 
 	$("#result").link(true, model);
 	// ............................... Assert .................................
-	equal(res, "Jim-BobJim|new0-BobJimnew0",
+	assert.equal(res, "Jim-BobJim|new0-BobJimnew0",
 		"Top level bindings with multiple targets on the same element work correctly: html{for people tmpl='selectTmpl'} {:selected:}");
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -1173,7 +1173,7 @@ test("Top-level linking", function() {
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
+	assert.equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
 		: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"Top level bindings allow passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
@@ -1181,13 +1181,13 @@ test("Top-level linking", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("$.link() and $().link() variants", function(assert) {
+QUnit.test("$.link() and $().link() variants", function(assert) {
 	var done = assert.async();
 
 	// ................................ Reset ................................
@@ -1212,7 +1212,7 @@ test("$.link() and $().link() variants", function(assert) {
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One StreetOne BarA|newLast StreetTwo BarB',
 	'$.link(expression, "#target", data, helpers) links expression to target element (equivalent to data-link="expression")');
 
@@ -1225,7 +1225,7 @@ test("$.link() and $().link() variants", function(assert) {
 if (!(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events)) {
 debugger;
 }
-	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -1247,7 +1247,7 @@ debugger;
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One StreetOne BarA|newLast StreetTwo BarB',
 	'$("#target").link(expression, data, helpers) links expression to target element (equivalent to data-link="expression")');
 
@@ -1273,7 +1273,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'OneOneOne|newLastnewLastnewLast|modLastmodLastmodLast'
 	: 'One One One|newLast newLast newLast|modLast modLast modLast'),
 	'$.link(expression, ".target", data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
@@ -1283,7 +1283,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1305,7 +1305,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'OneOneOne|newLastnewLastnewLast|modLastmodLastmodLast'
 	: 'One One One|newLast newLast newLast|modLast modLast modLast'),
 	'$(".target").link(expression, data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
@@ -1315,7 +1315,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1347,7 +1347,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
 	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
 	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
@@ -1361,7 +1361,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1386,7 +1386,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
 	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
 	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
@@ -1402,7 +1402,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1427,7 +1427,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
 		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
@@ -1441,7 +1441,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1465,7 +1465,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
 		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
@@ -1479,7 +1479,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1503,7 +1503,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
 		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
@@ -1517,7 +1517,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1541,7 +1541,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
 		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
@@ -1555,7 +1555,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1579,7 +1579,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
 		+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
 		+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
@@ -1593,7 +1593,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1622,7 +1622,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8 ? 'green outerVal |'
 		+ 'green outerVal Inside green outerVal Foo NAME: One|'
 		+ 'green outerVal Inside green outerVal Foo NAME:newLast|'
@@ -1638,7 +1638,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1674,7 +1674,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
+	assert.equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
 	(isIE8
 	? 'NAME: OneNAME: OneOne One One One|'
 		+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
@@ -1695,7 +1695,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	(isIE8
 	? 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
 		+ 'NAME:new_ORIGMOD_LastNAME:new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
@@ -1710,7 +1710,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1734,7 +1734,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + getTitles("#inner") + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
+	assert.equal(before + "|" + after + getTitles("#inner") + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
 	"One|One|One|modLast title:modLast - Model1: modLast- Model2: newLast2",
 	'$.link(true, selector, data, helpers) is a no-op when targeting within a previously linked rendered template');
 
@@ -1754,7 +1754,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
+	assert.equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
 	isIE8
 	? "modLast title:modLast|"
 		+ "Model2Tmpl: newLast2 title2:newLast2|"
@@ -1777,7 +1777,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1824,7 +1824,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"One title:One val:One|"
 	+ "newLast3 title:newLast3 val:newLast3|"
 	+ "modLast4 title:modLast4 val:modLast4 data:modLast4|"
@@ -1835,7 +1835,7 @@ setTimeout(function() {
 	'$(selector).unlink() removes data binding on target element, including both directions of binding on two-way data-linking');
 
 	// ............................... Assert .................................
-	ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
+	assert.ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
 	'$(selector).unlink() removes data binding, and the "link" views, for target elements');
 
 	// ................................ Act ..................................
@@ -1843,7 +1843,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1890,7 +1890,7 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"One title:One val:One|"
 	+ "newLast3 title:newLast3 val:newLast3|"
 	+ "modLast4 title:modLast4 val:modLast4 data:modLast4|"
@@ -1901,7 +1901,7 @@ setTimeout(function() {
 	'$.unlink(selector) removes data binding on target element, including both directions of binding on two-way data-linking');
 
 	// ............................... Assert .................................
-	ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
+	assert.ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
 	'$.unlink(selector) removes data binding, and the "link" views, for target elements');
 
 	// ................................ Act ..................................
@@ -1909,7 +1909,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1936,9 +1936,9 @@ done();
 }, 0);
 });
 
-module("template.link()");
+QUnit.module("template.link()");
 
-test("Helper overriding", 12, function(assert) {
+QUnit.test("Helper overriding", function(assert) {
 var done = assert.async();
 
 // ................................ Reset ................................
@@ -1961,7 +1961,7 @@ var done = assert.async();
 	$.views.helpers("a", null);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
+	assert.equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -1974,7 +1974,7 @@ var done = assert.async();
 	tmpl.link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "templateHelper", 'template helper overrides global helper');
+	assert.equal($("#result").text(), "templateHelper", 'template helper overrides global helper');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -1984,7 +1984,7 @@ var done = assert.async();
 	tmpl.link("#result", {}, {a: "optionHelper"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
+	assert.equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -1997,7 +1997,7 @@ var done = assert.async();
 	tmpl.link("#result", {}, {b: "optionHelper"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
+	assert.equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
 
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
@@ -2008,7 +2008,7 @@ var done = assert.async();
 	$.views.helpers("a", null);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
+	assert.equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
 
 	// =============================== Arrange ===============================
 	$.views.helpers("a", "globalHelper");
@@ -2019,7 +2019,7 @@ var done = assert.async();
 	$.views.helpers("a", null);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
+	assert.equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
 
 	// =============================== Arrange ===============================
 	$.views.helpers({
@@ -2046,7 +2046,7 @@ var done = assert.async();
 	$.observable(pson).setProperty("name", "name3");
 
 	// ............................... Assert .................................
-	equal(res, "globalAfterCreate globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
+	assert.equal(res, "globalAfterCreate globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
 		'Global onAfterCreate, onBeforeChange, onAfterChange - setProperty');
 
 	res = '';
@@ -2055,7 +2055,7 @@ var done = assert.async();
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(res, "globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
+	assert.equal(res, "globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
 		'Global onAfterCreate, onBeforeChange, onAfterChange - elemChange');
 
 	res = '';
@@ -2076,7 +2076,7 @@ setTimeout(function() {
 	$.observable(pson).setProperty("name", "name2");
 
 	// ............................... Assert .................................
-	equal(res, "optionsAfterCreate optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
+	assert.equal(res, "optionsAfterCreate optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
 		'options helper overrides global helper');
 
 	res = '';
@@ -2085,7 +2085,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(res, "optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
+	assert.equal(res, "optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
 		'options helper overrides global helper');
 
 	res = '';
@@ -2121,7 +2121,7 @@ setTimeout(function() {
 	$.observable(pson).setProperty("name", "name4");
 
 	// ............................... Assert .................................
-	equal(res, "templateAfterCreate templateBeforeChange|set|INPUT templateAfterChange|set|INPUT templateBeforeChange|set|: templateAfterChange|set|: ",
+	assert.equal(res, "templateAfterCreate templateBeforeChange|set|INPUT templateAfterChange|set|INPUT templateBeforeChange|set|: templateAfterChange|set|: ",
 		'template helper overrides options helper');
 
 	res = '';
@@ -2130,7 +2130,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
- equal(res, "templateBeforeChange|set|INPUT templateAfterChange|set|INPUT"
+ assert.equal(res, "templateBeforeChange|set|INPUT templateAfterChange|set|INPUT"
 		+ " templateBeforeChange|set|: templateAfterChange|set|: ",
 		'template helper overrides options helper');
 
@@ -2149,7 +2149,7 @@ done();
 }, 0);
 });
 
-test('data-link="expression"', function(assert) {
+QUnit.test('data-link="expression"', function(assert) {
 var done = assert.async();
 
 // ................................ Reset ................................
@@ -2170,7 +2170,7 @@ var done = assert.async();
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|newLast',
 	'Data link using: <span data-link="lastName"></span>');
 
@@ -2189,7 +2189,7 @@ var done = assert.async();
 	after = $("#last").val();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|newLast',
 	'Data link using: <input data-link="lastName"/> binds from data');
 
@@ -2200,7 +2200,7 @@ setTimeout(function() {
 	after = $("#result").html() + $("#last").val();
 
 	// ............................... Assert .................................
-	equal(person1.lastName, "editedName",
+	assert.equal(person1.lastName, "editedName",
 	'Data link using: <input data-link="lastName"/> does two-way binding');
 
 	// ................................ Reset ................................
@@ -2219,7 +2219,7 @@ setTimeout(function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One StreetOne|newLast StreetTwo',
 	'Data link using: <span data-link="expression"></span>');
 
@@ -2228,7 +2228,7 @@ setTimeout(function() {
 	before = $("#result").html();
 
 	// ............................... Assert .................................
-	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(home1).events && !$._data(address2).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(home1).events && !$._data(address2).events,
 	"$(container).empty removes both views and current listeners from that content - including after swapping data on deep paths");
 
 	person1.lastName = "One"; // reset Prop
@@ -2246,7 +2246,7 @@ setTimeout(function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Mr Jo One|Sir newFirst newLast',
 	'data-link="fullName()"');
 
@@ -2266,7 +2266,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	var html = $("#result span")[0].outerHTML;
-	equal(html,
+	assert.equal(html,
 	isIE8
 	? "<SPAN data-link=\"foo('x\\x').b\"" + html.slice(30)
 	: '<span data-link="foo(\'x\\x\').b">x\\x</span>',
@@ -2291,7 +2291,7 @@ setTimeout(function() {
 	after = elems[0].innerHTML + elems[1].innerHTML;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'StreetOneStreetOne|newStreetOneStreetTwo',
 	'person1.home.address.street binds only to the leaf, but person1.home^address.street does deep binding');
 
@@ -2313,7 +2313,7 @@ setTimeout(function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'StreetOne|StreetTwo+',
 	'~a.b^c does deep binding');
 
@@ -2340,7 +2340,7 @@ setTimeout(function() {
 	after += "|" + $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'getVal1 = 22|getVal2 = 22|getNewVal = 22',
 	'~a.b.helperFunction() does deep binding even for functions');
 
@@ -2373,7 +2373,7 @@ setTimeout(function() {
 	$("input.linked").each(function(i, el) { res += el.value; });
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8 ? "1new  2new  3 new 4 new 5 new 6 new INPUTS new new new new new new new new "
 		: "1 new  2 new  3 new  4 new  5 new  6 new  INPUTS new new new new new new new new ",
 	'Duplicate paths bind correctly (https://github.com/BorisMoore/jsviews/issues/250)');
@@ -2391,7 +2391,7 @@ setTimeout(function() {
 		.render(["aa", 22, 0, false, "", true]);
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"aa220falsetrue",
 	'{{:#data}} renders correctly for different data types');
 
@@ -2401,7 +2401,7 @@ setTimeout(function() {
 		.render({items: ["aa", 22, 0, false, "", true]});
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"0 aa 1 22 2 0 3 false 4  5 true ",
 	'{{:#data}} within {{for}} is correct for different data types');
 
@@ -2412,7 +2412,7 @@ setTimeout(function() {
 		.link("#result", ["aa", 22, 0, false, "", true]).text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"aa220falsetrue",
 	'With link, {{:#data}} renders correctly for different data types');
 
@@ -2422,7 +2422,7 @@ setTimeout(function() {
 		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8 ? "0 aa 1 22 2 0 3 false 4 5 true "
 		: "0 aa 1 22 2 0 3 false 4  5 true ",
 	'with link, {{:#data}} within {{for}} is correct for different data types');
@@ -2433,7 +2433,7 @@ setTimeout(function() {
 		.link("#result", ["aa", 22, 0, false, "", true]).text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"aa220falsetrue",
 	'With link, {^{:#data}} renders correctly for different data types');
 
@@ -2443,7 +2443,7 @@ setTimeout(function() {
 		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8 ? "0 aa 1 22 2 0 3 false 4 5 true "
 		: "0 aa 1 22 2 0 3 false 4  5 true ",
 	'with link, {^{:#data}} within {^{for}} is correct for different data types');
@@ -2485,7 +2485,7 @@ setTimeout(function() {
 	});
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"Josome string | Jo22 | Jo0 | Jofalse | Jo | Jotrue | newsome string | new22 | new0 | newfalse | new | newtrue | ",
 	'data-linking inside {{for sometype}} works correctly even when #data is not an object');
 
@@ -2529,7 +2529,7 @@ setTimeout(function() {
 	});
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"Josome string | Jo22 | Jo0 | Jofalse | Jo | Jotrue | newsome string | new22 | new0 | newfalse | new | newtrue | ",
 	'data-linking inside {^{for sometype}} works correctly even when #data is not an object');
 
@@ -2543,7 +2543,7 @@ done();
 }, 0);
 });
 
-test('data-link="attr{:expression}"', function() {
+QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
@@ -2559,7 +2559,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].className;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|xxx',
 	'Data link using: <span data-link="class{:lastName}"></span>, and setting lastName to "xxx" - sets className to "xxx"');
 
@@ -2578,7 +2578,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span").attr("title");
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'One|xxx',
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to "xxx" - sets title to "xxx"');
 
@@ -2597,7 +2597,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
+	assert.ok(before === 'One' && after === "",
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to "" - sets title to ""');
 
 	// ................................ Reset ................................
@@ -2616,7 +2616,7 @@ test('data-link="attr{:expression}"', function() {
 	var html = $("#result span")[0].outerHTML;
 	
 	// ............................... Assert .................................
-	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to null - removes title attribute');
 
@@ -2636,7 +2636,7 @@ test('data-link="attr{:expression}"', function() {
 	var html = $("#result span")[0].outerHTML;
 	
 	// ............................... Assert .................................
-	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to undefined - removes title attribute');
 
@@ -2655,7 +2655,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
+	assert.ok(before === 'One' && after === "",
 	'Data link using: <span data-link="{:lastName}"></span>, and setting lastName to null - sets content to empty string');
 
 	// ................................ Reset ................................
@@ -2673,7 +2673,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
+	assert.ok(before === 'One' && after === "",
 	"Data link using: <span data-link=\"html{:lastName||''}\"></span>, and setting lastName to null - sets content to empty string");
 
 	// ................................ Reset ................................
@@ -2692,7 +2692,7 @@ test('data-link="attr{:expression}"', function() {
 	var html = $("#result span")[0].outerHTML;
 	
 	// ............................... Assert .................................
-	ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and removing lastName - removes title attribute');
 
@@ -2711,7 +2711,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
+	assert.ok(before === 'One' && after === "",
 	'Data link using: <span data-link="{:lastName}"></span>, and removing lastName - sets content to empty string');
 
 	// ................................ Reset ................................
@@ -2729,7 +2729,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "",
+	assert.ok(before === 'One' && after === "",
 	"Data link using: <span data-link=\"html{:lastName||''}\"></span>, and removing lastName - sets content to empty string");
 
 	// ................................ Reset ................................
@@ -2747,7 +2747,7 @@ test('data-link="attr{:expression}"', function() {
 	before = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === "",
+	assert.ok(before === "",
 	'Data link using: <span data-link="title{:lastName}"></span>, with lastName "" - initializes with title attribute set to ""');
 
 	// ................................ Reset ................................
@@ -2765,7 +2765,7 @@ test('data-link="attr{:expression}"', function() {
 	before = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === null,
+	assert.ok(before === null,
 	'Data link using: <span data-link="title{:lastName}"></span>, with lastName undefined - initializes with title attribute null');
 
 	// ................................ Reset ................................
@@ -2783,7 +2783,7 @@ test('data-link="attr{:expression}"', function() {
 	before = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === null,
+	assert.ok(before === null,
 	'Data link using: <span data-link="title{:lastName}"></span>, with lastName null - initializes with title attribute null');
 
 	// ................................ Reset ................................
@@ -2801,7 +2801,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "false",
+	assert.ok(before === 'One' && after === "false",
 	'Data link using: <span data-link="title{:lastName}"></span>, and string lastName to false - sets title to "false"');
 
 	// ................................ Reset ................................
@@ -2821,7 +2821,7 @@ test('data-link="attr{:expression}"', function() {
 	var afterVal = $("#result span").data("foo");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && before === beforeVal && after === "Two" && after === afterVal,
+	assert.ok(before === 'One' && before === beforeVal && after === "Two" && after === afterVal,
 	'Data link using: <span data-link="data-foo{:lastName}"></span> sets data-foo attribute to lastName value and sets $(elem).data("foo") to the same value');
 
 	// ................................ Reset ................................
@@ -2843,7 +2843,7 @@ test('data-link="attr{:expression}"', function() {
 	afterVal = $("#result span").data("foo");
 
 	// ............................... Assert .................................
-	ok(before === originalAddress.toString() && beforeVal === originalAddress && after === crazyAddress.toString() && afterVal === crazyAddress,
+	assert.ok(before === originalAddress.toString() && beforeVal === originalAddress && after === crazyAddress.toString() && afterVal === crazyAddress,
 	'Data link using: <span data-link="data-foo{:home.address}"></span> sets data-foo attribute to address.toString() value and sets $(elem).data("foo") to address');
 
 	// ................................ Reset ................................
@@ -2863,7 +2863,7 @@ test('data-link="attr{:expression}"', function() {
 	after = el.getAttribute("data-foo") + el.getAttribute("data-foo-bar") + el.getAttribute("a-b-c") + el.getAttribute("a_b_c-d-e");
 
 	// ............................... Assert .................................
-	ok(before === 'OneOneOneOne' && after === "TwoTwoTwoTwo",
+	assert.ok(before === 'OneOneOneOne' && after === "TwoTwoTwoTwo",
 	'Data link using: data-link="data-foo{:lastName} data-foo-bar{:lastName} a-b-c{:lastName} a_b_c-d-e{:lastName}" sets attributes to lastName value');
 
 	// ................................ Reset ................................
@@ -2881,7 +2881,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].getAttribute("a-b_foo");
 
 	// ............................... Assert .................................
-	ok(before === 'One' && after === "Two",
+	assert.ok(before === 'One' && after === "Two",
 	'Data link using: <span data-link="a-b_foo{:lastName}"></span> sets a-b_foo attribute to lastName value');
 
 	// ................................ Reset ................................
@@ -2899,7 +2899,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	ok(before === "inline" && after === "none",
+	assert.ok(before === "inline" && after === "none",
 	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to "" - sets display to "none"');
 
 	// ................................ Reset ................................
@@ -2917,7 +2917,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	ok(before === "inline" && after === "none",
+	assert.ok(before === "inline" && after === "none",
 	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to null - sets display to "none"');
 
 	// ................................ Reset ................................
@@ -2935,7 +2935,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	ok(before === "inline" && after === "none",
+	assert.ok(before === "inline" && after === "none",
 	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to undefined - sets display to "none"');
 
 	// ................................ Reset ................................
@@ -2953,7 +2953,7 @@ test('data-link="attr{:expression}"', function() {
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	ok(before === "inline" && after === "none",
+	assert.ok(before === "inline" && after === "none",
 	'Data link using: <span data-link="visible{:lastName}"></span>, and string lastName to false - sets display to "none"');
 
 	// ................................ Reset ................................
@@ -2973,7 +2973,7 @@ test('data-link="attr{:expression}"', function() {
 	var reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "inline|none|inline",
+	assert.equal(before + "|" + after + "|" + reset, "inline|none|inline",
 	'Data link using: <span data-link="visible{:lastName}"></span>, and toggling string lastName to "" and back - sets display to "inline"');
 
 	// =============================== Arrange ===============================
@@ -2989,7 +2989,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "inline-block|none|inline-block",
+	assert.equal(before + "|" + after + "|" + reset, "inline-block|none|inline-block",
 	'Data link using: <span style="display:inline-block" data-link="visible{:lastName}"></span>, and toggling lastName - sets display to "inline-block"');
 
 	// =============================== Arrange ===============================
@@ -3005,7 +3005,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "inline|none|inline",
+	assert.equal(before + "|" + after + "|" + reset, "inline|none|inline",
 	'Data link using: <span style="display:none" data-link="visible{:lastName}"></span>, and toggling lastName - sets display to "inline"');
 
 	// =============================== Arrange ===============================
@@ -3021,7 +3021,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result div")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "none|block|none",
+	assert.equal(before + "|" + after + "|" + reset, "none|block|none",
 	'Data link using: <div style="display:none" data-link="visible{:missing}"></div>, and toggling lastName - sets display to "block"');
 
 	// ................................ Reset ................................
@@ -3040,7 +3040,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result div")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "block|none|block",
+	assert.equal(before + "|" + after + "|" + reset, "block|none|block",
 	'Repeat (block style for div is now cached) data link using:'
 	+ ' <div style="display:none" data-link="visible{:missing}"></div>, and toggling lastName - sets display to "block"');
 
@@ -3057,7 +3057,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result [style]")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "none|block|none",
+	assert.equal(before + "|" + after + "|" + reset, "none|block|none",
 	'Data link using: <para data-link="visible{:missing}"></para>, and toggling lastName - sets display to "block"');
 
 	// ................................ Reset ................................
@@ -3083,7 +3083,7 @@ test('data-link="attr{:expression}"', function() {
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + reset, "none|inline|none",
+	assert.equal(before + "|" + after + "|" + reset, "none|inline|none",
 	'Data link using: <span data-link="visible{not:lastName}"></span>, and toggling lastName - sets display to "inline" if lastName is ""');
 
 	// ................................ Reset ................................
@@ -3122,7 +3122,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: box&lt;br/&gt; - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: box&lt;br/&gt; - display: ",
 		"{chooseAttr} has target 'text'");
 
 	// ................................ Act ..................................
@@ -3130,7 +3130,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+	assert.equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
 		"{chooseAttr tagAttr=\'title\'} overrides tag.attr, and has target 'title'");
 
 	// ................................ Act ..................................
@@ -3138,7 +3138,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"{chooseAttr tagAttr=\'html\'} overrides tag.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -3146,7 +3146,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+	assert.equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
 		"{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'} overrides linkCtx.attr, and has target 'title'");
 
 	// ................................ Act ..................................
@@ -3154,7 +3154,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr} has target 'html'");
 
 	// ................................ Act ..................................
@@ -3162,7 +3162,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr tagAttr =\'title\'} overrides tag.attr, but still has target 'html'");
 
 	// ................................ Act ..................................
@@ -3170,7 +3170,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+	assert.equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
 		"html{chooseAttr tagAttr =\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
 
 	// ................................ Act ..................................
@@ -3178,14 +3178,14 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: xx - display: block",
+	assert.equal(divProps(), "title:  - innerHTML: xx - display: block",
 		"visible{chooseAttr} has display 'block'");
 
 	// ................................ Act ..................................
 	$.observable(thing).removeProperty("name");
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: xx - display: none",
+	assert.equal(divProps(), "title:  - innerHTML: xx - display: none",
 		"visible{chooseAttr} has display 'none' if {chooseAttr} returns ''");
 
 	// ................................ Act ..................................
@@ -3194,7 +3194,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: xx - display: block",
+	assert.equal(divProps(), "title:  - innerHTML: xx - display: block",
 		"visible{chooseAttr tagAttr=\'title\'} overrides tag.attr, but still has target 'visible' and has display 'block'");
 
 	// ................................ Act ..................................
@@ -3202,7 +3202,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'} overrides tag.attr and linkCtx.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -3210,7 +3210,7 @@ test('data-link="attr{:expression}"', function() {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
+	assert.equal(divProps(), "title: box<br/> - innerHTML: xx - display: ",
 		"visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
 
 	// ................................ Reset ................................
@@ -3218,7 +3218,7 @@ test('data-link="attr{:expression}"', function() {
 	res = "";
 });
 
-test('data-link="{cvt:expression:cvtBack}"', function(assert) {
+QUnit.test('data-link="{cvt:expression:cvtBack}"', function(assert) {
 
 var done = assert.async();
 	// ................................ Reset ................................
@@ -3243,7 +3243,7 @@ var done = assert.async();
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"mr jotwo30Mr Xavier|sir newonefirstnewtwolast40Sir newTwoFirst",
 	'Data link using: <span data-link="{cvt:expr ...}"></span> - with declared dependencies for converter');
 
@@ -3278,7 +3278,7 @@ var done = assert.async();
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(person1.lastName,
+	assert.equal(person1.lastName,
 	"One+toMr Jo",
 	'Data link using: <input data-link="{:expr:to}"/> with no convert. - convertBack called with tag as this pointer.');
 
@@ -3297,7 +3297,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(person1.lastName + $("#twoWay").data().foo,
+	assert.equal(person1.lastName + $("#twoWay").data().foo,
 	"One+23",
 	'Data link using: <input data-link="{:expr:to}"/> with no convert. - convertBack called with tag as this pointer.');
 
@@ -3316,7 +3316,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(person1.lastName,
+	assert.equal(person1.lastName,
 	"OnefromMr Jo+toMr Jo",
 	'Data link using: <input data-link="{from:expr:to}"/> - convert and convertBack called with tag as this pointer.');
 
@@ -3349,7 +3349,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(person1.lastName,
+	assert.equal(person1.lastName,
 	"OnefromMr Jo+toMr Jo",
 	'Data link using: <input data-link="{from:expr:to}"/> - with converters local to template: convert and convertBack called with tag as this pointer.');
 
@@ -3359,7 +3359,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 	// ............................... Assert .................................
-	equal(person1.lastName,
+	assert.equal(person1.lastName,
 	"OnefromMr Jo+toMr JofromMr Jo+toMr Jo",
 	'Data link using: <input data-link="{from:expr:to}"/> in nested block - with converters local to template: convert and convertBack called with tag as this pointer.');
 
@@ -3376,7 +3376,7 @@ done();
 }, 0);
 });
 
-test('Two-way binding', function(assert) {
+QUnit.test('Two-way binding', function(assert) {
 
 var done = assert.async();
 	// =============================== Arrange ===============================
@@ -3397,7 +3397,7 @@ setTimeout(function() {
 	res += $("#result").text() + " | " + model.address.street;
 
 	// ............................... Assert .................................
-	equal(res, "First St | 1st Ave | 1st Ave",
+	assert.equal(res, "First St | 1st Ave | 1st Ave",
 		'<input data-link="address.street"/>');
 
 	// ................................ Reset ................................
@@ -3441,7 +3441,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "Jim:Jim(1)|new:new(2)|new:-(-1)|Jim:Jim(1)|",
+	assert.equal(res, "Jim:Jim(1)|new:new(2)|new:-(-1)|Jim:Jim(1)|",
 		'<select data-link="selected">...<option data-link="name">');
 
 	// ................................ Reset ................................
@@ -3480,7 +3480,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
+	assert.equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
 		'<select data-link="selected">...<option value="{{:name}}">{{:name.toUpperCase()}}');
 
 	// ................................ Reset ................................
@@ -3519,7 +3519,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "Jim:Jim(1)|new:new(2)|new:-(-1)|Jim:Jim(1)|",
+	assert.equal(res, "Jim:Jim(1)|new:new(2)|new:-(-1)|Jim:Jim(1)|",
 		'<select data-link="selected">...<option>{{:name}}');
 
 	// ................................ Reset ................................
@@ -3558,7 +3558,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
+	assert.equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
 		'<select data-link="selected">...<option data-link="value{:name} {:name.toUpperCase()}">');
 
 	// ................................ Reset ................................
@@ -3597,7 +3597,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
+	assert.equal(res, "Jim:JIM(1)|new:NEW(2)|new:-(-1)|Jim:JIM(1)|",
 		'<select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
 	// ................................ Reset ................................
@@ -3628,7 +3628,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "4:-(-1)|4:4(0)|",
+	assert.equal(res, "4:-(-1)|4:4(0)|",
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
@@ -3656,7 +3656,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "4:-(-1)|4:4(0)|",
+	assert.equal(res, "4:-(-1)|4:4(0)|",
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converters');
 
 	// =============================== Arrange ===============================
@@ -3684,7 +3684,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "4:-(-1)|4:4(0)|",
+	assert.equal(res, "4:-(-1)|4:4(0)|",
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converterBack only');
 
 	// ................................ Reset ................................
@@ -3715,7 +3715,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "4:-(-1)|4:4(0)|",
+	assert.equal(res, "4:-(-1)|4:4(0)|",
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converter only');
 
 	// ................................ Reset ................................
@@ -3740,7 +3740,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "4:-(-1)|4:4(0)|",
+	assert.equal(res, "4:-(-1)|4:4(0)|",
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent setting of data array with selected option');
 
 	// ................................ Reset ................................
@@ -3800,7 +3800,7 @@ setTimeout(function() {
 	res += getSelection();
 
 	// ............................... Assert .................................
-	equal(res, "trueJim,Bob:BOBJIM(0)|new,Bob:BOBNEW(0)|new,Bob:BOB(0)|Jo:JO(3)|:-(-1)|Bob,Jim,Pete:BOBJIMPETE(0)|Bob:BOB(0)|",
+	assert.equal(res, "trueJim,Bob:BOBJIM(0)|new,Bob:BOBNEW(0)|new,Bob:BOB(0)|Jo:JO(3)|:-(-1)|Bob,Jim,Pete:BOBJIMPETE(0)|Bob:BOB(0)|",
 		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
 	// =============================== Arrange ===============================
@@ -3845,7 +3845,7 @@ setTimeout(function() {
 	res += $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
 	// ............................... Assert .................................
-	equal(res, "trueJim:2|NooneJim:1|Bob:0|:-1|Noone:1|Jim:2|trueNoone:1|",
+	assert.equal(res, "trueJim:2|NooneJim:1|Bob:0|:-1|Noone:1|Jim:2|trueNoone:1|",
 		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
 	// ................................ Reset ................................
@@ -3882,7 +3882,7 @@ setTimeout(function() {
 setTimeout(function() {
 	getContent();
 
-	equal(res, "FFFFFF|222222|",
+	assert.equal(res, "FFFFFF|222222|",
 		'Two-way binding to foo, #data.foo #view.data.foo');
 
 	// ................................ Reset ................................
@@ -3894,7 +3894,7 @@ done();
 
 });
 
-test('data-link="{radiogroup}"', function() {
+QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
@@ -3929,7 +3929,7 @@ test('data-link="{radiogroup}"', function() {
 	res += $("#result input:checked").parent().text() + "|" + model.selected;
 
 	// ............................... Assert .................................
-	equal(res, ":Jim:Jim|:Bob:Bob|:Jim:Jim|Jim",
+	assert.equal(res, ":Jim:Jim|:Bob:Bob|:Jim:Jim|Jim",
 		'data-link="{radiogroup selected}" top-level');
 
 	// ................................ Reset ................................
@@ -3977,7 +3977,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":Jim:Jim|:new:new||Jim-:Jim:Jim|",
+	assert.equal(res, ":Jim:Jim|:new:new||Jim-:Jim:Jim|",
 		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
 
 	// =============================== Arrange ===============================
@@ -4020,7 +4020,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":Jim|:new||Bob-:Bob|",
+	assert.equal(res, ":Jim|:new||Bob-:Bob|",
 		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
 
 	// ................................ Reset ................................
@@ -4066,7 +4066,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM|:NEW||None-:NONE|",
+	assert.equal(res, ":JIM|:NEW||None-:NONE|",
 		'data-link="{radiogroup selected}" ... <input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
@@ -4078,7 +4078,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
 		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... data-link="name"> - updated label and value');
 
 	// ................................ Reset ................................
@@ -4133,7 +4133,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":jim|:new||new-NONE-:none|",
+	assert.equal(res, ":jim|:new||new-NONE-:none|",
 		'data-link="{radiogroup selected convert=... convertBack=... linkTo=...}"');
 
 	// ............................... Act .................................
@@ -4145,7 +4145,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+	assert.equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
 		'data-link="{radiogroup selected convert=... convertBack=... linkTo=...}" - updated label and value');
 
 	// ................................ Reset ................................
@@ -4191,7 +4191,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, "JIM|NEW||None-NONE|",
+	assert.equal(res, "JIM|NEW||None-NONE|",
 		'data-link="{radiogroup selected}" with labels by for/id');
 
 	// ............................... Act .................................
@@ -4203,7 +4203,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
 		'data-link="{radiogroup selected}" with labels by for/id - updated label and value');
 
 	// ................................ Reset ................................
@@ -4255,7 +4255,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+	assert.equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
 		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
@@ -4267,7 +4267,7 @@ test('data-link="{radiogroup}"', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
 		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings - updated label and value');
 
 	// ................................ Reset ................................
@@ -4315,7 +4315,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
 		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
 
 	// ................................ Reset ................................
@@ -4363,7 +4363,7 @@ test('data-link="{radiogroup}"', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
 
 	// ............................... Assert .................................
-	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
+	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
 		'data-link="{radiogroup selected}" - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
 
 	// ................................ Reset ................................
@@ -4371,7 +4371,7 @@ test('data-link="{radiogroup}"', function() {
 
 });
 
-test('data-link="{tag...}"', function() {
+QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -4395,23 +4395,23 @@ test('data-link="{tag...}"', function() {
 
 	// ............................... Assert .................................
 	$.templates('a<span date-link="{norendernotemplate}"></span>b').link("#result", 1);
-	equal($("#result").text(), "ab",
+	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, no render function) renders empty string");
 
 	$.templates('a<span date-link="{voidrender}"></span>b').link("#result", 1);
-	equal($("#result").text(), "ab",
+	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
 	$.templates('a<span date-link="{emptyrender}"></span>b').link("#result", 1);
-	equal($("#result").text(), "ab",
+	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
 
 	$.templates('a<span date-link="{emptytemplate}"></span>b').link("#result", 1);
-	equal($("#result").text(), "ab",
+	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
 	$.templates('a<span date-link="{templatereturnsempty}"></span>b').link("#result", 1);
-	equal($("#result").text(), "ab",
+	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	// =============================== Arrange ===============================
@@ -4427,7 +4427,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link using: <span data-link="{tmplTag}"></span>');
 
@@ -4451,7 +4451,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link using: <span data-link="{fnTag}"></span>');
 
@@ -4475,7 +4475,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
-	equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""),
+	assert.equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""),
 	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link fnTagEl rendering <span>, using: <div data-link="{fnTagEl}"></div>');
 
@@ -4499,7 +4499,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link fnTagElCnt rendering <li>, using: <ul data-link="{fnTagElCnt}"></ul>');
 
@@ -4523,7 +4523,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link fnTagElCntNoInit rendering <li>, using: <ul data-link="{fnTagElCnt}"></ul>');
 
@@ -4547,7 +4547,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false.'
 	+ ' Prop theTitle: Sir. Prop ~street: newStreet',
 	'Data link using: <span data-link="{tmplTagWithProps ~some.path foo=~other.path ~bar=another.path}"></span> updates correctly when data changes');
@@ -4574,7 +4574,7 @@ test('data-link="{tag...}"', function() {
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false.'
 	+ ' Prop theTitle: Sir. Prop ~street: newStreet',
 	'Data link using: <span data-link="{fnTagWithProps ~some.path foo=~other.path ~bar=another.path}"></span> updates correctly when data changes');
@@ -4590,7 +4590,7 @@ test('data-link="{tag...}"', function() {
 
 });
 
-test("Computed observables in paths", function() {
+QUnit.test("Computed observables in paths", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
@@ -4649,7 +4649,7 @@ test("Computed observables in paths", function() {
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|",
+		assert.equal(ret, "onetwothree|one1a1btwothree|onetwothree|onetwo2a2bthree|onetwothree|addedonetwothree|onetwothree|",
 			"Interplay of view and tag refresh in deep content: " + message);
 	}
 
@@ -4784,7 +4784,7 @@ test("Computed observables in paths", function() {
 	ret += "|" + $("#result").text();
 
 	// ................................ Assert ..................................
-	equal(ret, "||1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
+	assert.equal(ret, "||1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new array");
 	$("#result").empty();
 
@@ -4827,7 +4827,7 @@ test("Computed observables in paths", function() {
 	ret += "|" + $("#result").text();
 
 	// ................................ Assert ..................................
-	equal(ret, "1 first street|2 first street|1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
+	assert.equal(ret, "1 first street|2 first street|1 first street|1 first streetB|1 first swappedstreet|1 second street|2 second street|2 second swappedstreet|2 second swappedstreetB",
 		"deep paths with computed observables bind correctly to rest of path after computed returns new object");
 
 	// ................................ Reset ................................
@@ -4943,7 +4943,7 @@ test("Computed observables in paths", function() {
 	ret += "|L: " + !!$._data(data1).events + " " + !!$._data(data1).events + " " + (JSON.stringify(_jsv.cbBindings) === "{}");
 	// |L: false false true
 	// ................................ Assert ..................................
-	equal(ret,
+	assert.equal(ret,
 		"|A: val2_22--val1_22|" +
 		"B: 1 first street--1 second street2 second street|" +
 		"C: 1 second street2 second street--1 first street|" +
@@ -4999,7 +4999,7 @@ test("Computed observables in paths", function() {
 
 	ret += $("#result").text();
 
-	equal(ret, "1_ESC", 'Computed function with depends = [undefined,"selected"] - no listener added');
+	assert.equal(ret, "1_ESC", 'Computed function with depends = [undefined,"selected"] - no listener added');
 
 	// ................................ Reset ................................
 	model.selected("S");
@@ -5023,7 +5023,7 @@ test("Computed observables in paths", function() {
 
 	ret += $("#result").text();
 
-	equal(ret, "2_ESC_Es2c3", 'Computed function with depends = [undefined,"selected", model, "colored"] - has listener for "colored" only');
+	assert.equal(ret, "2_ESC_Es2c3", 'Computed function with depends = [undefined,"selected", model, "colored"] - has listener for "colored" only');
 
 	// ................................ Reset ................................
 	model.selected("S");
@@ -5044,7 +5044,7 @@ test("Computed observables in paths", function() {
 
 	ret += $("#result").text();
 
-	equal(ret, "1_e2SC", "Computed function with circular depends - no stack overflow - handler skipped");
+	assert.equal(ret, "1_e2SC", "Computed function with circular depends - no stack overflow - handler skipped");
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -5052,7 +5052,7 @@ test("Computed observables in paths", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("Computed observables in $.link() expressions", function() {
+QUnit.test("Computed observables in $.link() expressions", function(assert) {
 
 	(function() {
 		// =============================== Arrange ===============================
@@ -5145,7 +5145,7 @@ test("Computed observables in $.link() expressions", function() {
 		changeAlt(5);
 
 		// ............................... Assert .................................
-		equal(res, " |1: b |2: b@ |3: a |4: a@ |5: b@", "complex");
+		assert.equal(res, " |1: b |2: b@ |3: a |4: a@ |5: b@", "complex");
 
 		// ................................ Reset ................................
 		$("#result").empty();
@@ -5250,7 +5250,7 @@ test("Computed observables in $.link() expressions", function() {
 		changeAlt(15);
 
 		// ............................... Assert .................................
-		equal(res, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B |6: B+ |7: B+> |8: B+>+ |9: B+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B+>+>", "complex");
+		assert.equal(res, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B |6: B+ |7: B+> |8: B+>+ |9: B+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B+>+>", "complex");
 
 		// ................................ Reset ................................
 		$("#result").empty();
@@ -5366,7 +5366,7 @@ test("Computed observables in $.link() expressions", function() {
 		changeAlt(15);
 
 		// ............................... Assert .................................
-		equal(res, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B2 |6: B2+ |7: B2+> |8: B2+>+ |9: B2+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B2+>+>", "complex");
+		assert.equal(res, " |1: A+ |2: A+> |3: A+>+ |4: A+>+> |5: B2 |6: B2+ |7: B2+> |8: B2+>+ |9: B2+>+> |10: A+>+> |11: A+>+>> |12: A+>+>>+ |13: A+>+>>+> |14: A+>+>>+>+ |15: B2+>+>", "complex");
 
 		// ................................ Reset ................................
 		$("#result").empty();
@@ -5374,7 +5374,7 @@ test("Computed observables in $.link() expressions", function() {
 
 });
 
-test("Computed observables in two-way binding", function(assert) {
+QUnit.test("Computed observables in two-way binding", function(assert) {
 var done = assert.async();
 
 	// =============================== Arrange ===============================
@@ -5420,7 +5420,7 @@ setTimeout(function() {
 	res += "|" + $("#result").text() + $("#full").val();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8
 	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
 		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
@@ -5492,7 +5492,7 @@ setTimeout(function() {
 	res += "|" + $("#result").text() + $("#full").val();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8
 	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
 		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
@@ -5551,7 +5551,7 @@ setTimeout(function() {
 	res += "|" + $("#result").text() + ":" + $("#full0").val();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8 
 	? "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
 	+ "newFirstnewLastnewFirst newLastnewLast newFirst Rose LeeRose LeeLee Rose :newFirst newLast|"
@@ -5636,7 +5636,7 @@ setTimeout(function() {
 	getResult();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 		"one one two two|"
 	+ "onechange onechange two two|"
 	+ "onechange onechange twochange twochange|"
@@ -5756,7 +5756,7 @@ setTimeout(function() {
 	getResult();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"n0 n0 s0 s0 n1 n1 s1 s1|"
 	+ "n0new n0new s0 s0 n1 n1 s1 s1|"
 	+ "n0new n0new s0 s0 n1new n1new s1 s1|"
@@ -5878,7 +5878,7 @@ setTimeout(function() {
 	getResult();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"n0 n0 s0 s0 n1 n1 s1 s1|"
 	+ "n0new n0new s0 s0 n1 n1 s1 s1|"
 	+ "n0new n0new s0 s0 n1new n1new s1 s1|"
@@ -5964,7 +5964,7 @@ setTimeout(function() {
 	getResult();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"n0 n0 s0 s0 n1 n1 s1 s1|"
 	+ "n0new n0 n0new n0new n1 n1 s1 s1|"
 	+ "n0new n0 n0new n0new n1new n1 n1new n1new|"
@@ -6149,7 +6149,7 @@ setTimeout(function() {
 	getResult(16);
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 		"1:A0 A0 A0 A0 A0 B0 A1 A1 A1 A1 A1 B1|"
 	+ "2:A0+ A0+ A0+ A0+ A0+ B0+ A1 A1 A1 A1 A1 B1|"
 	+ "3:B0+ B0+ B0+ B0+ A0+ B0+ A1 A1 A1 A1 A1 B1|"
@@ -6199,7 +6199,7 @@ done();
 }, 0);
 });
 
-test("Chained computed observables in template expressions", function() {
+QUnit.test("Chained computed observables in template expressions", function(assert) {
 
 	(function() {
 		// =============================== Arrange ===============================
@@ -6393,7 +6393,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Address");
 
 		// ............................... Assert .................................
-		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: xB |"
+		assert.equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: xB |"
 			+ "Home: xB$ |Street: xB$> |Address: xB$>+ |Ob: xB$>+1 |Home: xB$>+1$ |Street: xB$>+1$> |Address: xB$>+1$>+ |",
 		"Deep path with chained observables, binding to full depth: person^ob().home.address().street");
 
@@ -6453,7 +6453,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Alt");
 
 		// ............................... Assert .................................
-		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: B$+> |Street: B$+> |Address: B$+> |Home: B$+> |Ob: B$+> |Alt: xA |",
+		assert.equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$0 |Alt: B |Home: B$ |Address: B$+ |Street: B$+> |Person: B$+> |Street: B$+> |Address: B$+> |Home: B$+> |Ob: B$+> |Alt: xA |",
 		"Deep path with chained observables, binding to full depth - 1: person.ob()^home.address().street");
 
 		// ................................ Reset ................................
@@ -6494,7 +6494,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Alt");
 
 		// ............................... Assert .................................
-		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$ |Street: A>+$ |Address: A>+$ |Home: A>+$ |Alt: A>+$ |",
+		assert.equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+$ |Ob: A>+$ |Street: A>+$ |Address: A>+$ |Home: A>+$ |Alt: A>+$ |",
 		"Deep path with chained observables, binding to leaf depth + 2: person.ob().home^address().street");
 
 		// ................................ Reset ................................
@@ -6529,7 +6529,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Alt");
 
 		// ............................... Assert .................................
-		equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+ |Street: A>+ |Address: A>+ |Alt: A>+ |",
+		assert.equal(res, "None: A |Street: A> |Address: A>+ |Home: A>+ |Street: A>+ |Address: A>+ |Alt: A>+ |",
 		"Deep path with chained observables, binding to leaf depth plus 1: person.ob().home.address()^street");
 
 		// ................................ Reset ................................
@@ -6558,7 +6558,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Alt");
 
 		// ............................... Assert .................................
-		equal(res, "None: A |Street: A> |Address: A> |Street: A> |Alt: A> |",
+		assert.equal(res, "None: A |Street: A> |Address: A> |Street: A> |Alt: A> |",
 		"Deep path with chained observables, binding to leaf only: person.ob().home.address().street");
 
 	})();
@@ -6636,7 +6636,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Street");
 
 		// ............................... Assert .................................
-		equal(res, "None: TA |Street: TA> |Type: T$A> |Person: T2A2 |Type: T2$A2 |Street: T2$A2> |",
+		assert.equal(res, "None: TA |Street: TA> |Type: T$A> |Person: T2A2 |Type: T2$A2 |Street: T2$A2> |",
 		"Adjacent deep paths in expression: person^ob.type + person^ob.street");
 
 		// ................................ Reset ................................
@@ -6713,7 +6713,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Street");
 
 		// ............................... Assert .................................
-		equal(res, "None: AT |Street: A>T |Type: A>T$ |Ob: A>+T$+ |Type: A>+T$+$ |Street: A>+>T$+$ |",
+		assert.equal(res, "None: AT |Street: A>T |Type: A>T$ |Ob: A>+T$+ |Type: A>+T$+$ |Street: A>+>T$+$ |",
 		"Adjacent terms in expression with paths with observables: person^ob().street + person^ob().type");
 
 		// ................................ Reset ................................
@@ -6958,7 +6958,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Address");
 
 		// ............................... Assert .................................
-		equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
+		assert.equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
 		"Complex expression with multiple adjacent paths, with nested () and [] paren expressions, chained observables, arithmetic expressions etc.");
 
 		// ................................ Reset ................................
@@ -7007,7 +7007,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("type");
 
 		// ............................... Assert .................................
-		equal(res, "None: Am22 |type: Am22 |",
+		assert.equal(res, "None: Am22 |type: Am22 |",
 		"Complex unbound expression with [] paren expressions etc.");
 
 		// ................................ Reset ................................
@@ -7057,7 +7057,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("type");
 
 		// ............................... Assert .................................
-		equal(res, "None: Am22 |type: Am66 |",
+		assert.equal(res, "None: Am22 |type: Am66 |",
 		"Complex bound expression with [] paren expressions etc.");
 
 		// ................................ Reset ................................
@@ -7309,7 +7309,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Address");
 
 		// ............................... Assert .................................
-		equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
+		assert.equal(res, "None: 46A |Street: 46A> |Address: 46A>+ |Home: 46A>+$ |D: 52A>+$ |Index3: 58A>+$ |A: 60A>+$ |Index2: 50A>+$ |Ob: 50A>+$0 |Alt: 50B |Home: 50B$ |Address: 50B$+ |Street: 50B$+> |Person: 50xB |Home: 50xB$ |Street: 50xB$> |Address: 50xB$>+ |Ob: 50xB$>+1 |Home: 50xB$>+1$ |Index1: 54xB$>+1$ |A: 56xB$>+1$ |D: 62xB$>+1$ |Street: 62xB$>+1$> |Address: 62xB$>+1$>+ |",
 		"Complex expression on bound tag property, with multiple adjacent paths, with nested () and [] paren expressions, chained observables, arithmetic expressions etc.");
 
 		// ................................ Reset ................................
@@ -7445,7 +7445,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		equal(res, isIE8
+		assert.equal(res, isIE8
 			? "None: a a a a a a |Change a: AAAAAA |Change b: ABBBBB |Change c: ABCCCC |Change d: ABCDDD |Change e: ABCDEE |"
 			: "None: a a a a a a |Change a: A A A A A A |Change b: A B B B B B |Change c: A B C C C C |Change d: A B C D D D |Change e: A B C D E E |",
 		"{{: ...}} expressions with deeply chained computed observables");
@@ -7702,7 +7702,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Change e1");
 
 		// ............................... Assert .................................
-		equal(res, isIE8
+		assert.equal(res, isIE8
 			? "None: a a a a a a a a a a |Change a: AAAAAAAAAA |Change a1: AA1A1A1A1A1A1A1A1A1 |Change b: AA1BBBBBBBB |Change b1: AA1BB1B1B1B1B1B1B1 |Change c: AA1BB1CCCCCC |Change c1: AA1BB1CC1C1C1C1C1 |Change d: AA1BB1CC1DDDD |Change d1: AA1BB1CC1DD1D1D1 |Change e: AA1BB1CC1DD1EE |Change e1: AA1BB1CC1DD1EE1 |"
 			: "None: a a a a a a a a a a |Change a: A A A A A A A A A A |Change a1: A A1 A1 A1 A1 A1 A1 A1 A1 A1 |Change b: A A1 B B B B B B B B |Change b1: A A1 B B1 B1 B1 B1 B1 B1 B1 |Change c: A A1 B B1 C C C C C C |Change c1: A A1 B B1 C C1 C1 C1 C1 C1 |Change d: A A1 B B1 C C1 D D D D |Change d1: A A1 B B1 C C1 D D1 D1 D1 |Change e: A A1 B B1 C C1 D D1 E E |Change e1: A A1 B B1 C C1 D D1 E E1 |",
 		"{{: ...}} expressions with deeply chained computed observables (variant)");
@@ -7769,7 +7769,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		equal(res, isIE8
+		assert.equal(res, isIE8
 			? "None: a a a a a |Change a: AAAAA |Change b: BBBBB |Change c: BCCCC |Change d: BCDDD |Change e: BCDEE |"
 			: "None: a a a a a |Change a: A A A A A |Change b: B B B B B |Change c: B C C C C |Change d: B C D D D |Change e: B C D E E |",
 		"{{for ...}} expressions with deeply chained computed observables");
@@ -7836,7 +7836,7 @@ test("Chained computed observables in template expressions", function() {
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		equal(res, isIE8
+		assert.equal(res, isIE8
 			? "None: a a a a a | a a a a a |Change a: A A A A A |A A A A A |Change b: A A A A A |B B B B A |Change c: A A A A A |C C C B A |Change d: A A A A A |D D C B A |Change e: A A A A A |E D C B A |"
 			: "None: a a a a a | a a a a a |Change a: A A A A A | A A A A A |Change b: A A A A A | B B B B A |Change c: A A A A A | C C C B A |Change d: A A A A A | D D C B A |Change e: A A A A A | E D C B A |",
 		"Sibling {{: ...}} expressions with deeply chained computed observables");
@@ -7847,7 +7847,7 @@ test("Chained computed observables in template expressions", function() {
 	})();
 });
 
-test("replace mode and link=false mode", function() {
+QUnit.test("replace mode and link=false mode", function(assert) {
 
 	(function() {
 		$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
@@ -7874,14 +7874,14 @@ test("replace mode and link=false mode", function() {
 		res += $("#result").text();
 
 		// ............................... Assert .................................
-		equal(res, "JoPete(18) BobPeteJane",
+		assert.equal(res, "JoPete(18) BobPeteJane",
 		'tmpl.link(container, data) renders and data-links');
 
 		// ................................ Act ..................................
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// ................................ Act ..................................
@@ -7900,14 +7900,14 @@ test("replace mode and link=false mode", function() {
 		res += $("#result").text();
 
 		// ............................... Assert .................................
-		equal(res, "JoPete(4) JoPete",
+		assert.equal(res, "JoPete(4) JoPete",
 		'tmpl.link(container, data, {link: false}) renders but does not data-link, and does not insert script node markers');
 
 		// ................................ Act ..................................
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// ................................ Act ..................................
@@ -7926,14 +7926,14 @@ test("replace mode and link=false mode", function() {
 		res += $("#result").text();
 
 		// ............................... Assert .................................
-		equal(res, "0 - JoPete(18) BobPeteJane",
+		assert.equal(res, "0 - JoPete(18) BobPeteJane",
 		'tmpl.link(container, data, {target: "replace"}) replaces the target "container" by rendered content, and data-links');
 
 		// ................................ Act ..................................
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// =============================== Arrange ===============================
@@ -7955,14 +7955,14 @@ test("replace mode and link=false mode", function() {
 		res += $("#result").text();
 
 		// ............................... Assert .................................
-		equal(res, "0 - JoPete(4) JoPete",
+		assert.equal(res, "0 - JoPete(4) JoPete",
 		'tmpl.link(container, data, {target: "replace", link: false}) replaces the target "container" by rendered content, and does not data-link');
 
 		// ................................ Act ..................................
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// =============================== Arrange ===============================
@@ -7986,14 +7986,14 @@ test("replace mode and link=false mode", function() {
 		res += $("#result").text();
 
 		// ............................... Assert .................................
-		equal(res, "JoPete(8) JoPete",
+		assert.equal(res, "JoPete(8) JoPete",
 		'link=false on a block tag (e.g. {^{include link=false}}...) renders, but does not data-link, the content');
 
 		// ................................ Act ..................................
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		$.views.settings.advanced({_jsv: false}); // For using viewsAndBindings()
@@ -8001,9 +8001,9 @@ test("replace mode and link=false mode", function() {
 });
 
 
-module("API - data-bound tags");
+QUnit.module("API - data-bound tags");
 
-test("{^{:expression}}", function() {
+QUnit.test("{^{:expression}}", function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
@@ -8020,7 +8020,7 @@ test("{^{:expression}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'prop:One|prop:newLast',
 	'Data link using: {^{:lastName}}');
 
@@ -8032,7 +8032,7 @@ test("{^{:expression}}", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -8049,7 +8049,7 @@ test("{^{:expression}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'prop:|prop:newLast',
 	'Data link using: {^{:wasUndefined}} - renders to empty string when undefined, and still binds correctly for subsequent modifications');
 
@@ -8069,7 +8069,7 @@ test("{^{:expression}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"StreetOneStreetOne|newStreetOneStreetTwo",
 	'#data.person1.home.address.street binds only to the leaf, but person1.home^address.street does deep binding');
 
@@ -8141,7 +8141,7 @@ $.views.settings.trigger(false);
 $.views.settings.trigger(true);
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"SMITHOTHEROTHERSMITHOtherSmithOTHERSMITH|NEWLAST135NEWOTHER024NEWOTHER024NEWLAST135newother024newlast135NEWOTHER024NEWLAST135",
 	'Binding correctly to and from first argument, even with multiple args and props and with objects in paths, and with converters');
 
@@ -8163,7 +8163,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'$.link(expression, selector, undefined, helpers) - without passing data, data-links correctly to helpers');
 
@@ -8187,7 +8187,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'$.link(expression, selector) - without passing data, data-links correctly to helpers');
 
@@ -8207,7 +8207,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'$.link(template, selector) - without passing data, data-links correctly to helpers');
 
@@ -8225,7 +8225,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'template.link(selector) - without passing data, data-links correctly to helpers');
 
@@ -8243,7 +8243,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'$(selector).link(template) - without passing data, data-links correctly to helpers');
 
@@ -8261,7 +8261,7 @@ $.views.settings.trigger(true);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
 	'$(selector).link(expression) - without passing data, data-links correctly to helpers');
 
@@ -8272,7 +8272,7 @@ $.views.settings.trigger(true);
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("{^{>expression}}", function() {
+QUnit.test("{^{>expression}}", function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
@@ -8287,7 +8287,7 @@ test("{^{>expression}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'prop:One<br/>|prop:newLast<br/>',
 	'Data link using: {^{:lastName}}');
 
@@ -8299,7 +8299,7 @@ test("{^{>expression}}", function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -8317,7 +8317,7 @@ test("{^{>expression}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"StreetOneStreetOne|newStreetOneStreetTwo",
 	'#data.person1.home.address.street binds only to the leaf, but person1.home^address.street does deep binding');
 
@@ -8329,7 +8329,7 @@ test("{^{>expression}}", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("{^{tag}}", function() {
+QUnit.test("{^{tag}}", function(assert) {
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -8352,23 +8352,23 @@ test("{^{tag}}", function() {
 
 	// ............................... Assert .................................
 	$.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").link("#result", 1);
-	equal($("#result").text(), "abcde",
+	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, no render function) renders empty string");
 
 	$.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").link("#result", 1);
-	equal($("#result").text(), "abcde",
+	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
 	$.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").link("#result", 1);
-	equal($("#result").text(), "abcde",
+	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
 
 	$.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").link("#result", 1);
-	equal($("#result").text(), "abcde",
+	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
 	$.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").link("#result", 1);
-	equal($("#result").text(), "abcde",
+	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	// =============================== Arrange ===============================
@@ -8384,7 +8384,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
+	assert.equal(before + "|" + after, 'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link with: {^{tmplTag/}} updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -8407,7 +8407,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	ok(before === 'Name: Mr Jo. Width: 30' && before === after && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before === 'Name: Mr Jo. Width: 30' && before === after && !$._data(person1).events && !$._data(settings).events,
 	'Data link with: {{tmplTag/}} does nothing');
 
 	// ................................ Reset ................................
@@ -8430,7 +8430,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
+	assert.equal(before + "|" + after, 'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link with: {^{fnTag/}} updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -8453,7 +8453,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	ok(before === 'Name: Mr Jo. Width: 30' && before === after && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before === 'Name: Mr Jo. Width: 30' && before === after && !$._data(person1).events && !$._data(settings).events,
 	'Data link with: {{fnTag/}} does nothing');
 
 	// ................................ Reset ................................
@@ -8475,7 +8475,7 @@ test("{^{tag}}", function() {
 	$.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result div span")[0].outerHTML;
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	 isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link with: {^{fnTagEl/}} rendering <span>, updates when dependant object paths change');
 
@@ -8498,7 +8498,7 @@ test("{^{tag}}", function() {
 	after = $("#result div span").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link with {^{fnTagElNoInit}} rendering <span>, updates when dependant object paths change');
 
@@ -8522,7 +8522,7 @@ test("{^{tag}}", function() {
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link with {^{fnTagElCnt}} rendering <li>, updates when dependant object paths change');
 
@@ -8546,7 +8546,7 @@ test("{^{tag}}", function() {
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Data link with {^{fnTagElCntNoInit}} rendering <li>, updates when dependant object paths change');
 
@@ -8570,7 +8570,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false. Prop theTitle: Sir. Prop ~street: newStreet',
+	assert.equal(before + "|" + after, 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false. Prop theTitle: Sir. Prop ~street: newStreet',
 	'Data link with: {^{tmplTagWithProps ~some.path foo=~other.path ~bar=another.path/}} updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -8595,7 +8595,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	ok(before === 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne' && before === after && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before === 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne' && before === after && !$._data(person1).events && !$._data(settings).events,
 	'Data link with: {{tmplTagWithProps ~some.path foo=~other.path ~bar=another.path/}} does nothing');
 
 	// ................................ Reset ................................
@@ -8620,7 +8620,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false. Prop theTitle: Sir. Prop ~street: newStreet',
+	assert.equal(before + "|" + after, 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne|Name: Sir compFirst. Width: 40. Value: false. Prop theTitle: Sir. Prop ~street: newStreet',
 	'Data link with: {^{fnTagWithProps ~some.path foo=~other.path ~bar=another.path/}} updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -8645,7 +8645,7 @@ test("{^{tag}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	ok(before === 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne' && before === after && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before === 'Name: Mr Jo. Width: 30. Value: true. Prop theTitle: Mr. Prop ~street: StreetOne' && before === after && !$._data(person1).events && !$._data(settings).events,
 	'Data link with: {{fnTagWithProps ~some.path foo=~other.path ~bar=another.path/}} does nothing');
 
 	// ................................ Reset ................................
@@ -8673,9 +8673,9 @@ test("{^{tag}}", function() {
 		});
 
 	// ............................... Assert .................................
-	equal($("#result span")[0].outerHTML, isIE8 ? "<SPAN>w\\x\'y</SPAN>" : "<span>w\\x\'y</span>",
+	assert.equal($("#result span")[0].outerHTML, isIE8 ? "<SPAN>w\\x\'y</SPAN>" : "<span>w\\x\'y</span>",
 	"{^{mytag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
-	equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
+	assert.equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
 	"<div data-link=\"{mytag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 
 	// ................................ Reset ................................
@@ -8683,7 +8683,7 @@ test("{^{tag}}", function() {
 	res = "";
 });
 
-test("{^{for}}", function() {
+QUnit.test("{^{for}}", function(assert) {
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -8705,7 +8705,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
+	assert.equal(before + "|" + after, 'box|treebox',
 	'{^{for things}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -8713,7 +8713,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
@@ -8721,7 +8721,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'square',
+	assert.equal(after, 'square',
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -8729,7 +8729,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'triangle2circle2',
+	assert.equal(after, 'triangle2circle2',
 	'{^{for things}} binds to property change on path - swapping from singleton back to array');
 
 	// ................................ Act ..................................
@@ -8737,14 +8737,14 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'triangle2circle2oblongpentagon',
+	assert.equal(after, 'triangle2circle2oblongpentagon',
 	'{^{for things}} binds to array change on array after swapping from singleton back to array');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -8764,7 +8764,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
+	assert.equal(before + "|" + after, 'box|treebox',
 	'{^{for things}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -8772,7 +8772,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
@@ -8780,7 +8780,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'square',
+	assert.equal(after, 'square',
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -8788,7 +8788,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}} binds to property change on path - swapping from singleton back to previous array');
 
 	// ................................ Act ..................................
@@ -8796,7 +8796,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircleoblongpentagon',
+	assert.equal(after, 'trianglecircleoblongpentagon',
 	'{^{for things}} binds to array change on array after swapping from singleton back to array');
 
 	// ................................ Reset ................................
@@ -8820,7 +8820,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
+	assert.equal(before + "|" + after, 'box|treebox',
 	'{^{for things}} in element content binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -8828,7 +8828,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
@@ -8836,7 +8836,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'square',
+	assert.equal(after, 'square',
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -8844,7 +8844,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}} binds to property change on path - swapping from singleton back to previous array');
 
 	// ................................ Act ..................................
@@ -8852,7 +8852,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircleoblongpentagon',
+	assert.equal(after, 'trianglecircleoblongpentagon',
 	'{^{for things}} binds to array change on array after swapping from singleton back to array');
 
 	// ................................ Reset ................................
@@ -8872,7 +8872,7 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for #data}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
@@ -8892,14 +8892,14 @@ test("{^{for}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -8933,7 +8933,7 @@ $.observable(listData.nodes.list).insert("C2 ");
 ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
 	// ............................... Assert .................................
-	equal(ret, isIE8
+	assert.equal(ret, isIE8
 	? "|1 Plain: A |SpanWithNext: A nextElem|UlWithNext: AnextElem|Ul: A 4"
 	+ "|2 Plain: |SpanWithNext:nextElem|UlWithNext: nextElem|Ul:  4"
 	+ "|3 Plain:C  |SpanWithNext:C nextElem|UlWithNext: CnextElem|Ul: C 4"
@@ -8974,7 +8974,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 	? "|X box |X boxtable  |Xtree  boxtable  |Xtree  box  |X  box  ||X pen lamp |X lamp pen |"
 		: "|X box |X box table |X tree box table |X tree box |X box ||X pen lamp |X lamp pen |",
 	'{^{if things.length}}{^{for things}} content block bound to both array and array.length responds correctly to observable array changes');
@@ -9012,7 +9012,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen |"
 		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length && things}} content block bound to both array and array.length responds correctly to observable array changes');
@@ -9050,7 +9050,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen |"
 		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length}}{^{for ~root.things}} content bound to both array and array.length responds correctly to observable array changes');
@@ -9072,7 +9072,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{{include things}} moves context to things array, and {^{for}} then iterates and binds to array');
 
 	// ................................ Reset ................................
@@ -9091,7 +9091,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
+	assert.equal(before + "|" + after, 'box|treebox',
 	'{^{for things}}{{else}}{{/for}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -9100,7 +9100,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'treebox|None',
+	assert.equal(before + "|" + after, 'treebox|None',
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
@@ -9108,7 +9108,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'tree',
+	assert.equal(after, 'tree',
 	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
@@ -9116,7 +9116,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}}{{else}}{{/for}} binds to property change on path');
 
 	// ................................ Act ..................................
@@ -9124,7 +9124,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'square',
+	assert.equal(after, 'square',
 	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -9132,7 +9132,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'None',
+	assert.equal(after, 'None',
 	'{^{for things}}{{else}}{{/for}} binds to removeProperty change on path - and renders {{else}} block');
 
 	// ................................ Reset ................................
@@ -9151,7 +9151,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'box|treebox',
+	assert.equal(before + "|" + after, 'box|treebox',
 	'{^{for things}}{{else}}{{/for}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -9160,7 +9160,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'treebox|None',
+	assert.equal(before + "|" + after, 'treebox|None',
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
@@ -9168,7 +9168,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'tree',
+	assert.equal(after, 'tree',
 	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
@@ -9176,7 +9176,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'trianglecircle',
+	assert.equal(after, 'trianglecircle',
 	'{^{for things}}{{else}}{{/for}} binds to property change on path');
 
 	// ................................ Act ..................................
@@ -9184,7 +9184,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'square',
+	assert.equal(after, 'square',
 	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -9192,7 +9192,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 'None',
+	assert.equal(after, 'None',
 	'{^{for things}}{{else}}{{/for}} binds to removeProperty change on path - and renders {{else}} block');
 
 	// ................................ Reset ................................
@@ -9211,7 +9211,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'None_yes|boxtree_yes',
+	assert.equal(before + "|" + after, 'None_yes|boxtree_yes',
 	'{^{for things}}{{else}}{{/for}}{^{if ...}} starting with empty array binds to array inserts');
 	// See https://github.com/BorisMoore/jsviews/issues/326
 
@@ -9231,7 +9231,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'top|toptree',
+	assert.equal(before + "|" + after, 'top|toptree',
 	'Complex template, with empty placeholder for tbody after thead, and subsequent data-linked insertion of tbody');
 
 	// ................................ Act ..................................
@@ -9249,14 +9249,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += " " + (after === $("#result").text());
 
 	// ............................... Assert .................................
-	equal(res, 'true true true true true true',
+	assert.equal(res, 'true true true true true true',
 	'view refresh at all levels correctly maintains content');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9271,7 +9271,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'top|toptree',
+	assert.equal(before + "|" + after, 'top|toptree',
 	'Complex template, with empty placeholder for span, and subsequent data-linked insertion of in div');
 
 	// ................................ Act ..................................
@@ -9289,14 +9289,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += " " + (after === $("#result").text());
 
 	// ............................... Assert .................................
-	equal(res, 'true true true true true true',
+	assert.equal(res, 'true true true true true true',
 	'view refresh at all levels correctly maintains content');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9312,14 +9312,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $._data(model.things[0]).events;
 
 	// ............................... Assert .................................
-	equal(res, '1|1|undefined',
+	assert.equal(res, '1|1|undefined',
 	'Refreshing a view containing a tag which is bound to dependant data, and has no _prv node, removes the original binding and replaces it with a new one');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9336,14 +9336,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $._data(model.things[0]).events;
 
 	// ............................... Assert .................................
-	equal(res, '1|1|undefined',
+	assert.equal(res, '1|1|undefined',
 	'Refreshing a view containing a tag which is bound to dependant data, and has no _prv node, removes the original binding and replaces it with a new one');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9356,14 +9356,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	$.view("#result div", true).refresh();
 	after = $("#result div *").length;
 	// ............................... Assert .................................
-	equal(after, before,
+	assert.equal(after, before,
 	'Refreshing a view containing non-elOnly content, with a data-bound tag with no rendered content removes the original script node markers for the tag and replace with the new ones');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9381,7 +9381,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
-	equal(res, '|bush|tree',
+	assert.equal(res, '|bush|tree',
 	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Act ..................................
@@ -9391,7 +9391,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
-	equal(res, 'tree|tree',
+	assert.equal(res, 'tree|tree',
 	'view refresh with deferred correctly refreshes content');
 
 	// ................................ Act ..................................
@@ -9402,14 +9402,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
-	equal(res, 'treebush|bush',
+	assert.equal(res, 'treebush|bush',
 	'Changing dependant data on bindings with deferred, after view refresh correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9427,7 +9427,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, '|bush|tree',
+	assert.equal(res, '|bush|tree',
 	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Act ..................................
@@ -9437,7 +9437,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, 'tree|tree',
+	assert.equal(res, 'tree|tree',
 	'view refresh with deferred correctly refreshes content');
 
 	// ................................ Act ..................................
@@ -9447,14 +9447,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, 'treebush|bush',
+	assert.equal(res, 'treebush|bush',
 	'Changing dependant data on bindings with deferred, after view refresh correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9471,7 +9471,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30|Name: Sir compFirst. Width: 40',
 	'Calling view("li").refresh() for a view in element-only content (elCnt true) updates correctly: "<ul>{{for}}<li>...</li>{{/for}}</ul>"');
 
@@ -9497,7 +9497,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result ul").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + deferredString + "|" + after,
+	assert.equal(before + "|" + deferredString + "|" + after,
 	(isIE8 ? 'next||insertBeforenext'
 	: ' next||insertBefore next'),
 	'Inserting content before a next sibling element in element-only context does not set ._df, and subsequent insertion is correctly placed before the next sibling.');
@@ -9515,7 +9515,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	$.observable(model.things).insert(0, {thing: "bush"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:1 #parent.parent.index:1|",
+	assert.equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:1 #parent.parent.index:1|",
 	'Data-link to "#index" and "#get(\'item\').index" work correctly');
 
 	// ................................ Reset ................................
@@ -9532,7 +9532,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	$.observable(model.things).insert(0, {thing: "bush"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "bush Nested:0|tree Nested:1|",
+	assert.equal($("#result").text(), "bush Nested:0|tree Nested:1|",
 	'Data-link to "#getIndex()" works correctly');
 
 	// ................................ Reset ................................
@@ -9548,7 +9548,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// ............................... Assert .................................
 
-	ok(viewsAndBindings().split(" ").length === 7 // We removed view inside div, but still have the view for the outer template.
+	assert.ok(viewsAndBindings().split(" ").length === 7 // We removed view inside div, but still have the view for the outer template.
 		&& !$._data(model.things).events,
 		'$(container).empty removes listeners for empty tags in element-only content (_df="#n_/n_")');
 
@@ -9567,7 +9567,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	$.observable(data.list).insert("added");
 
 	// ............................... Assert .................................
-	ok(viewsAndBindings().split(" ").length === 13 // We removed view inside div, but still have the view for the outer template.
+	assert.ok(viewsAndBindings().split(" ").length === 13 // We removed view inside div, but still have the view for the outer template.
 		&& $._data(data.list).events.arrayChange.length === 1
 		&& $("#result ul").text() === "added",
 		'In element-only content, updateContent calls disposeTokens on _df inner bindings');
@@ -9575,25 +9575,25 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// ................................ Reset ................................
 	$("#result").empty();
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	$.views.settings.advanced({_jsv: false});
 
 });
 
-test("{^{for start end sort filter reverse}}", function() {
+QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
-	equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
-	equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
-	equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
-	equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array");
-	equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
-	equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
-	equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
-	equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
-	equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
+	assert.equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
+	assert.equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
+	assert.equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
+	assert.equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array");
+	assert.equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
+	assert.equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
+	assert.equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
+	assert.equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
+	assert.equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
 
 	var myarray = [1, 9, 2, 8, 3, 7, 4, 6, 5, -100, 20, 100, -1];
 	var mypeople = [
@@ -9610,34 +9610,34 @@ test("{^{for start end sort filter reverse}}", function() {
 		return item.details.age < 20;
 	};
 
-	equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data sort=''}}");
-	equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for #data sort=true}}");
-	equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
-	equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray start=1 end=-1}}");
-	equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray start=1}}");
-	equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray end=-1}}");
-	equal($.templates("{{for myarray sort=''}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray sort=''}}");
-	equal($.templates("{{for myarray sort='' reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray sort='' reverse=true}}");
-	equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
-	equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
+	assert.equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data sort=''}}");
+	assert.equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for #data sort=true}}");
+	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
+	assert.equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray start=1 end=-1}}");
+	assert.equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray start=1}}");
+	assert.equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray end=-1}}");
+	assert.equal($.templates("{{for myarray sort=''}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray sort=''}}");
+	assert.equal($.templates("{{for myarray sort='' reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray sort='' reverse=true}}");
+	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
+	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
-	equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
-	equal($.templates("{{for myarray sort='' filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray sort='' filter=~oddValue}}");
-	equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "-1 1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "-1 2 4 6 8 20 ", "{{for myarray sort=true filter=~oddIndex}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "6 8 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
-	equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
+	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
+	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
+	assert.equal($.templates("{{for myarray sort='' filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray sort='' filter=~oddValue}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "-1 1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "-1 2 4 6 8 20 ", "{{for myarray sort=true filter=~oddIndex}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "6 8 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
 }
 
-	equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='name'}}");
-	equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{for mypeople  sort='details.age'}}");
+	assert.equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='name'}}");
+	assert.equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{for mypeople  sort='details.age'}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
-	equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
+	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
 }
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
@@ -9658,7 +9658,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	var after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: box |Sort: box |NotTreeReverse: box |Start1: None",
+	assert.equal(after, "|All: box |Sort: box |NotTreeReverse: box |Start1: None",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering');
 
 	// ................................ Act ..................................
@@ -9667,7 +9667,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: tree box apple tree |Sort: apple box tree tree |NotTreeReverse: apple box |Start1: box apple tree ",
+	assert.equal(after, "|All: tree box apple tree |Sort: apple box tree tree |NotTreeReverse: apple box |Start1: box apple tree ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to array changes on leaf array');
 
 	// ................................ Act ..................................
@@ -9675,7 +9675,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................6
-	equal(after, "|All: tree |Sort: tree |NotTreeReverse: None|Start1: None",
+	assert.equal(after, "|All: tree |Sort: tree |NotTreeReverse: None|Start1: None",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
@@ -9683,7 +9683,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: tree tree |Sort: tree tree |NotTreeReverse: None|Start1: tree ",
+	assert.equal(after, "|All: tree tree |Sort: tree tree |NotTreeReverse: None|Start1: tree ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
@@ -9691,7 +9691,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: triangle circle |Sort: circle triangle |NotTreeReverse: circle triangle |Start1: circle ",
+	assert.equal(after, "|All: triangle circle |Sort: circle triangle |NotTreeReverse: circle triangle |Start1: circle ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path');
 
 	// ................................ Act ..................................
@@ -9699,7 +9699,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: triangle circle square tree |Sort: circle square tree triangle |NotTreeReverse: square circle triangle |Start1: circle square tree ",
+	assert.equal(after, "|All: triangle circle square tree |Sort: circle square tree triangle |NotTreeReverse: square circle triangle |Start1: circle square tree ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering inserts new items with sorting/filtering');
 
 	// ................................ Act ..................................
@@ -9707,7 +9707,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: tree |Sort: tree |NotTreeReverse: tree |Start1: tree ",
+	assert.equal(after, "|All: tree |Sort: tree |NotTreeReverse: tree |Start1: tree ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
@@ -9715,7 +9715,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: square apple tree |Sort: apple square tree |NotTreeReverse: apple square |Start1: apple tree ",
+	assert.equal(after, "|All: square apple tree |Sort: apple square tree |NotTreeReverse: apple square |Start1: apple tree ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path - swapping from singleton object back to array');
 
 	// ................................ Act ..................................
@@ -9723,7 +9723,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: None|Sort: None|NotTreeReverse: None|Start1: None",
+	assert.equal(after, "|All: None|Sort: None|NotTreeReverse: None|Start1: None",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to removeProperty change on path - and renders {{else}} block');
 
 	// ................................ Act ..................................
@@ -9731,7 +9731,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: circle tree square |Sort: circle square tree |NotTreeReverse: square circle |Start1: tree square ",
+	assert.equal(after, "|All: circle tree square |Sort: circle square tree |NotTreeReverse: square circle |Start1: tree square ",
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to setProperty change on path - and renders {{for}} block again');
 
 	// =============================== Arrange ===============================
@@ -9742,14 +9742,14 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All: circle tree square red green blue |Sort: circle square tree red green blue |NotTreeReverse: blue green red square circle |Start1: tree square red green blue ",
+	assert.equal(after, "|All: circle tree square red green blue |Sort: circle square tree red green blue |NotTreeReverse: blue green red square circle |Start1: tree square red green blue ",
 	'{^{for things}} plus sorting and filtering support observable changes to target array tagCtx.map.tgt');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 	model.things = []; // reset Prop
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -9775,7 +9775,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-		equal(after, "|All:--- a0 x0 b0 y0 c0 z0 |Sort:-- z0 y0 x0 c0 b0 a0 |Filter: y0 c0 a0 |Slice:- c0 ",
+		assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 |Sort:-- z0 y0 x0 c0 b0 a0 |Filter: y0 c0 a0 |Slice:- c0 ",
 	'{{for}} with sorting, filtering, reverse, start and end settings');
 
 	// ................................ Act ..................................
@@ -9783,7 +9783,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- c0 t0 ",
+	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- c0 t0 ",
 	'Appending of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 	// But note that in our scenario above this will append an item to the source array movies, which will trigger refreshed
 	// rendering of the first three {^{for}} instance above
@@ -9792,7 +9792,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- t0 ",
+	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- t0 ",
 	'To refresh sort etc with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
@@ -9800,7 +9800,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 |Sort:-- z0 y0 x0 t1 t0 c0 b0 a0 |Filter: y0 t1 c0 a0 |Slice:- t1 t0 ",
+	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 |Sort:-- z0 y0 x0 t1 t0 c0 b0 a0 |Filter: y0 t1 c0 a0 |Slice:- t1 t0 ",
 	'Insertion of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9808,7 +9808,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 |Sort:-- z0 y0 x0 t1 t0 m2 c0 b0 a0 |Filter: y0 t1 m2 b0 |Slice:- t1 m2 ",
+	assert.equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 |Sort:-- z0 y0 x0 t1 t0 m2 c0 b0 a0 |Filter: y0 t1 m2 b0 |Slice:- t1 m2 ",
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9816,7 +9816,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 t3 t4 |Sort:-- z0 y0 x0 t4 t3 t1 t0 m2 c0 b0 a0 |Filter: y0 t4 t1 m2 b0 |Slice:- t1 t3 t4 m2 ",
+	assert.equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 t3 t4 |Sort:-- z0 y0 x0 t4 t3 t1 t0 m2 c0 b0 a0 |Filter: y0 t4 t1 m2 b0 |Slice:- t1 t3 t4 m2 ",
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9824,7 +9824,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t1 t0 c0 b0 a0 |Filter: y0 t5 t1 c0 a0 |Slice:- t3 t5 t1 ",
+	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t1 t0 c0 b0 a0 |Filter: y0 t5 t1 c0 a0 |Slice:- t3 t5 t1 ",
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9832,7 +9832,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 a0 |Filter: y0 t5 t0 b0 |Slice:- t3 t5 ",
+	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 a0 |Filter: y0 t5 t0 b0 |Slice:- t3 t5 ",
 	'Removing item in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9840,7 +9840,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t5 t0 ",
+	assert.equal(after, "|All:--- x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t5 t0 ",
 	'Removal of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9848,7 +9848,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t0 t5 ",
+	assert.equal(after, "|All:--- x0 b0 y0 c0 z0 t0 t3 t5 |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t0 t5 ",
 	'Moving items in target array (sorted, filtered etc) - items are moved in target but not in source, and this is without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9856,7 +9856,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 b0 y0 c0 z0 t3 t6 |Sort:-- z0 y0 x0 t6 t3 c0 b0 |Filter: y0 t6 c0 |Slice:- t6 ",
+	assert.equal(after, "|All:--- x0 b0 y0 c0 z0 t3 t6 |Sort:-- z0 y0 x0 t6 t3 c0 b0 |Filter: y0 t6 c0 |Slice:- t6 ",
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9864,7 +9864,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 m7 b0 y0 c0 z0 t3 t6 |Sort:-- z0 y0 x0 t6 t3 m7 c0 b0 |Filter: y0 t6 m7 b0 |Slice:- t6 m7 ",
+	assert.equal(after, "|All:--- x0 m7 b0 y0 c0 z0 t3 t6 |Sort:-- z0 y0 x0 t6 t3 m7 c0 b0 |Filter: y0 t6 m7 b0 |Slice:- t6 m7 ",
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9872,7 +9872,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 m7 b0 y0 c0 z0 t3 t6 t8 t9 |Sort:-- z0 y0 x0 t9 t8 t6 t3 m7 c0 b0 |Filter: y0 t9 t6 m7 b0 |Slice:- t6 t8 t9 m7 ",
+	assert.equal(after, "|All:--- x0 m7 b0 y0 c0 z0 t3 t6 t8 t9 |Sort:-- z0 y0 x0 t9 t8 t6 t3 m7 c0 b0 |Filter: y0 t9 t6 m7 b0 |Slice:- t6 t8 t9 m7 ",
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -9880,13 +9880,13 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- x0 y0 c0 m7 b0 z0 t3 t6 t8 t9 |Sort:-- z0 y0 x0 t9 t8 t6 t3 m7 c0 b0 |Filter: y0 t9 t6 m7 b0 |Slice:- t9 t6 m7 ",
+	assert.equal(after, "|All:--- x0 y0 c0 m7 b0 z0 t3 t6 t8 t9 |Sort:-- z0 y0 x0 t9 t8 t6 t3 m7 c0 b0 |Filter: y0 t9 t6 m7 b0 |Slice:- t9 t6 m7 ",
 	'Moving of items in source array will also refresh sort, filter etc.');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 }
 	// =============================== Arrange ===============================
@@ -9910,7 +9910,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-		equal(after, "|All:--- a0 x0 b0 y0 c0 z0 |Slice:- x0 b0 y0 c0 ",
+		assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 |Slice:- x0 b0 y0 c0 ",
 	'{{for}} with start and end settings ("sliced")');
 
 	// ................................ Act ..................................
@@ -9918,7 +9918,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0 x0 b0 y0 c0 z0t0  |Slice:- x0 b0 y0 c0t0  "
 			: "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 t0 ",
 	'Appending of item in target array ("sliced") - item is rendered without refreshing sort, filter etc.');
@@ -9927,7 +9927,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0 x0 b0 y0 c0 z0t0  |Slice:-x0 b0 y0 c0 z0  "
 			: "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 z0 ",
 	'To refresh correct start and end with new item included, call tag.refresh() ');
@@ -9937,7 +9937,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0 x0 b0 y0 c0 z0t0t1   |Slice:-t1 x0 b0 y0 c0 z0  "
 			: "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 |Slice:- t1 x0 b0 y0 c0 z0 ",
 	'Insertion of item at specific position in target array ("sliced") - item is rendered at insert location, but item is simply appended to source array');
@@ -9947,7 +9947,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0m2  x0 b0 y0 c0 z0t0t1   |Slice:-m2 x0 b0 y0 c0 z0t0    "
 			: "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 |Slice:- m2 x0 b0 y0 c0 z0 t0 ",
 	'Insertion of item in source array will also refresh "slicing"');
@@ -9957,7 +9957,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0m2  x0 b0 y0 c0 z0t0t1t3 t4    |Slice:-m2t3 t4  x0 b0 y0 c0 z0t0    "
 			: "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 t3 t4 |Slice:- m2 t3 t4 x0 b0 y0 c0 z0 t0 ",
 	'Insertion of items at specific position in target array ("sliced") - items are rendered at insert location, but simply appended to source array');
@@ -9967,7 +9967,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0m2 t1t3 t4t5     |Slice:-t3t5 m2 t4      "
 			: "|All:--- a0 m2 t1 t3 t4 t5 |Slice:- t3 t5 m2 t4 ",
 	'Calling refresh() on target array will append and remove items appropriately from source array and target array (and move items in target array)');
@@ -9977,7 +9977,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:--- a0m2 t1t3t5     |Slice:-t3t5 m2      "
 			: "|All:--- a0 m2 t1 t3 t5 |Slice:- t3 t5 m2 ",
 	'Removing item in target array ("sliced") - items are rendered without refreshing "slicing".');
@@ -9987,7 +9987,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:---m2 t1t3t5     |Slice:-t1 t3       "
 			: "|All:--- m2 t1 t3 t5 |Slice:- t1 t3 ",
 	'Removal of item in source array will also refresh "slicing".');
@@ -9997,7 +9997,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:---m2 t1t3t5     |Slice:- t3     t1  "
 			: "|All:--- m2 t1 t3 t5 |Slice:- t3 t1 ",
 	'Moving items in target array ("slice") - items are moved in target but not in source, and this is without refreshing "slicing".');
@@ -10007,7 +10007,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8
+	assert.equal(after, isIE8
 			? "|All:---m2 t5    t1t3 |Slice:-t5  t1       "
 			: "|All:--- m2 t5 t1 t3 |Slice:- t5 t1 ",
 	'Moving of items in source array will also refresh "slicing".');
@@ -10015,7 +10015,7 @@ if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that
 	// ................................ Reset ................................
 	$("#result").empty();
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	// =============================== Arrange ===============================
@@ -10033,7 +10033,7 @@ var team = {
 var firstLi = $("li")[0];
 
 	// ............................... Assert .................................
-	equal(
+	assert.equal(
 		$.view("ul").views._1._prv === firstLi
 		&& $.view("ul").views._1.tag._prv === firstLi
 		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
@@ -10047,7 +10047,7 @@ var firstLi = $("li")[0];
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
-	equal(
+	assert.equal(
 		$.view("ul").views._1._prv === firstLi
 		&& $.view("ul").views._1.tag._prv === firstLi
 		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
@@ -10061,7 +10061,7 @@ firstLi = $("li")[0];
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
-	equal(
+	assert.equal(
 		$.view("ul").views._1._prv === firstLi
 		&& $.view("ul").views._1.tag._prv === firstLi
 		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
@@ -10075,7 +10075,7 @@ firstLi = $("li")[0];
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
-	equal(
+	assert.equal(
 		$.view("ul").views._2._prv === firstLi
 		&& $.view("ul").views._2.tag._prv === firstLi
 		&& $.view("ul").views._3._prv === firstLi
@@ -10087,14 +10087,14 @@ firstLi = $("li")[0];
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"dataMap bindings all removed when tag disposed (content removed from DOM)");
 
 	$.views.settings.advanced({_jsv: false});
 });
 
 
-test("{^{if}}...{{else}}...{{/if}}", function() {
+QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
@@ -10115,11 +10115,11 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 
 	// ............................... Assert .................................
 	after = $("#result").text();
-	equal(after, boundIfElseTmpl.render(data),
+	assert.equal(after, boundIfElseTmpl.render(data),
 	'Bound if and else with link render the same as unbound, when using the JsRender render() method');
 
 	// ............................... Assert .................................
-	equal(after, "ONE notTwo THREE ",
+	assert.equal(after, "ONE notTwo THREE ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
@@ -10127,7 +10127,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8 ? "notOne notTwo THREE  " : "notOne notTwo THREE ",
+	assert.equal(after, isIE8 ? "notOne notTwo THREE  " : "notOne notTwo THREE ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
@@ -10135,7 +10135,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, isIE8 ? "notOne TWO notThree  " : "notOne TWO notThree ",
+	assert.equal(after, isIE8 ? "notOne TWO notThree  " : "notOne TWO notThree ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Reset ................................
@@ -10163,7 +10163,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	// With deep version, the tokens for the {^{if}} binding had to be deferred - we test the format:
 	deferredString = /\/\d+\_\/\d+\^/.test(deferredString);
 
-	equal(deferredString && after, 'DeepContentafterDeep',
+	assert.equal(deferredString && after, 'DeepContentafterDeep',
 	'With deep bound {^{if}} tag, there is deferred binding and binding behaves correctly after removing and inserting');
 
 	// ................................ Act ..................................
@@ -10175,7 +10175,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	// With deep version, the tokens for the {^{if}} binding had to be deferred - we test the format:
 	deferredString = /#(\d+\^)\/\1/.test(deferredString);
 
-	equal(deferredString && after, 'afterDeep',
+	assert.equal(deferredString && after, 'afterDeep',
 	'With deep bound {^{if}} tag, there is deferred binding and binding behaves correctly after further remove');
 
 	// =============================== Arrange ===============================
@@ -10197,7 +10197,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	after = $("#result").text();
 	deferredString = $("#result tr")[0]._df; // ""
 	// With shallow version, no deferred binding
-	equal(!deferredString && after, 'ShallowContentafterShallow',
+	assert.equal(!deferredString && after, 'ShallowContentafterShallow',
 	'With shallow bound {^{if}} tag, there is no deferred binding, and binding behaves correctly after removing and inserting');
 
 	// ................................ Act ..................................
@@ -10208,7 +10208,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	deferredString = $("#result tr")[0]._df; // ""
 	// With shallow version, no deferred binding
 
-	equal(!deferredString && after, 'afterShallow',
+	assert.equal(!deferredString && after, 'afterShallow',
 	'With shallow bound {^{if}} tag, there is no deferred binding and binding behaves correctly after further remove');
 
 	// ................................ Reset ................................
@@ -10218,7 +10218,7 @@ test("{^{if}}...{{else}}...{{/if}}", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("{^{props}} basic", function() {
+QUnit.test("{^{props}} basic", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
@@ -10236,7 +10236,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'propA1:valA1a,|propA1:valA1b,',
+	assert.equal(before + "|" + after, 'propA1:valA1a,|propA1:valA1b,',
 	'{^{props}} - set existing property');
 
 	// ................................ Act ..................................
@@ -10245,7 +10245,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'propA1:valA1b,|propA1:valA1c,propA2:valA2a,',
+	assert.equal(before + "|" + after, 'propA1:valA1b,|propA1:valA1c,propA2:valA2a,',
 	'{^{props}} - set new property');
 
 	// ................................ Act ..................................
@@ -10254,7 +10254,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'propA1:valA1c,propA2:valA2a,|propA1:,propA2:,',
+	assert.equal(before + "|" + after, 'propA1:valA1c,propA2:valA2a,|propA1:,propA2:,',
 	'{^{props}} - set property to empty string or null');
 
 	// ................................ Act ..................................
@@ -10263,7 +10263,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'propA1:,propA2:,|propA1:,propA2:,',
+	assert.equal(before + "|" + after, 'propA1:,propA2:,|propA1:,propA2:,',
 	'{^{props}} - all properties null');
 
 	// ................................ Act ..................................
@@ -10272,7 +10272,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, 'propA1:,propA2:,|',
+	assert.equal(before + "|" + after, 'propA1:,propA2:,|',
 	'{^{props}} - all properties removed');
 
 	// ................................ Act ..................................
@@ -10281,7 +10281,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "|propA1:valA1b,",
+	assert.equal(before + "|" + after, "|propA1:valA1b,",
 	'{^{props}} - set property where there were none');
 
 	// ................................ Act ..................................
@@ -10290,7 +10290,7 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1b,|",
+	assert.equal(before + "|" + after, "propA1:valA1b,|",
 	'{^{props}} - set whole object to empty object');
 
 	// ................................ Act ..................................
@@ -10299,20 +10299,20 @@ test("{^{props}} basic", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "|propX:XX,",
+	assert.equal(before + "|" + after, "|propX:XX,",
 	'{^{props}} - set whole object to different object');
 
 	//................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function(assert) {
+QUnit.test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function(assert) {
 var done = assert.async();
 
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
@@ -10358,7 +10358,7 @@ var done = assert.async();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1a,removeadd,change,|propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,",
+	assert.equal(before + "|" + after, "propA1:valA1a,removeadd,change,|propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,",
 	'{^{props}} - add properties to props target array');
 
 	// ................................ Act ..................................
@@ -10367,7 +10367,7 @@ var done = assert.async();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,|addkey:addprop,removeadd,change,",
+	assert.equal(before + "|" + after, "propA1:valA1a,removeadd,change,addkey:addprop,removeadd,change,|addkey:addprop,removeadd,change,",
 	'{^{props}} - remove properties from props target array');
 
 	// ................................ Act ..................................
@@ -10376,7 +10376,7 @@ var done = assert.async();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "addkey:addprop,removeadd,change,|changed:changedValue,removeadd,change,",
+	assert.equal(before + "|" + after, "addkey:addprop,removeadd,change,|changed:changedValue,removeadd,change,",
 	'{^{props}} - change value of key and prop in props target array');
 
 	// ................................ Act ..................................
@@ -10387,7 +10387,7 @@ setTimeout(function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + JSON.stringify(root.objA), "changed:changedValue,removeadd,change,|changed:newValue,removeadd,change,|{\"changed\":\"newValue\"}",
+	assert.equal(before + "|" + after + "|" + JSON.stringify(root.objA), "changed:changedValue,removeadd,change,|changed:newValue,removeadd,change,|{\"changed\":\"newValue\"}",
 	'{^{props}} - change value of input bound to prop in props target array');
 
 	// ................................ Act ..................................
@@ -10398,7 +10398,7 @@ setTimeout(function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after + "|" + JSON.stringify(root.objA), "changed:newValue,removeadd,change,|newKey:newValue,removeadd,change,|{\"newKey\":\"newValue\"}",
+	assert.equal(before + "|" + after + "|" + JSON.stringify(root.objA), "changed:newValue,removeadd,change,|newKey:newValue,removeadd,change,|{\"newKey\":\"newValue\"}",
 	'{^{props}} - change value of input bound to key in props target array');
 
 	// ................................ Reset ................................
@@ -10408,7 +10408,7 @@ setTimeout(function() {
 	after = "" + ($._data(root).events === undefined) + "-" + ($._data(root.objA).events === undefined) + " -" + JSON.stringify(_jsv.cbBindings);
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "1-1|true-true -{}",
+	assert.equal(before + "|" + after, "1-1|true-true -{}",
 	'{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)');
 
 	$.views.settings.advanced({_jsv: false});
@@ -10418,7 +10418,7 @@ done();
 }, 0);
 });
 
-test("{^{props}}...{{else}} ...", function() {
+QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
@@ -10442,7 +10442,7 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1,|propA1:valA1,propA2:valA2,",
+	assert.equal(before + "|" + after, "propA1:valA1,|propA1:valA1,propA2:valA2,",
 	'{^{props}} - set new property on objA - shows additional property');
 
 	// ................................ Act ..................................
@@ -10451,7 +10451,7 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1,propA2:valA2,|propB1:valb1,propB2:valb2,",
+	assert.equal(before + "|" + after, "propA1:valA1,propA2:valA2,|propB1:valb1,propB2:valb2,",
 	'{^{props}} - remove properties from objA - switches to {{else objB}}');
 
 	// ................................ Act ..................................
@@ -10460,7 +10460,7 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propB1:valb1,propB2:valb2,|NONE",
+	assert.equal(before + "|" + after, "propB1:valb1,propB2:valb2,|NONE",
 	'{^{props}} - remove properties from objB - switches to {{else}}');
 
 	// ................................ Act ..................................
@@ -10469,7 +10469,7 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "NONE|NONE",
+	assert.equal(before + "|" + after, "NONE|NONE",
 	'{^{props}} - remove inexistant property from objB - remains on {{else}}');
 
 	// ................................ Act ..................................
@@ -10478,14 +10478,14 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "NONE|newProp:,",
+	assert.equal(before + "|" + after, "NONE|newProp:,",
 	'{^{props}} - set property on objB to undefined - render {{else objB}}');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
 	// =============================== Arrange ===============================
@@ -10518,7 +10518,7 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propA1:valA1,remove,|propB1:valb1,remove,propB2:valb2,remove,",
+	assert.equal(before + "|" + after, "propA1:valA1,remove,|propB1:valb1,remove,propB2:valb2,remove,",
 	'{^{props}} - remove properties from objA target array - switches to {{else objB}}');
 
 	// ................................ Act ..................................
@@ -10527,21 +10527,21 @@ test("{^{props}}...{{else}} ...", function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after, "propB1:valb1,remove,propB2:valb2,remove,|NONE",
+	assert.equal(before + "|" + after, "propB1:valb1,remove,propB2:valb2,remove,|NONE",
 	'{^{props}} - remove properties from objB target array - switches to {{else}}');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
 	$.views.settings.advanced({_jsv: false});
 });
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
-test("{^{props start end sort filter reverse}}...{{else}} ...", function() {
+QUnit.test("{^{props start end sort filter reverse}}...{{else}} ...", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
@@ -10570,7 +10570,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-		equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  |Sort:-- z0 y0 x0 c0 b0 a0 |Filter: y0 c0 a0 |Slice:- c0 ",
+		assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  |Sort:-- z0 y0 x0 c0 b0 a0 |Filter: y0 c0 a0 |Slice:- c0 ",
 	'{{props}} with Sorting, filtering, reverse, start and end settings');
 
 	// ................................ Act ..................................
@@ -10578,14 +10578,14 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- c0 t0 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- c0 t0 ",
 	'Appending of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 
 	ctx.target.refresh();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- t0 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  |Sort:-- z0 y0 x0 t0 c0 b0 a0 |Filter: y0 t0 b0 |Slice:- t0 ",
 	'To refresh, sort, slice etc with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
@@ -10593,7 +10593,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  |Sort:-- z0 y0 x0 t1 t0 c0 b0 a0 |Filter: y0 t1 c0 a0 |Slice:- t1 t0 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  |Sort:-- z0 y0 x0 t1 t0 c0 b0 a0 |Filter: y0 t1 c0 a0 |Slice:- t1 t0 ",
 	'Insertion of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10601,7 +10601,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, 	
+	assert.equal(after, 	
 "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key2:m3  |Sort:-- z0 y0 x0 t1 t0 m3 c0 b0 a0 |Filter: y0 t1 m3 b0 |Slice:- t1 m3 ",
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
@@ -10610,7 +10610,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key2:m3  key4:t4  key3:t3  |Sort:-- z0 y0 x0 t4 t3 t1 t0 m3 c0 b0 a0 |Filter: y0 t4 t1 m3 b0 |Slice:- t1 t3 t4 m3 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key2:m3  key4:t4  key3:t3  |Sort:-- z0 y0 x0 t4 t3 t1 t0 m3 c0 b0 a0 |Filter: y0 t4 t1 m3 b0 |Slice:- t1 t3 t4 m3 ",
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10618,7 +10618,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t1 t0 c0 b0 a0 |Filter: y0 t5 t1 c0 a0 |Slice:- t3 t5 t1 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t1 t0 c0 b0 a0 |Filter: y0 t5 t1 c0 a0 |Slice:- t3 t5 t1 ",
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10626,7 +10626,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 a0 |Filter: y0 t5 t0 b0 |Slice:- t3 t5 ",
+	assert.equal(after, "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 a0 |Filter: y0 t5 t0 b0 |Slice:- t3 t5 ",
 	'Removing item in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10634,7 +10634,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t5 t0 ",
+	assert.equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t5 t0 ",
 	'Removal of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10642,7 +10642,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t0 t5 ",
+	assert.equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key3:t3  key5:t5  |Sort:-- z0 y0 x0 t5 t3 t0 c0 b0 |Filter: y0 t5 t0 b0 |Slice:- t0 t5 ",
 	'Moving items in target array (sorted, filtered etc) - items are moved in target but not in source, and this is without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10650,7 +10650,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  |Sort:-- z0 y0 x0 t6 t3 c0 b0 |Filter: y0 t6 c0 |Slice:- t6 ",
+	assert.equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  |Sort:-- z0 y0 x0 t6 t3 c0 b0 |Filter: y0 t6 c0 |Slice:- t6 ",
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10658,7 +10658,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  key7:m8  |Sort:-- z0 y0 x0 t6 t3 m8 c0 b0 |Filter: y0 t6 m8 b0 |Slice:- t6 m8 ",
+	assert.equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  key7:m8  |Sort:-- z0 y0 x0 t6 t3 m8 c0 b0 |Filter: y0 t6 m8 b0 |Slice:- t6 m8 ",
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
@@ -10666,20 +10666,20 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  key7:m8  key9:t9  key8:t8  |Sort:-- z0 y0 x0 t9 t8 t6 t3 m8 c0 b0 |Filter: y0 t9 t6 m8 b0 |Slice:- t6 t8 t9 m8 ",
+	assert.equal(after, "|All:--- keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key3:t3  key6:t6  key7:m8  key9:t9  key8:t8  |Sort:-- z0 y0 x0 t9 t8 t6 t3 m8 c0 b0 |Filter: y0 t9 t6 m8 b0 |Slice:- t6 t8 t9 m8 ",
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
-	equal(JSON.stringify(_jsv.cbBindings), "{}",
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
 	$.views.settings.advanced({_jsv: false});
 });
 }
 
-test('data-link="{on ...', function() {
+QUnit.test('data-link="{on ...', function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
@@ -10702,7 +10702,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"shape|line",
 	'{on swap} calls swap method on click, with "this" pointer context on data object');
 
@@ -10721,7 +10721,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"shape|line",
 	'{on ~swap} calls swap helper method on click, with "this" pointer context defaulting to current data object');
 
@@ -10751,7 +10751,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "shape |linetrue "
 		: "shape |line true",
 	'{on ~util.swap} calls util.swap helper method on click, with ~util as this pointer');
@@ -10777,7 +10777,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"shape|line",
 	'{on ~util.swap context=#data} calls util.swap helper method on click, with current data object as this pointer');
 
@@ -10810,7 +10810,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "shape |linetrue "
 		: "shape |line true",
 	'{on ~util.swap context=~util.swapCtx} calls util.swap helper method on click, with util.swapCtx as this pointer');
@@ -10845,7 +10845,7 @@ test('data-link="{on ...', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "shape |linetrue "
 		: "shape |line true",
 	'{on ~util.swap data=#data} calls util.swap helper method on click, and passes current data #data as ev.data');
@@ -10870,7 +10870,7 @@ test('data-link="{on ...', function() {
 	after += $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"shape|lineshapeline",
 	"{on 'mouseup mousedown blur' swap} calls util method on mouseup, mousedown and blur");
 
@@ -10933,12 +10933,12 @@ test('data-link="{on ...', function() {
 
 	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
 	"multiple {on events selector method} bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"before: 1211 | after: undefinedundefined11",
 	"onDispose removes specific delegated events");
 
@@ -10952,7 +10952,7 @@ test('data-link="{on ...', function() {
 	$("#divForOn #newlyAdded").keyup();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: ",
 	"delegated {on events selector method} binding allows additional elements added to content to bind correctly");
 
@@ -10961,7 +10961,7 @@ test('data-link="{on ...', function() {
 	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	"Removing the element removes all associated attached {on } handlers");
 
@@ -10997,7 +10997,7 @@ test('data-link="{on ...', function() {
 	$("#doIt").click();
 
 	// ............................... Assert .................................
-	equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
+	assert.equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
 	"{on 'click' selector otherParams... method params...} : supports passing params to method, of any type, as well as setting data and context for the function call");
 
 	// =============================== Arrange ===============================
@@ -11050,12 +11050,12 @@ test('data-link="{on ...', function() {
 
 	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
 	"Top-level {on }: multiple {on events selector method} top-level bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"before: 1211 | after: undefinedundefined11",
 	"Top-level {on }: onDispose removes specific delegated events");
 
@@ -11069,7 +11069,7 @@ test('data-link="{on ...', function() {
 	$("#divForOn #newlyAdded").keyup();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: ",
 	"Top-level {on }: delegated {on events selector method} binding allows additional elements added to content to bind correctly");
 
@@ -11078,7 +11078,7 @@ test('data-link="{on ...', function() {
 	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	"Top-level {on }: Removing the element removes all associated attached {on } handlers");
 
@@ -11114,7 +11114,7 @@ test('data-link="{on ...', function() {
 	$("#doIt").click();
 
 	// ............................... Assert .................................
-	equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
+	assert.equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
 	"Top-level {on 'click' selector method params...} : supports passing params to method, of any type, as well as setting data and context for the function call");
 
 	// =============================== Arrange ===============================
@@ -11157,14 +11157,14 @@ test('data-link="{on ...', function() {
 	$("#linkTgt").click();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: test 3: refresh 4: test 5: test 6: refresh ",
 	'$.link(true, "#linkTgt", data): top-level linking to element (not container) links correctly, including \'{on }\' bindings');
 
 	// ............................... Assert .................................
 	eventBindings = "" + events.mouseup.length + events.mousedown.length + events.click.length;
 
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"111",
 	'$.link(true, "#linkTgt", data): top-level linking to element (not container) adds {on } binding handlers correctly - including calling refresh() on {on } tag');
 
@@ -11174,14 +11174,14 @@ test('data-link="{on ...', function() {
 	// ............................... Assert .................................
 	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	'$.unlink("#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
 
 	$.views.settings.advanced({_jsv: false});
 });
 
-test('{^{radiogroup}}', function() {
+QUnit.test('{^{radiogroup}}', function(assert) {
 
 	// =============================== Arrange ===============================
 	var tmpl = $.templates(
@@ -11223,7 +11223,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":Jim|:new||Bob-:Bob|",
+	assert.equal(res, ":Jim|:new||Bob-:Bob|",
 		'{^{radiogroup selected}}{^{for ...}}...<input ... value="{{:name}}">');
 
 	// ................................ Reset ................................
@@ -11269,7 +11269,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM|:NEW||None-:NONE|",
+	assert.equal(res, ":JIM|:NEW||None-:NONE|",
 		'{^{radiogroup selected}}...<input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
@@ -11281,7 +11281,7 @@ test('{^{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
 		'{^{radiogroup selected}}...{^{for ...}}...<input ... data-link="name"> - updated label and value');
 
 	// ................................ Reset ................................
@@ -11336,7 +11336,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":jim|:new||new-NONE-:none|",
+	assert.equal(res, ":jim|:new||new-NONE-:none|",
 		'{^{radiogroup selected convert=... convertBack=... linkTo=...}}');
 
 	// ............................... Act .................................
@@ -11348,7 +11348,7 @@ test('{^{radiogroup}}', function() {
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+	assert.equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
 		'{^{radiogroup selected convert=... convertBack=... linkTo=...}} - updated label and value');
 
 	// ................................ Reset ................................
@@ -11394,7 +11394,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, "JIM|NEW||None-NONE|",
+	assert.equal(res, "JIM|NEW||None-NONE|",
 		'{^{radiogroup selected}} with labels by for/id');
 
 	// ............................... Act .................................
@@ -11406,7 +11406,7 @@ test('{^{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
 		'{^{radiogroup selected}} with labels by for/id - updated label and value');
 
 	// ................................ Reset ................................
@@ -11458,7 +11458,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+	assert.equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
 		'{^{radiogroup selected}} - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
@@ -11470,7 +11470,7 @@ test('{^{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
 		'{^{radiogroup selected}} - two radiogroups with same selected bindings - updated label and value');
 
 	// ................................ Reset ................................
@@ -11518,7 +11518,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
 		'{^{radiogroup selected}} - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
 
 	// ................................ Reset ................................
@@ -11566,7 +11566,7 @@ test('{^{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
 
 	// ............................... Assert .................................
-	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
+	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
 		'{^{radiogroup selected}} - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
 
 	// ................................ Reset ................................
@@ -11574,7 +11574,7 @@ test('{^{radiogroup}}', function() {
 
 });
 
-test('radio buttons without {{radiogroup}}', function() {
+QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	// =============================== Arrange ===============================
 	var tmpl = $.templates(
@@ -11614,7 +11614,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":Jim|:new||Bob-:Bob|",
+	assert.equal(res, ":Jim|:new||Bob-:Bob|",
 		'{^{for ...}}...<input ... value="{{:name}}">');
 
 	// ................................ Reset ................................
@@ -11658,7 +11658,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM|:NEW||None-:NONE|",
+	assert.equal(res, ":JIM|:NEW||None-:NONE|",
 		'<input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
@@ -11670,7 +11670,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED|",
 		'{^{for ...}}...<input ... data-link="name"> - updated label and value');
 
 	// ................................ Reset ................................
@@ -11723,7 +11723,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":jim|:new||new-NONE-:none|",
+	assert.equal(res, ":jim|:new||new-NONE-:none|",
 		'data-link="{:select convert=... convertBack=... linkTo=...:}"');
 
 	// ............................... Act .................................
@@ -11735,7 +11735,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
+	assert.equal(res, ":none:bob:jimUpdated|new-JIMUPDATED-:jimUpdated|",
 		'data-link="{:select convert=... convertBack=... linkTo=...:}" - updated label and value');
 
 	// ................................ Reset ................................
@@ -11779,7 +11779,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, "JIM|NEW||None-NONE|",
+	assert.equal(res, "JIM|NEW||None-NONE|",
 		'data-link="selected" with labels by for/id');
 
 	// ............................... Act .................................
@@ -11791,7 +11791,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|jimUpdated-JIMUPDATED|",
 		'data-link="selected" with labels by for/id - updated label and value');
 
 	// ................................ Reset ................................
@@ -11839,7 +11839,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
+	assert.equal(res, ":JIM:JIM|:NEW:NEW||None-:NONE:NONE|",
 		'data-link="selected" - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
@@ -11851,7 +11851,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
-	equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
+	assert.equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|jimUpdated-:JIMUPDATED:JIMUPDATED|",
 		'data-link="selected" - two radiogroups with same selected bindings - updated label and value');
 
 	// ................................ Reset ................................
@@ -11895,7 +11895,7 @@ test('radio buttons without {{radiogroup}}', function() {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
 		'data-link="selected" - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
 
 	// ................................ Reset ................................
@@ -11903,7 +11903,7 @@ test('radio buttons without {{radiogroup}}', function() {
 
 });
 
-test('{^{on}}', function() {
+QUnit.test('{^{on}}', function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
@@ -11926,7 +11926,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "swap shape|swapline"
 	  : "swap shape|swap line",
 	'{^{on swap/}} renders as button with label "swap", and calls swap method on click, with "this" pointer context on data object');
@@ -11946,7 +11946,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"noop shape|noop shape",
 	'{^{on missingMethod/}} renders as button with label "noop", and is noop on click');
 
@@ -11966,7 +11966,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "clickme shape|clickmeline"
 	  : "clickme shape|clickme line",
 	'{^{on swap}} clickme {{/on}} renders as button with label "clickme", and calls swap method on click');
@@ -11986,7 +11986,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "clickagain shape|clickagainline"
 	  : "clickagain shape|clickagain line",
 	'{^{on swap tmpl=stringValue renders as button with label stringValue, and calls swap method on click');
@@ -12006,7 +12006,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "clickme shape|clickmeline"
 	  : "clickme shape|clickme line",
 	'{^{on swap}}<span>clickme</span>{{/on}} renders as span with label clickme, and calls swap method on click');
@@ -12026,7 +12026,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "~swap shape|~swapline"
 	  : "~swap shape|~swap line",
 	'{^{on ~swap/}} calls swap helper method on click, with "this" pointer context defaulting to current data object');
@@ -12057,7 +12057,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "~util.swap shape |~util.swaplinetrue "
 		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap/}} calls util.swap helper method on click, with ~util as this pointer');
@@ -12083,7 +12083,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "~util.swap shape|~util.swapline"
 	  : "~util.swap shape|~util.swap line",
 	'{^{on ~util.swap context=#data/}} calls util.swap helper method on click, with current data object as this pointer');
@@ -12117,7 +12117,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "~util.swap shape |~util.swaplinetrue "
 		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap context=~util.swapCtx/}} calls util.swap helper method on click, with util.swapCtx as this pointer');
@@ -12152,7 +12152,7 @@ test('{^{on}}', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "~util.swap shape |~util.swaplinetrue "
 		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap data=#data/}} calls util.swap helper method on click, and passes current data #data as ev.data');
@@ -12177,7 +12177,7 @@ test('{^{on}}', function() {
 	after += $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "swap shape|swaplineswapshapeswapline"
 	  : "swap shape|swap lineswap shapeswap line",
 	"{^{on 'mouseup mousedown blur' swap/}} calls util method on mouseup, mousedown and blur");
@@ -12238,12 +12238,12 @@ test('{^{on}}', function() {
 	eventBindings += " | after: " + events.keydown + events.keyup + events.mouseup.length + events.mousedown.length;
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: test 3: unbind 4: 5: unbind 6: 7: test 8: refresh ",
 	"multiple {^{on events selector method}} bindings on container attach events on delegated elements. Also, tag.onDispose on tag instances removes specific handlers for corresponding elements/selectors");
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"before: 1211 | after: undefinedundefined11",
 	"onDispose removes specific delegated events");
 
@@ -12257,7 +12257,7 @@ test('{^{on}}', function() {
 	$("#divForOn #newlyAdded").keyup();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: test 2: ",
 	"delegated {^{on events selector method}} binding allows additional elements added to content to bind correctly");
 
@@ -12266,7 +12266,7 @@ test('{^{on}}', function() {
 	eventBindings = "" + events.keydown + events.keyup + events.mouseup + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	// ............................... Assert .................................
-	equal(eventBindings,
+	assert.equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
 	"Removing the element removes all associated attached {on } handlers");
 
@@ -12302,7 +12302,7 @@ test('{^{on}}', function() {
 	$("#doIt").click();
 
 	// ............................... Assert .................................
-	equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
+	assert.equal(data.res, "Advisorheytrue33 allow:true extraParam: 754|Followerheytrue33 allow:false extraParam: 754|",
 	"{^{on 'click' selector otherParams... method params...}} : supports passing params to method, of any type, as well as setting data and context for the function call");
 
 	// ................................ Act ..................................
@@ -12326,7 +12326,7 @@ test('{^{on}}', function() {
 	$("#doIt").click();
 
 	// ............................... Assert .................................
-	equal(res, "100|100|doIt|red",
+	assert.equal(res, "100|100|doIt|red",
 	"{^{on ... id=... class=... width=... height=...}} : supports setting id, class, height and width");
 
 	// ................................ Act ..................................
@@ -12335,7 +12335,7 @@ test('{^{on}}', function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-test('data-link="{tag...} and {^{tag}} in same template"', function(assert) {
+QUnit.test('data-link="{tag...} and {^{tag}} in same template"', function(assert) {
 var done = assert.async();
 
 	// ................................ Reset ................................
@@ -12357,7 +12357,7 @@ var done = assert.async();
 	after = $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'Name: Mr Jo. Width: 30-One Name: Mr Jo. Width: 30-OneOne|Name: Sir newFirst. Width: 40-newLast Name: Sir newFirst. Width: 40-newLastnewLast',
 	'Data link using: {^{tmplTag/}} {^{:lastName}} <span data-link="{tmplTag}"></span><span data-link="lastName"></span><input data-link="lastName"/>');
 
@@ -12381,7 +12381,7 @@ var done = assert.async();
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	'prop:OneOne computed:Mr Jo OneMr Jo One Tag:Name: Mr Jo. Width: 30Name: Mr Jo. Width: 30OneMr Jo One|prop:compLastcompLast computed:Sir compFirst compLastSir compFirst compLast Tag:Name: Sir compFirst. Width: 40Name: Sir compFirst. Width: 40compLastSir compFirst compLast',
 	'Data link using: {^{:lastName}} <span data-link="lastName"></span> <input id="last" data-link="lastName"/> {^{:fullName()}}<span data-link="fullName()"></span> <input data-link="fullName()"/> {^{tmplTag/}} <span data-link="{tmplTag}"></span>');
 
@@ -12392,7 +12392,7 @@ setTimeout(function() {
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
-	equal(after,
+	assert.equal(after,
 	"prop:newLastnewLast computed:Sir newFirst newLastSir newFirst newLast Tag:Name: Sir newFirst. Width: 40Name: Sir newFirst. Width: 40newLastnewFirst newLast",
 	'Two-way binding to a computed observable correctly calls the setter');
 
@@ -12403,7 +12403,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	"$(container).empty removes the views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -12432,7 +12432,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	"$.unlink(container) removes the views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -12451,7 +12451,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	"$(container).unlink() removes the views and current listeners from that content");
 
 	// =============================== Arrange ===============================
@@ -12476,7 +12476,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(before + "|" + after === res && viewContent === viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before + "|" + after === res && viewContent === viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	'$.unobserve(person1, "*", settings, "*") removes the current listeners from that content, but leaves the views');
 
 	// ................................ Reset ................................
@@ -12505,7 +12505,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
 	'$.unlink() removes all views and listeners from the page');
 
 	// ................................ Reset ................................
@@ -12521,7 +12521,7 @@ done();
 }, 0);
 });
 
-test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function() {
+QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
 
@@ -12580,7 +12580,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	after += $("#result").text() + "|";
 
-	equal(before + after,
+	assert.equal(before + after,
 		isIE8
 		? "11 true true|"
 			+ "err:A ERR:B err:C err:D err:E err:F err:G err:H err:I ERR:J err:K |"
@@ -12612,7 +12612,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(initial.a).events && !$._data(initial.a.b).events,
+	assert.ok(!viewsAndBindings() && !$._data(initial.a).events && !$._data(initial.a.b).events,
 	'$.unlink() removes all views and listeners from the page');
 
 	// =============================== Arrange ===============================
@@ -12653,7 +12653,7 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 	$.observable(initial).setProperty('value', a = new Item(b = new Item(c = new Item(d = new Item(e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
 	after += $("#result").text() + "|";
 
-	equal(before + after,
+	assert.equal(before + after,
 		isIE8
 		? "string1 A error2 error3 error3b error4 error4b |"
 			+ "[object Object] Astring2Berror3error4error4b |"
@@ -12676,13 +12676,13 @@ test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'f
 
 	// ............................... Assert .................................
 
-	ok(!viewsAndBindings() && !$._data(initial.value()).events && !$._data(initial.value().value()).events,
+	assert.ok(!viewsAndBindings() && !$._data(initial.value()).events && !$._data(initial.value().value()).events,
 	'$.unlink() removes all views and listeners from the page');
 
 	$.views.settings.advanced({_jsv: false});
 });
 
-test('Bound tag properties and contextual parameters', function() {
+QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	// =============================== Arrange ===============================
 
 	var things = [
@@ -12713,7 +12713,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
 		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{include ^tmpl=~typeTemplates[type]... and data-link="{include ^tmpl=~typeTemplates[type]...');
@@ -12751,7 +12751,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
 		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{if true ^tmpl=~typeTemplates[type]... and data-link="{if true ^tmpl=~typeTemplates[type]...');
@@ -12789,7 +12789,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
 		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{if false}}{{else ^tmpl=~typeTemplates[type]... and data-link="{if false}{else ^tmpl=~typeTemplates[type]...');
@@ -12827,7 +12827,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
 		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{for undefined}}{{else ^tmpl=~typeTemplates[type]... and data-link="{for undefined}{else ^tmpl=~typeTemplates[type]...');
@@ -12860,7 +12860,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition:line false  Unbound condition: shape true Bound condition:shape true  Unbound condition: line false "
 		: "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition: line false Unbound condition: shape true Bound condition: shape true Unbound condition: line false ",
 	'Binding to contextual parameter {^{include ^~condition=... triggers update. Unbound contextual parameter {^{include ~condition=... does not trigger updated content');
@@ -12903,7 +12903,7 @@ test('Bound tag properties and contextual parameters', function() {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "Updating: shape true Non updating: shape true Updating: line false Non updating: line false |Updating:line false  Non updating: shapefalse Updating:shape true  Non updating: linetrue "
 		: "Updating: shape true  Non updating: shape true Updating: line false  Non updating: line false |Updating: line false  Non updating: shape false Updating: shape true  Non updating: line true ",
 	'Binding to property triggers update {^{updatingTag ^condition=... unless tag is non-updating: {^{nonUpdatingTag ^condition=...');
@@ -12939,7 +12939,7 @@ test('Bound tag properties and contextual parameters', function() {
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
+	assert.equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
 	: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"data-link allows passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
@@ -12972,7 +12972,7 @@ test('Bound tag properties and contextual parameters', function() {
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, "falsetrue|truefalse|falsetrue",
+	assert.equal(res, "falsetrue|truefalse|falsetrue",
 		"itemVar variables in item list are distinct variables");
 
 	// ................................ Reset ................................
@@ -12980,7 +12980,7 @@ test('Bound tag properties and contextual parameters', function() {
 
 });
 
-test('Data-linking helpers and contextual parameters', function() {
+QUnit.test('Data-linking helpers and contextual parameters', function(assert) {
 $.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
@@ -13009,7 +13009,7 @@ $.views.settings.trigger(false);
 	res += $("#result").text() + " | ";
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"Jo | new | changed | ",
 	'contextual parameter two-way binding');
 
@@ -13039,7 +13039,7 @@ $.views.settings.trigger(false);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	isIE8 ? "shape shape true line line false |shapelinefalse lineshapetrue "
 		: "shape shape true line line false |shape line false line shape true ",
 	'contextual parameter {^{include ~condition=... does not trigger update but references are bound');
@@ -13090,7 +13090,7 @@ $.views.settings.trigger(false);
 		getContent();
 	});
 
-	equal(res, "FFFFFFFFFFFF|000000000000|111111111111|222222222222|333333333333|444444444444|"
+	assert.equal(res, "FFFFFFFFFFFF|000000000000|111111111111|222222222222|333333333333|444444444444|"
 		+ "555555555555|666666666666|777777777777|888888888888|",
 		'Two-way binding to contextual parameters');
 
@@ -13157,7 +13157,7 @@ $.views.settings.trigger(false);
 
 	after += "|" + getContent();
 
-	equal(after, "add:add:add|addOuter:addOuter:addOuter|addInner:addInner:addInner"
+	assert.equal(after, "add:add:add|addOuter:addOuter:addOuter|addInner:addInner:addInner"
 		+ "|alt:alt:alt|altOuter:altOuter:altOuter|altInner:altInner:altInner"
 		+ "|addInner:addInner:addInner|altInner:altInner:altInner",
 		'Two-way binding to contextual parameters with computed values');
@@ -13209,7 +13209,7 @@ $.views.settings.trigger(false);
 
 	after += "|" + $("#result").text();
 
-	equal(after, "246|24|2|24|246|2468",
+	assert.equal(after, "246|24|2|24|246|2468",
 		'Contextual parameter for index with array change');
 
 	// ................................ Reset ................................
@@ -13218,7 +13218,7 @@ $.views.settings.trigger(false);
 $.views.settings.trigger(true);
 });
 
-test("JsViews ArrayChange: insert()", function() {
+QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.views.tags({
@@ -13238,7 +13238,7 @@ test("JsViews ArrayChange: insert()", function() {
 	$.observable(model.things).insert(1, {thing: "Middle"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
+	assert.equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
 	'Within element only content, insertion maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13263,7 +13263,7 @@ test("JsViews ArrayChange: insert()", function() {
 	$.observable(model.things).insert(1, {thing: "Middle"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
+	assert.equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
 	'Within regular content, insertion finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Reset ................................
@@ -13277,7 +13277,7 @@ test("JsViews ArrayChange: insert()", function() {
 	$.observable(model.things).insert(0, {thing: "First"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "FirstOrig",
+	assert.equal($("#result").text(), "FirstOrig",
 	'Within element only content, insertion maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13285,7 +13285,7 @@ test("JsViews ArrayChange: insert()", function() {
 	model.things = []; // reset Prop
 });
 
-test("JsViews ArrayChange: remove()", function() {
+QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.tags({
 		liTag: function() {
@@ -13302,14 +13302,14 @@ test("JsViews ArrayChange: remove()", function() {
 	$.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
+	assert.equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
 	'Within element only content, remove(1) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Act ..................................
 	$.observable(model.things).remove(); //TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagOrigTagMiddleTag|after",
+	assert.equal($("#result").text(), "TagOrigTagMiddleTag|after",
 	'Within element only content, remov maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13331,14 +13331,14 @@ test("JsViews ArrayChange: remove()", function() {
 	$.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
+	assert.equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
 	'Within regular content, remove(1) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Act ..................................
 	$.observable(model.things).remove();
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagOrigTagMiddleTag|after",
+	assert.equal($("#result").text(), "TagOrigTagMiddleTag|after",
 	'Within regular content, remove() finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Reset ................................
@@ -13347,7 +13347,7 @@ test("JsViews ArrayChange: remove()", function() {
 
 });
 
-test("JsViews ArrayChange: move()", function() {
+QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.tags({
 		liTag: function() {
@@ -13364,7 +13364,7 @@ test("JsViews ArrayChange: move()", function() {
 	$.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
+	assert.equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
 	'Within element only content, move(2, 0, 2) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13404,7 +13404,7 @@ test("JsViews ArrayChange: move()", function() {
 	addResult();
 
 	// ............................... Assert .................................
-	equal(result, "|MiddleLastOrigFirst|OneMiddleLastOrigFirst|MiddleLastOrigFirst|OneMiddleLastOrigFirst|OneTwoMiddleLastOrigFirst|OneMiddleLastOrigFirst|OneTwoMiddleLastOrigFirst|TwoMiddleLastOrigFirst|MiddleLastOrigFirst",
+	assert.equal(result, "|MiddleLastOrigFirst|OneMiddleLastOrigFirst|MiddleLastOrigFirst|OneMiddleLastOrigFirst|OneTwoMiddleLastOrigFirst|OneMiddleLastOrigFirst|OneTwoMiddleLastOrigFirst|TwoMiddleLastOrigFirst|MiddleLastOrigFirst",
 	'In element only content with preceding collapsible {{if}} blocks, move(2, 0, 2) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Act ..................................
@@ -13430,7 +13430,7 @@ test("JsViews ArrayChange: move()", function() {
 	addResult();
 
 	// ............................... Assert .................................
-	equal(result, "|OrigFirstMiddleLast|OneOrigFirstMiddleLast|OrigFirstMiddleLast|OneOrigFirstMiddleLast|OneTwoOrigFirstMiddleLast|OneOrigFirstMiddleLast|OneTwoOrigFirstMiddleLast|TwoOrigFirstMiddleLast|OrigFirstMiddleLast",
+	assert.equal(result, "|OrigFirstMiddleLast|OneOrigFirstMiddleLast|OrigFirstMiddleLast|OneOrigFirstMiddleLast|OneTwoOrigFirstMiddleLast|OneOrigFirstMiddleLast|OneTwoOrigFirstMiddleLast|TwoOrigFirstMiddleLast|OrigFirstMiddleLast",
 	'In element only content with preceding collapsible {{if}} blocks, refresh(...) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13466,7 +13466,7 @@ test("JsViews ArrayChange: move()", function() {
 	addResult();
 
 	// ............................... Assert .................................
-	equal(result, "|MiddleLastOrigFirst|oneMiddleLastOrigFirst|MiddleLastOrigFirst|oneMiddleLastOrigFirst|onetwoMiddleLastOrigFirst|oneMiddleLastOrigFirst|onetwoMiddleLastOrigFirst|twoMiddleLastOrigFirst|MiddleLastOrigFirst",
+	assert.equal(result, "|MiddleLastOrigFirst|oneMiddleLastOrigFirst|MiddleLastOrigFirst|oneMiddleLastOrigFirst|onetwoMiddleLastOrigFirst|oneMiddleLastOrigFirst|onetwoMiddleLastOrigFirst|twoMiddleLastOrigFirst|MiddleLastOrigFirst",
 	'In element only content with preceding collapsible {{for}} blocks, move(2, 0, 2) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Act ..................................
@@ -13491,7 +13491,7 @@ test("JsViews ArrayChange: move()", function() {
 	addResult();
 
 	// ............................... Assert .................................
-	equal(result, "|OrigFirstMiddleLast|oneOrigFirstMiddleLast|OrigFirstMiddleLast|oneOrigFirstMiddleLast|onetwoOrigFirstMiddleLast|oneOrigFirstMiddleLast|onetwoOrigFirstMiddleLast|twoOrigFirstMiddleLast|OrigFirstMiddleLast",
+	assert.equal(result, "|OrigFirstMiddleLast|oneOrigFirstMiddleLast|OrigFirstMiddleLast|oneOrigFirstMiddleLast|onetwoOrigFirstMiddleLast|oneOrigFirstMiddleLast|onetwoOrigFirstMiddleLast|twoOrigFirstMiddleLast|OrigFirstMiddleLast",
 	'In element only content with preceding collapsible {{for}} blocks, refresh(...) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -13513,7 +13513,7 @@ test("JsViews ArrayChange: move()", function() {
 	$.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
+	assert.equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
 	'Within regular content, move(2, 0, 2) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Reset ................................
@@ -13595,7 +13595,7 @@ test("JsViews ArrayChange: move()", function() {
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(1,0,2,3,4),
 		'moved one item from 0 to 1');
 }
@@ -13606,7 +13606,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'moved one item from 0  to 1 again (actually swaps back to orginal positions');
 }
@@ -13617,7 +13617,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(1,0,2,3,4),
 		'moved one item back from 1 to 0');
 }
@@ -13629,7 +13629,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'move(1, 0, 0) does nothing');
 }
@@ -13640,7 +13640,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'move(1, 1) does nothing');
 }
@@ -13651,7 +13651,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(0, 1, 2) moves 2 items');
 }
@@ -13662,7 +13662,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(4,2,0,1,3),
 		'move(0, 1, 4) moves 4 items');
 }
@@ -13673,7 +13673,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(1, 0, 4) moves back 4 items');
 }
@@ -13684,7 +13684,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(0, 1, 5): moving more than total items does nothing');
 }
@@ -13695,7 +13695,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(1, 2, 4): moving up items beyond last item does nothing');
 }
@@ -13706,7 +13706,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,1,3,4,0),
 		'move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
 }
@@ -13717,7 +13717,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(2,3,4,0),
 		'remove(1,1): works correctly');
 }
@@ -13728,7 +13728,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(3,4,0),
 		'remove(0): works correctly');
 }
@@ -13739,7 +13739,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(0,3,4),
 		'move(2, 0): works correctly');
 }
@@ -13753,7 +13753,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed(),
+	assert.equal($("#result").text() + findRed(),
 		current(3,2,0),
 		'multiple operations: works correctly - with the original item with style set to red still there');
 }
@@ -13848,7 +13848,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(1,0,2,3,4),
 		'Complex template: moved one item from 0 to 1');
 }
@@ -13859,7 +13859,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: moved one item from 0  to 1 again (actually swaps back to orginal positions');
 }
@@ -13870,7 +13870,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(1,0,2,3,4),
 		'Complex template: moved one item back from 1 to 0');
 }
@@ -13882,7 +13882,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: move(1, 0, 0) does nothing');
 }
@@ -13893,7 +13893,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: move(1, 1) does nothing');
 }
@@ -13904,7 +13904,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(0, 1, 2) moves 2 items');
 }
@@ -13915,7 +13915,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(4,2,0,1,3),
 		'Complex template: move(0, 1, 4) moves 4 items');
 }
@@ -13926,7 +13926,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(1, 0, 4) moves back 4 items');
 }
@@ -13937,7 +13937,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(0, 1, 5): moving more than total items does nothing');
 }
@@ -13948,7 +13948,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(1, 2, 4): moving up items beyond last item does nothing');
 }
@@ -13959,7 +13959,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,1,3,4,0),
 		'Complex template: move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
 }
@@ -13970,7 +13970,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(2,3,4,0),
 		'Complex template: remove(1,1): works correctly');
 }
@@ -13981,7 +13981,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(3,4,0),
 		'Complex template: remove(0): works correctly');
 }
@@ -13992,7 +13992,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(0,3,4),
 		'Complex template: move(2, 0): works correctly');
 }
@@ -14006,7 +14006,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 	// ............................... Assert .................................
 
 if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
-	equal($("#result").text() + findRed2(),
+	assert.equal($("#result").text() + findRed2(),
 		current(3,2,0),
 		'Complex template: multiple operations: works correctly - with the original item with style set to red still there');
 }
@@ -14016,7 +14016,7 @@ if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple white
 
 });
 
-test("JsViews ArrayChange: refresh()", function() {
+QUnit.test("JsViews ArrayChange: refresh()", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.tags({
 		liTag: function() {
@@ -14033,7 +14033,7 @@ test("JsViews ArrayChange: refresh()", function() {
 	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagATagBTagCTag|after",
+	assert.equal($("#result").text(), "TagATagBTagCTag|after",
 	'Within element only content, refresh() maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Reset ................................
@@ -14055,7 +14055,7 @@ test("JsViews ArrayChange: refresh()", function() {
 	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TagATagBTagCTag|after",
+	assert.equal($("#result").text(), "TagATagBTagCTag|after",
 	'Within regular content, refresh() finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Reset ................................
@@ -14063,7 +14063,7 @@ test("JsViews ArrayChange: refresh()", function() {
 	model.things = []; // reset Prop
 });
 
-test("JsViews jsv-domchange", function() {
+QUnit.test("JsViews jsv-domchange", function(assert) {
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -14092,7 +14092,7 @@ test("JsViews jsv-domchange", function() {
 	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 		"jsv-domchange DIV things true insert | "
 		+ "jsv-domchange DIV things true move | "
 		+ "jsv-domchange DIV things true remove | "
@@ -14125,7 +14125,7 @@ test("JsViews jsv-domchange", function() {
 	$.observable(model.things).remove(1, 2);
 	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
-	equal(res,
+	assert.equal(res,
 		"Params: 333, 444 | jsv-domchange DIV things true insert | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true move | "
 		+ "Params: 333, 444 | jsv-domchange DIV things true remove | "
@@ -14140,9 +14140,9 @@ test("JsViews jsv-domchange", function() {
 	reset();
 });
 
-module("API - $.observe() (jsv)");
+QUnit.module("API - $.observe() (jsv)");
 
-test("observe/unobserve alternative signatures", function() {
+QUnit.test("observe/unobserve alternative signatures", function(assert) {
 
 	$.views.settings.advanced({_jsv: true});
 
@@ -14159,7 +14159,7 @@ test("observe/unobserve alternative signatures", function() {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+	assert.equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
 		"observe/unobserve API calls combined with template binding: all bindings removed when content removed from DOM and unobserve called");
 
 	// ................................ Reset ................................
@@ -14182,7 +14182,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.unobserve(person, "first", onch2);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
+	assert.equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
 		"Observe API calls combined with template binding (version 2): all bindings removed when content removed from DOM and unobserve called");
 
 	// ................................ Reset ................................
@@ -14191,7 +14191,7 @@ test("observe/unobserve alternative signatures", function() {
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("Array", function() {
+QUnit.test("Array", function(assert) {
 
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
@@ -14213,13 +14213,13 @@ test("Array", function() {
 	$.unobserve(people, "length", onch2);
 
 	// ............................... Assert .................................
-	equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(people).events]), "[{},{},null]",
+	assert.equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(people).events]), "[{},{},null]",
 		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
 
 	$.views.settings.advanced({_jsv: false});
 });
 
-test("MVVM", function() {
+QUnit.test("MVVM", function(assert) {
 $.views.settings.trigger(false);
 
 	reset();
@@ -14311,7 +14311,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
+	assert.equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
 		"Paths with computed/getters: address()^street() - Swapping object higher in path then updating leaf getter, works correctly");
 
 	// =============================== Arrange ===============================
@@ -14336,7 +14336,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
+	assert.equal(ret, "|1st Ave/1st Ave--InputStreet/InputStreet--oldAddressChgStreet/oldAddressChgStreet--newAddressStreet/newAddressStreet--newAddressChgStreet/newAddressChgStreet",
 		"Paths with computed/getters: address().street() - Paths with computed/getter followed by '.' still update preceding getter"
 		+ "- same as if there was a '^' separator");
 	// =============================== Arrange ===============================
@@ -14369,7 +14369,7 @@ $.views.settings.trigger(false);
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
 
 	// ............................... Assert .................................
-	equal(message, '{\"change\":\"set\",\"path\":\"street\",\"value\":\"InputStreet\",\"oldValue\":\"1st Ave\"}\n\
+	assert.equal(message, '{\"change\":\"set\",\"path\":\"street\",\"value\":\"InputStreet\",\"oldValue\":\"1st Ave\"}\n\
 {\"change\":\"set\",\"path\":\"street\",\"value\":\"oldAddressChgStreet\",\"oldValue\":\"InputStreet\"}\n\
 {\"change\":\"set\",\"path\":\"address\",\"value\":{\"_street\":\"newAddressStreet\"},\"oldValue\":{\"_street\":\"oldAddressChgStreet\"}}\n\
 {\"change\":\"set\",\"path\":\"street\",\"value\":\"newAddressChgStreet\",\"oldValue\":\"newAddressStreet\"}\n',
@@ -14401,7 +14401,7 @@ $.views.settings.trigger(false);
 		+ " " + !$._data(person.address()).events + "|";
 
 	// ............................... Assert .................................
-	equal(message + ret
+	assert.equal(message + ret
 		+ eventsCountBefore
 		+ eventsCountAfterObserveAll
 		+ eventsCountAfterChanges
@@ -14452,7 +14452,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(ret, "\nInit>>phone1,phone2,insert:phone1,phone2,insertedPhone,remove:phone2,insertedPhone,refresh:replacedPhone1,replacedPhone2,insert:replacedPhone1,insertedPhone3a,insertedPhone3b,replacedPhone2, move:replacedPhone1,replacedPhone2,insertedPhone3a,insertedPhone3b,\
+	assert.equal(ret, "\nInit>>phone1,phone2,insert:phone1,phone2,insertedPhone,remove:phone2,insertedPhone,refresh:replacedPhone1,replacedPhone2,insert:replacedPhone1,insertedPhone3a,insertedPhone3b,replacedPhone2, move:replacedPhone1,replacedPhone2,insertedPhone3a,insertedPhone3b,\
 \nSet>>replacedPhone1,insert:replacedPhone1,insertedPhoneX,remove:insertedPhoneX,refresh:replacedPhoneX1,replacedPhoneX2,insert:replacedPhoneX1,insertedPhoneX3a,insertedPhoneX3b,replacedPhoneX2,move:replacedPhoneX1,replacedPhoneX2,insertedPhoneX3a,insertedPhoneX3b,\
 \nsetEmpty>>insert:insertedPhoneY,",
 		"Array operations with getters allow complete functionality, and track the modified tree at all times");
@@ -14499,7 +14499,7 @@ $.views.settings.trigger(false);
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
 	// ............................... Assert .................................
-	equal(message, '{\"change\":\"insert\",\"index\":2,\"items\":[{\"_number\":\"insertedPhone\"}]}\n\
+	assert.equal(message, '{\"change\":\"insert\",\"index\":2,\"items\":[{\"_number\":\"insertedPhone\"}]}\n\
 {\"change\":\"remove\",\"index\":0,\"items\":[{\"_number\":\"phone1\"}]}\n\
 {\"change\":\"insert\",\"index\":0,\"items\":[{\"_number\":\"replacedPhone1\"},{\"_number\":\"replacedPhone2\"}],\"refresh\":true}\n\
 {\"change\":\"remove\",\"index\":2,\"items\":[{\"_number\":\"phone2\"},{\"_number\":\"insertedPhone\"}],\"refresh\":true}\n\
@@ -14548,7 +14548,7 @@ $.views.settings.trigger(false);
 		+ " " + !$._data(person.phones()[0]).events + "|";
 
 	// ............................... Assert .................................
-	equal(message + ret
+	assert.equal(message + ret
 		+ eventsCountBefore
 		+ eventsCountAfterObserveAll
 		+ eventsCountAfterChanges
@@ -14561,7 +14561,7 @@ $.views.settings.trigger(false);
 $.views.settings.trigger(true);
 });
 
-test("$.views.viewModels", function() {
+QUnit.test("$.views.viewModels", function(assert) {
 	// =============================== Arrange ===============================
 	var Constr = $.views.viewModels({getters: ["a", "b"]});
 	// ................................ Act ..................................
@@ -14571,7 +14571,7 @@ test("$.views.viewModels", function() {
 	vm.b("b2 ");
 	res += vm.a() + vm.b();
 	// ............................... Assert .................................
-	equal(res, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
+	assert.equal(res, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
 
 	// =============================== Arrange ===============================
 	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
@@ -14582,7 +14582,7 @@ test("$.views.viewModels", function() {
 	vm.add("before ");
 	res = vm.c();
 	// ............................... Assert .................................
-	equal(res, "before a1 b1 c1 ", "viewModels, two getters, one method");
+	assert.equal(res, "before a1 b1 c1 ", "viewModels, two getters, one method");
 
 	// =============================== Arrange ===============================
 	Constr = $.views.viewModels({extend: {add: function(val) {
@@ -14593,7 +14593,7 @@ test("$.views.viewModels", function() {
 	vm.add("before");
 	res = vm.foo;
 	// ............................... Assert .................................
-	equal(res, "before", "viewModels, no getters, one method");
+	assert.equal(res, "before", "viewModels, no getters, one method");
 
 	// =============================== Arrange ===============================
 	Constr = $.views.viewModels({getters: []});
@@ -14601,7 +14601,7 @@ test("$.views.viewModels", function() {
 	vm = Constr();
 	res = JSON.stringify(vm);
 	// ............................... Assert .................................
-	equal(res, "{}", "viewModels, no getters, no methods");
+	assert.equal(res, "{}", "viewModels, no getters, no methods");
 
 	// =============================== Arrange ===============================
 	$.views.viewModels({
@@ -14623,7 +14623,7 @@ test("$.views.viewModels", function() {
 	res += vm.a() + vm.b();
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "a1 b1 a2 b2 |a2 b2 ", "viewModels, two getters, no methods");
+	assert.equal(res + "|" + changes, "a1 b1 a2 b2 |a2 b2 ", "viewModels, two getters, no methods");
 	changes = "";
 
 	// ................................ Act ..................................
@@ -14632,7 +14632,7 @@ test("$.views.viewModels", function() {
 	res = vm.a() + vm.b();
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "a3 b3 |a3 b3 ", "viewModels merge, two getters, no methods");
+	assert.equal(res + "|" + changes, "a3 b3 |a3 b3 ", "viewModels merge, two getters, no methods");
 	changes = "";
 
 	// ................................ Act ..................................
@@ -14640,7 +14640,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(res);
 
 	// ............................... Assert .................................
-	equal(res, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
+	assert.equal(res, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
 
 	// ............................... Reset .................................
 	$.unobserve(observeAllHandler);
@@ -14660,7 +14660,7 @@ test("$.views.viewModels", function() {
 	vm.b("b2 ");
 	res += vm.a() + vm.b();
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "a1 b1 c1 d1 e1 f1 g1 h1 a2 b2 |a2 b2 ",
+	assert.equal(res + "|" + changes, "a1 b1 c1 d1 e1 f1 g1 h1 a2 b2 |a2 b2 ",
 		"viewModels, multiple unmapped getters, no methods");
 	changes = "";
 
@@ -14670,7 +14670,7 @@ test("$.views.viewModels", function() {
 	res = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "a3 b3 c3 d3 e3 f3 g3 h3 |a3 b3 c3 d3 e3 f3 g3 h3 ",
+	assert.equal(res + "|" + changes, "a3 b3 c3 d3 e3 f3 g3 h3 |a3 b3 c3 d3 e3 f3 g3 h3 ",
 		"viewModels merge, multiple unmapped getters, no methods");
 	changes = "";
 
@@ -14679,7 +14679,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(res);
 
 	// ............................... Assert .................................
-	equal(res, '{"a":"a3 ","b":"b3 ","c":"c3 ","d":"d3 ","e":"e3 ","f":"f3 ","g":"g3 ","h":"h3 "}',
+	assert.equal(res, '{"a":"a3 ","b":"b3 ","c":"c3 ","d":"d3 ","e":"e3 ","f":"f3 ","g":"g3 ","h":"h3 "}',
 		"viewModels unmap, multiple unmapped getters, no methods");
 
 	// ............................... Reset .................................
@@ -14705,7 +14705,7 @@ test("$.views.viewModels", function() {
 	res = vm.c();
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "before a1 b1 c1 |before a1 b1 c1 ", "viewModels, getters and one method");
+	assert.equal(res + "|" + changes, "before a1 b1 c1 |before a1 b1 c1 ", "viewModels, getters and one method");
 	changes = "";
 
 	// ................................ Act ..................................
@@ -14714,7 +14714,7 @@ test("$.views.viewModels", function() {
 	res = vm.c();
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, "updated a3 b3 c3 |a3 b3 c3 updated a3 b3 c3 ", "viewModels merge, getters and one method");
+	assert.equal(res + "|" + changes, "updated a3 b3 c3 |a3 b3 c3 updated a3 b3 c3 ", "viewModels merge, getters and one method");
 	changes = "";
 
 	// ................................ Act ..................................
@@ -14722,7 +14722,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(res);
 
 	// ............................... Assert .................................
-	equal(res, '{"a":"a3 ","b":"b3 ","c":"updated a3 b3 c3 "}', "viewModels unmap, getters and one method");
+	assert.equal(res, '{"a":"a3 ","b":"b3 ","c":"updated a3 b3 c3 "}', "viewModels unmap, getters and one method");
 	changes = "";
 
 	// ............................... Reset .................................
@@ -14748,7 +14748,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(t2.unmap());
 
 	// ............................... Assert .................................
-	equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+	assert.equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
 		"viewModels, hierarchy");
 
 	// ................................ Act ..................................
@@ -14756,7 +14756,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(t2.unmap());
 
 	// ............................... Assert .................................
-	equal(res + "|" + changes, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1x ","b":"b1x "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}|a1x b1x ',
+	assert.equal(res + "|" + changes, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1x ","b":"b1x "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}|a1x b1x ',
 		"viewModels, merge deep node");
 	changes = "";
 
@@ -14769,7 +14769,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(t2FromArr.unmap());
 
 	// ............................... Assert .................................
-	equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
+	assert.equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":null}',
 		"viewModels, hierarchy");
 
 	// ................................ Act ..................................
@@ -14779,7 +14779,7 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(t2FromArr.unmap());
 
 	// ............................... Assert .................................
-	equal(res, '{"t1":{"a":"a4 ","b":"b4 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "},{"a":"a3 ","b":"b3 "}],"t1OrNull":null}',
+	assert.equal(res, '{"t1":{"a":"a4 ","b":"b4 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "},{"a":"a3 ","b":"b3 "}],"t1OrNull":null}',
 		"viewModels, hierarchy");
 
 	// ................................ Act ..................................
@@ -14787,13 +14787,13 @@ test("$.views.viewModels", function() {
 	res = JSON.stringify(t2new.unmap());
 
 	// ............................... Assert .................................
-	equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
+	assert.equal(res, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
 		"viewModels, hierarchy");
 });
 
-module("API - depends");
+QUnit.module("API - depends");
 
-test("Computed observables, converters and tags with depends", function() {
+QUnit.test("Computed observables, converters and tags with depends", function(assert) {
 	// =============================== Arrange ===============================
 
 function testDepends(template) {
@@ -14869,7 +14869,7 @@ function testDepends(template) {
 	summary.depends = ["itemsProp", "name"];
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends = ["itemsProp", ...] updates for both array change and property change');
 
 	// =============================== Arrange ===============================
@@ -14880,7 +14880,7 @@ function testDepends(template) {
 	};
 	
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends function programmatically observing array, with the callback provided as parameter. Works equivalently to the declarative depends for an array');
 
 	// =============================== Arrange ===============================
@@ -14898,7 +14898,7 @@ function testDepends(template) {
 	};
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}") && test,
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}") && test,
 		'Computed observable with depends including several nested function calls returning (finally) "itemsProp" updates for both array change and property change, and has correct this pointers and data arguments');
 
 	// =============================== Arrange ===============================
@@ -14912,7 +14912,7 @@ function testDepends(template) {
 	};
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends including several nested function calls (finally) programmatically observing both array and property. Works equivalently to declarative version');
 
 	// =============================== Arrange ===============================
@@ -14925,7 +14925,7 @@ function testDepends(template) {
 	summary.depends = [listenToArray, listenToName];
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends using independently declared functions to programmatically observe any fields. Works equivalently to declarative version');
 
 	// =============================== Arrange ===============================
@@ -14938,7 +14938,7 @@ function testDepends(template) {
 	summary.depends = [listenTo("itemsProp"), listenTo("name")];
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends using generated function to programmatically observe any fields. Works equivalently to declarative version');
 
 	// =============================== Arrange ===============================
@@ -14949,7 +14949,7 @@ function testDepends(template) {
 	summary.depends = ["itemsProp", "name"];
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:~summary()}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:~summary()}}{{/if}}"),
 		'Computed observable helper depends = ["itemsProp", ...] updates for both array change and property change');
 
 	// =============================== Arrange ===============================
@@ -14961,7 +14961,7 @@ function testDepends(template) {
 
 	summary.depends = ["itemsProp", "name"];
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{:'foo' convert=~summary}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{:'foo' convert=~summary}}{{/if}}"),
 		'Converter (passed as helper) with depends = ["itemsProp", ...] updates for both array change and property change');
 
 	// =============================== Arrange ===============================
@@ -14969,7 +14969,7 @@ function testDepends(template) {
 	$.views.converters("sumry", summary);
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{sumry:'foo'}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{sumry:'foo'}}{{/if}}"),
 		'Registered converter with depends = ["itemsProp", ...] updates for both array change and property change');
 
 	$.views.converters("sumry", null);
@@ -14983,7 +14983,7 @@ function testDepends(template) {
 	});
 
 	// ................................ Assert ..................................
-	ok(testDepends("{^{if show}}{^{sumry/}}{{/if}}"),
+	assert.ok(testDepends("{^{if show}}{^{sumry/}}{{/if}}"),
 		'Registered tag with depends = ["itemsProp", ...] updates for both array change and property change');
 
 	$.views.tags("sumry", null);
@@ -15075,27 +15075,27 @@ $.views.settings.trigger(false);
 	$.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
-	input = $("input")[0];
+	input = $("#result input")[0];
 	$(input).val(input.value + "+").change();
 	result += "\nTITLE: " + $("#result").text();
 
-	input = $("input")[1];
+	input = $("#result input")[1];
 	$(input).val(input.value + "+").change();
 	result += "\nNAME: " + $("#result").text();
 
-	input = $("input")[2];
+	input = $("#result input")[2];
 	$(input).val(input.value + "+").change();
 	result += "\nSTREET: " + $("#result").text();
 
-	input = $("input")[3];
+	input = $("#result input")[3];
 	$(input).val("Mr Bob FullSt").change();
 	result += "\nFULL: " + $("#result").text();
 
-	input = $("input")[4];
+	input = $("#result input")[4];
 	$(input).val("Lady Jane CtpSt").change();
 	result += "\nCTP: " + $("#result").text();
 
-	input = $("input")[5];
+	input = $("#result input")[5];
 	$(input).val("Ms Anne TagSt").change();
 	result += "\nTAG: " + $("#result").text();
 
@@ -15119,7 +15119,7 @@ $.views.settings.trigger(false);
 		+ "CTP: Lady Jane CtpSt  Full: Lady Jane CtpSt  CTP: Lady Jane CtpSt FULLNAMETAG: Lady Jane CtpSt \n"
 		+ "TAG: Ms Anne TagSt  Full: Ms Anne TagSt  CTP: Ms Anne TagSt FULLNAMETAG: Ms Anne TagSt ";
 
-	equal(result, expected,
+	assert.equal(result, expected,
 	"Custom tag control {{fullName ...}} using render, with linkedCtxParam, depends, onUpdate not false");
 
 	// =============================== Arrange ===============================
@@ -15163,32 +15163,32 @@ $.views.settings.trigger(false);
 	$.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
-	input = $("input")[0];
+	input = $("#result input")[0];
 	$(input).val(input.value + "+").change();
 	result += "\nTITLE: " + $("#result").text();
 
-	input = $("input")[1];
+	input = $("#result input")[1];
 	$(input).val(input.value + "+").change();
 	result += "\nNAME: " + $("#result").text();
 
-	input = $("input")[2];
+	input = $("#result input")[2];
 	$(input).val(input.value + "+").change();
 	result += "\nSTREET: " + $("#result").text();
 
-	input = $("input")[3];
+	input = $("#result input")[3];
 	$(input).val("Mr Bob FullSt").change();
 	result += "\nFULL: " + $("#result").text();
 
-	input = $("input")[4];
+	input = $("#result input")[4];
 	$(input).val("Lady Jane CtpSt").change();
 	result += "\nCTP: " + $("#result").text();
 
-	input = $("input")[5];
+	input = $("#result input")[5];
 	$(input).val("Ms Anne TagSt").change();
 	result += "\nTAG: " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, expected,
+	assert.equal(result, expected,
 	"Custom tag control {{fullName ...}} using template, with linkedCtxParam, depends, onUpdate not false - works correctly");
 
 	// =============================== Arrange ===============================
@@ -15234,16 +15234,16 @@ $.views.settings.trigger(false);
 	$.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
-	input = $("input")[0];
+	input = $("#result input")[0];
 	$(input).val("Mr Bob FullSt").change();
 	result += "\nCTP FUNCTION: " + $("#result").text();
 
-	input = $("input")[1];
+	input = $("#result input")[1];
 	$(input).val("Mr Bob FullSt").change();
 	result += "\nCTP EVALUATED FUNCTION: " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, isIE8 ? "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
+	assert.equal(result, isIE8 ? "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
 	+ "TITLE: Title:Sir2 Name: Jo Street: 1st Ave Full:Sir2 Jo 1st Ave TAG:Sir2 Jo 1st Ave TAG2:Sir2 Jo 1st Ave \n"
 	+ "NAME: Title:Sir2 Name:Jo2 Street: 1st Ave Full:Sir2 Jo2 1st Ave TAG:Sir2 Jo2 1st Ave TAG2:Sir2 Jo2 1st Ave \n"
 	+ "ADDRESS: Title:Sir2 Name:Jo2 Street:2nd St Full:Sir2 Jo2 2nd St TAG:Sir2 Jo2 2nd St TAG2:Sir2 Jo2 2nd St \n"
@@ -15278,7 +15278,7 @@ $.views.settings.trigger(false);
 		result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + "\n";
 	}
 	result = "";
-	var inputs = $("input");
+	var inputs = $("#result input");
 
 	getValues();
 
@@ -15307,7 +15307,7 @@ $.views.settings.trigger(false);
 	getValues();
 
 	// ............................... Assert .................................
-	equal(result, "Jo Jo Jo Jo Jo Jo\n"
+	assert.equal(result, "Jo Jo Jo Jo Jo Jo\n"
 + "Jo2 Jo2 Jo2 Jo2 Jo2 Jo2\n"
 + "Jo3 Jo3 Jo3 Jo3 Jo3 Jo3\n"
 + "Jo4 Jo4 Jo4 Jo4 Jo4 Jo4\n"
@@ -15356,7 +15356,7 @@ $.views.settings.trigger(false);
 		result += inputs[0].value + " " + inputs[1].value + " " + inputs[2].value + " " + inputs[3].value + " " + inputs[4].value + " " + inputs[5].value + " " + inputs[6].value + " " + inputs[7].value + "\n";
 	}
 	result = "";
-	var inputs = $("input");
+	var inputs = $("#result input");
 
 	getValues();
 
@@ -15393,7 +15393,7 @@ $.views.settings.trigger(false);
 	getValues();
 
 	// ............................... Assert .................................
-	equal(result, "Jo Jo Jo Jo Jo Jo Jo Jo\n"
+	assert.equal(result, "Jo Jo Jo Jo Jo Jo Jo Jo\n"
 + "Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0\n"
 + "Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1 Jo1\n"
 + "Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2 Jo2\n"
@@ -15447,7 +15447,7 @@ $.views.settings.trigger(false);
 	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
+	assert.equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
 	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Template linking to observable state, \"~tag.edit\"");
 
 	// =============================== Arrange ===============================
@@ -15495,7 +15495,7 @@ $.views.settings.trigger(false);
 	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
+	assert.equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred",
 	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Render method, and depends to bind to observable state, this.edit");
 
 	// =============================== Arrange ===============================
@@ -15555,7 +15555,7 @@ $.views.settings.trigger(false);
 	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(1).text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred|Fred Fred",
+	assert.equal(result, "Jo Jo|Fred Fred|Fred Fred|Fred Fred|Fred Fred",
 	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Render method, and programmatic observe state, this.edit");
 
 	// =============================== Arrange ===============================
@@ -15574,15 +15574,15 @@ $.views.settings.trigger(false);
 	$.observable(data).setProperty("name", "3.745")
 
 	// ............................... Assert .................................
-	equal($("#result").text(), isIE8 ? "3.753.74500" : "3.75 3.74500",
+	assert.equal($("#result").text(), isIE8 ? "3.753.74500" : "3.75 3.74500",
 	"Converter with prop 'length' data-links correctly (no collision with array.length on pathBindings array).");
 
 $.views.settings.trigger(true);
 });
 
-module("API - Settings");
+QUnit.module("API - Settings");
 
-test("Settings, error handlers, onError", function() {
+QUnit.test("Settings, error handlers, onError", function(assert) {
 $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
@@ -15603,7 +15603,7 @@ $.views.settings.trigger(false);
 		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
 
 	// ............................... Assert .................................
-	equal(res, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
+	assert.equal(res, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// ................................ Act ..................................
 	current = $.views.settings.delimiters();
@@ -15630,7 +15630,7 @@ $("#result input").val("NEW").change();
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, "Jo|noother2other3|_^,!@,(|_^,!@,(|nonew2new3|NOnew2new3|{{,}},^|{{,}},^|NONEW2NEW3", "Custom delimiters with link()");
+	assert.equal(res, "Jo|noother2other3|_^,!@,(|_^,!@,(|nonew2new3|NOnew2new3|{{,}},^|{{,}},^|NONEW2NEW3", "Custom delimiters with link()");
 
 	// =============================== Arrange ===============================
 		// Debug mode false
@@ -15654,7 +15654,7 @@ $("#result input").val("NEW").change();
 	res += " " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, 'false true ',
+	assert.equal(res, 'false true ',
 		'Debug mode false: {{:missing.willThrow}} throws error - with link()');
 
 	// ................................ Act ..................................
@@ -15671,7 +15671,7 @@ $("#result input").val("NEW").change();
 	res += " " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, 'false true X',
+	assert.equal(res, 'false true X',
 		'Debug mode false: - data-link="missing.willThrow" - throws error');
 
 	// ................................ Act ..................................
@@ -15687,7 +15687,7 @@ $("#result input").val("NEW").change();
 	res += " " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res.slice(0, 13), 'true {Error: ',
+	assert.equal(res.slice(0, 13), 'true {Error: ',
 		'Debug mode true: {{:missing.willThrow}} renders error - with link()');
 
 	// ................................ Act ..................................
@@ -15700,7 +15700,7 @@ $("#result input").val("NEW").change();
 	res += " " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res.slice(0, 13), 'true {Error: ',
+	assert.equal(res.slice(0, 13), 'true {Error: ',
 		'Debug mode true: - data-link="missing.willThrow" - renders error');
 
 	app = {choose: true, name: "Jo", onerr: "invalid'Jo'"};
@@ -15720,7 +15720,7 @@ $("#result input").val("NEW").change();
 	res = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, "Override error - _Jo true",
+	assert.equal(res, "Override error - _Jo true",
 		"Debug mode 'onError' handler override - with link()");
 
 	// ................................ Act ..................................
@@ -15728,7 +15728,7 @@ $("#result input").val("NEW").change();
 	res = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, "Override error - invalid'Jo'_Jo true Override error - invalid'Jo' (in if tag)_Jo trueOverride error - invalid'Jo' (in data-link)_Jo true",
+	assert.equal(res, "Override error - invalid'Jo'_Jo true Override error - invalid'Jo' (in if tag)_Jo trueOverride error - invalid'Jo' (in data-link)_Jo true",
 		"onError fallback in tags and in data-link expression, with debug mode 'onError' handler override");
 
 	// ................................ Act ..................................
@@ -15740,7 +15740,7 @@ $("#result input").val("NEW").change();
 	res = $("#result").text();
 
 	// ............................... Assert .................................
-	equal(res, "Override error - myErrFn for <Jo>_Jo true Override error - myErrFn for <Jo>_Jo trueOverride error - myErrFn for <Jo>_Jo true",
+	assert.equal(res, "Override error - myErrFn for <Jo>_Jo true Override error - myErrFn for <Jo>_Jo trueOverride error - myErrFn for <Jo>_Jo true",
 		"onError handler in tags and in data-link expression, with debug mode 'onError' handler override ");
 
 	// ................................ Reset ..................................
@@ -15750,9 +15750,9 @@ $("#result input").val("NEW").change();
 $.views.settings.trigger(true);
 });
 
-module("API - Declarations");
+QUnit.module("API - Declarations");
 
-test("Template encapsulation", function() {
+QUnit.test("Template encapsulation", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.templates({
@@ -15768,7 +15768,7 @@ test("Template encapsulation", function() {
 	$.link.myTmpl6("#result", {people: people});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "TwoOne", "Template with tag resource");
+	assert.equal($("#result").text(), "TwoOne", "Template with tag resource");
 
 	// =============================== Arrange ===============================
 	$.templates({
@@ -15787,15 +15787,15 @@ test("Template encapsulation", function() {
 	$.link.myTmpl7("#result", {people: people, first: false});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
+	assert.equal($("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-module("API - Views");
+QUnit.module("API - Views");
 
-test("$.view() in regular content", function() {
+QUnit.test("$.view() in regular content", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.tmplHierarchy("#result", topData);
@@ -15804,60 +15804,60 @@ test("$.view() in regular content", function() {
 	var view = $.view("#1");
 
 	// ............................... Assert .................................
-	ok(view.ctxPrm("val") === 1 && view.type === "myWrap", '$.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrap", '$.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "root");
 
 	// ............................... Assert .................................
-	ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
+	assert.ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "item");
 
 	// ............................... Assert .................................
-	ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "data");
 
 	// ............................... Assert .................................
-	ok(view.type === "data" && view.data === topData, '$.view(elem, "data") gets nearest data view');
+	assert.ok(view.type === "data" && view.data === topData, '$.view(elem, "data") gets nearest data view');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "if");
 
 	// ............................... Assert .................................
-	ok(view.type === "if" && view.data === people[0], '$.view(elem, "if") gets nearest "if" view');
+	assert.ok(view.type === "if" && view.data === people[0], '$.view(elem, "if") gets nearest "if" view');
 
 	// ................................ Act ..................................
 	view = $.view("#1", "array");
 
 	// ............................... Assert .................................
-	ok(view.type === "array" && view.data === people, '$.view(elem, "array") gets nearest array view');
+	assert.ok(view.type === "array" && view.data === people, '$.view(elem, "array") gets nearest array view');
 
 	// ................................ Act ..................................
 	view = $.view("#sp1", "myWrap");
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", '$.view(elem, "mytagName") gets nearest view for content of that tag');
+	assert.ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", '$.view(elem, "mytagName") gets nearest view for content of that tag');
 
 	view = $.view("#sp1");
 
 	// ............................... Assert .................................
-	ok(view.type === "if" && view.ctx.tag.tagName === "myWrap2", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
+	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrap2", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
 
 	// ................................ Act ..................................
 	view = $.view("#1", true);
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap2", '$.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.type === "myWrap2", '$.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#result", true, "myFlow");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlow", '$.view(elem, true, viewTypeName) gets the first (depth first) nested view of that type');
+	assert.ok(view.type === "myFlow", '$.view(elem, true, viewTypeName) gets the first (depth first) nested view of that type');
 
 	// =============================== Arrange ===============================
 
@@ -15869,14 +15869,14 @@ test("$.view() in regular content", function() {
 	view = $.view("#result", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data && view.type === "array",
+	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
 	var itemView = $.view("#result", true, "item");
 
 	// ............................... Assert .................................
-	ok(!itemView,
+	assert.ok(!itemView,
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
@@ -15889,14 +15889,14 @@ test("$.view() in regular content", function() {
 	view = $.view("#result", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data && view.type === "array",
+	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result", true, "item");
 
 	// ............................... Assert .................................
-	ok(itemView.index === 0,
+	assert.ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// =============================== Arrange ===============================
@@ -15909,14 +15909,14 @@ test("$.view() in regular content", function() {
 	view = $.view("#result div", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data.people && view.type === "array",
+	assert.ok(view.data === data.people && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result div", true, "item");
 
 	// ............................... Assert .................................
-	ok(!itemView,
+	assert.ok(!itemView,
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
@@ -15929,21 +15929,21 @@ test("$.view() in regular content", function() {
 	view = $.view("#result div", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data.people && view.type === "array",
+	assert.ok(view.data === data.people && view.type === "array",
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result div", true, "item");
 
 	// ............................... Assert .................................
-	ok(itemView.index === 0,
+	assert.ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("view.get() and view.getIndex() in regular content", function() {
+QUnit.test("view.get() and view.getIndex() in regular content", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.tmplHierarchy("#result", topData);
@@ -15954,55 +15954,55 @@ test("view.get() and view.getIndex() in regular content", function() {
 	var view = view1.get();
 
 	// ............................... Assert .................................
-	ok(view.parent.type === "top", 'view.get() gets root view (child of top view)');
+	assert.ok(view===view1.parent, 'view.get() gets parent view');
 
 	// ................................ Act ..................................
 	view = view1.get("item");
 
 	// ............................... Assert .................................
-	ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'view.get("item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'view.get("item") gets nearest item view');
 
 	// ................................ Act ..................................
 	view = view1.get("myWrap");
 
 	// ............................... Assert .................................
-	ok(view === view1, 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
+	assert.ok(view === view1, 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
 
 	// ................................ Act ..................................
 	view = view1.get(true, "myWrap");
 
 	// ............................... Assert .................................
-	ok(view === view1, 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view === view1, 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
 	view = view1.get(true, "myFlow");
 
 	// ............................... Assert .................................
-	ok(view.tmpl.markup === "<span>zz</span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view.tmpl.markup === "<span>zz</span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
 	view = view1.get(true, "myFlow2");
 
 	// ............................... Assert .................................
-	ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
 	view = view1.get(true);
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap2" && view === view1.get(true, "myWrap2") && view === $.view("#sp0").parent, 'view.get(true) gets nearest child view of any type');
+	assert.ok(view.type === "myWrap2" && view === view1.get(true, "myWrap2") && view === $.view("#sp0").parent, 'view.get(true) gets nearest child view of any type');
 
 	// ............................... Assert .................................
-	ok(view1.get(true, "nonexistent") === false, 'view.get(true, "viewTypeName") returns false if no descendant of that type, starting from the view itself');
+	assert.ok(view1.get(true, "nonexistent") === undefined, 'view.get(true, "viewTypeName") returns undefined if no descendant of that type, starting from the view itself');
 
 	// ............................... Assert .................................
-	ok($.view("#1").getIndex() === 0 && $.view("#1", "item").index === 0 && $.view("#2").getIndex() === 1 && $.view("#2", "item").index === 1, '$.view(elem).getIndex() gets index of nearest item view');
+	assert.ok($.view("#1").getIndex() === 0 && $.view("#1", "item").index === 0 && $.view("#2").getIndex() === 1 && $.view("#2", "item").index === 1, '$.view(elem).getIndex() gets index of nearest item view');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("view.ctxPrm() tag.ctxPrm()", function() {
+QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	$.views.settings.trigger(false);
 
@@ -16036,7 +16036,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	tmpl.link("#result", {}, {});
 
 	// ............................... Assert .................................
-	ok($.view().ctxPrm("toString") === undefined,
+	assert.ok($.view().ctxPrm("toString") === undefined,
 		"ctxPrm() for built-in non-enumerables such as 'toString' returns undefined");
 
 	// ................................ Act ..................................
@@ -16057,7 +16057,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: -: { } |2: set1-set1: {set1 } |3: new1-new1: {new1 } "
 		: "1: -: { } |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Uninitialized context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
@@ -16082,7 +16082,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: instance-instance: { instance} |2: set1-set1: {set1} |3: new1-new1: {new1} "
 		: "1: instance-instance: { instance} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Initialized instance context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
@@ -16109,7 +16109,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: registered-registered: { registered} |2: set1-set1: {set1} |3: new1-new1: {new1} "
 		: "1: registered-registered: { registered} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Initialized registered helper param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
@@ -16141,7 +16141,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: -: { Outer: , Inner: , Nested inner: }"
 		+ " |2: set1-set1: { Outer:set1 , Inner:set1 , Nested inner:set1 }"
 		+ " |3: new1-new1: { Outer:new1 , Inner:new1 , Nested inner:new1 } "
@@ -16198,7 +16198,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "2: " + content.text();
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	"1: Property:  PRP | Function: outer1 | "
 + "Inner Property:  PRP | Inner Function: inner11 | Inner Property:  PRP | Inner Function: inner12 | "
 + "Property:  PRP | Function: outer2 | "
@@ -16237,7 +16237,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res += "|3: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: View1:- View2:-: {  }"
 		+ " |2: View1:set2-set2 View2:set2-set2: {set2 set2 }"
 		+ " |3: View1:new2-new2 View2:new2-new2: {new2 new2 } "
@@ -16291,7 +16291,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
 		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
 		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
@@ -16314,7 +16314,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "|1: new4"
 		+ " |2: tagFoo-tagNewPrm-//tagNewPrm/tagNewPrm-new1/new2/tagFoo/tagFoo-new1/new2/tagFoo/tagFoo: { Outer:new1 , Inner:new2 , Nested inner:tagFoo , Nested inner:tagFoo } "
 		: "|1: new4"
@@ -16323,7 +16323,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// ............................... Assert .................................
 
-	equal(innerTag.tagCtxs[0].nodes().length + "|" + innerTag.tagCtxs[1].nodes().length + "|" + innerTag.nodes().length
+	assert.equal(innerTag.tagCtxs[0].nodes().length + "|" + innerTag.tagCtxs[1].nodes().length + "|" + innerTag.nodes().length
 		+ "-" + innerTag.tagCtxs[0].contents(true, "input").length + "|" + innerTag.tagCtxs[1].contents(true, "input").length + "|" + innerTag.contents(true, "input").length,
 		isIE8 ? "3|2|5-1|1|2" : "2|2|4-1|1|2",
 		"Multiple else blocks: tag.nodes() and tag.content() return content from all else blocks");
@@ -16373,7 +16373,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
 		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
 		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
@@ -16430,7 +16430,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// ............................... Assert .................................
 
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner:48 , Nested inner: 22}"
 		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
 		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
@@ -16484,7 +16484,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
 		+ " \n|2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
 		+ " \n|3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
@@ -16519,7 +16519,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	var res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val() + "|" +  inputInner0.val() + "|" +  inputInner1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERouter1!INNERinner0!OUTERouter1!INNER%outer1!|outer1!|inner0!|",
+	assert.equal(res, "OUTERouter1!INNERinner0!OUTERouter1!INNER%outer1!|outer1!|inner0!|",
 		"When contextual parameter not initialized at higher level, it is scoped to nearest tag container, or to root view (view below top view)");
 
 	// =============================== Arrange ===============================
@@ -16543,7 +16543,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "--" +  inputOuter0.val() + "|" +  inputOuter1.val() + "|" +  inputInner0.val() + "|" +  inputInner1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERMOST OUTERwrapper!INNERwrapper!OUTERMOST OUTERwrapper!INNERwrapper!--wrapper!|wrapper!|wrapper!|wrapper!",
+	assert.equal(res, "OUTERMOST OUTERwrapper!INNERwrapper!OUTERMOST OUTERwrapper!INNERwrapper!--wrapper!|wrapper!|wrapper!|wrapper!",
 		"When contextual parameter is initialized at higher level, it is initialized to that level");
 
 	// ................................ Act ..................................
@@ -16555,7 +16555,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val() + "|" +  inputInner0.val() + "|" +  inputInner1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERMOST OUTERinner0!INNERinner0!OUTERMOST OUTERouter1!INNERouter1!%inner0!|outer1!|inner0!|outer1!",
+	assert.equal(res, "OUTERMOST OUTERinner0!INNERinner0!OUTERMOST OUTERouter1!INNERouter1!%inner0!|outer1!|inner0!|outer1!",
 		"When contextual parameter is initialized at higher level, it is scoped to that level");
 
 	// =============================== Arrange ===============================
@@ -16585,7 +16585,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val() + "|" +  inputInner0.val() + "|" +  inputInner1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERouter1!INNERouter1!OUTERouter1!INNERouter1!%outer1!|outer1!|outer1!|outer1!",
+	assert.equal(res, "OUTERouter1!INNERouter1!OUTERouter1!INNERouter1!%outer1!|outer1!|outer1!|outer1!",
 		"When contextual parameter is initialized as global helper, it is scoped to root view (view below top view)");
 
 	// =============================== Arrange ===============================
@@ -16614,7 +16614,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val() + "|" +  inputInner0.val() + "|" +  inputInner1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERouter1!INNERouter1!OUTERouter1!INNERouter1!%outer1!|outer1!|outer1!|outer1!",
+	assert.equal(res, "OUTERouter1!INNERouter1!OUTERouter1!INNERouter1!%outer1!|outer1!|outer1!|outer1!",
 		"When contextual parameter is initialized as instance helper, it is scoped to root view (view below top view)");
 
 	// =============================== Arrange ===============================
@@ -16640,7 +16640,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERinner1!INNERhelperInit!OUTERinner1!INNERhelperInit!%inner1!|inner1!",
+	assert.equal(res, "OUTERinner1!INNERhelperInit!OUTERinner1!INNERhelperInit!%inner1!|inner1!",
 		"When tag needs to be refreshed, if no depends on tag, will not refresh values of ~foo ");
 
 	// =============================== Arrange ===============================
@@ -16667,7 +16667,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	res = $("#result").text() + "%" +  inputOuter0.val() + "|" +  inputOuter1.val();
 
 	// ............................... Assert .................................
-	equal(res, "OUTERinner1!INNERinner1!OUTERinner1!INNERinner1!%inner1!|inner1!",
+	assert.equal(res, "OUTERinner1!INNERinner1!OUTERinner1!INNERinner1!%inner1!|inner1!",
 		"When tag needs to be refreshed, if depends='~foo' on tag, will refresh values of ~foo ");
 
 // =============================== Arrange ===============================
@@ -16723,7 +16723,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: val1/val1-val1/val1: { val1 val1}" 
 		+ " \n2: new1/new1-new1/new1: {new1new1}"
 		+ " \n3: set2/set2-set2/set2: {set2set2}"
@@ -16787,7 +16787,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	+ "-" + inputOuter.val() + "/" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	equal(res, isIE8
+	assert.equal(res, isIE8
 		? "1: outer-outer: { outer }"
 		+ " \n2: outer/val1/val1-outer/val1/val1: { outer  val1 val1}"
 		+ " \n3: newouter/new2/new2-newouter/new2/new2: {newouter new2new2}"
@@ -16847,9 +16847,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.observe(data, "nm", changeHandler);
 	$.observe(data, "fullName", changeHandler);
 	$.observe($.view("#it"), "~nm", changeHandler);
-//	$.view("#it").ctxPrm("nm", true, changeHandler);
 	$.observe($.view("#it"), "~fullName", changeHandler);
-//	$.view("#it").ctxPrm("fullName", true, changeHandler);
 
 	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
 	$.observable(data).setProperty("nm", "NewVmProp");
@@ -16859,14 +16857,14 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.observable(data).setProperty("fullName", "NewVmFullname");
 
 	// ............................... Assert .................................
-	equal($("#result").text(), isIE8
+	assert.equal($("#result").text(), isIE8
 		? "NewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
 		: "NewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe computed with both data and contextual parameters as depends paths");
 
 	// ............................... Assert .................................
-	equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
-		"Observe listener registered for props and computed props, and ctxPrm listener registered for contextual parameters and computed contextual parameters. Trigger  correctly.");
+	assert.equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
+		"Observe listener registered for props and computed props, and ctxPrm listener registered for contextual parameters and computed contextual parameters. Trigger correctly.");
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
@@ -16901,9 +16899,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.observe(data, "nm", changeHandler);
 	$.observe(data, "fullName", changeHandler);
 	$.observe($.view("#it"), "~nm", changeHandler);
-//	$.view("#it").ctxPrm("nm", true, changeHandler);
 	$.observe($.view("#it"), "~fullName", changeHandler);
-//	$.view("#it").ctxPrm("fullName", true, changeHandler);
 
 	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
 	$.observable(data).setProperty("nm", "NewVmProp");
@@ -16914,13 +16910,13 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// ............................... Assert .................................
 	var fnctions = fullNameHlp === $.views.helpers.fullName && fn1 === $.views.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
-	equal(fnctions + $("#result").text(), isIE8
+	assert.equal(fnctions + $("#result").text(), isIE8
 		? "trueNewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
 		: "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe registered computed helper with both data and contextual parameters as depends paths");
 
 	// ............................... Assert .................................
-	equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
+	assert.equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
 		"Observe listener registered for props and computed props, and ctxPrm listener registered for contextual parameters and computed contextual parameters. Trigger  correctly.");
 	// ................................ Act ..................................
 
@@ -16967,9 +16963,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.observe(data, "nm", changeHandler);
 	$.observe(data, "fullName", changeHandler);
 	$.observe($.view("#it"), "~nm", changeHandler);
-//	$.view("#it").ctxPrm("nm", true, changeHandler);
 	$.observe($.view("#it"), "~fullName", changeHandler);
-//	$.view("#it").ctxPrm("fullName", true, changeHandler);
 
 	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
 	$.observable(data).setProperty("nm", "NewVmProp");
@@ -16980,13 +16974,13 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 
 	// ............................... Assert .................................
 	fnctions = fullNameHlp === tmpl.helpers.fullName && fn1 === tmpl.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
-	equal(fnctions + $("#result").text(), isIE8
+	assert.equal(fnctions + $("#result").text(), isIE8
 		? "trueNewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
 		: "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe registered computed helper, local to template, with both data and registered helper contextual parameters as depends paths");
 
 	// ............................... Assert .................................
-	equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
+	assert.equal(message, "_ocp(nm):NewCtxPropnm():NewVmProp_ocp(nm):NewCtxFull_ocp(fullName):NewVmPropNewCtxFullLastnm():NewVmFullfullName():NewVmFullNewCtxFullLast",
 		"Observe listener registered for props and computed props, and ctxPrm listener registered for contextual parameters and computed contextual parameters. Trigger  correctly.");
 	// ................................ Act ..................................
 
@@ -17017,11 +17011,11 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$.observable(data).setProperty("fullName", "AddVmFullname");
 
 	// ............................... Assert .................................
-	equal(message === "" && res, "14|13|11|10|9|",
+	assert.equal(message === "" && res, "14|13|11|10|9|",
 		"Unobserve programmatic APIs for data and for contextual parameters works correctly. Event handlers removed, and no longer triggered");
 
 	// ............................... Assert .................................
-	equal($("#result").text(), isIE8
+	assert.equal($("#result").text(), isIE8
 		? "AddCtxFullAddVmFullFN1FN1AddVmFullAddCtxFullLastAddVmFullAddCtxFullLast "
 		: "AddCtxFull AddVmFull FN1 FN1 AddVmFullAddCtxFullLast AddVmFullAddCtxFullLast ",
 		"After removing programmatically attached handlers for data and for contextual parameters, declarative UI handlers work correctly");
@@ -17030,7 +17024,7 @@ test("view.ctxPrm() tag.ctxPrm()", function() {
 	$("#result").empty();
 });
 
-test("$.view() in element-only content", function() {
+QUnit.test("$.view() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.tmplHierarchyElCnt("#result", topData);
@@ -17039,109 +17033,109 @@ test("$.view() in element-only content", function() {
 	var view = $.view("#tr1");
 
 	// ............................... Assert .................................
-	ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'Within element-only content, $.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'Within element-only content, $.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "root");
 
 	// ............................... Assert .................................
-	ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
+	assert.ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "item");
 
 	// ............................... Assert .................................
-	ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'Within element-only content, $.view(elem, "item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'Within element-only content, $.view(elem, "item") gets nearest item view');
 
 	// ................................ Act ..................................
 	view = $.view("#sp1", "item");
 
 	// ............................... Assert .................................
-	ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view, up through both elCnt and regular content views');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view, up through both elCnt and regular content views');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "data");
 
 	// ............................... Assert .................................
-	ok(view.type === "data" && view.data === topData, 'Within element-only content, $.view(elem, "data") gets nearest data view');
+	assert.ok(view.type === "data" && view.data === topData, 'Within element-only content, $.view(elem, "data") gets nearest data view');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "if");
 
 	// ............................... Assert .................................
-	ok(view.type === "if" && view.data === people[0], 'Within element-only content, $.view(elem, "if") gets nearest "if" view');
+	assert.ok(view.type === "if" && view.data === people[0], 'Within element-only content, $.view(elem, "if") gets nearest "if" view');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", "array");
 
 	// ............................... Assert .................................
-	ok(view.type === "array" && view.data === people, 'Within element-only content, $.view(elem, "array") gets nearest array view');
+	assert.ok(view.type === "array" && view.data === people, 'Within element-only content, $.view(elem, "array") gets nearest array view');
 
 	// ................................ Act ..................................
 	view = $.view("#sp1", "myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, $.view(elem, "mytagName") gets nearest view for content of that tag');
+	assert.ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, $.view(elem, "mytagName") gets nearest view for content of that tag');
 
 	// ................................ Act ..................................
 	view = $.view("#td1");
 
 	// ............................... Assert .................................
-	ok(view.type === "if" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
+	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
 
 	// ................................ Act ..................................
 	view = $.view("#spInFlow1");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, $.view(elem) gets nearest "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
+	assert.ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, $.view(elem) gets nearest "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", true);
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap2ElCnt", 'Within element-only content, $.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.type === "myWrap2ElCnt", 'Within element-only content, $.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1", true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "mytagName") gets the first (depth first) nested view of that type');
+	assert.ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1").get(true);
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrap2ElCnt", 'Within element-only content, view.get(true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.type === "myWrap2ElCnt", 'Within element-only content, view.get(true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1").get(true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "mytagName") gets the first (depth first) nested view of that type');
+	assert.ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1");
 
 	// ............................... Assert .................................
-	ok(view.type === "myWrapElCnt" && view === view.get("myWrapElCnt"), 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
+	assert.ok(view.type === "myWrapElCnt" && view === view.get("myWrapElCnt"), 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
 
 	// ............................... Assert .................................
-	ok(view === view.get(true, "myWrapElCnt"), 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view === view.get(true, "myWrapElCnt"), 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1").get(true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	ok(view.tmpl.markup === "xx<span id=\"spInFlow{{:#getIndex()+1}}\"></span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view.tmpl.markup === "xx<span id=\"spInFlow{{:#getIndex()+1}}\"></span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
 	view = $.view("#tr1").get(true, "myFlow2");
 
 	// ............................... Assert .................................
-	ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
+	assert.ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ............................... Assert .................................
-	ok($.view("#tr1").get(true, "nonexistent") === false, 'view.get(true, "viewTypeName") returns false if no descendant of that type, starting from the view itself');
+	assert.ok($.view("#tr1").get(true, "nonexistent") === undefined, 'view.get(true, "viewTypeName") returns undefined if no descendant of that type, starting from the view itself');
 
 	// =============================== Arrange ===============================
 
@@ -17155,14 +17149,14 @@ test("$.view() in element-only content", function() {
 	view = $.view("#result ul", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data && view.type === "array",
+	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
 	var itemView = $.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
-	ok(!itemView,
+	assert.ok(!itemView,
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
@@ -17177,14 +17171,14 @@ test("$.view() in element-only content", function() {
 	view = $.view("#result ul", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data && view.type === "array",
+	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
-	ok(itemView.index === 0,
+	assert.ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// =============================== Arrange ===============================
@@ -17197,14 +17191,14 @@ test("$.view() in element-only content", function() {
 	view = $.view("#result ul", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data.people && view.type === "array",
+	assert.ok(view.data === data.people && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
-	ok(!itemView,
+	assert.ok(!itemView,
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
@@ -17217,21 +17211,21 @@ test("$.view() in element-only content", function() {
 	view = $.view("#result ul", true);
 
 	// ............................... Assert .................................
-	ok(view.data === data.people && view.type === "array",
+	assert.ok(view.data === data.people && view.type === "array",
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
 	itemView = $.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
-	ok(itemView.index === 0,
+	assert.ok(itemView.index === 0,
 		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("view.get() and view.getIndex() in element-only content", function() {
+QUnit.test("view.get() and view.getIndex() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.tmplHierarchyElCnt("#result", topData);
@@ -17242,35 +17236,35 @@ test("view.get() and view.getIndex() in element-only content", function() {
 	var view = view1.get();
 
 	// ............................... Assert .................................
-	ok(view.parent.type === "top", 'In element-only content, view.get() gets root view (child of top view)');
+	assert.ok(view === view1.parent, 'In element-only content, view.get() gets parent view');
 
 	// ................................ Act ..................................
 	view = view1.get("item");
 
 	// ............................... Assert .................................
-	ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'In element-only content, view.get("item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'In element-only content, view.get("item") gets nearest item view');
 
 	// ................................ Act ..................................
 	view = view1.get("myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'In element-only content, view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
+	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'In element-only content, view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
 
 	// ............................... Assert .................................
-	ok($.view("#tr1").getIndex() === 0 && $.view("#tr1", "item").index === 0 && $.view("#tr2").getIndex() === 1 && $.view("#tr2", "item").index === 1,
+	assert.ok($.view("#tr1").getIndex() === 0 && $.view("#tr1", "item").index === 0 && $.view("#tr2").getIndex() === 1 && $.view("#tr2", "item").index === 1,
 		'$.view(elem).getIndex() gets index of nearest item view, up through elCnt views');
 
 	// ............................... Assert .................................
-	ok($.view("#sp1").getIndex() === 0 && $.view("#sp1", "item").index === 0 && $.view("#sp2").getIndex() === 1 && $.view("#sp2", "item").index === 1,
+	assert.ok($.view("#sp1").getIndex() === 0 && $.view("#sp1", "item").index === 0 && $.view("#sp2").getIndex() === 1 && $.view("#sp2", "item").index === 1,
 		'$.view(elem).getIndex() gets index of nearest item view, up through both elCnt and regular content views');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-module("API - Tag Controls");
+QUnit.module("API - Tag Controls");
 
-test("Wrapping", function() {
+QUnit.test("Wrapping", function(assert) {
 	// =============================== Arrange ===============================
 	$.templates({
 			markup: '{{mytag}}{{:name}}{{/mytag}}'
@@ -17285,7 +17279,7 @@ test("Wrapping", function() {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), 
+	assert.equal($("#result").text(), 
 			"DefaultArg:JoTMPL:JoCNT:Jo"
 		+ "DefaultArg:JoTMPL:JoCNT:Jo",
 		"If tag has no template, tagCtx.render() and tagCtx.content.render() both render content. arg[0] defaults to current data context.");
@@ -17305,7 +17299,7 @@ test("Wrapping", function() {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), 
+	assert.equal($("#result").text(), 
 			"TMPL:1Jo 2Jo 3Jo CNT:Jo"
 		+ "TMPL:1Jo 2Jo 3Jo CNT:Jo",
 		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content");
@@ -17325,7 +17319,7 @@ test("Wrapping", function() {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), 
+	assert.equal($("#result").text(), 
 
 			"TMPL:1aJo 2aJo 3Jo0 CNT:aJo"
 		+ "TMPL:1bJo 2bJo 3Jo1 CNT:bJo"
@@ -17351,7 +17345,7 @@ test("Wrapping", function() {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), 
+	assert.equal($("#result").text(), 
 			"DefaultArg:falseTMPL:JoCNT:Jo"
 		+ "DefaultArg:falseTMPL:JoCNT:Jo",
 		"If argDefault is false, arg[0] does not default to current data context. But can programmatically pass in data to tagCtx.render() or tagCtx.content.render()");
@@ -17360,7 +17354,7 @@ test("Wrapping", function() {
 	$("#result").empty();
 });
 
-test("view.childTags() and tag.childTags()", function() {
+QUnit.test("view.childTags() and tag.childTags()", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.boundTmplHierarchy("#result", topData);
@@ -17373,10 +17367,10 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags();
 
 	// ............................... Assert .................................
-	ok(tags.length === 4
+	assert.ok(tags.length === 4
 		&& tags[0].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0 &&
-		tags[1].tagName === "myWrap" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0,
-		tags[2].tagName === "mySimpleWrap",
+		tags[1].tagName === "myWrap" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0 &&
+		tags[2].tagName === "mySimpleWrap" &&
 		tags[3].tagName === "myWrap2",
 		'view.childTags() returns top-level bound tags within the view, and skips any unbound tags');
 
@@ -17384,7 +17378,7 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 8
+	assert.ok(tags.length === 8
 		&& tags[0].tagName === "myWrap"
 		&& tags[1].tagName === "myWrap2"
 		&& tags[2].tagName === "myWrap2"
@@ -17400,14 +17394,14 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags("myWrap");
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap" && tags[1].tagName === "myWrap" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2");
 
 	// ............................... Assert .................................
-	ok(tags.length === 4
+	assert.ok(tags.length === 4
 		&& tags[0].tagName === "myWrap2"
 		&& tags[1].tagName === "myWrap2"
 		&& tags[2].tagName === "myWrap2"
@@ -17419,7 +17413,7 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.childTags("myWrap2");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1
+	assert.ok(tags.length === 1
 		&& tags[0].tagName === "myWrap2",
 		'view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
@@ -17427,35 +17421,35 @@ test("view.childTags() and tag.childTags()", function() {
 	tags = view1.get(true, "myWrap").childTags(); // Get first myWrap view and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrap").childTags(true); // Get first myWrap view and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
 		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap")[0].childTags(); // Get first myWrap tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap")[0].childTags(true); // Get first myWrap tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2" && tags[1].tagName === "myWrap2",
 		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("view.childTags() in element-only content", function() {
+QUnit.test("view.childTags() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.boundTmplHierarchyElCnt("#result", topData);
@@ -17467,7 +17461,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags();
 
 	// ............................... Assert .................................
-	ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0
+	assert.ok(tags.length === 4 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0
 		&& tags[1].tagName === "myWrapElCnt" && tags[1].tagCtx.props.val === 2 && tags[1].tagCtx.view.getIndex() === 0
 		&& tags[2].tagName === "mySimpleWrap" && tags[2].tagCtx.props.val === 5 && tags[2].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags() returns top-level bound non-flow tags within the view, and skips any unbound tags');
@@ -17476,7 +17470,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 9
+	assert.ok(tags.length === 9
 		&& tags[0].tagName === "myWrapElCnt"
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[2].tagName === "mySimpleWrap"
@@ -17493,14 +17487,14 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags("myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1 && tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags("mytagName") returns all top-level bound tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 3
+	assert.ok(tags.length === 3
 		&& tags[0].tagName === "myWrap2ElCnt"
 		&& tags[1].tagName === "myWrap2ElCnt"
 		&& tags[1].tagName === "myWrap2ElCnt"
@@ -17511,7 +17505,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true, "myFlow");
 
 	// ............................... Assert .................................
-	ok(tags.length === 2
+	assert.ok(tags.length === 2
 		&& tags[0].tagName === "myFlow"
 		&& tags[1].tagName === "myFlow"
 		&& tags[1].tagCtx.view.getIndex() === 0,
@@ -17521,7 +17515,7 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags(true, "if");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1
+	assert.ok(tags.length === 1
 		&& tags[0].tagName === "if"
 		&& tags[0].tagCtx.view.getIndex() === 0,
 		'In element-only content, view.childTags(true, "if") for a flow tag ("if" in this case) returns all bound tags of the given name within the view - in document order');
@@ -17530,55 +17524,55 @@ test("view.childTags() in element-only content", function() {
 	tags = view1.childTags("myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1, 'In element-only content, view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
+	assert.ok(tags.length === 1, 'In element-only content, view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrapElCnt").childTags(); // Get first myWrapElCnt view and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
 		'view.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.get(true, "myWrapElCnt").childTags(true); // Get first myWrapElCnt view and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
+	assert.ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
 		'view.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt")[0].childTags(); // Get first myWrapElCnt tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[1].tagCtx.view.getIndex() === 0,
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt")[0].childTags(true); // Get first myWrapElCnt tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
+	assert.ok(tags.length === 3 && tags[0].tagName === "myWrap2ElCnt" && tags[1].tagName === "mySimpleWrap" && tags[2].tagName === "myWrap2ElCnt",
 		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("mySimpleWrap")[0].childTags(); // Get first mySimpleWrap tag and look for its top-level child tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "mySimpleWrap",
+	assert.ok(tags.length === 1 && tags[0].tagName === "mySimpleWrap",
 		'tag.childTags() returns top-level bound child tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("mySimpleWrap")[0].childTags(true); // Get first mySimpleWrap tag and look for descendant tags
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "mySimpleWrap" && tags[1].tagName === "myWrap2",
+	assert.ok(tags.length === 2 && tags[0].tagName === "mySimpleWrap" && tags[1].tagName === "myWrap2",
 		'tag.childTags(true) returns descendant tags, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("mySimpleWrap")[0].childTags(true, "myWrap2"); // Get first mySimpleWrap tag and look for descendant tags of type "myWrap2"
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrap2",
+	assert.ok(tags.length === 1 && tags[0].tagName === "myWrap2",
 		'tag.childTags(true, "mytagName") returns descendant tags of chosen name, and skips any unbound tags');
 
 	// =============================== Arrange ===============================
@@ -17588,14 +17582,14 @@ test("view.childTags() in element-only content", function() {
 	var tag = $("#result tr").view().childTags()[0];
 
 	// ............................... Assert .................................
-	ok(tag.tagName === "mySimpleWrap",
+	assert.ok(tag.tagName === "mySimpleWrap",
 		'childTags() correctly finds tag which has no output and renders within element contet, inside another tag also in element content');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("view.childTags() in element-only content, using data-link", function() {
+QUnit.test("view.childTags() in element-only content, using data-link", function(assert) {
 
 	// =============================== Arrange ===============================
 	$.link.boundTmplHierarchyElCntWithDataLink("#result", person1);
@@ -17606,41 +17600,41 @@ test("view.childTags() in element-only content, using data-link", function() {
 	tags = view1.childTags();
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1,
+	assert.ok(tags.length === 1 && tags[0].tagName === "myWrapElCnt" && tags[0].tagCtx.props.val === 1,
 		'In element-only content, view.childTags() returns top-level bound tags within the view, and skips any unbound tags');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true);
 
 	// ............................... Assert .................................
-	ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[0].tagCtx.props.val === 1,
+	assert.ok(tags.length === 2 && tags[0].tagName === "myWrapElCnt" && tags[1].tagName === "myWrap2ElCnt" && tags[0].tagCtx.props.val === 1,
 		'In element-only content, view.childTags(true) returns all tags within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrapElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrapElCnt" && view1.childTags("inexistantTag").length === 0,
+	assert.ok(tags.length === 1 && tags[0].tagName === "myWrapElCnt" && view1.childTags("inexistantTag").length === 0,
 		'In element-only content, view.childTags("mytagName") returns all top-level tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags(true, "myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 1 && tags[0].tagName === "myWrap2ElCnt",
+	assert.ok(tags.length === 1 && tags[0].tagName === "myWrap2ElCnt",
 		'In element-only content, view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ................................ Act ..................................
 	tags = view1.childTags("myWrap2ElCnt");
 
 	// ............................... Assert .................................
-	ok(tags.length === 0, 'In element-only content, view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
+	assert.ok(tags.length === 0, 'In element-only content, view.childTags(true, "mytagName") returns all tags of the given name within the view - in document order');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 });
 
-test("lateRender - for deferred API calls", function() {
+QUnit.test("lateRender - for deferred API calls", function(assert) {
 
 	// =============================== Arrange ===============================
 
@@ -17686,7 +17680,7 @@ test("lateRender - for deferred API calls", function() {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal=MyTag-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal/1/0",
+	assert.equal($("#result").text(), "-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal=MyTag-tagVal-tagVal/tagVal-tagVal-tagVal/tagVal/1/0",
 	"When using APIs such as #childTags() and #get() within binding expressions, to return tag instances, use lateRender=true to defer the API call until linking is complete" );
 
 	// ................................ Act ..................................
@@ -17712,7 +17706,7 @@ test("lateRender - for deferred API calls", function() {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "-tagVal/tagVal-tagVal-tagVal=MyTag",
+	assert.equal($("#result").text(), "-tagVal/tagVal-tagVal-tagVal=MyTag",
 	"When using APIs such as #childTags() and #get() within binding expressions, to return tag instances, use lateRender=xxx (any value xxx other than false or undefined) to defer the API call until linking is complete" );
 
 	// ................................ Act ..................................
@@ -17741,7 +17735,7 @@ try {
 	haserror = !!e;
 }
 	// ............................... Assert .................................
-	ok(haserror,
+	assert.ok(haserror,
 	"When using APIs such as #childTags() within binding expressions, using lateRender=false does not defer the API call" );
 
 	// ................................ Reset ................................
@@ -17749,7 +17743,7 @@ try {
 
 });
 
-test("this= and @some.path", function() {
+QUnit.test("this= and @some.path", function(assert) {
 	$.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
@@ -17777,7 +17771,7 @@ test("this= and @some.path", function() {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), 	
+	assert.equal($("#result").text(), 	
 "BEFORE:two two TAGS:DBCAFTER:two two ",
 	"Declarative this=ref binding on built-in flow tag and late path @ref... works correctly");
 
@@ -17804,7 +17798,7 @@ test("this= and @some.path", function() {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	equal($("#result").text(), "BEFORE:two two TAGS:OUT:two OUT:three OUT:one AFTER:two two ",
+	assert.equal($("#result").text(), "BEFORE:two two TAGS:OUT:two OUT:three OUT:one AFTER:two two ",
 	"Declarative this=ref binding on custom tag and late path @ref... works correctly");
 
 	// ................................ Act ..................................
@@ -17821,7 +17815,7 @@ test("this= and @some.path", function() {
 	input2.change();
 	result += "|" + $("#result").text();
 
-	equal(result, "BEFORE:newp newp TAGS:OUT:newp OUT:three OUT:one AFTER:newp newp |BEFORE:newp2 newp2 TAGS:OUT:newp2 OUT:three OUT:one AFTER:newp2 newp2 ",
+	assert.equal(result, "BEFORE:newp newp TAGS:OUT:newp OUT:three OUT:one AFTER:newp newp |BEFORE:newp2 newp2 TAGS:OUT:newp2 OUT:three OUT:one AFTER:newp2 newp2 ",
 	"Declarative this=ref binding on custom tag and late path @ref... works correctly even for two-way binding");
 
 	// ................................ Reset ................................
@@ -17832,7 +17826,7 @@ test("this= and @some.path", function() {
 
 //TODO add tests for tag.refresh()
 
-test("Modifying content, initializing widgets/tag controls, using data-link", function() {
+QUnit.test("Modifying content, initializing widgets/tag controls, using data-link", function(assert) {
 
 	// =============================== Arrange ===============================
 
@@ -17854,7 +17848,7 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
+	assert.equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
 
 	// =============================== Arrange ===============================
 
@@ -17874,14 +17868,14 @@ test("Modifying content, initializing widgets/tag controls, using data-link", fu
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result div").html(), " init after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init and onAfterLink');
+	assert.equal($("#result div").html(), " init after", 'A data-linked tag control which does not render allows setting of content on the data-linked element during init and onAfterLink');
 
 	// ............................... Reset .................................
 	$("#result").empty();
 	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{mytag}} inline data binding.
 });
 
-test('two-way bound tag controls', function(assert) {
+QUnit.test('two-way bound tag controls', function(assert) {
 var done = assert.async();
 
 $.views.settings.trigger(false);
@@ -17904,7 +17898,7 @@ $.views.settings.trigger(false);
 		linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -17915,12 +17909,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning false) - render not called');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"JoJo|newNamenewName",
 	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem');
 
@@ -17932,12 +17926,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called, but no render');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newNamenewName|newName2newName2",
 	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem');
 
@@ -17950,12 +17944,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName2newName2|newName3newName3",
 	'Data link using: <input data-link="{twoWayTag name}"/> - binds data to linkedElem - (replacing any value set during rendering)');
 
@@ -17970,12 +17964,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName3newName3|newValnewVal",
 	'Data link using: <input data-link="{twoWayTag name}"/> - binds linkedElem back to data');
 
@@ -17987,12 +17981,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for cancelled onBeforeChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValnewVal|newVal2ndNewVal",
 	'Data link using: <input data-link="{twoWayTag name}"/> - if onBeforeChange returns false -> data changes but no relinking of tag');
 
@@ -18007,12 +18001,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal ",
+	assert.equal(eventData, "onBeforeUpdateVal ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for cancelled onBeforeUpdateVal');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newVal2ndNewVal|newVal2ndNewVal",
 	'Data link using: <input data-link="{twoWayTag name}"/> - if onBeforeUpdateVal returns false -> data does not change, and no relinking of tag');
 
@@ -18030,12 +18024,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for tag.refresh');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValupdatedVal|updatedNameupdatedNameupdatedName",
 	'Data link using: <input data-link="{twoWayTag name}"/> - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
@@ -18043,7 +18037,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind onDispose ",
+	assert.equal(eventData, "onUnbind onDispose ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onDispose');
 	eventData = "";
 
@@ -18070,7 +18064,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
@@ -18078,7 +18072,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -18087,7 +18081,7 @@ $.views.settings.trigger(false);
 	$(linkedEl).change();
 
 	// ............................... Assert .................................
-	equal(person.name + "|" + tag.value,
+	assert.equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: <input data-link="{twoWayTag name convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on data');
 
@@ -18124,7 +18118,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - converter specified by data-linked convert property');
 
@@ -18133,7 +18127,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"anewname|ANewName",
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from one function to another');
 
@@ -18141,7 +18135,7 @@ $.views.settings.trigger(false);
 	$.observable(options).setProperty({cvt: "myupper"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from function to named converter');
 
@@ -18163,7 +18157,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for init, render, link');
 	eventData = "";
 
@@ -18174,12 +18168,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"JoJo|newNamenewName",
 	'Data link using: {^{twoWayTag name}} - binds data to linkedElem');
 
@@ -18189,14 +18183,14 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "newName2"});
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
 	linkedEl = $("#linkedElm")[0];
 	after = tag.value + linkedEl.value;
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newNamenewName|newName2newName2",
 	'Data link using: {^{twoWayTag name}} - binds data to linkedElem');
 
@@ -18209,7 +18203,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -18217,7 +18211,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName2newName2|newName3newName3",
 	'Data link using: {^{twoWayTag name}} - binds data to newly rendered linkedElem');
 
@@ -18232,12 +18226,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName3newName3|newValnewVal",
 	'Data link using: {^{twoWayTag name}} - binds linkedElem back to data');
 
@@ -18249,12 +18243,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
 	'Data link using: {^{twoWayTag name}} - event order for cancelled onBeforeChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValnewVal|newVal2ndNewVal",
 	'Data link using: {^{twoWayTag name}} - if onBeforeChange returns false -> data changes but no relinking of tag');
 
@@ -18272,12 +18266,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValupdatedVal|updatedNameupdatedNameupdatedName",
 	'Data link using: {^{twoWayTag name}} - tag.refresh() calls onUnbind, render, onBind and onAfterLink - reset to current data, and updates target (input value)');
 
@@ -18285,7 +18279,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind onDispose ",
+	assert.equal(eventData, "onUnbind onDispose ",
 	'Data link using: {^{twoWayTag name}} - event order for onDispose');
 	eventData = "";
 
@@ -18310,7 +18304,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
@@ -18318,7 +18312,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -18328,7 +18322,7 @@ $.views.settings.trigger(false);
 	$(linkedEl).change();
 
 	// ............................... Assert .................................
-	equal(person.name + "|" + tag.value,
+	assert.equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: {^{twoWayTag name convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
 
@@ -18350,7 +18344,7 @@ $.views.settings.trigger(false);
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for init, render, link');
 	eventData = "";
 
@@ -18362,12 +18356,12 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"JoJo|newNamenewName",
 	'Data link using: {^{twoWayTag name/}} - binds data to linkedElem');
 
@@ -18380,12 +18374,12 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newNamenewName|newName2newName2",
 	'Data link using: {^{twoWayTag name/}} - binds data to linkedElem');
 
@@ -18399,12 +18393,12 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName2newName2|newName3newName3",
 	'Data link using: {^{twoWayTag name/}} - binds data to newly rendered linkedElem');
 
@@ -18419,12 +18413,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name/}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newName3newName3|newValnewVal",
 	'Data link using: {^{twoWayTag name/}} - binds linkedElem back to dataonChange');
 
@@ -18436,12 +18430,12 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
 	'Data link using: {^{twoWayTag name/}} - event order for cancelled onBeforeChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValnewVal|newVal2ndNewVal",
 	'Data link using: {^{twoWayTag name/}} - if onBeforeChange returns false -> data changes but no relinking of tag');
 
@@ -18458,12 +18452,12 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"newValupdatedVal|updatedNameupdatedName",
 	'Data link using: {^{twoWayTag name/}} - tag.refresh() calls render and onAfterLink - reset to current data, and updates target (input value)');
 
@@ -18471,7 +18465,7 @@ $.views.settings.trigger(false);
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal(eventData, "onUnbind onDispose ",
+	assert.equal(eventData, "onUnbind onDispose ",
 	'Data link using: {^{twoWayTag name/}} - event order for onDispose');
 	eventData = "";
 
@@ -18495,7 +18489,7 @@ $.views.settings.trigger(false);
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
-	equal(tag.linkedElem[0].value + "|" + tag.value,
+	assert.equal(tag.linkedElem[0].value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
@@ -18504,7 +18498,7 @@ $.views.settings.trigger(false);
 
 	
 	// ............................... Assert .................................
-	equal(tag.linkedElem[0].value + "|" + tag.value,
+	assert.equal(tag.linkedElem[0].value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -18513,7 +18507,7 @@ $.views.settings.trigger(false);
 	tag.linkedElem.change();
 
 	// ............................... Assert .................................
-	equal(person.name + "|" + tag.value,
+	assert.equal(person.name + "|" + tag.value,
 	"changethename|changethename",
 	'Data link using: {^{twoWayTag name convertBack=~lower/}} - (tag.convertBack setting) on element change: converts the data, and sets on data');
 
@@ -18556,7 +18550,7 @@ $.views.settings.trigger(false);
 	var tagWithOverrideConverters = $("#result").view(true).childTags("textbox")[1];
 
 	// ............................... Assert .................................
-	equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
+	assert.equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
 	"JO|Jo % Jocvt|Jo",
 	'Data linked tag with default convert and convertBack, on initial linking: {^{textbox/}} uses default convert and {^{textbox convert=.../}} uses overridden convert');
 
@@ -18564,7 +18558,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName", name2: "ANewName2"});
 
 	// ............................... Assert .................................
-	equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
+	assert.equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
 	"ANEWNAME|ANewName % ANewName2cvt|ANewName2",
 	'Data linked tag with default convert and convertBack, on data change: {^{textbox/}} uses default convert and {^{textbox convert=.../}} uses overridden convert');
 
@@ -18575,7 +18569,7 @@ $.views.settings.trigger(false);
 	tagWithOverrideConverters.linkedElem.change();
 
 	// ............................... Assert .................................
-	equal(person.name + "|" + tagWithDefaultConverters.value + " % " + person.name2 + "|" + tagWithOverrideConverters.value,
+	assert.equal(person.name + "|" + tagWithDefaultConverters.value + " % " + person.name2 + "|" + tagWithOverrideConverters.value,
 	"changethename|changethename % ChangeTheName2cvtBk|ChangeTheName2cvtBk",
 	'Data linked tag with default convert and convertBack, on element change: {^{textbox/}}uses default convertBAck and {^{textbox convertBack=.../}} uses overridden convertBack');
 
@@ -18620,7 +18614,7 @@ $.views.settings.trigger(false);
 	result += "\nChangeConverterDepends-foo: " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, isIE8 ? "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
+	assert.equal(result, isIE8 ? "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
 		"ChangeData-name: TWO(Jo2 foo1)ONE(Jo2 foo1)ONE(Jo2 foo1)\n" +
 		"ChangeConverterDepends-foo: TWO(Jo2 foo2)ONE(Jo2 foo2)ONE(Jo2 foo2)"
 			: "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
@@ -18669,7 +18663,7 @@ $.views.settings.trigger(false);
 	result += "\nChangeTagDependsState-state: " + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, isIE8 ? "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
+	assert.equal(result, isIE8 ? "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
 		"ChangeData-name: TWO(Jo2 foo1) bar1 state1 foo1ONE(Jo2 foo1) bar1 state1 foo1THREE(Jo2 foo1) bar1 state1 foo1\n" +
 		"ChangeConverterDepends-foo: TWO(Jo2 foo2) bar1 state1 foo2ONE(Jo2 foo2) bar1 state1 foo2THREE(Jo2 foo2) bar1 state1 foo2\n" +
 		"ChangeTagDependsData-bar: TWO(Jo2 foo2) bar2 state1 foo2ONE(Jo2 foo2) bar2 state1 foo2THREE(Jo2 foo2) bar2 state1 foo2\n" +
@@ -18723,12 +18717,12 @@ setTimeout(function() {
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	" 1: FirstName|FirstName 2: SecondName|SecondName 3: ThirdName|ThirdName 4: FourthName|FourthName",
 	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}} triggers on specified events');
 
 	// ............................... Assert .................................
-	equal(handlers,
+	assert.equal(handlers,
 	"|11|11|11",
 	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
 
@@ -18736,7 +18730,7 @@ setTimeout(function() {
 	$.unlink("#result");
 
 	// ............................... Assert .................................
-	ok($._data(linkedElem).events === undefined,
+	assert.ok($._data(linkedElem).events === undefined,
 	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
@@ -18780,12 +18774,12 @@ setTimeout(function() {
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
 	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
 
 	// ............................... Assert .................................
-	equal(handlers,
+	assert.equal(handlers,
 	"|11|11|11",
 	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
@@ -18793,7 +18787,7 @@ setTimeout(function() {
 	$.unlink("#result");
 
 	// ............................... Assert .................................
-	ok($._data(linkedElem).events === undefined,
+	assert.ok($._data(linkedElem).events === undefined,
 	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
@@ -18837,13 +18831,13 @@ setTimeout(function() {
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	isIE8 ? " 1: First <b>Name</b> 2: Second <B>Name2</B> 3: Third <B>Name3</B> 4: Fourth <B>Name4</B>"
 		: " 1: First <b>Name</b> 2: Second <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
 	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> triggers on specified events');
 
 	// ............................... Assert .................................
-	equal(handlers,
+	assert.equal(handlers,
 	"|11|11|11",
 	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
 
@@ -18851,7 +18845,7 @@ setTimeout(function() {
 	$.unlink("#result");
 
 	// ............................... Assert .................................
-	ok($._data(linkedElem).events === undefined,
+	assert.ok($._data(linkedElem).events === undefined,
 	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(container)');
 
 	// =============================== Arrange ===============================
@@ -18896,12 +18890,12 @@ setTimeout(function() {
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
 	// ............................... Assert .................................
-	equal(res,
+	assert.equal(res,
 	" 1: FirstName 2: SecondName 3: ThirdName 4: FourthName",
 	'Top-level data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> triggers on specified events');
 
 	// ............................... Assert .................................
-	equal(handlers,
+	assert.equal(handlers,
 	"|11|11|11",
 	'Top-level data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
@@ -18909,7 +18903,7 @@ setTimeout(function() {
 	$.unlink("#result");
 
 	// ............................... Assert .................................
-	ok($._data(linkedElem).events === undefined,
+	assert.ok($._data(linkedElem).events === undefined,
 	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
 
 	$("#result").empty();
@@ -18931,7 +18925,7 @@ done();
 }, 0);
 });
 
-test("Tag options versus setting in init()", function() {
+QUnit.test("Tag options versus setting in init()", function(assert) {
 	$.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
@@ -18995,7 +18989,7 @@ test("Tag options versus setting in init()", function() {
 	getValues();
 
 	// ............................... Assert .................................
-	equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
+	assert.equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo0 Blow Jo0 Blow {{else}}: Blow Jo Blow Jo0 |data: Jo0 Blow Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo0 Blow1 Jo0 Blow1 {{else}}: Blow Jo Blow1 Jo0 |data: Jo0 Blow1 Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo2 Blow1 Jo2 Blow1 {{else}}: Blow Jo Blow1 Jo2 |data: Jo2 Blow1 Sir |text: SirSir\n"
@@ -19073,7 +19067,7 @@ test("Tag options versus setting in init()", function() {
 	getValues();
 
 	// ............................... Assert .................................
-	equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
+	assert.equal(result, "{{mytag}}: Jo Blow Jo Blow {{else}}: Blow Jo Blow Jo |data: Jo Blow Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo0 Blow Jo0 Blow {{else}}: Blow Jo Blow Jo0 |data: Jo0 Blow Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo0 Blow1 Jo0 Blow1 {{else}}: Blow Jo Blow1 Jo0 |data: Jo0 Blow1 Sir |text: SirSir\n"
 	+ "{{mytag}}: Jo2 Blow1 Jo2 Blow1 {{else}}: Blow Jo Blow1 Jo2 |data: Jo2 Blow1 Sir |text: SirSir\n"
@@ -19109,7 +19103,7 @@ test("Tag options versus setting in init()", function() {
 	}).link("#result", person);
 
 	// ............................... Assert .................................
-	equal(
+	assert.equal(
 		$("#result div").eq(0).prop("foo") + " "
 	+ $("#result div").eq(1).attr("title") + " "
 	+ $("#result div").eq(2).prop("bar") + " "
@@ -19159,7 +19153,7 @@ test("Tag options versus setting in init()", function() {
 			+ (elem.style.width ? " width: " + elem.style.width : "")
 			+ (elem.style.height ? " height: " + elem.style.height : "");
 	})
-	equal(result,
+	assert.equal(result,
 	 " |0:  class: top |1:  id: a class: head width: 102px height: 66px |2:  class: foot box"
 + " |3:  class: top |4:  id: b class: head width: 300px height: 10em |5:  class: foot myclass"
 + " |6:  class: top |7:  class: head |8:  id: c class: foot myclass width: 22px height: 46px",
@@ -19208,7 +19202,7 @@ test("Tag options versus setting in init()", function() {
 			+ (elem.style.width ? " width: " + elem.style.width : "")
 			+ (elem.style.height ? " height: " + elem.style.height : "");
 	})
-	equal(result,
+	assert.equal(result,
 	 " |0:  class: top |1:  id: a class: head width: 102px height: 66px |2:  class: foot box"
 + " |3:  class: top |4:  id: b class: head width: 300px height: 10em |5:  class: foot myclass"
 + " |6:  class: top |7:  class: head |8:  id: c class: foot myclass width: 22px height: 46px",
@@ -19238,7 +19232,7 @@ test("Tag options versus setting in init()", function() {
 	// ............................... Assert .................................
 	result = "";
 
-	equal($("#result").text(),
+	assert.equal($("#result").text(),
 		"1 false Jo false Jo "
 	+ "2 Jo Jo Jo Jo "
 	+ "3 Fred Fred Fred Fred Fred Fred Fred Fred "
@@ -19275,7 +19269,7 @@ test("Tag options versus setting in init()", function() {
 	// ............................... Assert .................................
 	result = "";
 
-	equal($("#result").text(),
+	assert.equal($("#result").text(),
 		"1: In template: Fred " + (isIE8 ? "" : " ")
 		+ "2: In template: Fred inner block: Fred "
 		+ "3: inner block: Fred",
@@ -19284,7 +19278,7 @@ test("Tag options versus setting in init()", function() {
 	$.views.settings.trigger(true);
 });
 
-test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
+QUnit.test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.settings.trigger(false);
 	var done = assert.async(),
@@ -19317,12 +19311,12 @@ test("Global trigger=false local trigger=true - triggers after keydown: <input/>
 		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
-		equal(res,
+		assert.equal(res,
 		" 1: FirstName 2: SecondName",
 		'Data link using: <input data-link="name trigger=true" /> triggers after keydown');
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1|1",
 		'Data link using: <input data-link=\'name trigger=true\' /> has no duplicate handlers after relinking');
 
@@ -19330,14 +19324,14 @@ test("Global trigger=false local trigger=true - triggers after keydown: <input/>
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("Global trigger=true local trigger=false - does not trigger after keydown: <input/>", function(assert) {
+QUnit.test("Global trigger=true local trigger=false - does not trigger after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 	var done = assert.async(),
 		res = "",
@@ -19362,12 +19356,12 @@ test("Global trigger=true local trigger=false - does not trigger after keydown: 
 		res += " 2: " + person.name;
 
 		// ............................... Assert .................................
-		equal(res,
+		assert.equal(res,
 		" 1: FirstName 2: FirstName",
 		'Data link using: <input data-link="name trigger=false" /> does not trigger after keydown');
 
 		// ............................... Assert .................................
-		equal(!events && !$._data(linkedElem).events,
+		assert.equal(!events && !$._data(linkedElem).events,
 		true,
 		'Data link using: <input data-link=\'name trigger=false\' /> has no handlers after relinking');
 
@@ -19375,14 +19369,14 @@ test("Global trigger=true local trigger=false - does not trigger after keydown: 
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=false" />: No handlers after $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("Global trigger=true - triggers after keydown: <input/>", function(assert) {
+QUnit.test("Global trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 	var done = assert.async(),
 		res = "",
@@ -19413,12 +19407,12 @@ test("Global trigger=true - triggers after keydown: <input/>", function(assert) 
 		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
-		equal(res,
+		assert.equal(res,
 		" 1: FirstName 2: SecondName",
 		'Data link using: <input data-link="name" /> triggers after keydown');
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1|1",
 		'Data link using: <input data-link=\'name\' /> has no duplicate handlers after relinking');
 
@@ -19426,14 +19420,14 @@ test("Global trigger=true - triggers after keydown: <input/>", function(assert) 
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name" />: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("Global trigger=true - <input type='checkbox'/>", function(assert) {
+QUnit.test("Global trigger=true - <input type='checkbox'/>", function(assert) {
 	// =============================== Arrange ===============================
 	var done = assert.async(),
 		res = "",
@@ -19459,12 +19453,12 @@ test("Global trigger=true - <input type='checkbox'/>", function(assert) {
 		res += " 2: " + person.member;
 
 		// ............................... Assert .................................
-		equal(res,
+		assert.equal(res,
 		" 1: false 2: true",
 		'Data link using: <input type="checkbox" data-link="member" /> triggers after change');
 
 		// ............................... Assert .................................
-		equal(events,
+		assert.equal(events,
 		undefined,
 		'Data link using: <input type="checkbox" data-link="member" /> has no events');
 
@@ -19475,7 +19469,7 @@ test("Global trigger=true - <input type='checkbox'/>", function(assert) {
 	}, 0);
 });
 
-test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) {
+QUnit.test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -19507,12 +19501,12 @@ test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) 
 		handlers += "|" + events.keydown.length;
 
 		// ............................... Assert .................................
-		equal(res,
+		assert.equal(res,
 		" 1: FirstName 2: SecondName",
 		'Data link using: <input data-link="name trigger=\'keydown\'" /> triggers after keydown');
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1|1",
 		'Data link using: <input data-link=\'name trigger=\'keydown\'\' /> has no duplicate handlers after relinking');
 
@@ -19520,14 +19514,14 @@ test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) 
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=\'keydown\'" />: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(assert) {
+QUnit.test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -19561,14 +19555,14 @@ test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(as
 
 	setTimeout(function() {
 		// ............................... Assert .................................
-		equal(before + "|" + person.name,
+		assert.equal(before + "|" + person.name,
 		"JO|changethename",
 		'Data link using: {^{twoWayTag name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1",
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}} has no duplicate handlers after relinking');
 
@@ -19576,14 +19570,14 @@ test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(as
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 		done();
 	}, 0);
 });
 
-test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(assert) {
+QUnit.test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -19631,14 +19625,14 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 
 	setTimeout(function() {
 		// ............................... Assert .................................
-		equal(before + "|" + person.name,
+		assert.equal(before + "|" + person.name,
 		"JO|changethename",
 		'Data link using: {^{textbox name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events[inputOrKeydown].length;
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1",
 		'Top-level data link using: {^{textbox name convertBack=~lower/}} has no duplicate handlers after relinking');
 
@@ -19646,7 +19640,7 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{textbox name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 		done();
@@ -19654,7 +19648,7 @@ test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(as
 
 });
 
-test("Custom tag trigger:... option", function(assert) {
+QUnit.test("Custom tag trigger:... option", function(assert) {
 	// =============================== Arrange ===============================
 
 	var done = assert.async(),
@@ -19702,7 +19696,7 @@ test("Custom tag trigger:... option", function(assert) {
 	before += "|" + person.name;
 
 		// ............................... Assert .................................
-		equal(before,
+		assert.equal(before,
 		"Jo|Jo|NewName2|AnotherNewName1",
 		'{^{textbox/}} with option trigger:false - triggers after change, not after keydown. But {^{textbox trigger=true/}} overrides option and triggers on keydown');
 
@@ -19712,7 +19706,7 @@ test("Custom tag trigger:... option", function(assert) {
 
 });
 
-test("Global trigger=true - triggers after keydown: {^{contentEditable}}", function(assert) {
+QUnit.test("Global trigger=true - triggers after keydown: {^{contentEditable}}", function(assert) {
 	// =============================== Arrange ===============================
 $.views.settings.trigger(true);
 
@@ -19773,7 +19767,7 @@ setTimeout(function() {
 
 setTimeout(function() {
 		// ............................... Assert .................................
-		equal(before + "|" + person.name,
+		assert.equal(before + "|" + person.name,
 		isIE8 ? "JO <B>SMITH</B>|new <em>name</em>|new2 \r\n<p>name2</p>|new3 \r\n<div>name3</div>"
 			: "JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
 		'Data link using: {^{contentEditable name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
@@ -19781,7 +19775,7 @@ setTimeout(function() {
 		handlers += "|" + events[inputOrKeydownContentEditable].length;
 
 		// ............................... Assert .................................
-		equal(handlers,
+		assert.equal(handlers,
 		"|1|1",
 		'Top-level data link using: {^{contentEditable name convertBack=~lower/}} has no duplicate handlers after relinking');
 
@@ -19789,7 +19783,7 @@ setTimeout(function() {
 		$.unlink("#result");
 
 		// ............................... Assert .................................
-		ok($._data(linkedElem).events === undefined,
+		assert.ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{contentEditable name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
 $.views.settings.trigger(true);
@@ -19801,7 +19795,7 @@ $.views.settings.trigger(true);
 
 });
 
-test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', function() {
+QUnit.test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', function(assert) {
 $.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
@@ -19865,7 +19859,7 @@ $.views.settings.trigger(false);
 	after = linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"Jo|newName",
 	'Data link using: <input data-link="{:name linkTo=name2:}"/> - binds data to linkedElem');
 
@@ -19876,7 +19870,7 @@ $.views.settings.trigger(false);
 	after = "name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"name:newName name2:Jo2|name:newName name2:newVal",
 	'Data link using: <input data-link="{:name linkTo=name2:}"/> - binds linkedElem back to "linkTo" target data - using return value of onChange');
 
@@ -19904,7 +19898,7 @@ $.views.settings.trigger(false);
 	after = "name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"value: initialValue name:Jo name2:Jo2|name:Jo name2:3rdNewVal",
 	'Data link using: <input data-link="\'initialValue\' linkTo=name2"/> - Initializes to provided string, and binds updated value of linkedElem back to "linkTo" target');
 
@@ -19925,7 +19919,7 @@ $.views.settings.trigger(false);
 	after = "name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"value: [object Object] name:Jo name2:Jo2|name:Jo name2:4thNewVal",
 	'Data link using: <input data-link="linkTo=name2"/> - Initializes to current data item, and binds updated value of linkedElem back to "linkTo" target');
 
@@ -19947,14 +19941,14 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value, "JO",
+	assert.equal(linkedEl.value, "JO",
 	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value,
+	assert.equal(linkedEl.value,
 	"ANEWNAME",
 	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -19963,7 +19957,7 @@ $.views.settings.trigger(false);
 	$(linkedEl).change();
 
 	// ............................... Assert .................................
-	equal("name:" + person.name + " name2:" + person.name2,
+	assert.equal("name:" + person.name + " name2:" + person.name2,
 	"name:ANewName name2:changethename",
 	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower}/> - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
@@ -19983,7 +19977,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -19994,12 +19988,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onUpdate');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"JoJo|newNamenewName",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds data to linkedElem');
 
@@ -20010,12 +20004,12 @@ $.views.settings.trigger(false);
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal ",
+	assert.equal(eventData, "onBeforeUpdateVal ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"value:newName name:newName name2:Jo2|value:newName name:newName name2:newVal",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - binds linkedElem back to "linkTo" target dataonChange');
 	eventData = "";
@@ -20044,7 +20038,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
@@ -20052,7 +20046,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -20061,7 +20055,7 @@ $.views.settings.trigger(false);
 	$(linkedEl).change();
 
 	// ............................... Assert .................................
-	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
+	assert.equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
 	"name:ANewName name2:changethename value:ANewName",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convertBack=~lower}"/> - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
@@ -20082,7 +20076,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for init, render, link');
 	eventData = "";
 
@@ -20093,12 +20087,12 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onUpdate');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"JoJo|newNamenewName",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - binds data to linkedElem');
 
@@ -20109,12 +20103,12 @@ $.views.settings.trigger(false);
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	equal(eventData, "onBeforeUpdateVal ",
+	assert.equal(eventData, "onBeforeUpdateVal ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onChange');
 	eventData = "";
 
 	// ............................... Assert .................................
-	equal(before + "|" + after,
+	assert.equal(before + "|" + after,
 	"value:newName name:newName name2:Jo2|value:newName name:newName name2:newVal",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - binds linkedElem back to "linkTo" target data');
 
@@ -20140,7 +20134,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"JO|Jo",
 	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
@@ -20148,7 +20142,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
-	equal(linkedEl.value + "|" + tag.value,
+	assert.equal(linkedEl.value + "|" + tag.value,
 	"ANEWNAME|ANewName",
 	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"} - (tag.convert setting) - on data change: converts the value on the target input');
 
@@ -20158,7 +20152,7 @@ $.views.settings.trigger(false);
 	$(linkedEl).change();
 
 	// ............................... Assert .................................
-	equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
+	assert.equal("name:" + person.name + " name2:" + person.name2 + " value:" + tag.value,
 	"name:ANewName name2:changethename value:ANewName",
 	'Data link using: {^{twoWayTag name linkTo=name2 convertBack=~lower}} - (tag.convertBack setting) on element change: converts the data, and sets on "linkTo" target data');
 
@@ -20167,9 +20161,8 @@ $.views.settings.trigger(false);
 	$.views.settings.trigger(true);
 });
 
-test('Custom Tag Controls - two-way binding (multiple targets)', function() {
-	$.views.settings
-		.trigger(false);
+QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(assert) {
+	$.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 	var person = {first: "Jo", last: "Blow"};
@@ -20212,7 +20205,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + person.first;
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Jo--Bob|Bob--newName|newName",
+	assert.equal(result, "Jo|Jo--Bob|Bob--newName|newName",
 	"linkedElem set in onBind");
 
 	// ................................ Act ..................................
@@ -20228,7 +20221,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
-	equal(result, 
+	assert.equal(result, 
 		isIE8 ? "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirstUpdate"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0Update"
 		: "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
@@ -20276,7 +20269,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
+	assert.equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
 	'With bindTo: [0, 1], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue() '
 	+ 'correctly access/update two-way bound values');
 
@@ -20318,7 +20311,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Jo--Bob|Bob| Bob--newFirst|newFirst| newFirst",
+	assert.equal(result, "Jo|Jo--Bob|Bob| Bob--newFirst|newFirst| newFirst",
 	'With bindTo: 1, and linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue()'
 	+ 'correctly access/update two-way bound values');
 
@@ -20363,7 +20356,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
+	assert.equal(result, "Jo,Blow|Jo|Blow--Bob,Puff|Bob|Puff| Bob Puff--newFirst,newLast|newFirst|newLast| newFirst newLast",
 	'With bindTo: ["name1", "name2"], and 2 linkedElems set in onBind, mytag.bndArgs() and mytag.updateValue())'
 	+ 'correctly access/update two-way bound values');
 
@@ -20402,7 +20395,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + person.first + "|" + linkedEl.value;
 
 	// ............................... Assert .................................
-	equal(result, "Jo--Bob--newName--updatedFirst|updatedFirst",
+	assert.equal(result, "Jo--Bob--newName--updatedFirst|updatedFirst",
 	"linkedElem set using linkedElement declaration");
 
 	// =============================== Arrange ===============================
@@ -20440,7 +20433,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Jo--Bob|Bob--newName|newName--updatedFirst|updatedFirst|updatedFirst",
+	assert.equal(result, "Jo|Jo--Bob|Bob--newName|newName--updatedFirst|updatedFirst|updatedFirst",
 	"linkedCtxParam declaring a tag contextual parameter");
 
 	// =============================== Arrange ===============================
@@ -20479,7 +20472,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + person.first + "|" + linkedEl.value + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Jo--Bob|Bob--newName|newName--updatedFirst|updatedFirst|updatedFirst",
+	assert.equal(result, "Jo|Jo--Bob|Bob--newName|newName--updatedFirst|updatedFirst|updatedFirst",
 	"bindTo and linkedCtxParam as arrays, declaring a tag contextual parameter");
 
 	// =============================== Arrange ===============================
@@ -20517,7 +20510,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Blow|Jo Blow--Bob|Puff|Bob Puff--newFirst|newLast|newFirst newLast",
+	assert.equal(result, "Jo|Blow|Jo Blow--Bob|Puff|Bob Puff--newFirst|newLast|newFirst newLast",
 	"bindTo and linkedCtxParam as arrays, declaring tag contextual parameters");
 
 	// ................................ Act ..................................
@@ -20527,7 +20520,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
-	equal(result, "newLast,newFirst--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast|updatedFirst|updatedLast updatedFirst",
+	assert.equal(result, "newLast,newFirst--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast|updatedFirst|updatedLast updatedFirst",
 	"mytag.bndArgs() and mytag.updateValues().setValues() work correctly for accessing/updating two-way bound tag contextual parameters");
 
 	// =============================== Arrange ===============================
@@ -20559,7 +20552,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
+	assert.equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
 	"mytag.bndArgs() and mytag.updateValues().setValues() work correctly for accessing/updating two-way bound linkedElems");
 
 	// =============================== Arrange ===============================
@@ -20599,7 +20592,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "truetruetrueJo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
+	assert.equal(result, "truetruetrueJo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
 	"Mixed declarative linkedElement and programmatic onBind approaches for defining linkedElems");
 
 	// =============================== Arrange ===============================
@@ -20635,7 +20628,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
+	assert.equal(result, "Jo|Blow| Blow--updatedFirst,updatedLast|updatedFirst|updatedFirst|updatedLast| updatedLast",
 	"Mixed declarative linkedElement and programmatic onBind approaches for defining linkedElems");
 
 	// =============================== Arrange ===============================
@@ -20665,7 +20658,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
+	assert.equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
 	"linkedCtxParam and linkedElem");
 
 	// =============================== Arrange ===============================
@@ -20698,7 +20691,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + person.first + "|" + person.last + "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
+	assert.equal(result, "Blow|Jo| Jo--updatedFirst,updatedLast|updatedLast|updatedFirst|updatedLast| updatedFirst",
 	"linkedCtxParam plus programmatic setting of linkedElem");
 
 	// =============================== Arrange ===============================
@@ -20738,7 +20731,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
 	// ............................... Assert .................................
-	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
+	assert.equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
 	"bindTo:1 with converters, using linkedElement with selector");
 
 	// =============================== Arrange ===============================
@@ -20775,7 +20768,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + person.last;
 
 	// ............................... Assert .................................
-	equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
+	assert.equal(result, "jo+|Blow--UPDATEDFIRST|UPDATEDFIRST|updatedfirst|Blow",
 	"linkedEl with converters (no bindTo), using linkedElement with selector");
 
 	// =============================== Arrange ===============================
@@ -20818,7 +20811,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.bndArgs() + "|" + linkedEl1.innerText + "," + linkedEl2.value + "|" + person.first + "," + person.last;
 
 	// ............................... Assert .................................
-	equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
+	assert.equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
 	"bindTo with converters, using linkedElement and linkedCtxParam");
 	
 	// =============================== Arrange ===============================
@@ -20884,7 +20877,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		&& linkedElWd.value === linkedCtxPrmWds[0].value && linkedElWd.value === linkedCtxPrmWds[1].value;
 
 	// ............................... Assert .................................
-	ok(result,
+	assert.ok(result,
 	"linkedElement and linkedCtxParam for unset params are initialized by getValue");
 
 	// ................................ Act ..................................
@@ -20898,7 +20891,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 
 	result += "|" + mytag.getValue();
 
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue");
 
 	// ................................ Act ..................................
@@ -20921,7 +20914,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|30,40",
+	assert.equal(result, "true|30,40",
 	"linkedElement and linkedCtxParam and tag.getValue() for static initial values initialize correctly");
 
 	// ................................ Act ..................................
@@ -20936,7 +20929,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value");
 
 	// ................................ Act ..................................
@@ -20949,7 +20942,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|140,160",
+	assert.equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValues(), mytag.updateValues()");
 
 	// ................................ Act ..................................
@@ -20975,7 +20968,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|30,40",
+	assert.equal(result, "true|30,40",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly");
 
 	// ................................ Act ..................................
@@ -20990,7 +20983,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value");
 
 	// ................................ Act ..................................
@@ -21005,7 +20998,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|50,70",
+	assert.equal(result, "true|50,70",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes");
 
 	// ................................ Act ..................................
@@ -21018,7 +21011,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|140,160",
+	assert.equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues()");
 
 	// ................................ Act ..................................
@@ -21050,7 +21043,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 		&& linkedElWd.value === "" + mytag.getValue()[1] && linkedElHt.value === "" + mytag.getValue()[0];
 
 	// ............................... Assert .................................
-	ok(result,
+	assert.ok(result,
 	"linkedElement and linkedCtxParam for unset params are initialized by getValue (with converters)");
 
 	// ................................ Act ..................................
@@ -21065,7 +21058,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue (with converters)");
 
 	// ................................ Act ..................................
@@ -21095,7 +21088,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|35,50",
+	assert.equal(result, "true|35,50",
 	"linkedElement and linkedCtxParam and tag.getValue() for static initial values initialize correctly (with converters)");
 
 	// ................................ Act ..................................
@@ -21110,7 +21103,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value which is the tag.setValue/getValue value (with converters)");
 
 	// ................................ Act ..................................
@@ -21124,7 +21117,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|140,160",
+	assert.equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), mytag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
@@ -21157,7 +21150,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|35,50",
+	assert.equal(result, "true|35,50",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly (with converters)");
 
 	// ................................ Act ..................................
@@ -21172,7 +21165,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value (with converters)");
 
 	// ................................ Act ..................................
@@ -21187,7 +21180,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|55,80",
+	assert.equal(result, "true|55,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (with converters)");
 
 	// ................................ Act ..................................
@@ -21201,7 +21194,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|140,160",
+	assert.equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
@@ -21234,7 +21227,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue()[1];
 
 	// ............................... Assert .................................
-	equal(result, "true|50",
+	assert.equal(result, "true|50",
 	"linkedElement and linkedCtxParam and tag.getValue() initialize correctly (One bindTo param bound, other uninitialized. With converters)");
 
 	// ................................ Act ..................................
@@ -21249,7 +21242,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,60",
+	assert.equal(result, "true|40,60",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value which is the tag.setValue/getValue value (One bindTo param bound, other uninitialized. With converters)");
 
 	// ................................ Act ..................................
@@ -21264,7 +21257,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|40,80",
+	assert.equal(result, "true|40,80",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value when external bindTo target value changes (One bindTo param bound, other uninitialized. With converters)");
 
 	// ................................ Act ..................................
@@ -21277,7 +21270,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	result += "|" + mytag.getValue();
 
 	// ............................... Assert .................................
-	equal(result, "true|140,160",
+	assert.equal(result, "true|140,160",
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues() (One bindTo param bound, other uninitialized. With converters)");
 
 	// =============================== Arrange ===============================
@@ -21325,7 +21318,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	}
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
 		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
 	"Two-way bound tag with multiple else blocks - initial render");
@@ -21334,7 +21327,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
 		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
 	"Two-way bound tag with multiple else blocks - observable update");
@@ -21348,7 +21341,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$(linkedElLast).change();
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
 		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
@@ -21361,7 +21354,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
 		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
@@ -21372,7 +21365,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
@@ -21385,7 +21378,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
@@ -21396,7 +21389,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
@@ -21404,7 +21397,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
+	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
 		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
 		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].contentView.nodes()[1]
 		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0]
@@ -21453,7 +21446,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag = $.view(linkedElFirst).tag;
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
 		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
 	"Two-way bound tag (using render method) with multiple else blocks - initial render");
@@ -21462,7 +21455,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
 		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
 	"Two-way bound tag (using render method) with multiple else blocks - observable update");
@@ -21476,7 +21469,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$(linkedElLast).change();
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
 		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
@@ -21489,7 +21482,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
 		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
@@ -21500,7 +21493,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|" 
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
@@ -21513,7 +21506,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
@@ -21524,7 +21517,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	equal(getResult(), isIE8
+	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
 		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
@@ -21532,7 +21525,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
+	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
 		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
 		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0],
 	"Two-way bound tag (using render method) with multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() tagCtx.childTags() work correctly");
@@ -21578,7 +21571,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	}
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow JoJo Blow|"
 		: "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow Jo Jo Blow|",
 	"Two-way tag with multiple bindings and multiple else blocks - initial render");
@@ -21587,7 +21580,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$.observable(person).setProperty({first: "Bob", last: "Smith"});
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith BobBobSmith|"
 		: "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith Bob Bob Smith|",
 	"Two-way tag with multiple bindings and multiple else blocks - observable update");
@@ -21600,7 +21593,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$(linkedElems1[1]).change();
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJonewJonewBlow|"
 		: "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJo newJo newBlow|",
 	"Two-way tag with multiple bindings and multiple else blocks - updated inputs");
@@ -21611,7 +21604,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValue("updatedFirst", 1, 1);
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
 		+ " Text: updatedFirst updatedLast updatedLast updatedFirstupdatedFirstupdatedLast|"
 		: "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
@@ -21623,7 +21616,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.updateValues("updatedFirst2", "updatedLast2");
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
 		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
@@ -21636,7 +21629,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValue("changedFirst", 1, 1);
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
 		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
@@ -21648,7 +21641,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.tagCtxs[1].setValues("changedLast2", "changedFirst2");
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
 		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
@@ -21660,7 +21653,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	mytag.setValues("changedFirst3", "changedLast3");
 
 	// ............................... Assert .................................
-	equal(getResult2(), isIE8
+	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|" 
 		: "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
@@ -21668,15 +21661,336 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	"Two-way tag with multiple bindings and multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
-	ok(mytag.contents("input")[3] === mytag.tagCtxs[1].contents("input")[1]
+	assert.ok(mytag.contents("input")[3] === mytag.tagCtxs[1].contents("input")[1]
 		&& mytag.nodes()[6] === mytag.tagCtxs[1].nodes()[1],
 	"Two-way tag with multiple bindings and multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() work correctly");
 
 	// ............................... Assert .................................
-	equal("" + mytag.cvtArgs() + "|" + mytag.tagCtxs[0].cvtArgs() + "|" + mytag.tagCtxs[1].cvtArgs()
+	assert.equal("" + mytag.cvtArgs() + "|" + mytag.tagCtxs[0].cvtArgs() + "|" + mytag.tagCtxs[1].cvtArgs()
 		+ "--" + mytag.bndArgs() + "|" + mytag.tagCtxs[0].bndArgs() + "|" + mytag.tagCtxs[1].bndArgs(),
 		"0,updatedLast2|0,updatedLast2|0,updatedFirst2--updatedFirst2,updatedLast2|updatedFirst2,updatedLast2|updatedLast2,updatedFirst2",
 	"Two-way tag with multiple bindings and multiple else blocks - calls to tag.cvtArgs(), tagCtx.cvtArgs() tag.bndArgs() tagCtx.bndArgs() work correctly");
+
+// ............................... Reset .................................
+
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	$("#result").html(
+	'<div id="page"></div>'
+	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
+	);
+
+	$.views.tags("namebox", {
+		setSize: true,
+		template: '<div><span>X</span> <input/></div>',
+		linkedElement: "input",
+		displayElement: "span",
+		mainElement: "div",
+		onBind: function(tagCtx) {
+			var tagCtx1 = this.tagCtxs[1];
+			logElems && logElems(this.linkedElems, this.linkedElem, this.mainElem, this.displayElem,
+				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem, 
+				tagCtx1.linkedElems, tagCtx1.mainElem, tagCtx1.displayElem);
+		}
+	});
+
+	ret = "";
+	data = {
+			first: "Jo",
+			last: "Blow"
+		};
+
+	// ................................ Act ..................................
+	var logElems = function(linkedElems, linkedElem, mainElem, displayElem, 
+		linkedElems0, mainElem0, displayElem0, 
+		linkedElems1, mainElem1, displayElem1 ) {
+		ret += "|" + (linkedElems === linkedElems0)
+		+ " " + (linkedElem === linkedElems[0])
+		+ " " + (mainElem === mainElem0)
+		+ " " + (displayElem === displayElem0)
+		+ " " + linkedElem[0].tagName + mainElem[0].tagName + displayElem[0].tagName
+	};
+
+	$.templates('<input data-link="first"/><input data-link="last"/>'
+	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
+	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
+		.link("#page", data);
+
+	$.link(true, ".top", data);
+
+	logElems = undefined;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "|true true true true INPUTDIVSPAN|true true true true INPUTDIVSPAN|true true true true INPUTDIVSPAN",
+	"Two-way tag: linkedElements|displayElement|mainElement settings lead to appropriate linkedElems|linkedElem|displayElem|mainElem values on tag and on tagCtx, in onBind()");
+
+	assert.ok($(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "DIV" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "DIV" && $("#id6")[0].tagName === "DIV" && !$("#id5")[0],
+	"Two-way tag: displayElement and mainElement settings lead to class and id assignment as expected on displayElem and mainElem");
+
+	// ................................ Act ..................................
+	var inputs = $("#result input");
+	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[0]).val("Pete").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[3]).val("Bains").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[4]).val("Bill").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+
+	$(inputs[7]).val("Banks").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "JoBlowJoBlowJoBlowJoBlow|JeffBlyeJeffBlyeJeffBlyeJeffBlye|PeteBlyePeteBlyePeteBlyePeteBlye|PeteBainsPeteBainsPeteBainsPeteBains|BillBainsBillBainsBillBainsBillBains|BillBanksBillBanksBillBanksBillBanks",
+	"Two-way tag: linkedElems 2-way binding is correct whether inline, data-linked, or top-level data-linked tag");
+
+	// =============================== Arrange ===============================
+
+	$("#result").html(
+	'<div id="page"></div>'
+	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
+	);
+
+	$.views.tags("namebox", {
+		onUpdate: false,
+		setSize: true,
+		template: '<div><span>X</span> <input/></div>',
+		linkedElement: "input",
+		displayElement: "span",
+		mainElement: "div",
+		onBind: function(tagCtx) {
+			var tagCtx1 = this.tagCtxs[1];
+			logElems && logElems(this.linkedElems, this.linkedElem, this.mainElem, this.displayElem,
+				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem, 
+				tagCtx1.linkedElems, tagCtx1.mainElem, tagCtx1.displayElem);
+		}
+	});
+
+	ret = "";
+	data = {
+			first: "Jo",
+			last: "Blow"
+		};
+
+	logElems = function(linkedElems, linkedElem, mainElem, displayElem, 
+		linkedElems0, mainElem0, displayElem0, 
+		linkedElems1, mainElem1, displayElem1 ) {
+		ret += "|" + (linkedElems === linkedElems0)
+		+ " " + (linkedElem === linkedElems[0])
+		+ " " + (mainElem === mainElem0)
+		+ " " + (displayElem === displayElem0)
+		+ " " + linkedElem[0].tagName + mainElem[0].tagName + displayElem[0].tagName
+	};
+
+	$.templates('<input data-link="first"/><input data-link="last"/>'
+	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
+	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
+		.link("#page", data);
+
+	$.link(true, ".top", data);
+
+	logElems = undefined;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "|true true true true INPUTDIVSPAN|true true true true INPUTDIVSPAN|true true true true INPUTDIVSPAN",
+	"Two-way tag (onUpdate false): linkedElements|displayElement|mainElement settings lead to appropriate linkedElems|linkedElem|displayElem|mainElem values on tag and on tagCtx, in onBind()");
+
+	assert.ok($(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "DIV" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "DIV" && $("#id6")[0].tagName === "DIV" && !$("#id5")[0],
+	"Two-way tag (onUpdate false): displayElement and mainElement settings lead to class and id assignment as expected on displayElem and mainElem");
+
+	// ................................ Act ..................................
+	inputs = $("#result input");
+	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[0]).val("Pete").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[3]).val("Bains").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[4]).val("Bill").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[7]).val("Banks").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "JoBlowJoBlowJoBlowJoBlow|JeffBlyeJeffBlyeJeffBlyeJeffBlye|PeteBlyePeteBlyePeteBlyePeteBlye|PeteBainsPeteBainsPeteBainsPeteBains|BillBainsBillBainsBillBainsBillBains|BillBanksBillBanksBillBanksBillBanks",
+	"Two-way tag (onUpdate false): linkedElems 2-way binding is correct whether inline, data-linked, or top-level data-linked tag");
+
+	// =============================== Arrange ===============================
+
+	$("#result").html(
+	'<div id="page"></div>'
+	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
+	);
+
+	$.views.tags("namebox", {
+		setSize: true,
+		template: '<div><span>X</span> <input/></div>',
+		onBind: function(tagCtx) {
+			this.tagCtxs[0].linkedElems=[this.tagCtxs[0].contents(true, "input")];
+			this.tagCtxs[0].displayElem=this.tagCtxs[0].contents(true, "span");
+			this.tagCtxs[0].mainElem=this.tagCtxs[0].contents(true, "div");
+			this.tagCtxs[1].linkedElems=[this.tagCtxs[1].contents(true, "input")];
+			this.tagCtxs[1].displayElem=this.tagCtxs[1].contents(true, "div");
+			this.tagCtxs[1].mainElem=this.tagCtxs[1].contents(true, "span");
+		}
+	});
+
+	ret = "";
+	data = {
+			first: "Jo",
+			last: "Blow"
+		};
+
+	$.templates('<input data-link="first"/><input data-link="last"/>'
+	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
+	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
+		.link("#page", data);
+
+	$.link(true, ".top", data);
+
+	// ............................... Assert .................................
+	assert.ok(	$(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "SPAN" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "SPAN" && $("#id5")[0].tagName === "DIV" && $("#id6")[0].tagName === "SPAN",
+	"Two-way tag: setting tagCtx.linkedElems|displayElem|mainElem in onBind lead to class and id assignment as expected on displayElem and mainElem");
+
+	// ................................ Act ..................................
+	inputs = $("#result input");
+	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[0]).val("Pete").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[3]).val("Bains").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[4]).val("Bill").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[7]).val("Banks").change();
+	inputs = $("#result input");
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "JoBlowJoBlowJoBlowJoBlow|JeffBlyeJeffBlyeJeffBlyeJeffBlye|PeteBlyePeteBlyePeteBlyePeteBlye|PeteBainsPeteBainsPeteBainsPeteBains|BillBainsBillBainsBillBainsBillBains|BillBanksBillBanksBillBanksBillBanks",
+	"Two-way tag: setting tagCtx.linkedElems|displayElem|mainElem in onBind lead to correct 2-way binding, whether inline, data-linked, or top-level data-linked tag");
+
+	// =============================== Arrange ===============================
+
+	$("#result").html(
+	'<div id="page"></div>'
+	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
+	);
+
+	$.views.tags("namebox", {
+		onUpdate: false,
+		setSize: true,
+		template: '<div><span>X</span> <input/></div>',
+		onBind: function(tagCtx) {
+			this.linkedElems=[this.tagCtxs[0].contents(true, "input")];
+	//  this.linkedElem=this.tagCtxs[0].contents(true, "input"); // also works
+			this.displayElem=this.tagCtxs[0].contents(true, "span");
+			this.mainElem=this.tagCtxs[0].contents(true, "div");
+
+			this.tagCtxs[1].linkedElems=[this.tagCtxs[1].contents(true, "input")];
+			this.tagCtxs[1].displayElem=this.tagCtxs[1].contents(true, "div");
+			this.tagCtxs[1].mainElem=this.tagCtxs[1].contents(true, "span");
+		}
+	});
+
+	ret = "";
+	data = {
+			first: "Jo",
+			last: "Blow"
+		};
+
+	$.templates('<input data-link="first"/><input data-link="last"/>'
+	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
+	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
+		.link("#page", data);
+
+	$.link(true, ".top", data);
+
+	// ............................... Assert .................................
+	assert.ok(	$(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "SPAN" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "SPAN" && $("#id5")[0].tagName === "DIV" && $("#id6")[0].tagName === "SPAN",
+	"Two-way tag: setting tag.linkedElem(s) and tagCtx|displayElem|mainElem in onBind lead to class and id assignment as expected on displayElem and mainElem");
+
+	// ................................ Act ..................................
+	inputs = $("#result input");
+	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[0]).val("Pete").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[3]).val("Bains").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[4]).val("Bill").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+	$(inputs[7]).val("Banks").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "JoBlowJoBlowJoBlowJoBlow|JeffBlyeJeffBlyeJeffBlyeJeffBlye|PeteBlyePeteBlyePeteBlyePeteBlye|PeteBainsPeteBainsPeteBainsPeteBains|BillBainsBillBainsBillBainsBillBains|BillBanksBillBanksBillBanksBillBanks",
+	"Two-way tag: setting tag.linkedElem(s) and tagCtx|displayElem|mainElem in onBind lead to correct 2-way binding, whether inline, data-linked, or top-level data-linked tag");
+
+	// =============================== Arrange ===============================
+
+	$.views.tags("namebox", {
+		onUpdate: false,
+		setSize: true,
+		onBind: function(tagCtx) {
+			this.linkedElems=[this.tagCtxs[0].contents(true, "input")];
+	//  this.linkedElem=this.tagCtxs[0].contents(true, "input"); // also works
+			this.displayElem=this.tagCtxs[0].contents(true, "span");
+			this.mainElem=this.tagCtxs[0].contents(true, "div");
+
+			this.tagCtxs[1].linkedElems=[this.tagCtxs[1].contents(true, "input")];
+			this.tagCtxs[1].displayElem=this.tagCtxs[1].contents(true, "div");
+			this.tagCtxs[1].mainElem=this.tagCtxs[1].contents(true, "span");
+		}
+	});
+
+	ret = "";
+	data = {
+			first: "Jo",
+			last: "Blow"
+		};
+
+	$.templates('<input data-link="first"/><input data-link="last"/>'
+	+ '{^{namebox first class="nm1" id="id1" width=66}}<div><span>X</span> <input/></div>{{else last width=24 class="nm2" id="id2" }}<div><span>X</span> <input/></div>{{/namebox}}')
+		.link("#result", data);
+
+	// ............................... Assert .................................
+	assert.ok(	$(".nm1").length === 1 && $(".nm2").length === 1 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "SPAN",
+	"Two-way tag, no template: setting tag.linkedElem(s) and tagCtx|displayElem|mainElem in onBind lead to class and id assignment as expected on displayElem and mainElem, within wrapped content");
+
+	// ................................ Act ..................................
+	inputs = $("#result input");
+	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+	$(inputs[0]).val("Pete").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+	$(inputs[1]).val("Bains").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+	$(inputs[2]).val("Jim").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+	$(inputs[3]).val("Banks").change();
+	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "JoBlowJoBlow|JeffBlyeJeffBlye|PeteBlyePeteBlye|PeteBainsPeteBains|JimBainsJimBains|JimBanksJimBanks",
+	"Two-way tag, no template: setting tag.linkedElem(s) and tagCtx|displayElem|mainElem in onBind lead to correct 2-way binding, on inputs in wrapped content");
 
 // ............................... Reset .................................
 
@@ -21709,7 +22023,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur-mod:cur",
+	assert.equal(ret, "cur-mod:cur",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): initial render");
 
 	// ................................ Act ..................................
@@ -21717,7 +22031,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod:cur2",
+	assert.equal(ret, "cur2-mod:cur2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
@@ -21725,7 +22039,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod2:cur2",
+	assert.equal(ret, "cur2-mod2:cur2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0):  bindTo binding does not update from data");
 
 	// ................................ Act ..................................
@@ -21734,7 +22048,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:set1",
+	assert.equal(ret, "cur2-set1:set1",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0):  bindTo binding updates to data -  bindFrom binding does not");
 
 	// ................................ Act ..................................
@@ -21742,7 +22056,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:setval",
+	assert.equal(ret, "cur2-set1:setval",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValue works");
 
 	// ................................ Act ..................................
@@ -21750,7 +22064,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:setval2",
+	assert.equal(ret, "cur2-set1:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValues works");
 
 	// ................................ Act ..................................
@@ -21758,7 +22072,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated1:setval2",
+	assert.equal(ret, "cur2-updated1:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): update() updates bindTo target");
 
 	// ................................ Act ..................................
@@ -21766,7 +22080,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated2:setval2",
+	assert.equal(ret, "cur2-updated2:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): update() updates bindTo target (variant)");
 
 // ............................... Reset .................................
@@ -21774,8 +22088,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var ret,
-		data = {current: "cur", modified: "mod"};
+
+	data = {current: "cur", modified: "mod"};
 
 	$.templates({
 		markup: '{^{mytag modified current/}}',
@@ -21800,7 +22114,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur-mod:cur",
+	assert.equal(ret, "cur-mod:cur",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): initial render");
 
 	// ................................ Act ..................................
@@ -21808,7 +22122,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod:cur2",
+	assert.equal(ret, "cur2-mod:cur2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
@@ -21816,7 +22130,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod2:cur2",
+	assert.equal(ret, "cur2-mod2:cur2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1):  bindTo binding does not update from data");
 
 	// ................................ Act ..................................
@@ -21825,7 +22139,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:set1",
+	assert.equal(ret, "cur2-set1:set1",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1):  bindTo binding updates to data -  bindFrom binding does not");
 
 	// ................................ Act ..................................
@@ -21833,7 +22147,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:setval",
+	assert.equal(ret, "cur2-set1:setval",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): setValue works");
 
 	// ................................ Act ..................................
@@ -21841,7 +22155,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:setval2",
+	assert.equal(ret, "cur2-set1:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): setValues works");
 
 	// ................................ Act ..................................
@@ -21849,7 +22163,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated1:setval2",
+	assert.equal(ret, "cur2-updated1:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target");
 
 	// ................................ Act ..................................
@@ -21857,7 +22171,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated2:setval2",
+	assert.equal(ret, "cur2-updated2:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target (variant)");
 
 // ............................... Reset .................................
@@ -21865,8 +22179,106 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var ret,
-		data = {current: "cur", modified: "mod"};
+
+	data = {current: "cur", modified: "mod"};
+
+	$.templates({
+		markup: '{^{mytag modified current convert=~cvt convertBack=~cvb/}}',
+		tags: {
+			mytag: {
+				onUpdate: false,
+				bindTo: 0,
+				bindFrom: 1,
+				linkedElement: "input",
+				linkedCtxParam: "fm",
+				template: "<input data-link='~fm'/>",
+				update: function(val) {
+					this.updateValue(val); // Update external data, through two-way binding
+				}
+			}
+		}
+	}).link("#result", data, {
+				cvt: function(val) {
+					return val;
+				},
+				cvb: function(val) {
+					return val;
+				}
+});
+
+	mytag = $.view().childTags()[0];
+	var linkedElem = mytag.tagCtx.contents("input")[0];
+
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur-mod:cur",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): initial render");
+
+	// ................................ Act ..................................
+	$.observable(data).setProperty({current: "cur2"});
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-mod:cur2",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): bindFrom binding updates from data");
+
+	// ................................ Act ..................................
+	$.observable(data).setProperty({modified: "mod2"});
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-mod2:cur2",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1):  bindTo binding does not update from data");
+
+	// ................................ Act ..................................
+	linkedElem.value = "set1";
+	$(linkedElem).change();
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-set1:set1",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1):  bindTo binding updates to data -  bindFrom binding does not");
+
+	// ................................ Act ..................................
+	mytag.setValue("setval", 0, 0);
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-set1:setval",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): setValue works");
+
+	// ................................ Act ..................................
+	mytag.setValues("setval2");
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-set1:setval2",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): setValues works");
+
+	// ................................ Act ..................................
+	mytag.update("updated1");
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-updated1:setval2",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target");
+
+	// ................................ Act ..................................
+	mytag.updateValue("updated2");
+	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
+
+	// ............................... Assert .................................
+	assert.equal(ret, "cur2-updated2:setval2",
+	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target (variant)");
+
+// ............................... Reset .................................
+
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	data = {current: "cur", modified: "mod"};
 
 	$.templates({
 		markup: '{^{mytag modified fm=current/}}',
@@ -21891,7 +22303,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur-mod:-cur",
+	assert.equal(ret, "cur-mod:-cur",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): initial render");
 
 	// ................................ Act ..................................
@@ -21899,7 +22311,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod:-cur2",
+	assert.equal(ret, "cur2-mod:-cur2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
@@ -21907,7 +22319,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod2:-cur2",
+	assert.equal(ret, "cur2-mod2:-cur2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0):  bindTo binding does not update from data");
 
 	// ................................ Act ..................................
@@ -21916,7 +22328,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:set1-cur2",
+	assert.equal(ret, "cur2-set1:set1-cur2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0):  bindTo binding updates to data -  bindFrom binding does not");
 
 	// ................................ Act ..................................
@@ -21924,7 +22336,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:set1-setval",
+	assert.equal(ret, "cur2-set1:set1-setval",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): setValue sets the bindFrom linkedPrm but not the bindTo linkedElem");
 
 	// ................................ Act ..................................
@@ -21932,7 +22344,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1:set1-setval2",
+	assert.equal(ret, "cur2-set1:set1-setval2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): setValues sets the bindFrom linkedPrm but not the bindTo linkedElem");
 
 	// ................................ Act ..................................
@@ -21940,7 +22352,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated1:set1-setval2",
+	assert.equal(ret, "cur2-updated1:set1-setval2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): update() updates bindTo target");
 
 	// ................................ Act ..................................
@@ -21948,7 +22360,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updated2:set1-setval2",
+	assert.equal(ret, "cur2-updated2:set1-setval2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): update() updates bindTo target (variant)");
 
 // ............................... Reset .................................
@@ -21956,8 +22368,8 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var ret,
-		data = {current: "cur", modified: "mod", two: 2, title: "Title"};
+
+	data = {current: "cur", modified: "mod", two: 2, title: "Title"};
 
 	$.templates({
 		markup: '{^{mytag modified 1 two fm=current title=title/}}',
@@ -21991,7 +22403,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur-mod:curFV0-2TV2",
+	assert.equal(ret, "cur-mod:curFV0-2TV2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: initial render");
 
 	// ................................ Act ..................................
@@ -21999,7 +22411,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod:cur2FV0-two2TV2",
+	assert.equal(ret, "cur2-mod:cur2FV0-two2TV2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: bindFrom binding updates from data");
 
 	// ................................ Act ..................................
@@ -22007,7 +22419,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-mod2:cur2FV0-two2TV2",
+	assert.equal(ret, "cur2-mod2:cur2FV0-two2TV2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack:  bindTo binding does not update from data");
 
 	// ................................ Act ..................................
@@ -22016,7 +22428,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1V:set1-two2TV2",
+	assert.equal(ret, "cur2-set1V:set1-two2TV2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack:  bindTo binding updates to data -  bindFrom binding does not");
 
 	// ................................ Act ..................................
@@ -22025,7 +22437,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1V:setvalV0-setval2V2",
+	assert.equal(ret, "cur2-set1V:setvalV0-setval2V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: setValue sets the bindFrom linkedPrm but not the bindTo linkedElem");
 
 	// ................................ Act ..................................
@@ -22033,7 +22445,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-set1V:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-set1V:setval3V0-setval5V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: setValues sets the bindFrom linkedPrm but not the bindTo linkedElem");
 
 	// ................................ Act ..................................
@@ -22042,7 +22454,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + "-" + data.title + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updatedMod2V-updatedTitle2O:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-updatedMod2V-updatedTitle2O:setval3V0-setval5V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: update() updates bindTo target (variant)");
 
 	// ................................ Act ..................................
@@ -22050,17 +22462,162 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	ret = data.current + "-" + data.modified + "-" + data.title + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	equal(ret, "cur2-updateMod3V-updateTitle3O:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-updateMod3V-updateTitle3O:setval3V0-setval5V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: update() updates bindTo target (variant)");
+
+// ............................... Reset .................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	data = {current1: "cur1", modified1: "mod1", current2: "cur2", modified2: "mod2"};
+	$.templates({
+		markup: "<input data-link='current1' class='fromCur1'/> <input data-link='modified1' class='toMod1'/><br/>"
+		+ "<input data-link='current2' class='fromCur2'/> <input data-link='modified2' class='toMod2'/><br/>"
+		+ "{^{mytag current1 modified1}}"
+		+ "{{else  current2 modified2 }}"
+		+ "{{/mytag}}",
+		tags: {
+			mytag: {
+				onUpdate: false,
+				bindTo: 1,
+				bindFrom: 0,
+				linkedElement: "input",
+				linkedCtxParam: "fm",
+				template: "<input class='linkedEl'/><input data-link='~fm' class='linkedPrm'/><br/>",
+				update: function(index, val) {
+					this.updateValue(val, 0, index);
+				},
+				set: function(index, val) {
+					this.tagCtxs[index].setValues(val);
+				},
+				convert: function(val) {
+					return val + "C";
+				},
+				convertBack: function(val) {
+					return val + "B";
+				}
+			}
+		}
+	}).link("#result", data);
+
+	mytag = $.view().childTags()[0];
+	var fromCur1 = $("#result .fromCur1")[0],
+		toMod1 = $("#result .toMod1")[0],
+		fromCur2 = $("#result .fromCur2")[0],
+		toMod2 = $("#result .toMod2")[0],
+		linkedEl1 = mytag.tagCtx.contents(".linkedEl")[0],
+		linkedPrm1 = mytag.tagCtx.contents(".linkedPrm")[0],
+		linkedEl2 = mytag.tagCtxs[1].contents(".linkedEl")[0],
+		linkedPrm2 = mytag.tagCtxs[1].contents(".linkedPrm")[0],
+		getRet = function() {
+			return fromCur1.value + "|" + toMod1.value + "|" + fromCur2.value + "|" + toMod2.value + "|"
+	 		+ linkedEl1.value + "|" + linkedPrm1.value + "|" + linkedEl2.value + "|" + linkedPrm2.value;
+		};
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "cur1|mod1|cur2|mod2||cur1C||cur2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): initial render");
+
+	// ................................ Act ..................................
+	fromCur1.value = "from1";
+	$(fromCur1).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|mod1|cur2|mod2||from1C||cur2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change from");
+
+	// ................................ Act ..................................
+	toMod1.value = "to1";
+	$(toMod1).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|to1|cur2|mod2||from1C||cur2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change to");
+
+	// ................................ Act ..................................
+	fromCur2.value = "from2";
+	$(fromCur2).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|to1|from2|mod2||from1C||from2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change from {{else}}");
+
+	// ................................ Act ..................................
+	toMod2.value = "to2";
+	$(toMod2).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|to1|from2|to2||from1C||from2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change to {{else}}");
+
+	// ................................ Act ..................................
+	linkedEl1.value = "el1";
+	$(linkedEl1).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|el1B|from2|to2|el1|from1C||from2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change linked");
+
+	// ................................ Act ..................................
+	linkedPrm1.value = "prm1";
+	$(linkedPrm1).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|el1B|from2|to2|el1|prm1||from2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change ctx prm");
+
+	// ................................ Act ..................................
+	linkedEl2.value = "el2";
+	$(linkedEl2).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|el1B|from2|el2B|el1|prm1|el2|from2C",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change linked {{else}}");
+
+	// ................................ Act ..................................
+	linkedPrm2.value = "prm2";
+	$(linkedPrm2).change();
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|el1B|from2|el2B|el1|prm1|el2|prm2",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): change ctx prm {{else}}");
+
+	// ................................ Act ..................................
+	mytag.update(0, "upd1");
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|upd1B|from2|el2B|el1|prm1|el2|prm2",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): updateValue");
+
+	// ................................ Act ..................................
+	mytag.update(1, "upd2");
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|upd1B|from2|upd2B|el1|prm1|el2|prm2",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): updateValue {{else}}");
+
+	// ................................ Act ..................................
+	mytag.set(0, "set1");
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|upd1B|from2|upd2B|el1|set1|el2|prm2",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValues");
+
+	// ................................ Act ..................................
+	mytag.set(1, "set2");
+
+	// ............................... Assert .................................
+	assert.equal(getRet(), "from1|upd1B|from2|upd2B|el1|set1|el2|set2",
+	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValues {{else}}");
 
 // ............................... Reset .................................
 
 	$("#result").empty();
-	$.views.settings
-		.trigger(true);
+	$.views.settings.trigger(true);
 });
 
-	test("Tag control events", function() {
+QUnit.test("Tag control events", function(assert) {
 
 	// =============================== Arrange ===============================
 	var eventData = "";
@@ -22130,25 +22687,25 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	}).link("#result", model);
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ", '{^{myWidget/}} - Events fire in order during rendering: render and onAfterLink');
+	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ", '{^{myWidget/}} - Events fire in order during rendering: render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
+	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(model.things).insert(0, {thing: "tree"});
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
+	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange onUnbind dispose ", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
+	assert.equal($("#result").text() + "|" + eventData, "|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange onUnbind dispose ", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
 
 	// ................................ Reset ................................
 	person1.lastName = "One";
@@ -22185,7 +22742,7 @@ test('Custom Tag Controls - two-way binding (multiple targets)', function() {
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	equal($("#result").text() + "|" + eventData, "|init onBind after ", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init and onAfterLink');
+	assert.equal($("#result").text() + "|" + eventData, "|init onBind after ", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init and onAfterLink');
 
 	$("#result").empty();
 

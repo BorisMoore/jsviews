@@ -1,4 +1,4 @@
-/*! JsObservable v0.9.91 (Beta): http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.0: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.91",
+var versionNumber = "v1.0.0",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -190,7 +190,7 @@ if (!$.observe) {
 				ctx = ev.data,
 				observeAll = ctx.observeAll,
 				cb = ctx.cb,
-				noArray = ctx.arOk ? 0 : 1,
+				noArray = ctx._arOk ? 0 : 1,
 				paths = ctx.paths,
 				ns = ctx.ns;
 
@@ -397,7 +397,7 @@ if (!$.observe) {
 							fullPath: fullPath,
 							paths: pathStr ? [pathStr] : [],
 							prop: prop,
-							arOk: allowArray
+							_arOk: allowArray
 						};
 					evData.ns = initialNs;
 					evData.cb = cb;

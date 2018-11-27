@@ -13,9 +13,9 @@ function undefine() { // Undefine registered modules from previously run tests.
 
 if (!window.attachEvent || window.addEventListener) { // Running RequireJS in qunit async test seems to fail in IE8
 
-module("AMD Script Loader");
+QUnit.module("AMD Script Loader");
 
-test("Loading jquery.observable.js using RequireJS", function(assert) {
+QUnit.test("Loading jquery.observable.js using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -27,13 +27,13 @@ test("Loading jquery.observable.js using RequireJS", function(assert) {
 			$.observable(data).setProperty("name", "Jo updated!");
 
 			var result = data.name + " " + (jq !== $ && $ === window.jQuery);
-			equal(result, "Jo updated! true", "jsviews.js loaded");
+			assert.equal(result, "Jo updated! true", "jsviews.js loaded");
 			done();
 		});
 	});
 });
 
-test("Loading jquery.views.js, plus dependencies, using RequireJS", function(assert) {
+QUnit.test("Loading jquery.views.js, plus dependencies, using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -46,13 +46,13 @@ test("Loading jquery.views.js, plus dependencies, using RequireJS", function(ass
 			$.observable(data).setProperty("name", "Jo updated!");
 
 			var result = $("#result").text() + " " + (jq !== $ && $ === window.jQuery);
-			equal(result, "Name: Jo updated! true", "jquery.views.js loaded");
+			assert.equal(result, "Name: Jo updated! true", "jquery.views.js loaded");
 			done();
 		});
 	});
 });
 
-test("Loading jsviews.js using RequireJS", function(assert) {
+QUnit.test("Loading jsviews.js using RequireJS", function(assert) {
 	var done = assert.async(),
 		jq = window.jQuery;
 	undefine();
@@ -65,7 +65,7 @@ test("Loading jsviews.js using RequireJS", function(assert) {
 			$.observable(data).setProperty("name", "Jo updated!");
 
 			var result = $("#result").text() + " " + (jq !== $ && $ === window.jQuery);
-			equal(result, "Name: Jo updated! true", "jsviews.js loaded");
+			assert.equal(result, "Name: Jo updated! true", "jsviews.js loaded");
 			done();
 		});
 	});

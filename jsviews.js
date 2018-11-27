@@ -1,4 +1,4 @@
-/*! jsviews.js v0.9.91 (Beta) single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.0 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v0.9.91",
+var versionNumber = "v1.0.0",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
@@ -133,7 +133,7 @@ var versionNumber = "v0.9.91",
 				template: function(name, item) {
 					if (item === null) {
 						delete $render[name];
-					} else {
+					} else if (name) {
 						$render[name] = item;
 					}
 				}
@@ -257,22 +257,40 @@ function $extend(target, source) {
 // views.delimiters
 //===================
 
+	/**
+	* Set the tag opening and closing delimiters and 'link' character. Default is "{{", "}}" and "^"
+	* openChars, closeChars: opening and closing strings, each with two characters
+	* $.views.settings.delimiters(...)
+	*
+	* @param {string}   openChars
+	* @param {string}   [closeChars]
+	* @param {string}   [link]
+	* @returns {Settings}
+	*
+	* Get delimiters
+	* delimsArray = $.views.settings.delimiters()
+	*
+	* @returns {string[]}
+	*/
 function $viewsDelimiters(openChars, closeChars, link) {
-	// Set the tag opening and closing delimiters and 'link' character. Default is "{{", "}}" and "^"
-	// openChars, closeChars: opening and closing strings, each with two characters
 	if (!openChars) {
 		return $subSettings.delimiters;
 	}
 	if ($isArray(openChars)) {
 		return $viewsDelimiters.apply($views, openChars);
 	}
+	linkChar = link ? link[0] : linkChar;
+	if (!/^(\W|_){5}$/.test(openChars + closeChars + linkChar)) {
+		error("Invalid delimiters"); // Must be non-word characters, and openChars and closeChars must each be length 2
+	}
+	delimOpenChar0 = openChars[0];
+	delimOpenChar1 = openChars[1];
+	delimCloseChar0 = closeChars[0];
+	delimCloseChar1 = closeChars[1];
 
-	$subSettings.delimiters = [openChars, closeChars, linkChar = link ? link.charAt(0) : linkChar];
+	$subSettings.delimiters = [delimOpenChar0 + delimOpenChar1, delimCloseChar0 + delimCloseChar1, linkChar];
 
-	delimOpenChar0 = openChars.charAt(0); // Escape the characters - since they could be regex special characters
-	delimOpenChar1 = openChars.charAt(1);
-	delimCloseChar0 = closeChars.charAt(0);
-	delimCloseChar1 = closeChars.charAt(1);
+	// Escape the characters - since they could be regex special characters
 	openChars = "\\" + delimOpenChar0 + "(\\" + linkChar + ")?\\" + delimOpenChar1; // Default is "{^{"
 	closeChars = "\\" + delimCloseChar0 + "\\" + delimCloseChar1;                   // Default is "}}"
 	// Build regex with new delimiters
@@ -307,8 +325,8 @@ function getView(inner, type) { //view.get(inner, type)
 
 	var views, i, l, found,
 		view = this,
-		root = !type || type === "root";
-		// If type is undefined, returns root view (view under top view).
+		root = type === "root";
+		// view.get("root") returns view.root, view.get() returns view.parent, view.get(true) returns view.views[0].
 
 	if (inner) {
 		// Go through views - this one, and all nested ones, depth-first - and return first one with given type.
@@ -331,14 +349,16 @@ function getView(inner, type) { //view.get(inner, type)
 	} else if (root) {
 		// Find root view. (view whose parent is top view)
 		found = view.root;
-	} else {
+	} else if (type) {
 		while (view && !found) {
 			// Go through views - this one, and all parent ones - and return first one with given type.
 			found = view.type === type ? view : undefined;
 			view = view.parent;
 		}
+	} else {
+		found = view.parent;
 	}
-	return found;
+	return found || undefined;
 }
 
 function getNestedIndex() {
@@ -356,11 +376,13 @@ function getIndex() {
 
 getIndex.depends = "index";
 
-//==========
-// View.hlp
-//==========
+//==================
+// View.ctxPrm, etc.
+//==================
 
-function getPathObject(ob, path, ltOb, fn) { // Iterate through path to late paths: @a.b.c paths
+/* Internal private: view._getOb() */
+function getPathObject(ob, path, ltOb, fn) {
+	// Iterate through path to late paths: @a.b.c paths
 	// Return "" (or noop if leaf is a function @a.b.c(...) ) if intermediate object not yet available
 	var prevOb, tokens, l,
 		i = 0;
@@ -394,7 +416,6 @@ function contextParameter(key, value, get) {
 		storeView = this,
 		isUpdate = !isRenderCall && arguments.length > 1,
 		store = storeView.ctx;
-
 	if (key) {
 		if (!storeView._) { // tagCtx.ctxPrm() call
 			tagElse = storeView.index;
@@ -409,7 +430,7 @@ function contextParameter(key, value, get) {
 		} else {
 			store = undefined;
 		}
-		if (storeView.tagCtx || storeView.linked) { // Data-linked view, or tag instance
+		if (!isRenderCall && storeView.tagCtx || storeView.linked) { // Data-linked view, or tag instance
 			if (!res || !res._cxp) {
 				// Not a contextual parameter
 				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view ("data" view of linked template)
@@ -455,7 +476,7 @@ function contextParameter(key, value, get) {
 				tagElse = obsCtxPrm.tagElse;
 				newRes = res[1] // linkFn for compiled expression
 					? obsCtxPrm.tag && obsCtxPrm.tag.cvtArgs
-						? obsCtxPrm.tag.cvtArgs(1, tagElse)[obsCtxPrm.ind] // = tag.bndArgs() - for tag contextual parameter
+						? obsCtxPrm.tag.cvtArgs(tagElse, 1)[obsCtxPrm.ind] // = tag.bndArgs() - for tag contextual parameter
 						: res[1](res[0].data, res[0], $sub)    // = fn(data, view, $sub) for compiled binding expression
 					: res[0]._ocp; // Observable contextual parameter (uninitialized, or initialized as static expression, so no path dependencies)
 				if (isUpdate) {
@@ -482,6 +503,7 @@ function contextParameter(key, value, get) {
 	}
 }
 
+/* Internal private: view._getTmpl() */
 function getTemplate(tmpl) {
 	return tmpl && (tmpl.fn
 		? tmpl
@@ -498,7 +520,7 @@ function convertVal(converter, view, tagCtx, onError) {
 	var tag, value, argsLen, bindTo,
 		// If tagCtx is an integer, then it is the key for the compiled function to return the boundTag tagCtx
 		boundTag = typeof tagCtx === "number" && view.tmpl.bnds[tagCtx-1],
-		linkCtx = view.linkCtx; // For data-link="{cvt:...}"...
+		linkCtx = view._lc; // For data-link="{cvt:...}"...
 
 	if (onError === undefined && boundTag && boundTag._lr) { // lateRender
 		onError = "";
@@ -557,13 +579,16 @@ function convertVal(converter, view, tagCtx, onError) {
 	return value != undefined ? value : "";
 }
 
-function convertArgs(bound, tagElse) { // tag.cvtArgs() or tag.cvtArgs(trueOrFalse, tagElse)
+function convertArgs(tagElse, bound) { // tag.cvtArgs() or tag.cvtArgs(tagElse?, true?)
 	var l, key, boundArgs, args, bindFrom, tag, converter,
 		tagCtx = this;
 
 	if (tagCtx.tagName) {
 		tag = tagCtx;
-		tagCtx = tag.tagCtxs ? tag.tagCtxs[tagElse || 0] : tag.tagCtx;
+		tagCtx = (tag.tagCtxs || [tagCtx])[tagElse||0];
+		if (!tagCtx) {
+			return;
+		}
 	} else {
 		tag = tagCtx.tag;
 	}
@@ -623,13 +648,14 @@ function argOrProp(context, key) {
 }
 
 function convertBoundArgs(tagElse) { // tag.bndArgs()
-	return this.cvtArgs(1, tagElse);
+	return this.cvtArgs(tagElse, 1);
 }
 
 //=============
-// views._tag
+// views.tag
 //=============
 
+/* view.getRsc() */
 function getResource(resourceType, itemName) {
 	var res, store,
 		view = this;
@@ -666,7 +692,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		content, callInit, mapDef, thisMap, args, bdArgs, props, tagDataMap, contentCtx, key, bindFromLength, bindToLength, linkedElement, defaultCtx,
 		i = 0,
 		ret = "",
-		linkCtx = parentView.linkCtx || 0,
+		linkCtx = parentView._lc || false,
 		ctx = parentView.ctx,
 		parentTmpl = tmpl || parentView.tmpl,
 		// If tagCtxs is an integer, then it is the key for the compiled function to return the boundTag tagCtxs
@@ -711,7 +737,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 		}
 		if (tmpl = tagCtx.props.tmpl) {
 			// If the tmpl property is overridden, set the value (when initializing, or, in case of binding: ^tmpl=..., when updating)
-			tagCtx.tmpl = parentView.getTmpl(tmpl);
+			tagCtx.tmpl = parentView._getTmpl(tmpl);
 			tagCtx.content = tagCtx.content || tagCtx.tmpl;
 		}
 
@@ -729,8 +755,8 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			if (linkCtx) {
 				tag.inline = false;
 				linkCtx.tag = tag;
-				tag.linkCtx = linkCtx;
 			}
+			tag.linkCtx = linkCtx;
 			if (tag._.bnd = boundTag || linkCtx.fn) {
 				// Bound if {^{tag...}} or data-link="{tag...}"
 				tag._.ths = tagCtx.params.props.this; // Tag has a this=expr binding, to get javascript reference to tag instance
@@ -836,9 +862,9 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 				attr = tag.attr;
 				tag._.noVws = attr && attr !== HTML;
 			}
-			args = tag.cvtArgs(undefined, i);
+			args = tag.cvtArgs(i);
 			if (tag.linkedCtxParam) {
-				bdArgs = tag.cvtArgs(1, i);
+				bdArgs = tag.cvtArgs(i, 1);
 				m = bindFromLength;
 				defaultCtx = tag.constructor.prototype.ctx;
 				while (m--) {
@@ -894,8 +920,11 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 				}
 				itemRet = tagCtx.render(contentCtx, true) || (isUpdate ? undefined : "");
 			}
-			// No return value from render, and no template/content tagCtx.render(...), so return undefined
-			ret = ret ? ret + (itemRet || "") : itemRet; // If no rendered content, this will be undefined
+			ret = ret
+				? ret + (itemRet || "")
+				: itemRet !== undefined
+					? "" + itemRet
+					: undefined; // If no return value from render, and no template/content tagCtx.render(...), return undefined
 		}
 		tag.rendering = tag.rendering.rndr; // Remove tag.rendering object (if this is outermost render call. (In case of nested calls)
 	}
@@ -969,10 +998,10 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 View.prototype = {
 	get: getView,
 	getIndex: getIndex,
-	getRsc: getResource,
-	getTmpl: getTemplate,
 	ctxPrm: contextParameter,
-	getOb: getPathObject,
+	getRsc: getResource,
+	_getTmpl: getTemplate,
+	_getOb: getPathObject,
 	_is: "view"
 };
 
@@ -1271,7 +1300,7 @@ function compileViewModel(name, type) {
 				arr.push(ob);
 			});
 
-			ob = this.apply(this, arr); // Insantiate this View Model, passing getters args array to constructor
+			ob = this.apply(this, arr); // Instantiate this View Model, passing getters args array to constructor
 			for (prop in data) { // Copy over any other properties. that are not get/set properties
 				if (prop !== $expando && !getterNames[prop]) {
 					ob[prop] = data[prop];
@@ -1444,14 +1473,27 @@ function tmplObject(markup, options) {
 // registerStore
 //==============
 
+/**
+* Internal. Register a store type (used for template, tags, helpers, converters)
+*/
 function registerStore(storeName, storeSettings) {
 
+/**
+* Generic store() function to register item, named item, or hash of items
+* Also used as hash to store the registered items
+* Used as implementation of $.templates(), $.views.templates(), $.views.tags(), $.views.helpers() and $.views.converters()
+*
+* @param {string|hash} name         name - or selector, in case of $.templates(). Or hash of items
+* @param {any}         [item]       (e.g. markup for named template)
+* @param {template}    [parentTmpl] For item being registered as private resource of template
+* @returns {any|$.views} item, e.g. compiled template - or $.views in case of registering hash of items
+*/
 	function theStore(name, item, parentTmpl) {
 		// The store is also the function used to add items to the store. e.g. $.templates, or $.views.tags
 
 		// For store of name 'thing', Call as:
 		//    $.views.things(items[, parentTmpl]),
-		// or $.views.things(name, item[, parentTmpl])
+		// or $.views.things(name[, item, parentTmpl])
 
 		var compile, itemName, thisStore, cnt,
 			onStore = $sub.onStore[storeName];
@@ -1508,6 +1550,15 @@ function registerStore(storeName, storeSettings) {
 	$views[storeNames] = theStore;
 }
 
+/**
+* Add settings such as:
+* $.views.settings.allowCode(true)
+* @param {boolean}  value
+* @returns {Settings}
+*
+* allowCode = $.views.settings.allowCode()
+* @returns {boolean}
+*/
 function addSetting(st) {
 	$viewsSettings[st] = function(value) {
 		return arguments.length
@@ -1547,6 +1598,17 @@ function dataMap(mapDef) {
 // renderContent
 //==============
 
+/** Render the template as a string, using the specified data and helpers/context
+* $("#tmpl").render(), tmpl.render(), tagCtx.render(), $.render.namedTmpl()
+*
+* @param {any}        data
+* @param {hash}       [context]           helpers or context
+* @param {boolean}    [noIteration]
+* @param {View}       [parentView]        internal
+* @param {string}     [key]               internal
+* @param {function}   [onRender]          internal
+* @returns {string}   rendered template   internal
+*/
 function renderContent(data, context, noIteration, parentView, key, onRender) {
 	var i, l, tag, tmpl, tagCtx, isTopRenderCall, prevData, prevIndex,
 		view = parentView,
@@ -1563,7 +1625,7 @@ function renderContent(data, context, noIteration, parentView, key, onRender) {
 		// This is a call from renderTag or tagCtx.render(...)
 		tagCtx = this;
 		view = view || tagCtx.view;
-		tmpl = view.getTmpl(tag.template || tagCtx.tmpl);
+		tmpl = view._getTmpl(tag.template || tagCtx.tmpl);
 		if (!arguments.length) {
 			data = tag.contentCtx && $isFunction(tag.contentCtx)
 				? data = tag.contentCtx(data)
@@ -1666,7 +1728,7 @@ function renderWithViews(tmpl, data, context, noIteration, view, key, onRender, 
 			context.link = false;
 		}
 		if (itemVar = tagCtx.props.itemVar) {
-			if (itemVar.charAt(0) !== "~") {
+			if (itemVar[0] !== "~") {
 				syntaxError("Use itemVar='~myItem'");
 			}
 			itemVar = itemVar.slice(1);
@@ -1767,7 +1829,7 @@ function onRenderError(e, view, fallback) {
 		message = fallback; // There is a settings.debugMode(handler) onError override. Call it, and use return value (if any) to replace message
 	}
 
-	return view && !view.linkCtx ? $converters.html(message) : message;
+	return view && !view._lc ? $converters.html(message) : message;
 }
 
 function error(message) {
@@ -1889,7 +1951,7 @@ function tmplFn(markup, tmpl, isLinkExpr, convertBack, hasElse) {
 							keyValue = "undefined"; // this=some.path is always a to parameter (one-way), so don't need to compile/evaluate some.path initialization
 						}
 						if (param) {
-							isLateOb = isLateOb || param.charAt(0) === "@";
+							isLateOb = isLateOb || param[0] === "@";
 						}
 						key = "'" + keyToken + "':";
 						if (arg) {
@@ -2047,7 +2109,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 					syntaxError(allPath);
 				}
 				if (!subPath) {
-					allPath = (late // late path @a.b.c: not throw on 'property of undefined' if a undefined, and will use getOb() after linking to resolve late.
+					allPath = (late // late path @a.b.c: not throw on 'property of undefined' if a undefined, and will use _getOb() after linking to resolve late.
 							? (isLinkExpr ? '' : '(ltOb.lt=ltOb.lt||') + '(ob='
 							: ""
 						)
@@ -2057,7 +2119,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 								? "view"
 								: "data")
 						+ (late
-							? ')===undefined' + (isLinkExpr ? '' : ')') + '?"":view.getOb(ob,"'
+							? ')===undefined' + (isLinkExpr ? '' : ')') + '?"":view._getOb(ob,"'
 							: ""
 						)
 						+ (leafToken
@@ -2089,7 +2151,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 								path = "^" + path.slice(1);
 							}
 							theOb.sb = path;
-							theOb.bnd = theOb.bnd || path.charAt(0) === "^";
+							theOb.bnd = theOb.bnd || path[0] === "^";
 						}
 					} else {
 						binds.push(path);
@@ -2108,7 +2170,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 		lftPrn = lftPrn || lftPrn0 || lftPrn2;
 		path = path || path2;
 
-		if (late && (late = !/\)|]/.test(full.charAt(index-1)))) {
+		if (late && (late = !/\)|]/.test(full[index-1]))) {
 			path = path.slice(1).split(".").join("^"); // Late path @z.b.c. Use "^" rather than "." to ensure that deep binding will be used
 		}
 		// Could do this - but not worth perf cost?? :-
@@ -2229,7 +2291,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 		pathStart = {}, // tracks the start of the current path such as c^d() in the above example
 		result;
 
-	if (params.charAt(0) === "@") {
+	if (params[0] === "@") {
 		params = params.replace(rBracketQuote, ".");
 	}
 	result = (params + (tmpl ? " " : "")).replace(rParams, parseTokens);
@@ -2366,8 +2428,8 @@ function buildCode(ast, tmpl, isLinkExpr) {
 							: (getsVal = true, "((v=" + params[0] + ')!=null?v:' + (isLinkExpr ? 'null)' : '"")'))
 							// Non strict equality so data-link="title{:expr}" with expr=null/undefined removes title attribute
 					)
-					: (hasTag = true, "\n{view:view,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
-						+ (content ? nestedTmpls.length : "0") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
+					: (hasTag = true, "\n{view:view,content:false,tmpl:" // Add this tagCtx to the compiled code for the tagCtxs to be passed to renderTag()
+						+ (content ? nestedTmpls.length : "false") + "," // For block tags, pass in the key (nestedTmpls.length) to the nested content template
 						+ tagCtx + "},"));
 
 				if (tagAndElses && !nextIsElse) {
@@ -2548,6 +2610,14 @@ function getTargetSorted(value, tagCtx) {
 	return value;
 }
 
+/** Render the template as a string, using the specified data and helpers/context
+* $("#tmpl").render()
+*
+* @param {any}        data
+* @param {hash}       [helpersOrContext]
+* @param {boolean}    [noIteration]
+* @returns {string}   rendered template
+*/
 function $fnRender(data, context, noIteration) {
 	var tmplElem = this.jquery && (this[0] || error('Unknown template')), // Targeted element not found for jQuery template selector such as "#myTmpl"
 		tmpl = tmplElem.getAttribute(tmplAttr);
@@ -2670,6 +2740,14 @@ if (!(jsr || $ && $.render)) {
 		addSetting(setting);
 	}
 
+	/**
+	* $.views.settings.debugMode(true)
+	* @param {boolean}  debugMode
+	* @returns {Settings}
+	*
+	* debugMode = $.views.settings.debugMode()
+	* @returns {boolean}
+	*/
 	($viewsSettings.debugMode = function(debugMode) {
 		return debugMode === undefined
 			? $subSettings.debugMode
@@ -2811,7 +2889,7 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsObservable >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsObservable:
- * See http://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
+ * See https://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
  * Copyright 2018, Boris Moore
  * Released under the MIT License.
  */
@@ -2930,7 +3008,7 @@ if (!$.observe) {
 				ctx = ev.data,
 				observeAll = ctx.observeAll,
 				cb = ctx.cb,
-				noArray = ctx.arOk ? 0 : 1,
+				noArray = ctx._arOk ? 0 : 1,
 				paths = ctx.paths,
 				ns = ctx.ns;
 
@@ -3137,7 +3215,7 @@ if (!$.observe) {
 							fullPath: fullPath,
 							paths: pathStr ? [pathStr] : [],
 							prop: prop,
-							arOk: allowArray
+							_arOk: allowArray
 						};
 					evData.ns = initialNs;
 					evData.cb = cb;
@@ -3980,7 +4058,7 @@ if (!$.observe) {
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsViews >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsViews:
  * Interactive data-driven views using templates and data-linking.
- * See http://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
+ * See https://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
  * Copyright 2018, Boris Moore
  * Released under the MIT License.
  */
@@ -4131,8 +4209,8 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 		}
 
 		// Set linkCtx on view, dynamically, just during this handler call
-		oldLinkCtx = view.linkCtx;
-		view.linkCtx = linkCtx;
+		oldLinkCtx = view._lc;
+		view._lc = linkCtx;
 		l = tos.length;
 		while (l--) {
 			if (to = tos[l]) {
@@ -4180,7 +4258,7 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 				}
 			}
 		}
-		view.linkCtx = oldLinkCtx;
+		view._lc = oldLinkCtx;
 	}
 	if (tag) {
 		tag._.chg = undefined; // Clear marker
@@ -4214,7 +4292,7 @@ function onElemChange(ev) {
 
 function onDataLinkedTagChange(ev, eventArgs) {
 	// Update or initial rendering of any tag (including {{:}}) whether inline or data-linked element.
-	var attr, sourceValue, noUpdate, forceUpdate, hasError, onError, bindEarly,
+	var attr, sourceValue, noUpdate, forceUpdate, hasError, onError, bindEarly, tagCtx, l,
 		linkCtx = this,
 		linkFn = linkCtx.fn,
 		tag = linkCtx.tag,
@@ -4223,11 +4301,11 @@ function onDataLinkedTagChange(ev, eventArgs) {
 		cvt = linkCtx.convert,
 		parentElem = target.parentNode,
 		view = linkCtx.view,
-		oldLinkCtx = view.linkCtx,
+		oldLinkCtx = view._lc,
 		onEvent = eventArgs && changeHandler(view, onBeforeChangeStr, tag);
 
 	// Set linkCtx on view, dynamically, just during this handler call
-	view.linkCtx = linkCtx;
+	view._lc = linkCtx;
 	if (parentElem && (!onEvent || onEvent.call(tag || linkCtx, ev, eventArgs) !== false)
 			// If data changed, the ev.data is set to be the path. Use that to filter the handler action...
 			&& (!eventArgs || ev.data.prop === "*" || ev.data.prop === eventArgs.path)) {
@@ -4278,7 +4356,7 @@ function onDataLinkedTagChange(ev, eventArgs) {
 						// from the sourceValue (which may optionally have been modifed in onUpdate()...) and then bind, and we are done
 						observeAndBind(linkCtx, source, target);
 					}
-					view.linkCtx = oldLinkCtx;
+					view._lc = oldLinkCtx;
 					if (eventArgs && (onEvent = changeHandler(view, onAfterChangeStr, tag))) {
 						onEvent.call(tag || linkCtx, ev, eventArgs);
 					}
@@ -4290,6 +4368,13 @@ function onDataLinkedTagChange(ev, eventArgs) {
 
 				if (tag.onUnbind) {
 					tag.onUnbind(tag.tagCtx, linkCtx, tag.ctx, ev, eventArgs);
+				}
+
+				tag.linkedElems = tag.linkedElem = tag.mainElem = tag.displayElem = undefined;
+				l = tag.tagCtxs.length;
+				while (l--) {
+					tagCtx = tag.tagCtxs[l];
+					tagCtx.linkedElems = tagCtx.mainElem = tagCtx.displayElem = undefined;
 				}
 
 				sourceValue = tag.tagName === ":" // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
@@ -4334,7 +4419,7 @@ function onDataLinkedTagChange(ev, eventArgs) {
 			onEvent.call(tag || linkCtx, ev, eventArgs);
 		}
 		// Remove dynamically added linkCtx from view
-		view.linkCtx = oldLinkCtx;
+		view._lc = oldLinkCtx;
 	}
 }
 
@@ -4356,7 +4441,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 		$target = $(target),
 		view = linkCtx.view,
 		targetVal = linkCtx._val,
-		oldLinkCtx = view.linkCtx,
+		oldLinkCtx = view._lc,
 		change = tag;
 
 	if (tag) {
@@ -4446,7 +4531,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 		if (setter = fnSetters[attr]) {
 			if (attr === HTML) {
 				// Set linkCtx on view, dynamically, just during this handler call
-				view.linkCtx = linkCtx;
+				view._lc = linkCtx;
 				if (tag && tag.inline) {
 					nodesToRemove = tag.nodes(true);
 					if (tag._elCnt) {
@@ -4496,7 +4581,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 					}
 				}
 				// Remove dynamically added linkCtx and ctx from view
-				view.linkCtx = oldLinkCtx;
+				view._lc = oldLinkCtx;
 			} else {
 				if (change = change || targetVal !== sourceValue) {
 					if (attr === "text" && target.children && !target.children[0]) {
@@ -4897,7 +4982,7 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 			}
 			if ("" + tmplOrLinkExpr === tmplOrLinkExpr) {
 				// tmplOrLinkExpr is a string: treat as data-link expression.
-				addDataBinding(late = [], tmplOrLinkExpr, targetEl, parentView, undefined, true, from, context);
+				addDataBinding(late = [], tmplOrLinkExpr, targetEl, parentView, undefined, "expr", from, context);
 			} else {
 				if (tmplOrLinkExpr.markup !== undefined) {
 					// This is a call to template.link()
@@ -4924,7 +5009,7 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 					}
 				} else if (tmplOrLinkExpr === true && parentView === topView) {
 					// $.link(true, selector, data, ctx) - where selector points to elem in top-level content. (If not top-level content, no-op)
-					refresh = {lnk: 1};
+					refresh = {lnk: "top"};
 				} else {
 					break; // no-op - $.link(true, selector, data, ctx) targeting within previously linked rendered template
 				}
@@ -4991,7 +5076,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 			inTag = 0;
 			return all;
 		}
-		tag = tag1 || tag2 || "";
+		tag = (tag1 || tag2 || "").toLowerCase();
 		closeTag = closeTag || closeTag2;
 		selfClose = selfClose || selfClose2;
 		if (isVoid && !selfClose && (!all || closeTag || tag || id && !inTag)) { // !all = end of string
@@ -5000,6 +5085,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 		}
 		closeTag = closeTag || selfClose;
 		if (closeTag) {
+			closeTag = closeTag.toLowerCase();
 			inTag = 0;
 			isVoid = undefined;
 			// TODO: smart insertion of <tbody> - to be completed for robust insertion of deferred bindings etc.
@@ -5615,13 +5701,12 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 				tagExpr += delimCloseChar1 + delimOpenChar0 + delimOpenChar1 + "/" + tokens[4] + delimCloseChar0;
 			}
 			linkCtx = {
-				type: isLink ? "top" : "link",
+				type: isLink || "link",
 				data: data, // source
 				elem: node, // target
 				view: currentView,
 				ctx: context,
 				attr: attr,
-				isLk: isLink, // top-level linking?
 				_toLk : 1, // Flag to data-link on initial data-link call rendering call
 				_noUpd : tokens[2] // Flag for data-link="^{...}" so on initial data-link call will bind, but not render)
 			};
@@ -5663,8 +5748,9 @@ function bindDataLinkTarget(linkCtx, late) {
 		onDataLinkedTagChange.call(linkCtx, ev, eventArgs);
 		// If the link expression uses a custom tag, the onDataLinkedTagChange call will call renderTag, which will set tagCtx on linkCtx
 	}
-	var view;
-	if (linkCtx.isLk) {
+	var view,
+		linkCtxType = linkCtx.type;
+	if (linkCtxType === "top" || linkCtxType === "expr") {
 		// Top-level linking: .link(expressionOrTrue, data, context) - so we need to create a view for the linking, with the data and ctx
 		// which may be different than the current context of the target. Note that this view is not a standard data-linked view, so it will
 		// be disposed only when its parent view is disposed.
@@ -5675,7 +5761,7 @@ function bindDataLinkTarget(linkCtx, late) {
 	linkCtx._ctxCb = $sub._gccb(view = linkCtx.view); // getContextCallback: _ctxCb, for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 	linkCtx._hdl = handler;
 	// handler._ctx = linkCtx; Could pass linkCtx for use in a depends = function() {} call, so depends is different for different linkCtx's
-	if (linkCtx.elem.nodeName === "SELECT" && linkCtx.type === "link" && !linkCtx.attr) {
+	if (linkCtx.elem.nodeName === "SELECT" && linkCtxType === "link" && !linkCtx.attr) {
 		var $elem = $(linkCtx.elem);
 		$elem.on("jsv-domchange", function() {
 			// If the options have changed dynamically under the select, we need to refresh the data-linked selection, using the new options
@@ -5817,9 +5903,9 @@ function callAfterLink(tag, ev, eventArgs) {
 				l = linkedElements.length;
 				while (l--) {
 					if (linkedElements[l]) {
+						linkCtxElem = !tag.inline && $linkCtxElem.filter(linkedElements[l]);
 						m = tagCtxslength;
 						while (m--) {
-							linkCtxElem = !m && !tag.inline && $linkCtxElem.filter(linkedElements[l]);
 							tagCtxElse = tagCtxs[m];
 							linkedElems = tagCtxElse.linkedElems = tagCtxElse.linkedElems || new Array(l);
 							linkedElem = linkCtxElem[0] ? linkCtxElem : tagCtxElse.contents(true, linkedElements[l]);
@@ -5833,9 +5919,9 @@ function callAfterLink(tag, ev, eventArgs) {
 			if (linkedElements = tag.mainElement) {
 				// tag.mainElement: - selector for identifying mainElem in template/rendered content
 				// (But for tag bindings on data-linked elements, defaults to data-linked element)
+				linkCtxElem = !tag.inline && $linkCtxElem.filter(linkedElements);
 				m = tagCtxslength;
 				while (m--) {
-					linkCtxElem = !m && !tag.inline && $linkCtxElem.filter(linkedElements);
 					tagCtxElse = tagCtxs[m];
 					linkedElem = linkCtxElem[0] ? linkCtxElem : tagCtxElse.contents(true, linkedElements).eq(0);
 					if (linkedElem[0]) {
@@ -5846,16 +5932,13 @@ function callAfterLink(tag, ev, eventArgs) {
 			if (linkedElements = tag.displayElement) {
 				// tag.displayElement: - selector for identifying displayElem in template/rendered content
 				// (But for tag bindings on data-linked elements, defaults to data-linked element)
+				linkCtxElem = !tag.inline && $linkCtxElem.filter(linkedElements);
 				m = tagCtxslength;
 				while (m--) {
-					linkCtxElem = !m && !tag.inline && $linkCtxElem.filter(linkedElements);
 					tagCtxElse = tagCtxs[m];
 					linkedElem = linkCtxElem[0] ? linkCtxElem : tagCtxElse.contents(true, linkedElements).eq(0);
 					if (linkedElem[0]) {
 						tagCtxElse.displayElem = linkedElem;
-						if (!m) {
-							tag.displayElem = linkedElem;
-						}
 					}
 				}
 			}
@@ -5906,12 +5989,12 @@ function callAfterLink(tag, ev, eventArgs) {
 	}
 
 	if (!tag.flow && !tag._.chg) {
-		if (tag.inline && tag._.unlinked && (tag.linkedElems || tag.bindTo)) {
+		if (tag._tgId && tag._.unlinked && (tag.linkedElems || tag.bindTo)) {
 			defineBindToDataTargets(bindingStore[tag._tgId], tag);
 		}
 		m = tagCtxs.length;
 		while (m--) {
-			props = tag.cvtArgs(1, m); // array of bindFrom args/props
+			props = tag.cvtArgs(m, 1); // array of bindFrom args/props
 			l = props.length;
 			while (l--) {
 				val = props[l];
@@ -5919,7 +6002,7 @@ function callAfterLink(tag, ev, eventArgs) {
 			}
 			if (tag._.unlinked) {
 				tagCtx = tagCtxs[m];
-				linkedElems = tagCtx.linkedElems || tag.linkedElem && [tag.linkedElem];
+				linkedElems = tagCtx.linkedElems || !m && tag.linkedElem && [tag.linkedElem];
 				indexTo = (tag.bindTo || [0]).length;
 				while (indexTo--) {
 					if ((linkedElem = linkedElems && linkedElems[indexTo]) && (l = linkedElem.length)) {
@@ -6442,6 +6525,7 @@ function disposeTokens(tokens, elem) {
 //============================================
 
 function updateValue(val, index, tagElse, async, bindId, ev) {
+// async, bindId and ev not documented - used internally, e.g. for paged and sorted arrays on tags with dataMap, such as {{for}}
 // Observably update a data value targeted by the binding.to binding of a 2way data-link binding. Called when elem changes
 // Called when linkedElem of a tag control changes: as updateValue(val, index, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValue(val, index, tagElse) - this: tag
@@ -6906,6 +6990,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				renderAndLink(view, view.index, view.tmpl, parent.views, view.data, undefined, true);
 				setArrayChangeLink(view);
 			}
+			return view;
 		};
 
 		theView.fixIndex = function(fromIndex) {
@@ -7415,7 +7500,7 @@ $extend($, {
 			if (node) {
 				if (inner) {
 					getInnerView(node._df, true);
-					if (!view) {
+					if (!view && node.tagName) { // Not a text node
 						// Treat supplied node as a container element and return the first view encountered.
 						elems = qsa ? node.querySelectorAll(bindElsSel) : $(bindElsSel, node).get();
 						l = elems.length;
@@ -7615,7 +7700,7 @@ $sub._gccb = function(view) { // Return a callback for accessing the context of 
 };
 
 //===================
-// ctxPrm  helpers
+// ctxPrm helpers
 //===================
 // The following helper functions for observable contextual parameters are needed by render.js in data-linking scenarios
 // Implemented here rather than in render.js to keep render.js size down, and exposed via $.sub...
@@ -7625,12 +7710,14 @@ $sub._cp = function(paramVal, paramExpr, view, tagCtxPrm) { // Create tag or inl
 	// Called for tag parameter (two-way binding), from renderTag. (tagCtxPrm is {tag: ..., ind: ...})
 	if (view.linked) { // In JsViews, returns [view, linkFn] where linkFn is compiled function for expression, or observable contextual parameter object
 		if (tagCtxPrm && (tagCtxPrm.cvt || tagCtxPrm.tag._.toIndex[tagCtxPrm.ind] === undefined)) {
-			paramVal = [{_ocp: paramVal}]; // Uninitialized observable contextual parameter object
-			tagCtxPrm.updateValue = function(val, path) {
+			paramVal = [{_ocp: paramVal}]; // With convert, or with bindTo/bindFrom different, the tag contextual parameter object will be 'local' to the tag.
+				// It will be updated by bindFrom binding, and by tag.setValue(...), but not by tag.updateValue() (which will update bindTo value externally)
+			tagCtxPrm.updateValue = function(val) {
 				$.observable(paramVal._cxp.data).setProperty(_ocp, val); // Set the value (res[0]._ocp)
 				return this;
 			};
-		} else if (paramExpr) {
+		} else if (paramExpr) { // With no convert/convertBack and no bindTo/bindFrom difference, tag contextual parameter 2way binds to bindTo/bindFrom value.
+				// So tag.updateValue() updates external value, which updates contextual  parameter through 2way binding
 			var params = delimOpenChar1 + ":" + paramExpr + delimCloseChar0,
 				links = topView.tmpl.links, // Use topView links, as for compiled top-level linking expressions. To do - should this ever get disposed?
 				linkFn = links[params];
