@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.0 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.1 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,26 +47,20 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.0",
+var versionNumber = "v1.0.1",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
 
 //TODO	tmplFnsCache = {},
-	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings, delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
-
-	rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-	//        not                               object     helper    view  viewProperty pathTokens      leafToken
-
-	rParams = /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$_])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
-	//         lftPrn0          lftPrn        bound path             operator err                                         eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
-	// (left paren? followed by (path? followed by operator) or (path followed by left paren?)) or comma or apos or quot or right paren or space
+	$isFunction, $isArray, $templates, $converters, $helpers, $tags, $sub, $subSettings, $subSettingsAdvanced, $viewsSettings,
+	delimOpenChar0, delimOpenChar1, delimCloseChar0, delimCloseChar1, linkChar, setting, baseOnError,
 
 	isRenderCall,
 	rNewLine = /[ \t]*(\r\n|\n|\r)/g,
 	rUnescapeQuotes = /\\(['"])/g,
 	rEscapeQuotes = /['"\\]/g, // Escape quotes and \ character
-	rBuildHash = /(?:\x08|^)(onerror:)?(?:(~?)(([\w$_\.]+):)?([^\x08]+))\x08(,)?([^\x08]+)/gi,
+	rBuildHash = /(?:\x08|^)(onerror:)?(?:(~?)(([\w$.]+):)?([^\x08]+))\x08(,)?([^\x08]+)/gi,
 	rTestElseIf = /^if\s/,
 	rFirstElem = /<(\w+)[>\s]/,
 	rAttrEncode = /[\x00`><"'&=]/g, // Includes > encoding since rConvertMarkers in JsViews does not skip > characters in attribute strings
@@ -122,6 +116,12 @@ var versionNumber = "v1.0.0",
 		jsviews: versionNumber,
 		sub: {
 			// subscription, e.g. JsViews integration
+			rPath: /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+			//        not                               object     helper    view  viewProperty pathTokens      leafToken
+
+			rPrm: /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
+			//   lftPrn0           lftPrn         bound     path               operator     err                                          eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
+
 			View: View,
 			Err: JsViewsError,
 			tmplFn: tmplFn,
@@ -2096,12 +2096,13 @@ function paramStructure(parts, type) {
 function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 
 	function parseTokens(all, lftPrn0, lftPrn, bound, path, operator, err, eq, path2, late, prn, comma, lftPrn2, apos, quot, rtPrn, rtPrnDot, prn2, space, index, full) {
-	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
-	//  lftPrn0          lftPrn        bound path             operator err                                         eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
-		// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+	// /(\()(?=\s*\()|(?:([([])\s*)?(?:(\^?)(~?[\w$.^]+)?\s*((\+\+|--)|\+|-|~(?![\w$])|&&|\|\||===|!==|==|!=|<=|>=|[<>%*:?\/]|(=))\s*|(!*?(@)?[#~]?[\w$.^]+)([([])?)|(,\s*)|(\(?)\\?(?:(')|("))|(?:\s*(([)\]])(?=[.^]|\s*$|[^([])|[)\]])([([]?))|(\s+)/g,
+	//lftPrn0           lftPrn         bound     path               operator     err                                          eq      path2 late            prn      comma  lftPrn2   apos quot        rtPrn  rtPrnDot                  prn2     space
+	// (left paren? followed by (path? followed by operator) or (path followed by paren?)) or comma or apos or quot or right paren or space
+
 		function parsePath(allPath, not, object, helper, view, viewProperty, pathTokens, leafToken) {
-			//rPath = /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
-			//          not                               object     helper    view  viewProperty pathTokens      leafToken
+			// /^(!*?)(?:null|true|false|\d[\d.]*|([\w$]+|\.|~([\w$]+)|#(view|([\w$]+))?)([\w$.^]*?)(?:[.[^]([\w$]+)\]?)?)$/g,
+			//    not                               object     helper    view  viewProperty pathTokens      leafToken
 			var subPath = object === ".";
 			if (object) {
 				path = path.slice(not.length);
@@ -2250,7 +2251,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 									bindings && ((bindings = bndCtx.bd = pathBindings[named] = []), bindings.skp = !bound), path + ':')
 							: path
 				// path
-								? (path.split("^").join(".").replace(rPath, parsePath)
+								? (path.split("^").join(".").replace($sub.rPath, parsePath)
 									+ (prn
 				// some.fncall(
 										? (bndCtx = bndStack[++parenDepth] = {bd: []}, fnCall[parenDepth] = rtSq, prn)
@@ -2294,7 +2295,7 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 	if (params[0] === "@") {
 		params = params.replace(rBracketQuote, ".");
 	}
-	result = (params + (tmpl ? " " : "")).replace(rParams, parseTokens);
+	result = (params + (tmpl ? " " : "")).replace($sub.rPrm, parseTokens);
 
 	return !parenDepth && result || syntaxError(params); // Syntax error if unbalanced parens in params expression
 }
@@ -3874,7 +3875,7 @@ if (!$.observe) {
 			self._srt = true; // Flag for sorting during refresh
 			for (j=k=0; j<newLength; j++) {
 				if ((newItem = newItems[j]) === data[j-k]) {
-						insertAdded();
+					insertAdded();
 				} else {
 					for (i=j-k; i<dataLength; i++) {
 						if (newItem === data[i]) {
@@ -3972,7 +3973,7 @@ if (!$.observe) {
 				} else if (!unbound) {
 					if (mapDef.obsSrc) {
 						$observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
-							if (!changing) {
+							if (!changing && !eventArgs.refresh) {
 								changing = true;
 								mapDef.obsSrc(map, ev, eventArgs);
 								changing = undefined;
@@ -4118,7 +4119,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	bindingStore = {},
 	bindingKey = 1,
 	rViewPath = /^#(view\.?)?/,
-	rConvertMarkers = /((\/>)|<\/(\w+)>|)(\s*)([#\/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>)|$)/g,
+	rConvertMarkers = /((\/>)|<\/(\w+)>|)(\s*)([#/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>)|$)/g,
 	rOpenViewMarkers = /(#)()(\d+)(_)/g,
 	rOpenMarkers = /(#)()(\d+)([_^])/g,
 	rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
@@ -5063,7 +5064,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 
 	//==== nested functions ====
 	function convertMarkers(all, preceding, selfClose, closeTag, spaceBefore, id, boundId, spaceAfter, tag1, tag2, closeTag2, spaceAfterClose, selfClose2, endOpenTag) {
-		// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#\/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
+		// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
 		//                 prec, slfCl, clsTag,  spBefore, id,      bndId  spAfter,tag1,                   tag2,               clTag2,sac  slfCl2, endOpenTag
 		// Convert the markers that were included by addBindingMarkers in template output, to appropriate DOM annotations:
 		// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
@@ -7098,7 +7099,7 @@ $tags({
 				if (!contextOb) {
 					// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
 					// to return that context object, and run compiled function against data
-					contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length - 1)[0]);
+					contextOb = /^(.*)[.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length - 1)[0]);
 					contextOb = contextOb && $sub.tmplFn(delimOpenChar1 + ":" + contextOb[1] + delimCloseChar0, view.tmpl, true)(linkCtx.data, view);
 				}
 

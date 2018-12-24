@@ -128,7 +128,7 @@ test('Error cases for require() for JsRender, JsViews, JsObservable, JsRender te
 	}
 
 	// ............................... Assert .................................
-	equal(result, "JsViews requires JsRender", 'require("jquery.views")(jQuery) throws "JsViews requires JsRender"');
+	equal(result.slice(0, 25), "JsViews requires JsRender", 'require("jquery.views")(jQuery) throws "JsViews requires JsRender"');
 
 	// ................................ Act ..................................
 

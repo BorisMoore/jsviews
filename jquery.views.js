@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.0: http://jsviews.com/ */
+/*! jquery.views.js v1.0.1: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.0",
+var versionNumber = "v1.0.1",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -133,7 +133,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	bindingStore = {},
 	bindingKey = 1,
 	rViewPath = /^#(view\.?)?/,
-	rConvertMarkers = /((\/>)|<\/(\w+)>|)(\s*)([#\/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>)|$)/g,
+	rConvertMarkers = /((\/>)|<\/(\w+)>|)(\s*)([#/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>)|$)/g,
 	rOpenViewMarkers = /(#)()(\d+)(_)/g,
 	rOpenMarkers = /(#)()(\d+)([_^])/g,
 	rViewMarkers = /(?:(#)|(\/))(\d+)(_)/g,
@@ -1078,7 +1078,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 
 	//==== nested functions ====
 	function convertMarkers(all, preceding, selfClose, closeTag, spaceBefore, id, boundId, spaceAfter, tag1, tag2, closeTag2, spaceAfterClose, selfClose2, endOpenTag) {
-		// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#\/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
+		// rConvertMarkers = /(^|(\/>)|<\/(\w+)>|)(\s*)([#/]\d+(?:_|(\^)))`(\s*)(<\w+(?=[\s\/>]))?|\s*(?:(<\w+(?=[\s\/>]))|<\/(\w+)>(\s*)|(\/>)\s*|(>))/g,
 		//                 prec, slfCl, clsTag,  spBefore, id,      bndId  spAfter,tag1,                   tag2,               clTag2,sac  slfCl2, endOpenTag
 		// Convert the markers that were included by addBindingMarkers in template output, to appropriate DOM annotations:
 		// data-jsv attributes (for element-only content) or script marker nodes (within phrasing or flow content).
@@ -3116,7 +3116,7 @@ $tags({
 				if (!contextOb) {
 					// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
 					// to return that context object, and run compiled function against data
-					contextOb = /^(.*)[\.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length - 1)[0]);
+					contextOb = /^(.*)[.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length - 1)[0]);
 					contextOb = contextOb && $sub.tmplFn(delimOpenChar1 + ":" + contextOb[1] + delimCloseChar0, view.tmpl, true)(linkCtx.data, view);
 				}
 

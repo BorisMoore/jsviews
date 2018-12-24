@@ -1,4 +1,4 @@
-/*! JsObservable v1.0.0: http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.1: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.0",
+var versionNumber = "v1.0.1",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -1056,7 +1056,7 @@ if (!$.observe) {
 			self._srt = true; // Flag for sorting during refresh
 			for (j=k=0; j<newLength; j++) {
 				if ((newItem = newItems[j]) === data[j-k]) {
-						insertAdded();
+					insertAdded();
 				} else {
 					for (i=j-k; i<dataLength; i++) {
 						if (newItem === data[i]) {
@@ -1154,7 +1154,7 @@ if (!$.observe) {
 				} else if (!unbound) {
 					if (mapDef.obsSrc) {
 						$observable(map.src).observeAll(map.obs = function(ev, eventArgs) {
-							if (!changing) {
+							if (!changing && !eventArgs.refresh) {
 								changing = true;
 								mapDef.obsSrc(map, ev, eventArgs);
 								changing = undefined;
