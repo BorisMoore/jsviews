@@ -1546,7 +1546,7 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	$.unobserve(person, person.address, person.phones, notBound);
 
 	// ............................... Assert .................................
-	assert.equal("" + $._data(person).events.propertyChange.length + $._data(person.address).events.propertyChange.length + $._data(person.phones).events.arrayChange.length, 
+	assert.equal("" + $._data(person).events.propertyChange.length + $._data(person.address).events.propertyChange.length + $._data(person.phones).events.arrayChange.length,
 		"311",
 		"unobserve(object1, object2, unboundHandler) with another (unused) handler does nothing");
 
@@ -3166,7 +3166,7 @@ QUnit.test("observeAll", function(assert) {
 	$.observable(model.things).remove(2);
 
 	// ............................... Assert .................................
-	assert.equal(result, 
+	assert.equal(result,
 'ObserveAll Path: root eventArgs: change: insert|index: 3|items: [object Object]|'
 + 'ObserveAll Path: root eventArgs: change: refresh|oldItems: [object Object],[object Object],[object Object],[object Object]|'
 + 'ObserveAll Path: root[0] eventArgs: change: set|path: thing|value: tree+|oldValue: tree|remove: false|'
@@ -3473,7 +3473,7 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	$.observable(model.things).remove(2);
 
 	// ............................... Assert .................................
-	assert.equal(result, 
+	assert.equal(result,
 'ObserveAll Path: root eventArgs: change: insert|index: 3|items: [object Object]|'
 + 'ObserveAll Path: root eventArgs: change: refresh|oldItems: [object Object],[object Object],[object Object],[object Object]|'
 + 'ObserveAll Path: root[0] eventArgs: change: set|path: thing|value: tree+|oldValue: tree|remove: false|'
@@ -3658,7 +3658,7 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// =============================== Arrange ===============================
 	var cb = function cb(ev, eventArgs) {
 		var val = eventArgs.value;
-		result += eventArgs.path + ": " + ($.isArray(val) ? val.length : val) + ", "; 
+		result += eventArgs.path + ": " + ($.isArray(val) ? val.length : val) + ", ";
 	},
 
 	reset = function() {
@@ -4746,7 +4746,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	$.observable("e", team.person.phones).insert("newPhone2");
 
 	// ............................... Assert .................................
-	assert.equal(result, 
+	assert.equal(result,
 		"myListener3 change: 'set' Caller ns: 'a' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
 		+ "Handler observeAll._path : 'root' Handler observeAll.path() : 'root' Handler observeAll.parents() : '1' calls: 1|"
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
@@ -4776,7 +4776,7 @@ $.unobserve("a.b.c");
 	$.observable("e", team.person.phones).insert("newPhone2");
 
 	// ............................... Assert .................................
-	assert.equal(result, 
+	assert.equal(result,
 		"myListener3 change: 'set' Caller ns: 'a' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
 		+ "Handler observeAll._path : 'root' Handler observeAll.path() : 'root' Handler observeAll.parents() : '1' calls: 1|"
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: '*' Handler paths: '' Handler prop: '*' "
@@ -4807,7 +4807,7 @@ $.unobserve("a.b.c");
 
 	// ............................... Assert .................................
 
-	assert.equal(result, 
+	assert.equal(result,
 		"myListener3 change: 'set' Caller ns: 'a' Handler ns: 'a.b.c' Handler fullPath: 'person.phones' Handler paths: 'phones,friend.name' Handler prop: 'person' calls: 1|"
 		+ "myListener3 change: 'set' Caller ns: 'b' Handler ns: 'a.b.c' Handler fullPath: 'friend.name' Handler paths: '' Handler prop: 'name' calls: 2|"
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",

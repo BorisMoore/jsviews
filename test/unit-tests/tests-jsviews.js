@@ -19,7 +19,7 @@ function keydown(elem) {
 		elem.keydown();
 	}
 }
- 
+
 // =============== Model ===============
 function fullName(reverse, upper) {
 	var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
@@ -797,7 +797,6 @@ QUnit.test("jQuery cleanData integration", function(assert) {
 	res = $("#inner").html();
 	$.observable(person1).setProperty("lastName", "last2");
 	res += "|" + $("#inner").html();
-	$("#inner").dequeue("foo", null);
 	$.observable(person1).setProperty("lastName", "last3");
 	res += "|" + $("#inner").html();
 
@@ -890,7 +889,7 @@ res += "|" + $("#result").text();
 
 	// ................................ Act ..................................
 
-res = clicked;
+res = "" + clicked;
 
 $(buttons[0]).click();
 $(buttons[1]).click();
@@ -1222,9 +1221,6 @@ QUnit.test("$.link() and $().link() variants", function(assert) {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-if (!(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events)) {
-debugger;
-}
 	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events,
 	"$(container).empty removes current listeners from that content");
 
@@ -2614,7 +2610,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	$.observable(person1).setProperty("lastName", null);
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
-	
+
 	// ............................... Assert .................................
 	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
@@ -2634,7 +2630,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	$.observable(person1).setProperty("lastName", undefined);
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
-	
+
 	// ............................... Assert .................................
 	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
@@ -2690,7 +2686,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	$.observable(person1).removeProperty("lastName");
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
-	
+
 	// ............................... Assert .................................
 	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
 		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
@@ -4404,7 +4400,7 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	$.templates('a<span date-link="{emptyrender}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
-	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
+	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
 	$.templates('a<span date-link="{emptytemplate}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
@@ -5552,7 +5548,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	isIE8 
+	isIE8
 	? "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
 	+ "newFirstnewLastnewFirst newLastnewLast newFirst Rose LeeRose LeeLee Rose :newFirst newLast|"
 	+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst Rose LeeRose LeeLee Rose :2wayFirst 2wayLast"
@@ -8113,7 +8109,7 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 $.views.settings.trigger(false);
 	$.link(tmpl, "#result", data, {
-		upper: function(val) { 
+		upper: function(val) {
 			return val.toUpperCase();
 		},
 		lower: function(val) {
@@ -8361,7 +8357,7 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	$.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
-	"non-rendering tag (no template, empty string returned from render function) renders empty string", 1);
+	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
 	$.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
@@ -9606,25 +9602,25 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	];
 	var oddValue = function(item, index, items) { return item%2; };
 	var oddIndex = function(item, index, items) { return index%2; };
-	var under20 = function(item, index, items) { 
+	var under20 = function(item, index, items) {
 		return item.details.age < 20;
 	};
 
-	assert.equal($.templates("{{for #data sort=''}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data sort=''}}");
+	assert.equal($.templates("{{for #data}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data}}");
 	assert.equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for #data sort=true}}");
 	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
 	assert.equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray start=1 end=-1}}");
 	assert.equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray start=1}}");
 	assert.equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray end=-1}}");
-	assert.equal($.templates("{{for myarray sort=''}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray sort=''}}");
-	assert.equal($.templates("{{for myarray sort='' reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray sort='' reverse=true}}");
+	assert.equal($.templates("{{for myarray}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray}}");
+	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
 	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
 	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
 
 if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
 	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
-	assert.equal($.templates("{{for myarray sort='' filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray sort='' filter=~oddValue}}");
+	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "-1 1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "-1 2 4 6 8 20 ", "{{for myarray sort=true filter=~oddIndex}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
@@ -10093,6 +10089,517 @@ firstLi = $("li")[0];
 	$.views.settings.advanced({_jsv: false});
 });
 
+QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering", function(assert) {
+	var data = {
+		p_st: 2,
+		p_en: 4,
+		p_rev: false,
+		t_st: 0,
+		t_en: 4,
+		t_stp: undefined,
+		t_mapdeps: "flt",
+		flt: "l",
+		people: [
+			"Jo",
+			"Bob",
+			"Jane",
+			"Jeff",
+			"May",
+			"Alice"
+		],
+		things: [
+			{is: "table"},
+			{is: "porcelain"},
+			{is: "lamp"},
+			{is: "hat"}
+		]
+	},
+	out = "",
+	content = "",
+	people = data.people;
+
+	$.templates(
+		'{^{for skip}}{{:~rndr(#data)}}'
+	+ '{{else people start=p_st end=p_en reverse=p_rev}}|{{:~rndr(#data)}}'
+	+ '{{else things sort=t_srt filter=t_flt start=t_st end=t_en step=t_stp mapDepends=t_mapdeps}}|{{:~rndr(is)}}'
+	+ '{{else}}None{{/for}}'
+	)
+		.link("#result", data, {
+			rndr: function(value) {
+				out += "|" + value;
+				return value;
+			}
+		});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'initial render, first {{else}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("skip", "SkipTheList");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "SkipTheList::|SkipTheList", 'move to initial block (no mapped list');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("skip", undefined);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'move back to {{else people}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_st", 1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff::|Bob", 'incremental, on reducing start');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_en", 5);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May::|May", 'incremental, on increasing end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_en", 3);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane::", 'incremental, on reducing end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_st", 4);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, on increasing start, no items, moves to {{else}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_st", -1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat::", 'incremental, on changing start - integer from end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_en", -2);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, on changing end - integer from end, no items, moves to final {{else}}');
+
+		// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({p_st: 1, p_en:40});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May|Alice::|Bob|Jane|Jeff|May|Alice", 'incremental, on changing start/end - moves to first block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_rev", true);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|May|Jeff|Jane|Bob|Jo::|Jo", 'incremental, set reverse=true');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, moves to second block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_srt", "is");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|porcelain|table::", 'incremental, on changing start');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_flt", function(item, index, items) {
+		return index%2 === 1; // Include only odd index items
+	});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|lamp|table::", 'incremental, on setting filter');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
+		return a.is.length> b.is.length? 1 : a.is.length< b.is.length? -1 : 0; // Sort by string length of items
+	}});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|porcelain::|hat|porcelain", 'incremental, on setting sort function');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_flt", function(item, index, items) {
+		var flt = this.view.data.flt;
+		return flt ? item.is.toLowerCase().indexOf(flt.toLowerCase()) !== -1 : true;
+	});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|lamp|table|porcelain::", 'incremental, on setting filter, with flt="l"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "t");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|table::|hat", 'incremental, on setting flt to "t"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "e");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain::|porcelain", 'incremental, on setting flt to "e"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data.things).insert(2, [{is: "cupboard"}, {is: "window"}]);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain::", 'incremental, on inserting items');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|hat|lamp|window|cupboard", 'incremental, on setting flt to ""');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_srt", false);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain|cupboard|window|lamp|hat::", 'incremental, on setting sort to false');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", 3);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|window::", 'incremental, on setting step to 3');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", 2);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|cupboard|lamp::|cupboard|lamp", 'incremental, on setting step to 2');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data.things).move(1, 4, 2);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|lamp|porcelain::|porcelain", 'incremental, on using move(1, 4, 2)');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", false);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|window|lamp|hat|porcelain|cupboard::|window|hat|cupboard", 'incremental, on setting step to false');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data.things).refresh([data.things[4], data.things[2], data.things[0], data.things[3]]);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|porcelain|lamp|table|hat::", 'incremental, on using refresh(...)');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_st", 10);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, move to final {{else}} block');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	var data = {
+		p_rev: false,
+		people: [
+			"Jo",
+			"Bob",
+			"Jane"
+		]
+	},
+	out = "",
+	content = "",
+	people = data.people;
+
+	$.templates(
+		'{^{for people sort=p_srt reverse=p_rev}}|{{:~rndr(#data)}}{{/for}}'
+	)
+		.link("#result", data, {
+			rndr: function(value) {
+				out += "|" + value;
+				return value;
+			}
+		});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jo|Bob|Jane::|Jo|Bob|Jane", 'initial render, (no initial DataMap use)');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_rev", true);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jane|Bob|Jo::", 'reverse order (DataMap used - incremental re-order)');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_srt", true);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jo|Jane|Bob::", 'reverse sort (DataMap used - incremental re-order)');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+});
+
+QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering", function(assert) {
+	var data = {
+		p_st: 2,
+		p_en: 4,
+		p_rev: false,
+		t_st: 0,
+		t_en: 4,
+		t_stp: undefined,
+		t_mapdeps: "flt",
+		flt: "l",
+		people: {
+			one: "Jo",
+			b: "Bob",
+			x: "Jane",
+			two: "Jeff",
+			m: "May",
+			last: "Alice"
+		},
+		things: {
+			a: {is: "table"},
+			b: {is: "porcelain"},
+			c: {is: "lamp"},
+			d: {is: "hat"}
+		}
+	},
+	out = "",
+	content = "",
+	people = data.people;
+
+	$.templates(
+		'{^{props skip}}{{:~rndr(prop)}}'
+	+ '{{else people start=p_st end=p_en reverse=p_rev}}|{{:~rndr(prop)}}'
+	+ '{{else things sort=t_srt filter=t_flt start=t_st end=t_en step=t_stp mapDepends=t_mapdeps}}|{{:~rndr(prop.is)}}'
+	+ '{{else}}None{{/props}}'
+	)
+		.link("#result", data, {
+			rndr: function(value) {
+				out += "|" + value;
+				return value;
+			}
+		});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'initial render, first {{else}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("skip", {is: "SkipTheList"});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "SkipTheList::|SkipTheList", 'move to initial block (no mapped list');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("skip", undefined);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'move back to {{else people}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_st", 1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff::|Bob", 'incremental, on reducing start');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_en", 5);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May::|May", 'incremental, on increasing end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_en", 3);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane::", 'incremental, on reducing end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_st", 4);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, on increasing start, no items, moves to {{else}} block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_st", -1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat::", 'incremental, on changing start - integer from end');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_en", -2);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, on changing end - integer from end, no items, moves to final {{else}}');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({p_st: 1, p_en:40});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May|Alice::|Bob|Jane|Jeff|May|Alice", 'incremental, on changing start/end - moves to first block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("p_rev", true);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|May|Jeff|Jane|Bob|Jo::|Jo", 'incremental, set reverse=true');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, moves to second block');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_srt", "prop.is");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|porcelain|table::", 'incremental, on changing start');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_flt", function(item, index, items) {
+		return index%2 === 1; // Include only odd index items
+	});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|lamp|table::", 'incremental, on setting filter');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
+		return a.prop.is.length> b.prop.is.length? 1 : a.prop.is.length< b.prop.is.length? -1 : 0; // Sort by string length of items
+	}});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|porcelain::|hat|porcelain", 'incremental, on setting sort function');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_flt", function(item, index, items) {
+		var flt = this.view.data.flt;
+		return flt ? item.prop.is.toLowerCase().indexOf(flt.toLowerCase()) !== -1 : true;
+	});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|lamp|table|porcelain::", 'incremental, on setting filter, with flt="l"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "t");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|table::|hat", 'incremental, on setting flt to "t"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "e");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain::|porcelain", 'incremental, on setting flt to "e"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data.things).setProperty({e: {is: "cupboard"}, f: {is: "window"}});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|table|porcelain::", 'incremental, on inserting items');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("flt", "");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|hat|lamp|window|cupboard", 'incremental, on setting flt to ""');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_srt", "prop.is");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|cupboard|hat|lamp|porcelain|table|window::", 'incremental, on setting sort to "prop.is"');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_srt", false);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::", 'incremental, on setting sort to false');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", 3);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|window::", 'incremental, on setting step to 3');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", 2);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|table|cupboard::|table|cupboard", 'incremental, on setting step to 2');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_stp", false);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|lamp|window|porcelain", 'incremental, on setting step to false');
+
+	// ................................ Act ..................................
+	out = "";
+	$.observable(data).setProperty("t_st", 10);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, move to final {{else}} block');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+});
 
 QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
@@ -10601,7 +11108,7 @@ $.templates(
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, 	
+	assert.equal(after,
 "|All:--- keyf:a0  keye:x0  keyd:b0  keyc:y0  keyb:c0  keya:z0  key0:t0  key1:t1  key2:m3  |Sort:-- z0 y0 x0 t1 t0 m3 c0 b0 a0 |Filter: y0 t1 m3 b0 |Slice:- t1 m3 ",
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
@@ -10896,9 +11403,6 @@ QUnit.test('data-link="{on ...', function(assert) {
 				eventArgs.linkCtx.tag.refresh();
 			},
 			test: function()
-			
-			
-			
 			{
 				res += "test ";
 			}
@@ -13549,7 +14053,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		  seq += i + " " + arguments[i] + "|";
 		}
 		seq += "End";
-		return "Start " + seq + "Start " + seq + "Start " + seq + "Start" + seq + " at: " + redItemAt + "/" + redItemAt + "/" + redItemAt 
+		return "Start " + seq + "Start " + seq + "Start " + seq + "Start" + seq + " at: " + redItemAt + "/" + redItemAt + "/" + redItemAt
 	}
 
 	model.items = [0,1,2,3,4];
@@ -14847,7 +15351,7 @@ function testDepends(template) {
 	$("#result").empty();
 	$.unobserve(app);
 
-	return ret === 
+	return ret ===
 		"|1:first-1-Jo" +
 		"|2:first-1-Bob" +
 		"|3:previous-2-Bob" +
@@ -14876,9 +15380,9 @@ function testDepends(template) {
 
 	summary.depends = function(object, callback) {
 		$.observe(object, "itemsProp", callback);
-		return "name"; 
+		return "name";
 	};
-	
+
 	// ................................ Assert ..................................
 	assert.ok(testDepends("{^{if show}}{^{:summary()}}{{/if}}"),
 		'Computed observable with depends function programmatically observing array, with the callback provided as parameter. Works equivalently to the declarative depends for an array');
@@ -14892,8 +15396,8 @@ function testDepends(template) {
 			return [function (data3) {
 				var this3 = this;
 				test = this1 === data1 && this1 === data2 && this1 === data3 && this1 === this2 && this1 === this3;
-				return "itemsProp"; 
-			}, "name"]; 
+				return "itemsProp";
+			}, "name"];
 		};
 	};
 
@@ -14907,7 +15411,7 @@ function testDepends(template) {
 			$.observe(object, "itemsProp", callback);
 			return [function () {
 				$.observe(object, "name", callback);
-			}]; 
+			}];
 		};
 	};
 
@@ -14934,7 +15438,7 @@ function testDepends(template) {
 			$.observe(object, field, callback);
 		}
 	}
-	
+
 	summary.depends = [listenTo("itemsProp"), listenTo("name")];
 
 	// ................................ Assert ..................................
@@ -16724,7 +17228,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(res, isIE8
-		? "1: val1/val1-val1/val1: { val1 val1}" 
+		? "1: val1/val1-val1/val1: { val1 val1}"
 		+ " \n2: new1/new1-new1/new1: {new1new1}"
 		+ " \n3: set2/set2-set2/set2: {set2set2}"
 		+ " \n4: val2/val2-val2/val2: { val2 val2}"
@@ -16828,12 +17332,12 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		nm: "Jo",
 		fullName: fullNameVM,
 		fnprop: fn1
-	}, 
+	},
 	ctx = {
 		nm: "Bob",
 		fullName: fullNameCtx,
 		fnprop: fn1
-	}; 
+	};
 
 	tmpl.link("#result", data, ctx);
 
@@ -16889,7 +17393,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		nm: "Jo",
 		fullName: fullNameVM,
 		fnprop: fn1
-	}; 
+	};
 
 	tmpl.link("#result", data);
 
@@ -16932,28 +17436,17 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	tmpl = $.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
 
-
-	function fullNameHlp() {
-		return this.data.nm + this.ctxPrm("nm") + "Last";
-	}
-
-	fullNameHlp.depends = ["nm", "~nm"];
-
-	fullNameHlp.set = function(val) {
-		this.ctxPrm("nm", val.slice(0, -4));
-	};
-
 	$.views.helpers({
 		nm: "Jim",
 		fnprop: fn1,
 		fullName: fullNameHlp
-	}, tmpl);
+	}, tmpl); // local to tmpl
 
 	data = {
 		nm: "Jo",
 		fullName: fullNameVM,
 		fnprop: fn1
-	}; 
+	};
 
 	tmpl.link("#result", data);
 
@@ -17279,7 +17772,7 @@ QUnit.test("Wrapping", function(assert) {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), 
+	assert.equal($("#result").text(),
 			"DefaultArg:JoTMPL:JoCNT:Jo"
 		+ "DefaultArg:JoTMPL:JoCNT:Jo",
 		"If tag has no template, tagCtx.render() and tagCtx.content.render() both render content. arg[0] defaults to current data context.");
@@ -17299,7 +17792,7 @@ QUnit.test("Wrapping", function(assert) {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), 
+	assert.equal($("#result").text(),
 			"TMPL:1Jo 2Jo 3Jo CNT:Jo"
 		+ "TMPL:1Jo 2Jo 3Jo CNT:Jo",
 		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content");
@@ -17319,7 +17812,7 @@ QUnit.test("Wrapping", function(assert) {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), 
+	assert.equal($("#result").text(),
 
 			"TMPL:1aJo 2aJo 3Jo0 CNT:aJo"
 		+ "TMPL:1bJo 2bJo 3Jo1 CNT:bJo"
@@ -17345,7 +17838,7 @@ QUnit.test("Wrapping", function(assert) {
 		}).link("#result", {name: "Jo"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), 
+	assert.equal($("#result").text(),
 			"DefaultArg:falseTMPL:JoCNT:Jo"
 		+ "DefaultArg:falseTMPL:JoCNT:Jo",
 		"If argDefault is false, arg[0] does not default to current data context. But can programmatically pass in data to tagCtx.render() or tagCtx.content.render()");
@@ -17771,7 +18264,7 @@ QUnit.test("this= and @some.path", function(assert) {
 	}).link("#result", {});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), 	
+	assert.equal($("#result").text(),
 "BEFORE:two two TAGS:DBCAFTER:two two ",
 	"Declarative this=ref binding on built-in flow tag and late path @ref... works correctly");
 
@@ -18496,7 +18989,6 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	$.observable(person).setProperty({name: "ANewName"});
 
-	
 	// ............................... Assert .................................
 	assert.equal(tag.linkedElem[0].value + "|" + tag.value,
 	"ANEWNAME|ANewName",
@@ -19115,7 +19607,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	person = {first: "Jo", width: 32};
 
 	$.views.templates({
-		markup: '{^{mytag first width=width height=66 class="box" id="a"}}' 
+		markup: '{^{mytag first width=width height=66 class="box" id="a"}}'
 			+ '{{else first id="b"}}'
 			+ '{{else first width=width-10 height=46 id="c"}}{{/mytag}}',
 		tags: {
@@ -20221,7 +20713,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
-	assert.equal(result, 
+	assert.equal(result,
 		isIE8 ? "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirstUpdate"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0Update"
 		: "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
@@ -20813,7 +21305,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ............................... Assert .................................
 	assert.equal(result, "Jo*,BLOW|Jo,blow+|updatedFirst*,UPDATEDLAST|updatedFirst*,UPDATEDLAST|updatedFirst,updatedlast",
 	"bindTo with converters, using linkedElement and linkedCtxParam");
-	
+
 	// =============================== Arrange ===============================
 	$.views.tags("mytag", {
 		bindTo: ["height", "width"],
@@ -21277,7 +21769,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	person = {first: "Jo", middle: "Herbert", last: "Blow"};
 
 	$.templates({
-		markup: 
+		markup:
 			'{^{textbox first label="First"}} {^{child ~nm/}}'
 			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
 			+ '{{else last label="Last"}} {^{child ~nm/}}'
@@ -21409,7 +21901,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	person = {first: "Jo", middle: "Herbert", last: "Blow"};
 
 	$.templates({
-		markup: 
+		markup:
 			'{^{textbox first label="First"}} {^{child ~nm/}}'
 			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
 			+ '{{else last label="Last"}} {^{child ~nm/}}'
@@ -21495,7 +21987,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ............................... Assert .................................
 	assert.equal(getResult(), isIE8
 		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
-		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|" 
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
 		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
@@ -21655,7 +22147,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ............................... Assert .................................
 	assert.equal(getResult2(), isIE8
 		? "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
-		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|" 
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
 		: "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
 	"Two-way tag with multiple bindings and multiple else blocks - tag.setValues() updates linkedElems only");
@@ -21691,7 +22183,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		onBind: function(tagCtx) {
 			var tagCtx1 = this.tagCtxs[1];
 			logElems && logElems(this.linkedElems, this.linkedElem, this.mainElem, this.displayElem,
-				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem, 
+				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem,
 				tagCtx1.linkedElems, tagCtx1.mainElem, tagCtx1.displayElem);
 		}
 	});
@@ -21703,8 +22195,8 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		};
 
 	// ................................ Act ..................................
-	var logElems = function(linkedElems, linkedElem, mainElem, displayElem, 
-		linkedElems0, mainElem0, displayElem0, 
+	var logElems = function(linkedElems, linkedElem, mainElem, displayElem,
+		linkedElems0, mainElem0, displayElem0,
 		linkedElems1, mainElem1, displayElem1 ) {
 		ret += "|" + (linkedElems === linkedElems0)
 		+ " " + (linkedElem === linkedElems[0])
@@ -21770,7 +22262,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		onBind: function(tagCtx) {
 			var tagCtx1 = this.tagCtxs[1];
 			logElems && logElems(this.linkedElems, this.linkedElem, this.mainElem, this.displayElem,
-				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem, 
+				tagCtx.linkedElems, tagCtx.mainElem, tagCtx.displayElem,
 				tagCtx1.linkedElems, tagCtx1.mainElem, tagCtx1.displayElem);
 		}
 	});
@@ -21781,8 +22273,8 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 			last: "Blow"
 		};
 
-	logElems = function(linkedElems, linkedElem, mainElem, displayElem, 
-		linkedElems0, mainElem0, displayElem0, 
+	logElems = function(linkedElems, linkedElem, mainElem, displayElem,
+		linkedElems0, mainElem0, displayElem0,
 		linkedElems1, mainElem1, displayElem1 ) {
 		ret += "|" + (linkedElems === linkedElems0)
 		+ " " + (linkedElem === linkedElems[0])
@@ -22610,6 +23102,142 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ............................... Assert .................................
 	assert.equal(getRet(), "from1|upd1B|from2|upd2B|el1|set1|el2|set2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValues {{else}}");
+
+// ............................... Reset .................................
+
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	data = {
+		arrA:[{val:'value 1'}],
+		objA2:{0: {val:'value 2'}},
+		objA3:{x: {val:'value 3'}},
+		objA4:{x: {val:'value 4'}},
+		arrB:[{val:'value 1'}],
+		objB2:{0: {val:'value 2'}},
+		objB3:{x: {val:'value 3'}},
+		objB4:{x: {val:'value 4'}},
+		arrC:[{val:'value 1'}],
+		objC2:{0: {val:'value 2'}},
+		objC3:{x: {val:'value 3'}},
+		objC4:{x: {val:'value 4'}},
+		arrD:[{val:'value 1'}],
+		objD2:{0: {val:'value 2'}},
+		objD3:{x: {val:'value 3'}},
+		objD4:{x: {val:'value 4'}}
+	};
+
+	$.templates({
+		markup: 
+		"{^{mytag arrA[0].val objA2['0'].val objA3['x'].val objA4.x.val p1=arrB[0].val p2=objB2['0'].val p3=objB3['x'].val p4=objB4.x.val}}"
+		+ "{{else  arrC[0].val objC2['0'].val objC3['x'].val objC4.x.val p1=arrD[0].val p2=objD2['0'].val p3=objD3['x'].val p4=objD4.x.val}}"
+		+ "{{/mytag}}",
+		tags: {
+			mytag: {
+				onUpdate: false,
+				bindTo: [0 ,1, 2, 3, 'p1', 'p2', 'p3', 'p4'],
+				template: ""
+			}
+		}
+	}).link("#result", data);
+
+	mytag = $.view().childTags()[0];
+
+	// ................................ Act ..................................
+	mytag.updateValue("new1").updateValue("new2", 1).updateValue("new3", 2).updateValue("new4", 3)
+		.updateValue("new5", 4).updateValue("new6", 5).updateValue("new7", 6).updateValue("new8", 7)
+		.updateValue("new9", 0, 1).updateValue("new10", 1, 1).updateValue("new11", 2, 1).updateValue("new12", 3, 1)
+		.updateValue("new13", 4, 1).updateValue("new14", 5, 1).updateValue("new15", 6, 1).updateValue("new16", 7, 1);
+
+	// ............................... Assert .................................
+	assert.equal(data.arrA[0].val + data.objA2['0'].val + data.objA3.x.val + data.objA4.x.val + data.arrB[0].val + data.objB2['0'].val + data.objB3.x.val + data.objB4.x.val + data.arrC[0].val + data.objC2['0'].val + data.objC3.x.val + data.objC4.x.val + data.arrD[0].val + data.objD2['0'].val + data.objD3.x.val + data.objD4.x.val,
+		"new1new2new3new4new5new6new7new8new9new10new11new12new13new14new15new16", "updateValue() binds to paths with [...].val accessors");
+
+	// ................................ Act ..................................
+
+	mytag.updateValues("more1", "more2", "more3", "more4", "more5", "more6", "more7", "more8");
+
+	// ............................... Assert .................................
+	assert.equal(data.arrA[0].val + data.objA2['0'].val + data.objA3.x.val + data.objA4.x.val + data.arrB[0].val + data.objB2['0'].val + data.objB3.x.val + data.objB4.x.val + data.arrC[0].val + data.objC2['0'].val + data.objC3.x.val + data.objC4.x.val + data.arrD[0].val + data.objD2['0'].val + data.objD3.x.val + data.objD4.x.val,
+		"more1more2more3more4more5more6more7more8new9new10new11new12new13new14new15new16", "updateValues() binds to paths with [...].val accessors");
+
+// ............................... Reset .................................
+
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	var store = {
+		arrA: {val:'value 1'},
+		objA2: {val:'value 2'},
+		objA3: {val:'value 3'},
+		objA4: {val:'value 4'},
+		arrB: {val:'value 1'},
+		objB2: {val:'value 2'},
+		objB3: {val:'value 3'},
+		objB4: {val:'value 4'},
+		arrC: {val:'value 1'},
+		objC2: {val:'value 2'},
+		objC3: {val:'value 3'},
+		objC4: {val:'value 4'},
+		arrD: {val:'value 1'},
+		objD2: {val:'value 2'},
+		objD3: {val:'value 3'},
+		objD4: {val:'value 4'}
+	};
+
+	data = {
+		arrA: function() { return store.arrA },
+		objA2: function() { return store.objA2 },
+		objA3: function() { return store.objA3 },
+		objA4: function() { return store.objA4 },
+		arrB: function() { return store.arrB },
+		objB2: function() { return store.objB2 },
+		objB3: function() { return store.objB3 },
+		objB4: function() { return store.objB4 },
+		arrC: function() { return store.arrC },
+		objC2: function() { return store.objC2 },
+		objC3: function() { return store.objC3 },
+		objC4: function() { return store.objC4 },
+		arrD: function() { return store.arrD },
+		objD2: function() { return store.objD2 },
+		objD3: function() { return store.objD3 },
+		objD4: function() { return store.objD4 },
+	};
+
+	$.templates({
+		markup: 
+		"{^{mytag arrA().val objA2().val objA3().val objA4().val p1=arrB().val p2=objB2().val p3=objB3().val p4=objB4().val}}"
+		+ "{{else  arrC().val objC2().val objC3().val objC4().val p1=arrD().val p2=objD2().val p3=objD3().val p4=objD4().val}}"
+		+ "{{/mytag}}",
+		tags: {
+			mytag: {
+				onUpdate: false,
+				bindTo: [0 ,1, 2, 3, 'p1', 'p2', 'p3', 'p4'],
+				template: ""
+			}
+		}
+	}).link("#result", data);
+
+	mytag = $.view().childTags()[0];
+
+	// ................................ Act ..................................
+	mytag.updateValue("new1").updateValue("new2", 1).updateValue("new3", 2).updateValue("new4", 3)
+		.updateValue("new5", 4).updateValue("new6", 5).updateValue("new7", 6).updateValue("new8", 7)
+		.updateValue("new9", 0, 1).updateValue("new10", 1, 1).updateValue("new11", 2, 1).updateValue("new12", 3, 1)
+		.updateValue("new13", 4, 1).updateValue("new14", 5, 1).updateValue("new15", 6, 1).updateValue("new16", 7, 1);
+
+	// ............................... Assert .................................
+	assert.equal(store.arrA.val + store.objA2.val + store.objA3.val + store.objA4.val + store.arrB.val + store.objB2.val + store.objB3.val + store.objB4.val + store.arrC.val + store.objC2.val + store.objC3.val + store.objC4.val + store.arrD.val + store.objD2.val + store.objD3.val + store.objD4.val,
+		"new1new2new3new4new5new6new7new8new9new10new11new12new13new14new15new16", "updateValue() binds to paths with computed().val paths");
+
+	// ................................ Act ..................................
+
+	mytag.updateValues("more1", "more2", "more3", "more4", "more5", "more6", "more7", "more8");
+
+	// ............................... Assert .................................
+	assert.equal(store.arrA.val + store.objA2.val + store.objA3.val + store.objA4.val + store.arrB.val + store.objB2.val + store.objB3.val + store.objB4.val + store.arrC.val + store.objC2.val + store.objC3.val + store.objC4.val + store.arrD.val + store.objD2.val + store.objD3.val + store.objD4.val,
+		"more1more2more3more4more5more6more7more8new9new10new11new12new13new14new15new16", "updateValues() binds to paths computed().val paths");
 
 // ............................... Reset .................................
 
