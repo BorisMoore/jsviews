@@ -4,7 +4,8 @@
 
 // =============== INIT APP ===============
 
-var viewContent, before, after, lastEvData, lastEventArgs, listeners, result1, handlersCount, elems,
+var isIE8 = window.attachEvent && !window.addEventListener,
+	viewContent, before, after, lastEvData, lastEventArgs, listeners, result1, handlersCount, elems,
 	result = "",
 	calls = 0;
 
@@ -241,7 +242,8 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	$.observable(person).setProperty("dob", dt);
 
 	// ............................... Assert .................................
-	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: 10/24/1991 value: "1980-10-24T07:00:00.000Z", eventArgs.path: dob|',
+	assert.equal(result, isIE8 ? 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: 10/24/1991 value: \"1980-10-24T07:00:00Z\", eventArgs.path: dob|'
+		: 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: 10/24/1991 value: "1980-10-24T07:00:00.000Z", eventArgs.path: dob|',
 	"setProperty to Date object");
 
 	// ................................ Reset ................................
@@ -254,7 +256,8 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	$.observable(person).setProperty("dob", dt2);
 
 	// ............................... Assert .................................
-	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-24T07:00:00.000Z" value: "1980-10-26T07:00:00.000Z", eventArgs.path: dob|',
+	assert.equal(result, isIE8 ?  'calls: 1, ev.data: prop: dob, eventArgs: oldValue: \"1980-10-24T07:00:00Z\" value: \"1980-10-26T07:00:00Z\", eventArgs.path: dob|'
+		: 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-24T07:00:00.000Z" value: "1980-10-26T07:00:00.000Z", eventArgs.path: dob|',
 	"setProperty to another Date object");
 
 	// ................................ Reset ................................
@@ -264,7 +267,8 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	$.observable(person).setProperty("dob", "1/24/2002");
 
 	// ............................... Assert .................................
-	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-26T07:00:00.000Z" value: 1/24/2002, eventArgs.path: dob|',
+	assert.equal(result, isIE8 ?  'calls: 1, ev.data: prop: dob, eventArgs: oldValue: \"1980-10-26T07:00:00Z\" value: 1/24/2002, eventArgs.path: dob|'
+		: 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-26T07:00:00.000Z" value: 1/24/2002, eventArgs.path: dob|',
 	"setProperty to date as string");
 
 	// ................................ Reset ................................
@@ -1200,12 +1204,6 @@ QUnit.test("Array", function(assert) {
 		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,16,18] value: [1,2,10], eventArgs.path: arr|"
 		+ "regularCallbackCalls: 5, eventArgs: change: insert|1 1 true",
 		'$.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
-
-		"regularCallbackCalls: 1, eventArgs: change: insert|"
-		"calls: 2, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,16,18] value: [1,2,10], eventArgs.path: arr|"
-		"calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2nd, eventArgs.path: notThereBefore|"
-		"calls: 4, ev.data: prop: *, eventArgs: oldValue: n value: 1st, eventArgs.path: first|"
-		"regularCallbackCalls: 5, eventArgs: change: insert|1 1 true"
 
 	// ................................ Act ..................................
 	reset();
@@ -3057,12 +3055,14 @@ QUnit.test("observeAll", function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(result,
-  'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"upper St","ZIP":"33333"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
+'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|'
 + 'ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|'
 + 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
-+ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush\"}]|'
++ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|'
 + 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
-	"observeAll raises correct change events");
+		"observeAll raises correct change events");
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3344,12 +3344,14 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(result,
-  'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"upper St","ZIP":"33333"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
+'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|'
++ 'ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|'
 + 'ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|'
 + 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
-+ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush\"}]|'
++ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|'
 + 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
-	'$.observe(data, "**", ...) works as observeAll and raises correct change events');
+		'$.observe(data, "**", ...) works as observeAll and raises correct change events');
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4416,12 +4418,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
-	assert.equal(result, 
-  'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"upper St","ZIP":"33333"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|'
-+ 'ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|'
-+ 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
-+ 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush\"}]|'
-+ 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
+	assert.equal(result, 'ObserveAll Path: root.person1.home eventArgs: change: "set"|path: "address"|value: {"street":"1st","ZIP":"00000"}|oldValue: {"street":"StreetOne","ZIP":"111"}|remove: false|ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "street"|value: "upper St"|oldValue: "1st"|remove: false|ObserveAll Path: root.person1.home.address eventArgs: change: "set"|path: "ZIP"|value: "33333"|oldValue: "00000"|remove: false|ObserveAll Path: root eventArgs: change: "set"|path: "things"|value: [{"thing":"tree"}]|oldValue: []|remove: false|ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush"}]|ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
 	"observeAll with namespace raises correct change events");
 
 	// ............................... Assert .................................
@@ -4787,7 +4784,7 @@ $.unobserve("a.b.c");
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
 		'call observe with "**" - namespaces');
 
-	$.unobserve("a.b.c");
+$.unobserve("a.b.c");
 
 // ................................ Act ..................................
 
@@ -4847,7 +4844,6 @@ $.unobserve("a.b.c");
 //}
 });
 
-if ($.views.tags) { // $.views.viewModels requires JsRender to be loaded
 QUnit.test("$.views.viewModels", function(assert) {
 	// =============================== Arrange ===============================
 	var Constr = $.views.viewModels({getters: ["a", "b"]});
@@ -5076,167 +5072,6 @@ QUnit.test("$.views.viewModels", function(assert) {
 	// ............................... Assert .................................
 	assert.equal(result, '{"t1":{"a":"a3 ","b":"b3 "},"t1Arr":[{"a":"a1 ","b":"b1 "},{"a":"a2 ","b":"b2 "}],"t1OrNull":{"a":"a4 ","b":"b4 "}}',
 		"viewModels, hierarchy");
-});
-}
-
-QUnit.test("setProperty/insert/remove etc. using async or batched events", function(assert) {
-	// =============================== Arrange ===============================
-	var done = assert.async(),
-		count = 0,
-		batch = [],
-		person = { first: "Jo", last: "Blow" },
-		numbers = [0],
-		count = 1;
-
-	function makeChanges(delay) {
-		result+= count + ": Set first and last";
-		$.observable(person, delay).setProperty({first: person.first + count, last: person.last + count});
-		result+= count + ": Insert number " + count;
-		$.observable(numbers, delay).insert([count, count+"b"]);
-		result+= count + ": Set first";
-		$.observable(person, delay).setProperty("first", person.first + "!");
-		result+= count + ": Remove number " + numbers[numbers.length - 1];
-		$.observable(numbers, delay).remove();
-	}
-
-	function reset() {
-		$.observable(person).setProperty({first: "Jo", last: "Blow"});
-		$.observable(numbers).remove(1, numbers.length-1);
-		count = 1;
-		result = "";
-	}
-
-	$.observe(person, "*", numbers, "**", function(ev, eventArgs) {
-		var message = " Event:";
-		if (eventArgs.change === "set") {
-			message += "Set " + eventArgs.path + ": - " + eventArgs.value;
-		} else if (eventArgs.change === "insert") {
-			message += "Insert: - " + eventArgs.items[0];
-		} else if (eventArgs.change === "remove") {
-			message += "Remove: - " + eventArgs.items[0];
-		}
-		result+= message;
-	});
-
-	// ................................ Act ..................................
-	result = "";
-	makeChanges();
-
-	// ............................... Assert .................................
-	assert.equal(result,
-		"1: Set first and last Event:Set first: - Jo1 Event:Set last: - Blow11: Insert number 1 Event:Insert: - 11: Set first Event:Set first: - Jo1!1: Remove number 1b Event:Remove: - 1b",
-		"Synchronous events");
-
-	// ................................ Act ..................................
-	reset();
-	makeChanges(batch);
-	batch.trigger();
-
-	// ............................... Assert .................................
-	assert.equal(result,
-		"1: Set first and last1: Insert number 11: Set first1: Remove number 1b Event:Set last: - Blow1 Event:Insert: - 1 Event:Set first: - Jo1! Event:Remove: - 1b",
-		"Batched events, with batch.trigger()");
-
-	// ................................ Act ..................................
-	reset();
-	makeChanges(true);
-
-	// ............................... Assert .................................
-	setTimeout(function() {
-		assert.equal(result,
-			"1: Set first and last1: Insert number 11: Set first1: Remove number 1b Event:Set last: - Blow1 Event:Insert: - 1 Event:Set first: - Jo1! Event:Remove: - 1b",
-			"Asynchronous events");
-
-		// ................................ Reset ................................
-		result = "";
-		$.unobserve();
-		done();
-	}, 0);
-});
-
-QUnit.test("setProperty/insert/remove etc. using namespaces", function(assert) {
-	// =============================== Arrange ===============================
-	var done = assert.async(),
-		count = 0,
-		batch = [],
-		person = { first: "Jo", last: "Blow" },
-		numbers = [0],
-		count = 1;
-
-	function makeChanges(ns, delay) {
-		result+= count + ": Set first and last";
-		$.observable(ns, person, delay).setProperty({first: person.first + count, last: person.last + count});
-		result+= count + ": Insert number " + count;
-		$.observable(ns, numbers, delay).insert([count, count+"b"]);
-		result+= count + ": Set first";
-		$.observable(ns, person, delay).setProperty("first", person.first + "!");
-		result+= count + ": Remove number " + numbers[numbers.length - 1];
-		$.observable(ns, numbers, delay).remove();
-	}
-
-	function reset() {
-		$.observable(person).setProperty({first: "Jo", last: "Blow"});
-		$.observable(numbers).remove(1, numbers.length-1);
-		count = 1;
-		result = "";
-	}
-
-	$.observe("my.name.spaces", person, "*", numbers, "**", function(ev, eventArgs) {
-		var message = " Event:";
-		if (eventArgs.change === "set") {
-			message += "Set " + eventArgs.path + ": - " + eventArgs.value;
-		} else if (eventArgs.change === "insert") {
-			message += "Insert: - " + eventArgs.items[0];
-		} else if (eventArgs.change === "remove") {
-			message += "Remove: - " + eventArgs.items[0];
-		}
-		result+= message;
-	});
-
-	// ................................ Act ..................................
-	result = "";
-	makeChanges("name.spaces.my");
-
-	// ............................... Assert .................................
-	assert.equal(result,
-		"1: Set first and last Event:Set first: - Jo1 Event:Set last: - Blow11: Insert number 1 Event:Insert: - 11: Set first Event:Set first: - Jo1!1: Remove number 1b Event:Remove: - 1b",
-		"Synchronous events, with namespace");
-
-	// ................................ Act ..................................
-	reset();
-	makeChanges("name.spaces.my", batch);
-	batch.trigger();
-
-	// ............................... Assert .................................
-	assert.equal(result,
-		"1: Set first and last1: Insert number 11: Set first1: Remove number 1b Event:Set last: - Blow1 Event:Insert: - 1 Event:Set first: - Jo1! Event:Remove: - 1b",
-		"Batched events, with batch.trigger(), with namespace");
-
-	// ................................ Act ..................................
-	reset();
-	makeChanges("name.another", batch); // Namespace does not match the listener namespace
-	batch.trigger();
-
-	// ............................... Assert .................................
-	assert.equal(result,
-		"1: Set first and last1: Insert number 11: Set first1: Remove number 1b",
-		"Batched events, with batch.trigger(), but non-matching namespace");
-
-	// ................................ Act ..................................
-	reset();
-	makeChanges("my.name.spaces", true);
-
-	// ............................... Assert .................................
-	setTimeout(function() {
-		assert.equal(result,
-			"1: Set first and last1: Insert number 11: Set first1: Remove number 1b Event:Set last: - Blow1 Event:Insert: - 1 Event:Set first: - Jo1! Event:Remove: - 1b",
-			"Asynchronous events, with namespace");
-
-		// ................................ Reset ................................
-		result = "";
-		$.unobserve();
-		done();
-	}, 0);
 });
 
 })(this.jQuery);

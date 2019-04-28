@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.2: http://jsviews.com/ */
+/*! jquery.views.js v1.0.3: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.2",
+var versionNumber = "v1.0.3",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -162,7 +162,7 @@ $observe = $observable.observe;
 // Event handlers
 //===============
 
-function updateValues(sourceValues, tagElse, bindId, ev) {
+function updateValues(sourceValues, tagElse, async, bindId, ev) {
 // Observably update a data value targeted by the binding.to binding of a 2way data-link binding. Called when elem changes
 // Called when linkedElem of a tag control changes: as updateValue(val, index, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValues(val1, val2, val3, ...) - this: tag
@@ -265,7 +265,7 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 								exprOb = exprOb.sb;
 							}
 						}
-						$observable(target).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
+						$observable(target, async).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
 					}
 				}
 			}
@@ -628,10 +628,10 @@ function arrayChangeHandler(ev, eventArgs) { // array change handler for 'array'
 			self._.srt = eventArgs.refresh; // true if part of a 'sort' on refresh
 			switch (action) {
 				case "insert":
-					self.addViews(index, items);
+					self.addViews(index, items, eventArgs._dly);
 					break;
 				case "remove":
-					self.removeViews(index, items.length);
+					self.removeViews(index, items.length, undefined, eventArgs._dly);
 					break;
 				case "move":
 					self.moveViews(eventArgs.oldIndex, index, items.length);
@@ -825,6 +825,7 @@ function addBindingMarkers(value, view, tag) {
 function observeAndBind(linkCtx, source, target) {
 	var binding, l, k, linkedElem, exprFnDeps, exprOb, prop, propDeps, depends, tagDepends, bindId, linkedElems,
 		tag = linkCtx.tag,
+		allowArray = !tag,
 		cvtBk = linkCtx.convertBack,
 		handler = linkCtx._hdl;
 	source = typeof source === "object" && source; // If not an object set to false
@@ -870,6 +871,7 @@ function observeAndBind(linkCtx, source, target) {
 					}
 				}
 			}
+			allowArray = tag.onArrayChange === undefined || tag.onArrayChange === true;
 		}
 
 		l = exprFnDeps.length;
@@ -882,7 +884,7 @@ function observeAndBind(linkCtx, source, target) {
 			}
 		}
 		binding = $observable._apply(
-			1, // Use as 'this' pointer - arbitrary
+			allowArray ? 0 : 1, // 'this' pointer for observeAndBind, used to set allowArray to 1 or 0.
 			[source],
 			exprFnDeps, // flatten the paths - to gather all the dependencies across args and bound params
 			depends,
@@ -1133,7 +1135,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 				}
 			}
 		}
-		if (elCnt) {
+		if (elCnt && !inTag) {
 			// elContent maps tagNames which have only element content, so may not support script nodes.
 			// We are in element-only content, can remove white space, and use data-jsv attributes on elements as markers
 			// Example: <tr data-jsv="/2_#6_"> - close marker for view 2 and open marker for view 6
@@ -1752,8 +1754,10 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 function bindDataLinkTarget(linkCtx, late) {
 	// Add data link bindings for a link expression in data-link attribute markup
 	function handler(ev, eventArgs) {
-		onDataLinkedTagChange.call(linkCtx, ev, eventArgs);
 		// If the link expression uses a custom tag, the onDataLinkedTagChange call will call renderTag, which will set tagCtx on linkCtx
+		if (!eventArgs || !eventArgs.refresh) {
+			onDataLinkedTagChange.call(linkCtx, ev, eventArgs);
+		}
 	}
 	var view,
 		linkCtxType = linkCtx.type;
@@ -2561,14 +2565,17 @@ function updateValue(val, index, tagElse, async, bindId, ev) {
 	if (self && self._tgId) {
 		bindId = self;
 	}
-	values[index||0] = val;
-	if (async) {
-		setTimeout(function() {
-			updateValues(values, tagElse, bindId, ev);
-		});
-	} else {
-		updateValues(values, tagElse, bindId, ev);
+	if (arguments.length < 4) {
+		if (+index !== index) {
+			async = index;
+			tagElse = index = 0;
+		} else if (+tagElse !== tagElse) {
+			async = tagElse;
+			tagElse = 0;
+		}
 	}
+	values[index||0] = val;
+	updateValues(values, tagElse, async, bindId, ev);
 	return self;
 }
 
@@ -2594,8 +2601,9 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		var filtered,
 			nodes = $(this.nodes());
 		if (nodes[0]) {
+			select = deep ? select || "*" : select;
 			filtered = select ? nodes.filter(select) : nodes;
-			nodes = deep && select ? filtered.add(nodes.find(select)) : filtered;
+			nodes = deep ? filtered.add(nodes.find(select)) : filtered;
 		}
 		return nodes;
 	};
@@ -2757,7 +2765,21 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		theTag.updateValue = updateValue;
 
 		theTag.updateValues = function() {
-			return updateValues(arguments, undefined, this);
+			var tagElse, async,
+				tag = this,
+				bindToLength = tag.bindTo ? tag.bindTo.length : 1,
+				extra = arguments.length - bindToLength;
+
+			if (extra) {
+				tagElse = arguments[bindToLength];
+				if (extra > 1) {
+					async = extra > 1 ? arguments[bindToLength + 1] : undefined;
+				} else if (+tagElse !==  tagElse) {
+					async = tagElse;
+					tagElse = 0;
+				}
+			}
+			return updateValues(arguments, tagElse, async, this);
 		};
 
 		theTag.setValues = function() {
@@ -2811,7 +2833,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		theView = tagOrView;
 
 		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
-		theView.addViews = function(index, dataItems) {
+		theView.addViews = function(index, dataItems, delayed) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
 				view = this,
@@ -2822,16 +2844,15 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				// view is of type "array"
 				viewsCount = views.length + itemsCount;
 
-				if (viewsCount === view.data.length // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
-						&& renderAndLink(view, index, view.tmpl, views, dataItems, view.ctx) !== false) {
-					if (!view._.srt) { // Not part of a 'sort' on refresh
-						view.fixIndex(index + itemsCount);
-					}
+				if ((delayed || viewsCount === view.data.length) // If delayed or if views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& renderAndLink(view, index, view.tmpl, views, dataItems, view.ctx) !== false
+					&& !view._.srt) { // Not part of a 'sort' on refresh
+					view.fixIndex(index + itemsCount);
 				}
 			}
 		};
 
-		theView.removeViews = function(index, itemsCount, keepNodes, isMove) {
+		theView.removeViews = function(index, itemsCount, keepNodes, delayed) {
 			// view.removeViews() removes all the child views
 			// view.removeViews(index) removes the child view with specified index or key
 			// view.removeViews(index, count) removes the specified nummber of child views, starting with the specified index
@@ -2915,7 +2936,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 					}
 				}
 				if (isArray && itemsCount
-					&& (isMove || viewsCount - itemsCount === view.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& (delayed || viewsCount - itemsCount === view.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
 					current = index + itemsCount;
 					// Remove indexed items (parentView is data array view);
 					while (current-- > index) {
@@ -3165,6 +3186,7 @@ $tags({
 			}
 		},
 		onUpdate: false,
+		onArrayChange: false,
 		onUnbind: function() {
 			var self = this,
 				oldIsCleanCall = isCleanCall;
@@ -3303,16 +3325,7 @@ $extend($tags["for"], {
 		ev.done = true;
 	},
 	onUpdate: function(ev, eventArgs, tagCtxs) {
-		var tagCtx, props,
-			tag = this,
-			l = tagCtxs.length;
-		while (l--) {
-			tagCtx = tagCtxs[l];
-			props = tagCtx.props;
-			tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
-			props.dataMap = (tagCtx.argDefault !== false && $isArray(tagCtx.args[0])
-				&& (props.sort !== undefined || tagCtx.params.props.start || tagCtx.params.props.end || props.step !== undefined || props.filter || props.reverse)) && tag.sortDataMap;
-		}
+		this.setDataMap(tagCtxs);
 	},
 	onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 		var data,

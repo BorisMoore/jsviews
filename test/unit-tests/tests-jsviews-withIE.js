@@ -4,9 +4,13 @@
 
 /* Setup */
 var inputOrKeydownContentEditable,
+	isIE8 = window.attachEvent && !window.addEventListener,
+	isIE = window.navigator.userAgent,
 	useInput = "oninput" in document,
 	inputOrKeydown = useInput ? "input" : "keydown";
-	inputOrKeydownContentEditable = "input";
+
+	isIE = isIE.indexOf('MSIE ') > 0 || isIE.indexOf('Trident/') > 0;
+	inputOrKeydownContentEditable = isIE ? "keydown" : "input";
 
 function keydown(elem) {
 	if (useInput) {
@@ -431,6 +435,9 @@ function reset() {
 
 // End Setup
 
+//test("TEST", function() {
+//});
+//return;
 QUnit.module("Template structure");
 
 QUnit.test("Template validation", function(assert) {
@@ -606,10 +613,10 @@ QUnit.test("Template validation", function(assert) {
 		.link("#result", markupData);
 
 	// ................................ Act ..................................
-	res = "" + ($("#result").html().indexOf("<img><img>")>60);
+	res = "" + ($("#result").html().indexOf(isIE8 ? "<IMG><IMG>": "<img><img>")>60);
 
 	$.observable(markupData).setProperty("markup", "<br/><br>");
-	res += "|" + ($("#result").html().indexOf("<br><br>")>60);
+	res += "|" + ($("#result").html().indexOf(isIE8 ? "<BR><BR>": "<br><br>")>60);
 
 	// ............................... Assert .................................
 	assert.equal(res, "true|true", "Validation - void elements inserted from data can have self-close slashes, or not...");
@@ -823,8 +830,8 @@ var tmpl1 = $.templates(
 );
 
 var tmpl2 = $.templates(
-	'<li><button data-link="{on ~clicked 1} {:name}">click me</button></li>'
-	+ '<li class="clickLi" data-link="{on ~clicked 1} {:name}">click me</li>'
+	'<li><button data-link="{on ~clicked} {:name}">click me</button></li>'
+	+ '<li class="clickLi" data-link="{on ~clicked} {:name}">click me</li>'
 	+ '<li><input data-link="name" /></li>'
 	+ '{^{for things}}<li>inserted</li>{{/for}}'
 ),
@@ -832,7 +839,7 @@ var tmpl2 = $.templates(
 data = {name:"Jo", things:[]},
 clicked = 0,
 helpers = {
-	clicked: function(val) {
+	clicked: function() {
 		clicked += 1;
 	}
 };
@@ -1179,7 +1186,8 @@ QUnit.test("Top-level linking", function(assert) {
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(res, ("Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
+	assert.equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
+		: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"Top level bindings allow passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
@@ -1275,7 +1283,9 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
-	assert.equal(before + "|" + after, 'One One One|newLast newLast newLast|modLast modLast modLast',
+	assert.equal(before + "|" + after,
+	(isIE8 ? 'OneOneOne|newLastnewLastnewLast|modLastmodLastmodLast'
+	: 'One One One|newLast newLast newLast|modLast modLast modLast'),
 	'$.link(expression, ".target", data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
 
 	// ................................ Act ..................................
@@ -1305,7 +1315,9 @@ setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
-	assert.equal(before + "|" + after, 'One One One|newLast newLast newLast|modLast modLast modLast',
+	assert.equal(before + "|" + after,
+	(isIE8 ? 'OneOneOne|newLastnewLastnewLast|modLastmodLastmodLast'
+	: 'One One One|newLast newLast newLast|modLast modLast modLast'),
 	'$(".target").link(expression, data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
 
 	// ................................ Act ..................................
@@ -1346,9 +1358,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
+	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$.link(expression, selector, data, helpers) links expression to multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
@@ -1382,10 +1397,14 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
+	+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+	+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
+	+ 'NEWTMPLNAME: modLastNEWTMPLNAME: modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
-	+ ' NEWTMPLNAME: modLast  NEWTMPLNAME: modLast modLast modLast modLast modLast',
+	+ ' NEWTMPLNAME: modLast  NEWTMPLNAME: modLast modLast modLast modLast modLast'),
 	'$(selector).link(expression, data, helpers) links expression to multiple targets on multiple target elements, including binding to passed in templates');
 
 	// ................................ Act ..................................
@@ -1419,9 +1438,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
+		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 		+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$.link(true, ".inner", data, helpers) links multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
@@ -1454,9 +1476,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
+		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$(".inner").link(true, data, helpers) links multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
@@ -1489,9 +1514,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
+		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$(container).link(true, data, helpers) links multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
@@ -1524,9 +1552,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: One NAME: OneOne One One One|'
+		+ 'NAME:newLast NAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLast NAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$(container).link(true, data, helpers) links multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
@@ -1559,9 +1590,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8 ? 'NAME: OneNAME: OneOne One One One|'
+		+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
+	: ' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
-	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
+	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'),
 	'$.link(expression, selector, data, helpers) links correctly to multiple targets on multiple target elements within a linked rendered template');
 
 	// ................................ Act ..................................
@@ -1599,10 +1633,14 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	'green outerVal |'
+	(isIE8 ? 'green outerVal |'
+		+ 'green outerVal Inside green outerVal Foo NAME: One|'
+		+ 'green outerVal Inside green outerVal Foo NAME:newLast|'
+		+ 'red outerVal Insidered outerVal Foo NAME:newLast'
+	: 'green outerVal |'
 		+ 'green outerVal Inside green outerVal Foo NAME: One|'
 		+ 'green outerVal Inside green outerVal Foo NAME: newLast|'
-		+ 'red outerVal Inside red outerVal Foo NAME: newLast',
+		+ 'red outerVal Inside red outerVal Foo NAME: newLast'),
 	'$.link(expression, selector, data, helpers) links correctly to target elements within a linked rendered template - and extends the context of the target view');
 
 	// ................................ Act ..................................
@@ -1647,10 +1685,15 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
-	' NAME: One  NAME: One One One One One|'
+	(isIE8
+	? 'NAME: OneNAME: OneOne One One One|'
+		+ 'NAME:newLastNAME:newLastnewLast newLast newLast newLast|'
+		+ 'NAME:modLastNAME:modLastmodLast modLast modLast modLast'
+		+ ' - Model1: modLast- Model2: lastModel2Name'
+	: ' NAME: One  NAME: One One One One One|'
 		+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'
-		+ ' - Model1: modLast- Model2: lastModel2Name',
+		+ ' - Model1: modLast- Model2: lastModel2Name'),
 	'$.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
@@ -1663,9 +1706,13 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
+	(isIE8
+	? 'NAME:modLastNAME:modLastmodLast modLast modLast modLast|'
+		+ 'NAME:new_ORIGMOD_LastNAME:new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
+		+ 'NAME:new_ORIGMOD_LastNAME_ORIGMOD_NewTmpl: new_ORIGMOD_Lastnew_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'
+	: ' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
 		+ ' NAME: new_ORIGMOD_Last  NAME: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
-		+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last',
+		+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last'),
 	'Continue: $.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
@@ -1718,7 +1765,15 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
-	"modLast title:modLast|"
+	isIE8
+	? "modLast title:modLast|"
+		+ "Model2Tmpl: newLast2 title2:newLast2|"
+		+ "Model2Tmpl:last2B title2:last2B|"
+		+ "last1A title:last1A|"
+		+ "modMoreLast title:modMoreLast|"
+		+ "Model2NEWTmpl: last2B title:modMoreLast"
+		+ " - Model1: modMoreLast- Model2: last2B"
+	: "modLast title:modLast|"
 		+ "Model2Tmpl: newLast2 title2:newLast2|"
 		+ "Model2Tmpl: last2B title2:last2B|"
 		+ "last1A title:last1A|"
@@ -2222,7 +2277,9 @@ setTimeout(function() {
 	// ............................... Assert .................................
 	var html = $("#result span")[0].outerHTML;
 	assert.equal(html,
-	'<span data-link="foo(\'x\\x\').b">x\\x</span>',
+	isIE8
+	? "<SPAN data-link=\"foo('x\\x').b\"" + html.slice(30)
+	: '<span data-link="foo(\'x\\x\').b">x\\x</span>',
 	'Escaping of characters: data-link="foo(\'x\\x\').b"');
 
 	// ................................ Reset ................................
@@ -2327,7 +2384,8 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"1 new  2 new  3 new  4 new  5 new  6 new  INPUTS new new new new new new new new ",
+	isIE8 ? "1new  2new  3 new 4 new 5 new 6 new INPUTS new new new new new new new new "
+		: "1 new  2 new  3 new  4 new  5 new  6 new  INPUTS new new new new new new new new ",
 	'Duplicate paths bind correctly (https://github.com/BorisMoore/jsviews/issues/250)');
 
 	// ................................ Reset ................................
@@ -2375,7 +2433,8 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"0 aa 1 22 2 0 3 false 4  5 true ",
+	isIE8 ? "0 aa 1 22 2 0 3 false 4 5 true "
+		: "0 aa 1 22 2 0 3 false 4  5 true ",
 	'with link, {{:#data}} within {{for}} is correct for different data types');
 
 	// ................................ Act ..................................
@@ -2395,7 +2454,8 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"0 aa 1 22 2 0 3 false 4  5 true ",
+	isIE8 ? "0 aa 1 22 2 0 3 false 4 5 true "
+		: "0 aa 1 22 2 0 3 false 4  5 true ",
 	'with link, {^{:#data}} within {^{for}} is correct for different data types');
 
 	// ................................ Act ..................................
@@ -2566,7 +2626,8 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	var html = $("#result span")[0].outerHTML;
 
 	// ............................... Assert .................................
-	assert.ok(before === 'One' && after === null && html === "<span data-link=\"title{:lastName}\"></span>",
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to null - removes title attribute');
 
 	// ................................ Reset ................................
@@ -2585,7 +2646,8 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	var html = $("#result span")[0].outerHTML;
 
 	// ............................... Assert .................................
-	assert.ok(before === 'One' && after === null && html === "<span data-link=\"title{:lastName}\"></span>",
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and setting lastName to undefined - removes title attribute');
 
 	// ................................ Reset ................................
@@ -2640,7 +2702,8 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	var html = $("#result span")[0].outerHTML;
 
 	// ............................... Assert .................................
-	assert.ok(before === 'One' && after === null && html === "<span data-link=\"title{:lastName}\"></span>",
+	assert.ok(before === 'One' && after === null && html === (isIE8 ? ("<SPAN data-link=\"title{:lastName}\""
+		+ html.slice(34)) : "<span data-link=\"title{:lastName}\"></span>"),
 	'Data link using: <span data-link="title{:lastName}"></span>, and removing lastName - removes title attribute');
 
 	// ................................ Reset ................................
@@ -3061,7 +3124,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	function divProps() {
 		var div = $("#result div")[0];
-		return "title: " + div.title + " - innerHTML: " + div.innerHTML.replace(/<script.*?><\/script>/g, "") + " - display: " + div.style.display;
+		return "title: " + div.title + " - innerHTML: " + div.innerHTML.replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, "") + " - display: " + div.style.display;
 	}
 
 	// ................................ Act ..................................
@@ -3085,7 +3148,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	assert.equal(divProps(), "title:  - innerHTML: " + "box<br>" + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"{chooseAttr tagAttr=\'html\'} overrides tag.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -3101,7 +3164,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	assert.equal(divProps(), "title:  - innerHTML: " + "box<br>" + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr} has target 'html'");
 
 	// ................................ Act ..................................
@@ -3109,7 +3172,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	assert.equal(divProps(), "title:  - innerHTML: " + "box<br>" + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"html{chooseAttr tagAttr =\'title\'} overrides tag.attr, but still has target 'html'");
 
 	// ................................ Act ..................................
@@ -3149,7 +3212,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		.link("#result", thing);
 
 	// ............................... Assert .................................
-	assert.equal(divProps(), "title:  - innerHTML: " + "box<br>" + " - display: ",
+	assert.equal(divProps(), "title:  - innerHTML: " + (isIE8 ? "box<BR>" : "box<br>") + " - display: ",
 		"visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'} overrides tag.attr and linkCtx.attr, and has target 'html'");
 
 	// ................................ Act ..................................
@@ -4422,8 +4485,8 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
-	assert.equal((before + "|" + after).replace(/<script.*?><\/script>/g, ""),
-	'<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
+	assert.equal((before + "|" + after).replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""),
+	isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link fnTagEl rendering <span>, using: <div data-link="{fnTagEl}"></div>');
 
 	// ................................ Reset ................................
@@ -5368,7 +5431,10 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
+	isIE8
+	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
+		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
 		+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property correctly calls the setter');
 
@@ -5437,7 +5503,10 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
+	isIE8
+	? "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirstnewLastnewFirst newLastnewLast newFirst newFirst newLast|compFirstcompLastcompFirst"
+		+ " compLastcompLast compFirst compFirst compLast|2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst 2wayFirst 2wayLast"
+	: "Jeff Smith Jeff Smith Smith Jeff Jeff Smith|newFirst newLast newFirst newLast newLast newFirst newFirst newLast|compFirst compLast compFirst"
 		+ " compLast compLast compFirst compFirst compLast|2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst 2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property defined on the prototype correctly calls the setter');
 
@@ -5493,7 +5562,11 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	"Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
+	isIE8
+	? "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
+	+ "newFirstnewLastnewFirst newLastnewLast newFirst Rose LeeRose LeeLee Rose :newFirst newLast|"
+	+ "2wayFirst2wayLast2wayFirst 2wayLast2wayLast 2wayFirst Rose LeeRose LeeLee Rose :2wayFirst 2wayLast"
+	: "Jeff Friedman Jeff Friedman Friedman Jeff Rose Lee Rose Lee Lee Rose :Jeff Friedman|"
 	+ "newFirst newLast newFirst newLast newLast newFirst Rose Lee Rose Lee Lee Rose :newFirst newLast|"
 	+ "2wayFirst 2wayLast 2wayFirst 2wayLast 2wayLast 2wayFirst Rose Lee Rose Lee Lee Rose :2wayFirst 2wayLast",
 	'Two-way binding to a computed observable data property passed in as helper calls the setter');
@@ -7382,7 +7455,9 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		assert.equal(res, "None: a a a a a a |Change a: A A A A A A |Change b: A B B B B B |Change c: A B C C C C |Change d: A B C D D D |Change e: A B C D E E |",
+		assert.equal(res, isIE8
+			? "None: a a a a a a |Change a: AAAAAA |Change b: ABBBBB |Change c: ABCCCC |Change d: ABCDDD |Change e: ABCDEE |"
+			: "None: a a a a a a |Change a: A A A A A A |Change b: A B B B B B |Change c: A B C C C C |Change d: A B C D D D |Change e: A B C D E E |",
 		"{{: ...}} expressions with deeply chained computed observables");
 		// =============================== Arrange ===============================
 
@@ -7637,7 +7712,9 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		getResult("Change e1");
 
 		// ............................... Assert .................................
-		assert.equal(res, "None: a a a a a a a a a a |Change a: A A A A A A A A A A |Change a1: A A1 A1 A1 A1 A1 A1 A1 A1 A1 |Change b: A A1 B B B B B B B B |Change b1: A A1 B B1 B1 B1 B1 B1 B1 B1 |Change c: A A1 B B1 C C C C C C |Change c1: A A1 B B1 C C1 C1 C1 C1 C1 |Change d: A A1 B B1 C C1 D D D D |Change d1: A A1 B B1 C C1 D D1 D1 D1 |Change e: A A1 B B1 C C1 D D1 E E |Change e1: A A1 B B1 C C1 D D1 E E1 |",
+		assert.equal(res, isIE8
+			? "None: a a a a a a a a a a |Change a: AAAAAAAAAA |Change a1: AA1A1A1A1A1A1A1A1A1 |Change b: AA1BBBBBBBB |Change b1: AA1BB1B1B1B1B1B1B1 |Change c: AA1BB1CCCCCC |Change c1: AA1BB1CC1C1C1C1C1 |Change d: AA1BB1CC1DDDD |Change d1: AA1BB1CC1DD1D1D1 |Change e: AA1BB1CC1DD1EE |Change e1: AA1BB1CC1DD1EE1 |"
+			: "None: a a a a a a a a a a |Change a: A A A A A A A A A A |Change a1: A A1 A1 A1 A1 A1 A1 A1 A1 A1 |Change b: A A1 B B B B B B B B |Change b1: A A1 B B1 B1 B1 B1 B1 B1 B1 |Change c: A A1 B B1 C C C C C C |Change c1: A A1 B B1 C C1 C1 C1 C1 C1 |Change d: A A1 B B1 C C1 D D D D |Change d1: A A1 B B1 C C1 D D1 D1 D1 |Change e: A A1 B B1 C C1 D D1 E E |Change e1: A A1 B B1 C C1 D D1 E E1 |",
 		"{{: ...}} expressions with deeply chained computed observables (variant)");
 
 		// =============================== Arrange ===============================
@@ -7702,7 +7779,9 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		assert.equal(res, "None: a a a a a |Change a: A A A A A |Change b: B B B B B |Change c: B C C C C |Change d: B C D D D |Change e: B C D E E |",
+		assert.equal(res, isIE8
+			? "None: a a a a a |Change a: AAAAA |Change b: BBBBB |Change c: BCCCC |Change d: BCDDD |Change e: BCDEE |"
+			: "None: a a a a a |Change a: A A A A A |Change b: B B B B B |Change c: B C C C C |Change d: B C D D D |Change e: B C D E E |",
 		"{{for ...}} expressions with deeply chained computed observables");
 
 		// =============================== Arrange ===============================
@@ -7767,7 +7846,9 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		getResult("Change e");
 
 		// ............................... Assert .................................
-		assert.equal(res, "None: a a a a a | a a a a a |Change a: A A A A A | A A A A A |Change b: A A A A A | B B B B A |Change c: A A A A A | C C C B A |Change d: A A A A A | D D C B A |Change e: A A A A A | E D C B A |",
+		assert.equal(res, isIE8
+			? "None: a a a a a | a a a a a |Change a: A A A A A |A A A A A |Change b: A A A A A |B B B B A |Change c: A A A A A |C C C B A |Change d: A A A A A |D D C B A |Change e: A A A A A |E D C B A |"
+			: "None: a a a a a | a a a a a |Change a: A A A A A | A A A A A |Change b: A A A A A | B B B B A |Change c: A A A A A | C C C B A |Change d: A A A A A | D D C B A |Change e: A A A A A | E D C B A |",
 		"Sibling {{: ...}} expressions with deeply chained computed observables");
 
 		// ................................ Reset ................................
@@ -8405,7 +8486,7 @@ QUnit.test("{^{tag}}", function(assert) {
 	after = $("#result div span")[0].outerHTML;
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	'<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
+	 isIE8 ? '<SPAN>Name: Mr Jo. Width: 30</SPAN>|<SPAN>Name: Sir compFirst. Width: 40</SPAN>' : '<span>Name: Mr Jo. Width: 30</span>|<span>Name: Sir compFirst. Width: 40</span>',
 	'Data link with: {^{fnTagEl/}} rendering <span>, updates when dependant object paths change');
 
 	// ................................ Reset ................................
@@ -8602,9 +8683,9 @@ QUnit.test("{^{tag}}", function(assert) {
 		});
 
 	// ............................... Assert .................................
-	assert.equal($("#result span")[0].outerHTML, "<span>w\\x\'y</span>",
+	assert.equal($("#result span")[0].outerHTML, isIE8 ? "<SPAN>w\\x\'y</SPAN>" : "<span>w\\x\'y</span>",
 	"{^{mytag foo(\"w\\x\'y\").b/}} - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
-	assert.equal($("#result span")[1].outerHTML, "<span>w\\x</span>",
+	assert.equal($("#result span")[1].outerHTML, isIE8 ? "<SPAN>w\\x</SPAN>" : "<span>w\\x</span>",
 	"<div data-link=\"{mytag foo('w\\x').b}\" > - correct compilation and output of quotes and backslash, with object returned in path (so nested compilation)");
 
 	// ................................ Reset ................................
@@ -8801,7 +8882,7 @@ QUnit.test("{^{for}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for #data}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
@@ -8821,7 +8902,7 @@ QUnit.test("{^{for}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{^{for}} when #data is an array binds to array changes on #data');
 
 	// ................................ Reset ................................
@@ -8862,7 +8943,13 @@ $.observable(listData.nodes.list).insert("C2 ");
 ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
 	// ............................... Assert .................................
-	assert.equal(ret, "|1 Plain: A |SpanWithNext: A nextElem|UlWithNext: AnextElem|Ul: A 4"
+	assert.equal(ret, isIE8
+	? "|1 Plain: A |SpanWithNext: A nextElem|UlWithNext: AnextElem|Ul: A 4"
+	+ "|2 Plain: |SpanWithNext:nextElem|UlWithNext: nextElem|Ul:  4"
+	+ "|3 Plain:C  |SpanWithNext:C nextElem|UlWithNext: CnextElem|Ul: C 4"
+	+ "|4 Plain: |SpanWithNext:nextElem|UlWithNext: nextElem|Ul:  4|"
+	+ "5 Plain:C2  |SpanWithNext:C2 nextElem|UlWithNext: C2nextElem|Ul: C2 4"
+	: "|1 Plain: A |SpanWithNext: A nextElem|UlWithNext: AnextElem|Ul: A 4"
 	+ "|2 Plain: |SpanWithNext: nextElem|UlWithNext: nextElem|Ul:  4"
 	+ "|3 Plain: C |SpanWithNext: C nextElem|UlWithNext: CnextElem|Ul: C 4"
 	+ "|4 Plain: |SpanWithNext: nextElem|UlWithNext: nextElem|Ul:  4"
@@ -8897,7 +8984,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|X box |X box table |X tree box table |X tree box |X box ||X pen lamp |X lamp pen |",
+	assert.equal(after, isIE8
+	? "|X box |X boxtable  |Xtree  boxtable  |Xtree  box  |X  box  ||X pen lamp |X lamp pen |"
+		: "|X box |X box table |X tree box table |X tree box |X box ||X pen lamp |X lamp pen |",
 	'{^{if things.length}}{^{for things}} content block bound to both array and array.length responds correctly to observable array changes');
 
 	// ................................ Reset ................................
@@ -8933,7 +9022,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
+	assert.equal(after, isIE8
+		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen |"
+		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length && things}} content block bound to both array and array.length responds correctly to observable array changes');
 
 	// ................................ Reset ................................
@@ -8969,7 +9060,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
+	assert.equal(after, isIE8
+		? "|box |box table |tree box table |tree box |box ||pen lamp | lamppen |"
+		: "|box |box table |tree box table |tree box |box ||pen lamp |lamp pen |",
 	'{^{for things.length}}{^{for ~root.things}} content bound to both array and array.length responds correctly to observable array changes');
 
 	// ................................ Reset ................................
@@ -8989,7 +9082,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(before + "|" + after, "2 boxtable|3 treeboxtable",
+	assert.equal(before + "|" + after, isIE8 ? "2 boxtable|3tree boxtable" : "2 boxtable|3 treeboxtable",
 	'{{include things}} moves context to things array, and {^{for}} then iterates and binds to array');
 
 	// ................................ Reset ................................
@@ -9415,7 +9508,8 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + deferredString + "|" + after,
-	(' next||insertBefore next'),
+	(isIE8 ? 'next||insertBeforenext'
+	: ' next||insertBefore next'),
 	'Inserting content before a next sibling element in element-only context does not set ._df, and subsequent insertion is correctly placed before the next sibling.');
 
 	// ................................ Reset ................................
@@ -9537,6 +9631,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
 	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
 	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
 	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}");
@@ -9545,13 +9640,17 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "6 8 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
 	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
+}
 
 	assert.equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='name'}}");
 	assert.equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{for mypeople  sort='details.age'}}");
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
 	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+}
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 	// =============================== Arrange ===============================
 	model.things = [{ob: {thing: "box"}}];
 	var ctx = {};
@@ -9799,7 +9898,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
-
+}
 	// =============================== Arrange ===============================
 	movies = [{title: "a0"}, {title: "x0"}, {title: "b0"}, {title: "y0"}, {title: "c0"}, {title: "z0"}];
 	ctx = {};
@@ -9829,14 +9928,18 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 t0 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0 x0 b0 y0 c0 z0t0  |Slice:- x0 b0 y0 c0t0  "
+			: "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 t0 ",
 	'Appending of item in target array ("sliced") - item is rendered without refreshing sort, filter etc.');
 
 	ctx.target.refresh();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 z0 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0 x0 b0 y0 c0 z0t0  |Slice:-x0 b0 y0 c0 z0  "
+			: "|All:--- a0 x0 b0 y0 c0 z0 t0 |Slice:- x0 b0 y0 c0 z0 ",
 	'To refresh correct start and end with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
@@ -9844,7 +9947,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 |Slice:- t1 x0 b0 y0 c0 z0 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0 x0 b0 y0 c0 z0t0t1   |Slice:-t1 x0 b0 y0 c0 z0  "
+			: "|All:--- a0 x0 b0 y0 c0 z0 t0 t1 |Slice:- t1 x0 b0 y0 c0 z0 ",
 	'Insertion of item at specific position in target array ("sliced") - item is rendered at insert location, but item is simply appended to source array');
 
 	// ................................ Act ..................................
@@ -9852,7 +9957,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 |Slice:- m2 x0 b0 y0 c0 z0 t0 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0m2  x0 b0 y0 c0 z0t0t1   |Slice:-m2 x0 b0 y0 c0 z0t0    "
+			: "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 |Slice:- m2 x0 b0 y0 c0 z0 t0 ",
 	'Insertion of item in source array will also refresh "slicing"');
 
 	// ................................ Act ..................................
@@ -9860,7 +9967,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 t3 t4 |Slice:- m2 t3 t4 x0 b0 y0 c0 z0 t0 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0m2  x0 b0 y0 c0 z0t0t1t3 t4    |Slice:-m2t3 t4  x0 b0 y0 c0 z0t0    "
+			: "|All:--- a0 m2 x0 b0 y0 c0 z0 t0 t1 t3 t4 |Slice:- m2 t3 t4 x0 b0 y0 c0 z0 t0 ",
 	'Insertion of items at specific position in target array ("sliced") - items are rendered at insert location, but simply appended to source array');
 
 	// ................................ Act ..................................
@@ -9868,7 +9977,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 m2 t1 t3 t4 t5 |Slice:- t3 t5 m2 t4 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0m2 t1t3 t4t5     |Slice:-t3t5 m2 t4      "
+			: "|All:--- a0 m2 t1 t3 t4 t5 |Slice:- t3 t5 m2 t4 ",
 	'Calling refresh() on target array will append and remove items appropriately from source array and target array (and move items in target array)');
 
 	// ................................ Act ..................................
@@ -9876,7 +9987,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- a0 m2 t1 t3 t5 |Slice:- t3 t5 m2 ",
+	assert.equal(after, isIE8
+			? "|All:--- a0m2 t1t3t5     |Slice:-t3t5 m2      "
+			: "|All:--- a0 m2 t1 t3 t5 |Slice:- t3 t5 m2 ",
 	'Removing item in target array ("sliced") - items are rendered without refreshing "slicing".');
 
 	// ................................ Act ..................................
@@ -9884,7 +9997,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- m2 t1 t3 t5 |Slice:- t1 t3 ",
+	assert.equal(after, isIE8
+			? "|All:---m2 t1t3t5     |Slice:-t1 t3       "
+			: "|All:--- m2 t1 t3 t5 |Slice:- t1 t3 ",
 	'Removal of item in source array will also refresh "slicing".');
 
 	// ................................ Act ..................................
@@ -9892,7 +10007,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- m2 t1 t3 t5 |Slice:- t3 t1 ",
+	assert.equal(after, isIE8
+			? "|All:---m2 t1t3t5     |Slice:- t3     t1  "
+			: "|All:--- m2 t1 t3 t5 |Slice:- t3 t1 ",
 	'Moving items in target array ("slice") - items are moved in target but not in source, and this is without refreshing "slicing".');
 
 	// ................................ Act ..................................
@@ -9900,7 +10017,9 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "|All:--- m2 t5 t1 t3 |Slice:- t5 t1 ",
+	assert.equal(after, isIE8
+			? "|All:---m2 t5    t1t3 |Slice:-t5  t1       "
+			: "|All:--- m2 t5 t1 t3 |Slice:- t5 t1 ",
 	'Moving of items in source array will also refresh "slicing".');
 
 	// ................................ Reset ................................
@@ -10529,7 +10648,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "notOne notTwo THREE ",
+	assert.equal(after, isIE8 ? "notOne notTwo THREE  " : "notOne notTwo THREE ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
@@ -10537,7 +10656,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	after = $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(after, "notOne TWO notThree ",
+	assert.equal(after, isIE8 ? "notOne TWO notThree  " : "notOne TWO notThree ",
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Reset ................................
@@ -10942,6 +11061,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 	$.views.settings.advanced({_jsv: false});
 });
 
+if (!isIE8) { // IE8 does not support filter. Need to add polyfill on sites that want this support
 QUnit.test("{^{props start end sort filter reverse}}...{{else}} ...", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using _jsv
 
@@ -11078,6 +11198,7 @@ $.templates(
 
 	$.views.settings.advanced({_jsv: false});
 });
+}
 
 QUnit.test('data-link="{on ...', function(assert) {
 
@@ -11152,7 +11273,8 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"shape |line true",
+	isIE8 ? "shape |linetrue "
+		: "shape |line true",
 	'{on ~util.swap} calls util.swap helper method on click, with ~util as this pointer');
 
 	// ................................ Reset ................................
@@ -11210,7 +11332,8 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"shape |line true",
+	isIE8 ? "shape |linetrue "
+		: "shape |line true",
 	'{on ~util.swap context=~util.swapCtx} calls util.swap helper method on click, with util.swapCtx as this pointer');
 
 	// ................................ Reset ................................
@@ -11244,7 +11367,8 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"shape |line true",
+	isIE8 ? "shape |linetrue "
+		: "shape |line true",
 	'{on ~util.swap data=#data} calls util.swap helper method on click, and passes current data #data as ev.data');
 
 	// ................................ Reset ................................
@@ -12321,7 +12445,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"swap shape|swap line",
+	isIE8 ? "swap shape|swapline"
+	  : "swap shape|swap line",
 	'{^{on swap/}} renders as button with label "swap", and calls swap method on click, with "this" pointer context on data object');
 
 	// ................................ Reset ................................
@@ -12360,7 +12485,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"clickme shape|clickme line",
+	isIE8 ? "clickme shape|clickmeline"
+	  : "clickme shape|clickme line",
 	'{^{on swap}} clickme {{/on}} renders as button with label "clickme", and calls swap method on click');
 
 	// ................................ Reset ................................
@@ -12379,7 +12505,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"clickagain shape|clickagain line",
+	isIE8 ? "clickagain shape|clickagainline"
+	  : "clickagain shape|clickagain line",
 	'{^{on swap tmpl=stringValue renders as button with label stringValue, and calls swap method on click');
 
 	// ................................ Reset ................................
@@ -12398,7 +12525,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"clickme shape|clickme line",
+	isIE8 ? "clickme shape|clickmeline"
+	  : "clickme shape|clickme line",
 	'{^{on swap}}<span>clickme</span>{{/on}} renders as span with label clickme, and calls swap method on click');
 
 	// ................................ Reset ................................
@@ -12417,7 +12545,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"~swap shape|~swap line",
+	isIE8 ? "~swap shape|~swapline"
+	  : "~swap shape|~swap line",
 	'{^{on ~swap/}} calls swap helper method on click, with "this" pointer context defaulting to current data object');
 
 	// ................................ Reset ................................
@@ -12447,7 +12576,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"~util.swap shape |~util.swap line true",
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap/}} calls util.swap helper method on click, with ~util as this pointer');
 
 	// ................................ Reset ................................
@@ -12472,7 +12602,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"~util.swap shape|~util.swap line",
+	isIE8 ? "~util.swap shape|~util.swapline"
+	  : "~util.swap shape|~util.swap line",
 	'{^{on ~util.swap context=#data/}} calls util.swap helper method on click, with current data object as this pointer');
 
 	// ................................ Reset ................................
@@ -12505,7 +12636,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"~util.swap shape |~util.swap line true",
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap context=~util.swapCtx/}} calls util.swap helper method on click, with util.swapCtx as this pointer');
 
 	// ................................ Reset ................................
@@ -12539,7 +12671,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"~util.swap shape |~util.swap line true",
+	isIE8 ? "~util.swap shape |~util.swaplinetrue "
+		: "~util.swap shape |~util.swap line true",
 	'{^{on ~util.swap data=#data/}} calls util.swap helper method on click, and passes current data #data as ev.data');
 
 	// ................................ Reset ................................
@@ -12563,7 +12696,8 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"swap shape|swap lineswap shapeswap line",
+	isIE8 ? "swap shape|swaplineswapshapeswapline"
+	  : "swap shape|swap lineswap shapeswap line",
 	"{^{on 'mouseup mousedown blur' swap/}} calls util method on mouseup, mousedown and blur");
 
 	// ................................ Reset ................................
@@ -12965,7 +13099,19 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	after += $("#result").text() + "|";
 
 	assert.equal(before + after,
-		"11 true true|"
+		isIE8
+		? "11 true true|"
+			+ "err:A ERR:B err:C err:D err:E err:F err:G err:H err:I ERR:J err:K |"
+			+ "leafLEAFleafleafleaffooleaf from my tag1leaf from my tag2 leafleaf from my tag1LEAFLEAF|"
+			+ "leaf2LEAF2leaf2leafleaffooleaf2 from my tag1leaf2 from my tag2 leaf2leaf2 from my tag1LEAF2LEAF2|"
+			+ "leaf3LEAF3leaf3leafleaf3fooleaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
+			+ "leaf4LEAF4leaf4leafleaf4fooleaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
+			+ "11 11 9 true true|"
+			+ "leaf4LEAF4leaf4leafleaf4fooleaf4 from my tag1leaf4 from my tag2 leaf4leaf4 from my tag1LEAF4LEAF4|"
+			+ "11 true true|"
+			+ "err:A ERR:B err:C err:D err:E err:F err:G  err:H err:I ERR:J ERR:K |"
+			+ "leaf3LEAF3leaf3leaf3leaf3fooleaf3 from my tag1leaf3 from my tag2 leaf3leaf3 from my tag1LEAF3LEAF3|"
+		: "11 true true|"
 			+ "err:A  ERR:B  err:C  err:D  err:E  err:F  err:G  err:H  err:I  ERR:J  err:K  |"
 			+ "leaf LEAF leaf leaf leaffoo leaf from my tag1 leaf from my tag2 leaf leaf from my tag1 LEAF LEAF |"
 			+ "leaf2 LEAF2 leaf2 leaf leaffoo leaf2 from my tag1 leaf2 from my tag2 leaf2 leaf2 from my tag1 LEAF2 LEAF2 |"
@@ -13026,6 +13172,14 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	after += $("#result").text() + "|";
 
 	assert.equal(before + after,
+		isIE8
+		? "string1 A error2 error3 error3b error4 error4b |"
+			+ "[object Object] Astring2Berror3error4error4b |"
+			+ "[object Object] A[object Object]Bstring3Cerror4 |"
+			+ "[object Object] A[object Object]B[object Object]Cstring4D |"
+			+ "[object Object] Aerror2error3error3berror4error4b |"
+			+ "[object Object] A[object Object]a[object Object]b[object Object]c |"
+		:
 		"string1 A error2  error3 error3b error4 error4b |"
 			+ "[object Object] A string2 B error3  error4 error4b |"
 			+ "[object Object] A [object Object] B string3 C error4  |"
@@ -13078,7 +13232,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{include ^tmpl=~typeTemplates[type]... and data-link="{include ^tmpl=~typeTemplates[type]...');
 
 	// ................................ Reset ................................
@@ -13115,7 +13270,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{if true ^tmpl=~typeTemplates[type]... and data-link="{if true ^tmpl=~typeTemplates[type]...');
 
 	// ................................ Reset ................................
@@ -13152,7 +13308,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{if false}}{{else ^tmpl=~typeTemplates[type]... and data-link="{if false}{else ^tmpl=~typeTemplates[type]...');
 
 	// ................................ Reset ................................
@@ -13189,7 +13346,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
+	isIE8 ? "Tag: Shape: circle Elem: Shape: circle Tag: Line: square 1 Elem: Line: square 1 |Tag:Line: circle5  Elem: Line: circle5 Tag:Shape: square  Elem: Shape: square "
+		: "Tag: Shape: circle\n Elem: Shape: circle\n Tag: Line: square 1\n Elem: Line: square 1\n |Tag: Line: circle 5\n Elem: Line: circle 5\n Tag: Shape: square\n Elem: Shape: square\n ",
 	'binding to ^tmpl=... :{^{for undefined}}{{else ^tmpl=~typeTemplates[type]... and data-link="{for undefined}{else ^tmpl=~typeTemplates[type]...');
 
 	// ................................ Reset ................................
@@ -13221,7 +13379,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition: line false Unbound condition: shape true Bound condition: shape true Unbound condition: line false ",
+	isIE8 ? "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition:line false  Unbound condition: shape true Bound condition:shape true  Unbound condition: line false "
+		: "Bound condition: shape true Unbound condition: shape true Bound condition: line false Unbound condition: line false |Bound condition: line false Unbound condition: shape true Bound condition: shape true Unbound condition: line false ",
 	'Binding to contextual parameter {^{include ^~condition=... triggers update. Unbound contextual parameter {^{include ~condition=... does not trigger updated content');
 
 	// ................................ Reset ................................
@@ -13263,7 +13422,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"Updating: shape true  Non updating: shape true Updating: line false  Non updating: line false |Updating: line false  Non updating: shape false Updating: shape true  Non updating: line true ",
+	isIE8 ? "Updating: shape true Non updating: shape true Updating: line false Non updating: line false |Updating:line false  Non updating: shapefalse Updating:shape true  Non updating: linetrue "
+		: "Updating: shape true  Non updating: shape true Updating: line false  Non updating: line false |Updating: line false  Non updating: shape false Updating: shape true  Non updating: line true ",
 	'Binding to property triggers update {^{updatingTag ^condition=... unless tag is non-updating: {^{nonUpdatingTag ^condition=...');
 
 	// ................................ Reset ................................
@@ -13297,7 +13457,8 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(res, ("Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
+	assert.equal(res, (isIE8 ? "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName -newName lead:newName -  "
+	: "Bob lead:Jim - Jim lead:Jim - |Bob lead:newName - Jim lead:newName - newName lead:newName - "),
 		"data-link allows passing in new contextual parameters to template: data-link=\"{for people ~team=#data tmpl=...");
 
 	// ................................ Reset ................................
@@ -13397,7 +13558,8 @@ $.views.settings.trigger(false);
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
-	"shape shape true line line false |shape line false line shape true ",
+	isIE8 ? "shape shape true line line false |shapelinefalse lineshapetrue "
+		: "shape shape true line line false |shape line false line shape true ",
 	'contextual parameter {^{include ~condition=... does not trigger update but references are bound');
 
 	// ................................ Reset ................................
@@ -13950,27 +14112,33 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(1,0,2,3,4),
 		'moved one item from 0 to 1');
+}
 
 // ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'moved one item from 0  to 1 again (actually swaps back to orginal positions');
+}
 
 // ................................ Act ..................................
 	move(1, 0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(1,0,2,3,4),
 		'moved one item back from 1 to 0');
+}
 
 // ................................ Act ..................................
 	move(1, 0); // Return to original position
@@ -13978,99 +14146,121 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'move(1, 0, 0) does nothing');
+}
 
 // ................................ Act ..................................
 	move(1, 1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(0,1,2,3,4),
 		'move(1, 1) does nothing');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 2);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(0, 1, 2) moves 2 items');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(4,2,0,1,3),
 		'move(0, 1, 4) moves 4 items');
+}
 
 // ................................ Act ..................................
 	move(1, 0, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(1, 0, 4) moves back 4 items');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 5);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(0, 1, 5): moving more than total items does nothing');
+}
 
 // ................................ Act ..................................
 	move(1, 2, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,0,1,3,4),
 		'move(1, 2, 4): moving up items beyond last item does nothing');
+}
 
 // ................................ Act ..................................
 	move(2, 1, 8);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,1,3,4,0),
 		'move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
+}
 
 // ................................ Act ..................................
 	remove(1,1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(2,3,4,0),
 		'remove(1,1): works correctly');
+}
 
 // ................................ Act ..................................
 	remove(0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(3,4,0),
 		'remove(0): works correctly');
+}
 
 // ................................ Act ..................................
 	move(2, 0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(0,3,4),
 		'move(2, 0): works correctly');
+}
 
 // ................................ Act ..................................
 	remove(2);
@@ -14080,9 +14270,11 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed(),
 		current(3,2,0),
 		'multiple operations: works correctly - with the original item with style set to red still there');
+}
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -14173,27 +14365,33 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(1,0,2,3,4),
 		'Complex template: moved one item from 0 to 1');
+}
 
 // ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: moved one item from 0  to 1 again (actually swaps back to orginal positions');
+}
 
 // ................................ Act ..................................
 	move(1, 0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(1,0,2,3,4),
 		'Complex template: moved one item back from 1 to 0');
+}
 
 // ................................ Act ..................................
 	move(1, 0); // Return to original position
@@ -14201,99 +14399,121 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: move(1, 0, 0) does nothing');
+}
 
 // ................................ Act ..................................
 	move(1, 1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(0,1,2,3,4),
 		'Complex template: move(1, 1) does nothing');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 2);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(0, 1, 2) moves 2 items');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(4,2,0,1,3),
 		'Complex template: move(0, 1, 4) moves 4 items');
+}
 
 // ................................ Act ..................................
 	move(1, 0, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(1, 0, 4) moves back 4 items');
+}
 
 // ................................ Act ..................................
 	move(0, 1, 5);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(0, 1, 5): moving more than total items does nothing');
+}
 
 // ................................ Act ..................................
 	move(1, 2, 4);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,0,1,3,4),
 		'Complex template: move(1, 2, 4): moving up items beyond last item does nothing');
+}
 
 // ................................ Act ..................................
 	move(2, 1, 8);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,1,3,4,0),
 		'Complex template: move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
+}
 
 // ................................ Act ..................................
 	remove(1,1);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(2,3,4,0),
 		'Complex template: remove(1,1): works correctly');
+}
 
 // ................................ Act ..................................
 	remove(0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(3,4,0),
 		'Complex template: remove(0): works correctly');
+}
 
 // ................................ Act ..................................
 	move(2, 0);
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(0,3,4),
 		'Complex template: move(2, 0): works correctly');
+}
 
 // ................................ Act ..................................
 	remove(2);
@@ -14303,9 +14523,11 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ............................... Assert .................................
 
+if (!isIE8) { // Not worth verifying exact text rendering in IE8: multiple whitespace rendering bugs.
 	assert.equal($("#result").text() + findRed2(),
 		current(3,2,0),
 		'Complex template: multiple operations: works correctly - with the original item with style set to red still there');
+}
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -15397,7 +15619,16 @@ $.views.settings.trigger(false);
 
 	// ............................... Assert .................................
 
-	var expected = "Sir Jo 1st Ave  Full: Sir Jo 1st Ave  CTP: Sir Jo 1st Ave FULLNAMETAG: Sir Jo 1st Ave \n"
+	var expected = isIE8 ?
+		"Sir Jo 1st Ave  Full: Sir Jo 1st Ave  CTP: Sir Jo 1st Ave FULLNAMETAG: Sir Jo 1st Ave \n"
+		+ "ADDRESS: Sir Jo 2nd St  Full:Sir Jo 2nd St  CTP:Sir Jo 2nd St FULLNAMETAG:Sir Jo 2nd St \n"
+		+ "TITLE: Sir+ Jo 2nd St  Full:Sir+ Jo 2nd St  CTP:Sir+ Jo 2nd St FULLNAMETAG:Sir+ Jo 2nd St \n"
+		+ "NAME: Sir+ Jo+ 2nd St  Full:Sir+ Jo+ 2nd St  CTP:Sir+ Jo+ 2nd St FULLNAMETAG:Sir+ Jo+ 2nd St \n"
+		+ "STREET: Sir+ Jo+ 2nd St+  Full:Sir+ Jo+ 2nd St+  CTP:Sir+ Jo+ 2nd St+ FULLNAMETAG:Sir+ Jo+ 2nd St+ \n"
+		+ "FULL: Mr Bob FullSt  Full:Mr Bob FullSt  CTP:Mr Bob FullSt FULLNAMETAG:Mr Bob FullSt \n"
+		+ "CTP: Lady Jane CtpSt  Full:Lady Jane CtpSt  CTP:Lady Jane CtpSt FULLNAMETAG:Lady Jane CtpSt \n"
+		+ "TAG: Ms Anne TagSt  Full:Ms Anne TagSt  CTP:Ms Anne TagSt FULLNAMETAG:Ms Anne TagSt "
+			: "Sir Jo 1st Ave  Full: Sir Jo 1st Ave  CTP: Sir Jo 1st Ave FULLNAMETAG: Sir Jo 1st Ave \n"
 		+ "ADDRESS: Sir Jo 2nd St  Full: Sir Jo 2nd St  CTP: Sir Jo 2nd St FULLNAMETAG: Sir Jo 2nd St \n"
 		+ "TITLE: Sir+ Jo 2nd St  Full: Sir+ Jo 2nd St  CTP: Sir+ Jo 2nd St FULLNAMETAG: Sir+ Jo 2nd St \n"
 		+ "NAME: Sir+ Jo+ 2nd St  Full: Sir+ Jo+ 2nd St  CTP: Sir+ Jo+ 2nd St FULLNAMETAG: Sir+ Jo+ 2nd St \n"
@@ -15530,7 +15761,13 @@ $.views.settings.trigger(false);
 	result += "\nCTP EVALUATED FUNCTION: " + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(result, "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
+	assert.equal(result, isIE8 ? "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
+	+ "TITLE: Title:Sir2 Name: Jo Street: 1st Ave Full:Sir2 Jo 1st Ave TAG:Sir2 Jo 1st Ave TAG2:Sir2 Jo 1st Ave \n"
+	+ "NAME: Title:Sir2 Name:Jo2 Street: 1st Ave Full:Sir2 Jo2 1st Ave TAG:Sir2 Jo2 1st Ave TAG2:Sir2 Jo2 1st Ave \n"
+	+ "ADDRESS: Title:Sir2 Name:Jo2 Street:2nd St Full:Sir2 Jo2 2nd St TAG:Sir2 Jo2 2nd St TAG2:Sir2 Jo2 2nd St \n"
+	+ "CTP FUNCTION: Title:Mr Name:Bob Street:FullSt Full:Mr Bob FullSt TAG:Mr Bob FullSt TAG2:Mr Bob FullSt \n"
+	+ "CTP EVALUATED FUNCTION: Title:Mr Name:Bob Street:FullSt Full:Mr Bob FullSt TAG:Mr Bob FullSt TAG2:Mr Bob FullSt "
+		: "Title: Sir Name: Jo Street: 1st Ave Full: Sir Jo 1st Ave TAG: Sir Jo 1st Ave TAG2: Sir Jo 1st Ave \n"
 	+ "TITLE: Title: Sir2 Name: Jo Street: 1st Ave Full: Sir2 Jo 1st Ave TAG: Sir2 Jo 1st Ave TAG2: Sir2 Jo 1st Ave \n"
 	+ "NAME: Title: Sir2 Name: Jo2 Street: 1st Ave Full: Sir2 Jo2 1st Ave TAG: Sir2 Jo2 1st Ave TAG2: Sir2 Jo2 1st Ave \n"
 	+ "ADDRESS: Title: Sir2 Name: Jo2 Street: 2nd St Full: Sir2 Jo2 2nd St TAG: Sir2 Jo2 2nd St TAG2: Sir2 Jo2 2nd St \n"
@@ -15855,11 +16092,9 @@ $.views.settings.trigger(false);
 	$.observable(data).setProperty("name", "3.745")
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), "3.75 3.74500",
+	assert.equal($("#result").text(), isIE8 ? "3.753.74500" : "3.75 3.74500",
 	"Converter with prop 'length' data-links correctly (no collision with array.length on pathBindings array).");
 
-	// ................................ Reset ..................................
-	$("#result").empty();
 $.views.settings.trigger(true);
 });
 
@@ -15925,7 +16160,7 @@ $("#result input").val("NEW").change();
 
 	// ................................ Act ..................................
 	res = $.views.settings.debugMode();
-	$("#result").empty();
+  $("#result").empty();
 
 	try {
 		$.templates('{{:missing.willThrow}}X').link("#result", app);
@@ -15942,8 +16177,9 @@ $("#result input").val("NEW").change();
 
 	// ................................ Act ..................................
 	res = $.views.settings.debugMode();
+  $("#result").empty();
 
-	try {
+  try {
 		$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
 	}
 	catch (e) {
@@ -15962,6 +16198,7 @@ $("#result input").val("NEW").change();
 	$.views.settings.debugMode(true);
 
 	res = $.views.settings.debugMode();
+  $("#result").empty();
 
 	$.templates('{{:missing.willThrow}}').link("#result", app);
 
@@ -15974,6 +16211,7 @@ $("#result input").val("NEW").change();
 	// ................................ Act ..................................
 
 	res = $.views.settings.debugMode();
+  $("#result").empty();
 
 	$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
 
@@ -16025,7 +16263,6 @@ $("#result input").val("NEW").change();
 
 	// ................................ Reset ..................................
 	$("#result").empty();
-	$.unlink(); // Need to unlink since when throwing above, view registration was incomplete, so calling $("#result").empty() is not sufficient to clean up child views on topView
 	$.views.settings.debugMode(oldDebugMode);
 
 $.views.settings.trigger(true);
@@ -16149,7 +16386,6 @@ QUnit.test("$.view() in regular content", function(assert) {
 	// ................................ Act ..................................
 	view = $.view("#result", true);
 
-    var view2 = $.view("#result").get(true);
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
@@ -16339,7 +16575,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: -: { } |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+	assert.equal(res, isIE8
+		? "1: -: { } |2: set1-set1: {set1 } |3: new1-new1: {new1 } "
+		: "1: -: { } |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Uninitialized context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
 
 	// ................................ Act ..................................
@@ -16362,7 +16600,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: instance-instance: { instance} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+	assert.equal(res, isIE8
+		? "1: instance-instance: { instance} |2: set1-set1: {set1} |3: new1-new1: {new1} "
+		: "1: instance-instance: { instance} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Initialized instance context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
 
 	// ................................ Act ..................................
@@ -16387,7 +16627,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: registered-registered: { registered} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
+	assert.equal(res, isIE8
+		? "1: registered-registered: { registered} |2: set1-set1: {set1} |3: new1-new1: {new1} "
+		: "1: registered-registered: { registered} |2: set1-set1: { set1} |3: new1-new1: { new1} ",
 		"Initialized registered helper param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
 
 	// =============================== Arrange ===============================
@@ -16417,7 +16659,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	res += "|3: " + view1.ctxPrm("foo") + "-" + input.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: -: { Outer: , Inner: , Nested inner: }"
+	assert.equal(res, isIE8
+		? "1: -: { Outer: , Inner: , Nested inner: }"
+		+ " |2: set1-set1: { Outer:set1 , Inner:set1 , Nested inner:set1 }"
+		+ " |3: new1-new1: { Outer:new1 , Inner:new1 , Nested inner:new1 } "
+		: "1: -: { Outer: , Inner: , Nested inner: }"
 		+ " |2: set1-set1: { Outer: set1, Inner: set1, Nested inner: set1}"
 		+ " |3: new1-new1: { Outer: new1, Inner: new1, Nested inner: new1} ",
 		"Observable contextual parameter is scoped to root view (view below top view)");
@@ -16509,7 +16755,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	res += "|3: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: View1:- View2:-: {  }"
+	assert.equal(res, isIE8
+		? "1: View1:- View2:-: {  }"
+		+ " |2: View1:set2-set2 View2:set2-set2: {set2 set2 }"
+		+ " |3: View1:new2-new2 View2:new2-new2: {new2 new2 } "
+		: "1: View1:- View2:-: {  }"
 		+ " |2: View1:set2-set2 View2:set2-set2: { set2 set2}"
 		+ " |3: View1:new2-new2 View2:new2-new2: { new2 new2} ",
 		"Observable contextual parameter is scoped to root view (view below top view) - which is array view, when rendering/linking an array");
@@ -16559,7 +16809,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+	assert.equal(res, isIE8
+		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
+		: "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
 		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer: set1, Inner: set2, Nested inner: set4, Nested inner: set4}"
 		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer: new1, Inner: new2, Nested inner: new4, Nested inner: new4} ",
 		"Observable contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
@@ -16578,7 +16832,10 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "|1: new4"
+	assert.equal(res, isIE8
+		? "|1: new4"
+		+ " |2: tagFoo-tagNewPrm-//tagNewPrm/tagNewPrm-new1/new2/tagFoo/tagFoo-new1/new2/tagFoo/tagFoo: { Outer:new1 , Inner:new2 , Nested inner:tagFoo , Nested inner:tagFoo } "
+		: "|1: new4"
 		+ " |2: tagFoo-tagNewPrm-//tagNewPrm/tagNewPrm-new1/new2/tagFoo/tagFoo-new1/new2/tagFoo/tagFoo: { Outer: new1, Inner: new2, Nested inner: tagFoo, Nested inner: tagFoo} ",
 		"tag.ctxPrm() gets/sets parameter scoped to tag view, shared across else blocks");
 
@@ -16586,7 +16843,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	assert.equal(innerTag.tagCtxs[0].nodes().length + "|" + innerTag.tagCtxs[1].nodes().length + "|" + innerTag.nodes().length
 		+ "-" + innerTag.tagCtxs[0].contents(true, "input").length + "|" + innerTag.tagCtxs[1].contents(true, "input").length + "|" + innerTag.contents(true, "input").length,
-		"2|2|4-1|1|2",
+		isIE8 ? "3|2|5-1|1|2" : "2|2|4-1|1|2",
 		"Multiple else blocks: tag.nodes() and tag.content() return content from all else blocks");
 
 	// =============================== Arrange ===============================
@@ -16634,7 +16891,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+	assert.equal(res, isIE8
+		? "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
+		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer:set1 , Inner:set2 , Nested inner:set4 , Nested inner:set4 }"
+		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer:new1 , Inner:new2 , Nested inner:new4 , Nested inner:new4 } "
+		: "1: ///-///: { Outer: , Inner: , Nested inner: , Nested inner: }"
 		+ " |2: set1/set2/set4/set4-set1/set2/set4/set4: { Outer: set1, Inner: set2, Nested inner: set4, Nested inner: set4}"
 		+ " |3: new1/new2/new4/new4-new1/new2/new4/new4: { Outer: new1, Inner: new2, Nested inner: new4, Nested inner: new4} ",
 		"Observable contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
@@ -16687,7 +16948,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// ............................... Assert .................................
 
-	assert.equal(res, "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner: 48, Nested inner: 22}"
+	assert.equal(res, isIE8
+		? "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner:48 , Nested inner: 22}"
+		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
+		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
+		: "1: /11/48/22-/11/48/22: { Outer: , Inner: 11, Nested inner: 48, Nested inner: 22}"
 		+ " |2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
 		+ " |3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
 		"Observable tag contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
@@ -16737,7 +17002,11 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		+ "-" + input1.val() + "/" + input2.val() + "/" + input3.val() + "/" + input4.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
+	assert.equal(res, isIE8
+		? "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
+		+ " \n|2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer:set1 , Inner:set2, Nested inner:set3 , Nested inner:set4}"
+		+ " \n|3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer:new1 , Inner:new2, Nested inner:new3 , Nested inner:new4} "
+		: "1: /11//22-/11//22: { Outer: , Inner: 11, Nested inner: , Nested inner: 22}"
 		+ " \n|2: set1/set2/set3/set4-set1/set2/set3/set4: { Outer: set1, Inner: set2, Nested inner: set3, Nested inner: set4}"
 		+ " \n|3: new1/new2/new3/new4-new1/new2/new3/new4: { Outer: new1, Inner: new2, Nested inner: new3, Nested inner: new4} ",
 		"Observable tag contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
@@ -16972,7 +17241,14 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	+ "-" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: val1/val1-val1/val1: { val1 val1}"
+	assert.equal(res, isIE8
+		? "1: val1/val1-val1/val1: { val1 val1}"
+		+ " \n2: new1/new1-new1/new1: {new1new1}"
+		+ " \n3: set2/set2-set2/set2: {set2set2}"
+		+ " \n4: val2/val2-val2/val2: { val2 val2}"
+		+ " \n5: set3/set3-set3/set3: {set3set3}"
+		+ " \n6: new3/new3-new3/new3: {new3new3} "
+		: "1: val1/val1-val1/val1: { val1 val1}"
 		+ " \n2: new1/new1-new1/new1: { new1 new1}"
 		+ " \n3: set2/set2-set2/set2: { set2 set2}"
 		+ " \n4: val2/val2-val2/val2: { val2 val2}"
@@ -17029,7 +17305,12 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	+ "-" + inputOuter.val() + "/" + input1.val() + "/" + input2.val() + ": {" + content.text() + "} ";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1: outer-outer: { outer }"
+	assert.equal(res, isIE8
+		? "1: outer-outer: { outer }"
+		+ " \n2: outer/val1/val1-outer/val1/val1: { outer  val1 val1}"
+		+ " \n3: newouter/new2/new2-newouter/new2/new2: {newouter new2new2}"
+		+ " \n4: newouter/val2/val2-newouter/val2/val2: {newouter  val2 val2} "
+		: "1: outer-outer: { outer }"
 		+ " \n2: outer/val1/val1-outer/val1/val1: { outer  val1 val1}"
 		+ " \n3: newouter/new2/new2-newouter/new2/new2: { newouter  new2 new2}"
 		+ " \n4: newouter/val2/val2-newouter/val2/val2: { newouter  val2 val2} ",
@@ -17094,7 +17375,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	$.observable(data).setProperty("fullName", "NewVmFullname");
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), "NewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
+	assert.equal($("#result").text(), isIE8
+		? "NewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
+		: "NewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe computed with both data and contextual parameters as depends paths");
 
 	// ............................... Assert .................................
@@ -17145,7 +17428,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// ............................... Assert .................................
 	var fnctions = fullNameHlp === $.views.helpers.fullName && fn1 === $.views.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
-	assert.equal(fnctions + $("#result").text(), "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
+	assert.equal(fnctions + $("#result").text(), isIE8
+		? "trueNewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
+		: "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe registered computed helper with both data and contextual parameters as depends paths");
 
 	// ............................... Assert .................................
@@ -17196,7 +17481,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// ............................... Assert .................................
 	fnctions = fullNameHlp === tmpl.helpers.fullName && fn1 === tmpl.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
-	assert.equal(fnctions + $("#result").text(), "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
+	assert.equal(fnctions + $("#result").text(), isIE8
+		? "trueNewCtxFullNewVmFullFN2FN2NewVmFullNewCtxFullLastNewVmFullNewCtxFullLast "
+		: "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe registered computed helper, local to template, with both data and registered helper contextual parameters as depends paths");
 
 	// ............................... Assert .................................
@@ -17235,7 +17522,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Unobserve programmatic APIs for data and for contextual parameters works correctly. Event handlers removed, and no longer triggered");
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text(), "AddCtxFull AddVmFull FN1 FN1 AddVmFullAddCtxFullLast AddVmFullAddCtxFullLast ",
+	assert.equal($("#result").text(), isIE8
+		? "AddCtxFullAddVmFullFN1FN1AddVmFullAddCtxFullLastAddVmFullAddCtxFullLast "
+		: "AddCtxFull AddVmFull FN1 FN1 AddVmFullAddCtxFullLast AddVmFullAddCtxFullLast ",
 		"After removing programmatically attached handlers for data and for contextual parameters, declarative UI handlers work correctly");
 
 	// ............................... Reset .................................
@@ -18066,7 +18355,7 @@ QUnit.test("Modifying content, initializing widgets/tag controls, using data-lin
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	assert.equal($("#result div").html().replace(/<script.*?><\/script>/g, ""), " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
+	assert.equal($("#result div").html().replace(isIE8 ? /\r\n<SCRIPT.*?><\/SCRIPT>|\r\n/g : /<script.*?><\/script>/g, ""), isIE8 ? "render after" : " render after", 'A data-linked tag control allows setting of content on the data-linked element during render and onAfterLink');
 
 	// =============================== Arrange ===============================
 
@@ -18831,7 +19120,10 @@ $.views.settings.trigger(false);
 	result += "\nChangeConverterDepends-foo: " + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(result, "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
+	assert.equal(result, isIE8 ? "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
+		"ChangeData-name: TWO(Jo2 foo1)ONE(Jo2 foo1)ONE(Jo2 foo1)\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2)ONE(Jo2 foo2)ONE(Jo2 foo2)"
+			: "TWO(Jo foo1) ONE(Jo foo1) ONE(Jo foo1)\n" +
 		"ChangeData-name: TWO(Jo2 foo1) ONE(Jo2 foo1) ONE(Jo2 foo1)\n" +
 		"ChangeConverterDepends-foo: TWO(Jo2 foo2) ONE(Jo2 foo2) ONE(Jo2 foo2)",
 		'{^{:...}} tag with converters with depends - updates correctly in response to dependent observable change');
@@ -18877,7 +19169,12 @@ $.views.settings.trigger(false);
 	result += "\nChangeTagDependsState-state: " + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(result, "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
+	assert.equal(result, isIE8 ? "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
+		"ChangeData-name: TWO(Jo2 foo1) bar1 state1 foo1ONE(Jo2 foo1) bar1 state1 foo1THREE(Jo2 foo1) bar1 state1 foo1\n" +
+		"ChangeConverterDepends-foo: TWO(Jo2 foo2) bar1 state1 foo2ONE(Jo2 foo2) bar1 state1 foo2THREE(Jo2 foo2) bar1 state1 foo2\n" +
+		"ChangeTagDependsData-bar: TWO(Jo2 foo2) bar2 state1 foo2ONE(Jo2 foo2) bar2 state1 foo2THREE(Jo2 foo2) bar2 state1 foo2\n" +
+		"ChangeTagDependsState-state: TWO(Jo2 foo2) bar2 state1 foo2ONE(Jo2 foo2) bar2 state2 foo2THREE(Jo2 foo2) bar2 state1 foo2"
+			: "TWO(Jo foo1) bar1 state1 foo1 ONE(Jo foo1) bar1 state1 foo1 THREE(Jo foo1) bar1 state1 foo1\n" +
 		"ChangeData-name: TWO(Jo2 foo1) bar1 state1 foo1 ONE(Jo2 foo1) bar1 state1 foo1 THREE(Jo2 foo1) bar1 state1 foo1\n" +
 		"ChangeConverterDepends-foo: TWO(Jo2 foo2) bar1 state1 foo2 ONE(Jo2 foo2) bar1 state1 foo2 THREE(Jo2 foo2) bar1 state1 foo2\n" +
 		"ChangeTagDependsData-bar: TWO(Jo2 foo2) bar2 state1 foo2 ONE(Jo2 foo2) bar2 state1 foo2 THREE(Jo2 foo2) bar2 state1 foo2\n" +
@@ -19041,7 +19338,8 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res,
-	" 1: First <b>Name</b> 2: Second <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
+	isIE8 ? " 1: First <b>Name</b> 2: Second <B>Name2</B> 3: Third <B>Name3</B> 4: Fourth <B>Name4</B>"
+		: " 1: First <b>Name</b> 2: Second <b>Name2</b> 3: Third <b>Name3</b> 4: Fourth <b>Name4</b>",
 	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> triggers on specified events');
 
 	// ............................... Assert .................................
@@ -19478,7 +19776,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	result = "";
 
 	assert.equal($("#result").text(),
-		"1: In template: Fred " + (" ")
+		"1: In template: Fred " + (isIE8 ? "" : " ")
 		+ "2: In template: Fred inner block: Fred "
 		+ "3: inner block: Fred",
 	"contentCtx as a function returns the data context both for the template and for block content.");
@@ -19976,7 +20274,8 @@ setTimeout(function() {
 setTimeout(function() {
 		// ............................... Assert .................................
 		assert.equal(before + "|" + person.name,
-		"JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
+		isIE8 ? "JO <B>SMITH</B>|new <em>name</em>|new2 \r\n<p>name2</p>|new3 \r\n<div>name3</div>"
+			: "JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
 		'Data link using: {^{contentEditable name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
 
 		handlers += "|" + events[inputOrKeydownContentEditable].length;
@@ -20429,7 +20728,9 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value + "|" + person.first + "|" + $("#result").text();
 
 	assert.equal(result,
-		"newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
+		isIE8 ? "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirstUpdate"
+		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0Update"
+		: "newName--updatedFirst|updatedFirst|updatedFirst|updatedFirst Update"
 		+ "--updatedFirst0|updatedFirst0|updatedFirst0|updatedFirst0 Update",
 	"With linkedElem set in onBind, mytag.bndArgs() and mytag.updateValue().setValue() correctly access/update two-way bound values");
 
@@ -21523,14 +21824,18 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	}
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
+	assert.equal(getResult(), isIE8
+		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
+		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
 	"Two-way bound tag with multiple else blocks - initial render");
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
+	assert.equal(getResult(), isIE8
+		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
+		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
 	"Two-way bound tag with multiple else blocks - observable update");
 
 	// ................................ Act ..................................
@@ -21542,7 +21847,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	$(linkedElLast).change();
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
+		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First newJo Middle newHerbert Last newBlow: newJo newHerbert newBlow|",
 	"Two-way bound tag with multiple else blocks - updated inputs");
 
@@ -21552,7 +21860,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
+		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First updatedFirst Middle updatedMiddle Last updatedLast: updatedFirst updatedMiddle updatedLast|",
 	"Two-way bound tag with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
@@ -21560,7 +21871,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
@@ -21570,7 +21884,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag with multiple else blocks - tag.setValue() updates linkedElems only");
 
@@ -21578,14 +21895,17 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
 	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
-		&& mytag.nodes()[5] === mytag.tagCtxs[1].nodes()[1]
-		&& mytag.nodes()[5] === mytag.tagCtxs[1].contentView.nodes()[1]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].contentView.nodes()[1]
 		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0]
 		&& mytag.childTags("child").length === mytag.tagCtxs[0].childTags("child").length + mytag.tagCtxs[1].childTags("child").length +  mytag.tagCtxs[2].childTags("child").length,
 	"Two-way bound tag, multiple else blocks: calls tagCtx.contents() tagCtx.nodes() tagCtx.childTags() return from one else block."
@@ -21632,14 +21952,18 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag = $.view(linkedElFirst).tag;
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
+	assert.equal(getResult(), isIE8
+		? "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text:First Jo Middle Herbert Last Blow: Jo Herbert Blow|"
+		: "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
 	"Two-way bound tag (using render method) with multiple else blocks - initial render");
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
+	assert.equal(getResult(), isIE8
+		? "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text:FirstBob MiddleXavier LastSmith:BobXavierSmith|"
+		: "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
 	"Two-way bound tag (using render method) with multiple else blocks - observable update");
 
 	// ................................ Act ..................................
@@ -21651,7 +21975,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	$(linkedElLast).change();
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstnewJo MiddlenewHerbert LastnewBlow:newJonewHerbertnewBlow|"
+		: "Data: newJo-newHerbert-newBlow Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First newJo Middle newHerbert Last newBlow: newJo newHerbert newBlow|",
 	"Two-way bound tag (using render method) with multiple else blocks - updated inputs");
 
@@ -21661,7 +21988,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValue("updatedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst MiddleupdatedMiddle LastupdatedLast:updatedFirstupdatedMiddleupdatedLast|"
+		: "Data: updatedFirst-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First updatedFirst Middle updatedMiddle Last updatedLast: updatedFirst updatedMiddle updatedLast|",
 	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValue() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
@@ -21669,7 +21999,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValues("updatedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: newJo-newHerbert-newBlow"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag (using render method) with multiple else blocks - tag.updateValues() updates outer bindings and linkedCtxPrm, but not linkedElems");
 
@@ -21679,7 +22012,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag (using render method) with multiple else blocks - tag.setValue() updates linkedElems only");
 
@@ -21687,13 +22023,16 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+	assert.equal(getResult(), isIE8
+		? "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text:FirstupdatedFirst2 MiddleupdatedMiddle LastupdatedLast:updatedFirst2updatedMiddleupdatedLast|"
+		: "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
 		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
 	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems only");
 
 	// ............................... Assert .................................
 	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
-		&& mytag.nodes()[5] === mytag.tagCtxs[1].nodes()[1]
+		&& mytag.nodes()[isIE8 ? 4 : 5] === mytag.tagCtxs[1].nodes()[1]
 		&& mytag.childTags("child")[1] === mytag.tagCtxs[1].childTags("child")[0],
 	"Two-way bound tag (using render method) with multiple else blocks - calls to tagCtx.contents() tagCtx.nodes() tagCtx.childTags() work correctly");
 
@@ -21738,14 +22077,18 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	}
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow Jo Jo Blow|",
+	assert.equal(getResult2(), isIE8
+		? "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow JoJo Blow|"
+		: "Data: Jo-Blow Inputs: Jo-Blow-Blow-Jo Text: Jo Blow Blow Jo Jo Blow|",
 	"Two-way tag with multiple bindings and multiple else blocks - initial render");
 
 	// ................................ Act ..................................
 	$.observable(person).setProperty({first: "Bob", last: "Smith"});
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith Bob Bob Smith|",
+	assert.equal(getResult2(), isIE8
+		? "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith BobBobSmith|"
+		: "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith Bob Bob Smith|",
 	"Two-way tag with multiple bindings and multiple else blocks - observable update");
 
 	// ................................ Act ..................................
@@ -21756,7 +22099,9 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	$(linkedElems1[1]).change();
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJo newJo newBlow|",
+	assert.equal(getResult2(), isIE8
+		? "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJonewJonewBlow|"
+		: "Data: newJo-newBlow Inputs: Bob-Smith-newBlow-newJo Text: newJo newBlow newBlow newJo newJo newBlow|",
 	"Two-way tag with multiple bindings and multiple else blocks - updated inputs");
 
 	// ................................ Act ..................................
@@ -21765,7 +22110,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValue("updatedFirst", 1, 1);
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
+	assert.equal(getResult2(), isIE8
+		? "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst updatedLast updatedLast updatedFirstupdatedFirstupdatedLast|"
+		: "Data: updatedFirst-updatedLast Inputs: Bob-Smith-newBlow-newJo"
 		+ " Text: updatedFirst updatedLast updatedLast updatedFirst updatedFirst updatedLast|",
 	"Two-way tag with multiple bindings and multiple else blocks - tag.updateValue() updates outer bindings but not linkedElems");
 
@@ -21774,7 +22122,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.updateValues("updatedFirst2", "updatedLast2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
+	assert.equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-newBlow-newJo"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
 	"Two-way tag with multiple bindings and multiple else blocks - tag.updateValues() updates outer bindings but not linkedElems");
 
@@ -21784,7 +22135,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValue("changedFirst", 1, 1);
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
+	assert.equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast-changedFirst"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
 	"Two-way tag with multiple bindings and multiple else blocks - tag.setValue() updates linkedElems only");
 
@@ -21793,7 +22147,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.tagCtxs[1].setValues("changedLast2", "changedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
+	assert.equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: Bob-Smith-changedLast2-changedFirst2"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
 	"Two-way tag with multiple bindings and multiple else blocks - tagCtx.setValues() updates linkedElems only");
 
@@ -21802,7 +22159,10 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValues("changedFirst3", "changedLast3");
 
 	// ............................... Assert .................................
-	assert.equal(getResult2(), "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
+	assert.equal(getResult2(), isIE8
+		? "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
+		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2updatedFirst2updatedLast2|"
+		: "Data: updatedFirst2-updatedLast2 Inputs: changedFirst3-changedLast3-changedLast2-changedFirst2"
 		+ " Text: updatedFirst2 updatedLast2 updatedLast2 updatedFirst2 updatedFirst2 updatedLast2|",
 	"Two-way tag with multiple bindings and multiple else blocks - tag.setValues() updates linkedElems only");
 
@@ -22923,98 +23283,8 @@ QUnit.test("Tag control events", function(assert) {
 				onUpdate: function(ev, eventArgs, newTagCtxs) {
 					eventData += "update ";
 				},
-				onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
-					eventData += "after ";
-				},
-				onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
-					eventData += "onBind ";
-				},
-				onUnbind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
-					eventData += "onUnbind ";
-				},
-				onBeforeChange: function(ev, eventArgs) {
-					eventData += "onBeforeChange ";
-				},
-				onAfterChange: function(ev, eventArgs) {
-					eventData += "onAfterChange ";
-				},
-				onDispose: function() {
-					eventData += "dispose ";
-				},
-				getType: function() {
-					eventData += "getType ";
-					return this.type;
-				},
-				type: "special"
-			}
-		}
-	}).link("#result", model);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ",
-		'{^{myWidget/}} - Events fire in order during rendering');
-	eventData = "";
-
-	// ................................ Act ..................................
-	$.observable(person1).setProperty("lastName", "Two");
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
-		'{^{myWidget/}} - Events fire in order during update (setProperty)');
-	eventData = "";
-
-	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
-		'{^{myWidget/}} - Events fire in order during update (insert)');
-	eventData = "";
-
-	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
-		'{^{myWidget/}} - Events fire in order during update (refresh)');
-	eventData = "";
-
-	// ................................ Act ..................................
-	$("#result").empty();
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "|onUnbind dispose ",
-		'{^{myWidget/}} - onDispose fires when container element is emptied or removed');
-
-	// ................................ Reset ................................
-	person1.lastName = "One";
-	model.things = [];
-	eventData = "";
-
-// =============================== Arrange ===============================
-	eventData = "";
-	model.things = [{thing: "box"}]; // reset Prop
-
-	// ................................ Act ..................................
-	$.templates({
-		markup: '<div>{^{myCustomArrayChangeWidget person1.lastName things/}}</div>',
-		tags: {
-			myCustomArrayChangeWidget: {
-				init: function(tagCtx, linkCtx, ctx) {
-					eventData += "init ";
-				},
-				render: function(name, things) {
-					eventData += "render ";
-					return "<span>" + name + "</span> <span>" + things.length + "</span> <span>" + this.getType() + "</span>";
-				},
-				onBeforeUpdateVal: function(ev, eventArgs) {
-					eventData += "onBeforeUpdateVal ";
-				},
-				onUpdate: function(ev, eventArgs, newTagCtxs) {
-					eventData += "update ";
-				},
 				onArrayChange: function(ev, eventArgs) {
-					eventData += "onArrayChange" + (eventArgs.refresh ? "(refresh) " : " ");
+					eventData += "onArrayChange ";
 				},
 				onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 					var tag = this,
@@ -23059,40 +23329,25 @@ QUnit.test("Tag control events", function(assert) {
 	}).link("#result", model);
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ",
-		'{^{myCustomArrayChangeWidget/}} - Events fire in order during rendering');
-	eventData = "";
+	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ", '{^{myWidget/}} - Events fire in order during rendering: render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
-		'{^{myCustomArrayChangeWidget/}} - Events fire in order during update (setProperty)');
-	eventData = "";
+	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$.observable(model.things).insert(0, {thing: "tree"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onArrayChange ",
-		'{^{myCustomArrayChangeWidget/}} - No update during insert - instead, custom onArrayChange handler called');
-	eventData = "";
-
-	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onArrayChange(refresh) onArrayChange(refresh) onArrayChange ",
-		'{^{myCustomArrayChangeWidget/}} - No update during refresh - instead, custom onArrayChange handler called for each event');
-	eventData = "";
+	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange ", '{^{myWidget/}} - Events fire in order during update: update, render and onAfterLink');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "|onUnbind dispose ",
-		'{^{myCustomArrayChangeWidget/}} - onDispose fires when container element is emptied or removed');
+	assert.equal($("#result").text() + "|" + eventData, "|init render getType onBind after onBeforeChange update onUnbind render getType onBind after onAfterChange onArrayChange onUnbind dispose ", '{^{myWidget/}} - onDispose fires when container element is emptied or removed');
 
 	// ................................ Reset ................................
 	person1.lastName = "One";
@@ -23132,90 +23387,9 @@ QUnit.test("Tag control events", function(assert) {
 	assert.equal($("#result").text() + "|" + eventData, "|init onBind after ", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init and onAfterLink');
 
 	$("#result").empty();
+
+	//TODO: Add tests for attaching jQuery UI widgets or similar to tag controls, using data-link and {^{mytag}} inline data binding.
+
 });
 
-QUnit.test("tag onArrayChange options", function(assert) {
-
-	// =============================== Arrange ===============================
-	var data = {
-		items: ["aa", "AA"],
-		items2: ["bb", "BB"]
-	};
-
-	// ................................ Act ..................................
-	var template = "First: {{:#data[0]}} Last: {{:#data[length-1]}} First2: {{:~tagCtx.args[1][0]}} Last2: {{:~tagCtx.args[1][~tagCtx.args[1].length-1]}}";
-
-	$.templates({
-		markup:
-'1 {^{mytag items items2/}} ' +
-'2 {^{arrChFn items items2/}} ' +
-'2b {^{arrChFalse items items2/}} ' +
-'3 <span data-link="{mytag items items2}"></span> ' +
-'4 <span data-link="{arrChFn items items2}"></span> ' +
-'4b <span data-link="{arrChFalse items items2}"></span> ' +
-'5 {^{> items[0]+\'-\'+items2[0]}} ' +
-'6 <span data-link="items[0]+\'-\'+items2[0]"></span> ' +
-'7 <span data-link="items[0]+\'-\'+items2[0]"></span> ' +
-'8 <span data-link="items[0]+\'-\'+items2[0] lateRender=true"></span> ' +
-'9 {^{if items[0] ==="aa"}}not a{{/if}} ' +
-'10 {^{for items2[0]==="bb" && items}} {{:}}{{/for}} ' +
-
-'1 {^{mytag items items2 onArrayChange=false/}} ' +
-'2 {^{arrChFn items items2 onArrayChange=true/}} ' +
-'2b {^{arrChFalse items items2 onArrayChange=true/}} ' +
-'3 <span data-link="{mytag items items2 onArrayChange=false}"></span> ' +
-'4 <span data-link="{arrChFn items items2 onArrayChange=true}"></span> ' +
-'4b <span data-link="{arrChFalse items items2 onArrayChange=true}"></span> ' +
-'5 {^{> items[0]+\'-\'+items2[0] onArrayChange=false}} ' +
-'6 <span data-link="items[0]+\'-\'+items2[0] onArrayChange=false"></span> ' +
-'7 <span data-link="items[0]+\'-\'+items2[0] onArrayChange=false"></span> ' +
-'8 <span data-link="items[0]+\'-\'+items2[0] onArrayChange=false lateRender=true"></span> ' +
-'9 {^{if items[0] ==="aa" onArrayChange=false}}not a{{/if}} ' +
-'10 {^{for items2[0]==="bb" && items onArrayChange=true}} {{:}}{{/for}}',
-		tags: {
-			mytag: template,
-			arrChFn: {
-				template: template,
-				onArrayChange: function() {}
-			},
-			arrChFalse: {
-				template: template,
-				onArrayChange: function() {}
-			}
-		}
-	}).link("#result", data);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text(),
-		"1 First: aa Last: AA First2: bb Last2: BB 2 First: aa Last: AA First2: bb Last2: BB 2b First: aa Last: AA First2: bb Last2: BB 3 First: aa Last: AA First2: bb Last2: BB 4 First: aa Last: AA First2: bb Last2: BB 4b First: aa Last: AA First2: bb Last2: BB 5 aa-bb 6 aa-bb 7 aa-bb 8 aa-bb 9 not a 10  aa AA 1 First: aa Last: AA First2: bb Last2: BB 2 First: aa Last: AA First2: bb Last2: BB 2b First: aa Last: AA First2: bb Last2: BB 3 First: aa Last: AA First2: bb Last2: BB 4 First: aa Last: AA First2: bb Last2: BB 4b First: aa Last: AA First2: bb Last2: BB 5 aa-bb 6 aa-bb 7 aa-bb 8 aa-bb 9 not a 10  aa AA",
-		'Initial rendering');
-
-	// ................................ Act ..................................
-	$.observable(data.items).move(0, data.items.length-1);
-	$.observable(data.items2).move(0, data.items2.length-1);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text(),
-		"1 First: AA Last: aa First2: BB Last2: bb 2 First: aa Last: AA First2: bb Last2: BB 2b First: aa Last: AA First2: bb Last2: BB 3 First: AA Last: aa First2: BB Last2: bb 4 First: aa Last: AA First2: bb Last2: BB 4b First: aa Last: AA First2: bb Last2: BB 5 AA-BB 6 AA-BB 7 AA-BB 8 AA-BB 9  10  AA aa 1 First: aa Last: AA First2: bb Last2: BB 2 First: AA Last: aa First2: BB Last2: bb 2b First: AA Last: aa First2: BB Last2: bb 3 First: aa Last: AA First2: bb Last2: BB 4 First: AA Last: aa First2: BB Last2: bb 4b First: AA Last: aa First2: BB Last2: bb 5 aa-bb 6 aa-bb 7 aa-bb 8 aa-bb 9 not a 10  false",
-		'After array change "move"');
-
-	// ................................ Act ..................................
-	$.observable(data).setProperty({items: ["xx", "XX"], items2: ["yy", "YY"]});
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text(),
-		"1 First: xx Last: XX First2: yy Last2: YY 2 First: xx Last: XX First2: yy Last2: YY 2b First: xx Last: XX First2: yy Last2: YY 3 First: xx Last: XX First2: yy Last2: YY 4 First: xx Last: XX First2: yy Last2: YY 4b First: xx Last: XX First2: yy Last2: YY 5 xx-yy 6 xx-yy 7 xx-yy 8 xx-yy 9  10  false 1 First: xx Last: XX First2: yy Last2: YY 2 First: xx Last: XX First2: yy Last2: YY 2b First: xx Last: XX First2: yy Last2: YY 3 First: xx Last: XX First2: yy Last2: YY 4 First: xx Last: XX First2: yy Last2: YY 4b First: xx Last: XX First2: yy Last2: YY 5 xx-yy 6 xx-yy 7 xx-yy 8 xx-yy 9  10  false",
-		'After property change "setProperty"');
-
-	// ................................ Act ..................................
-	$.observable(data.items).refresh(["aa", "AA"]);
-
-	// ............................... Assert .................................
-	assert.equal($("#result").text(),
-		"1 First: aa Last: AA First2: yy Last2: YY 2 First: xx Last: XX First2: yy Last2: YY 2b First: xx Last: XX First2: yy Last2: YY 3 First: aa Last: AA First2: yy Last2: YY 4 First: xx Last: XX First2: yy Last2: YY 4b First: xx Last: XX First2: yy Last2: YY 5 aa-yy 6 aa-yy 7 aa-yy 8 aa-yy 9 not a 10  false 1 First: xx Last: XX First2: yy Last2: YY 2 First: aa Last: AA First2: yy Last2: YY 2b First: aa Last: AA First2: yy Last2: YY 3 First: xx Last: XX First2: yy Last2: YY 4 First: aa Last: AA First2: yy Last2: YY 4b First: aa Last: AA First2: yy Last2: YY 5 xx-yy 6 xx-yy 7 xx-yy 8 xx-yy 9  10  false",
-		'After array change "refresh"');
-
-	// ................................ Reset ................................
-	$("#result").empty();
-});
 })(this, this.jQuery);

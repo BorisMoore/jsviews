@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.2 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.3 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.2",
+var versionNumber = "v1.0.3",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
@@ -543,6 +543,7 @@ function convertVal(converter, view, tagCtx, onError) {
 				inline: !linkCtx,
 				tagName: ":",
 				convert: converter,
+				onArrayChange: true,
 				flow: true,
 				tagCtx: tagCtx,
 				tagCtxs: [tagCtx],
@@ -991,6 +992,9 @@ function View(context, type, parentView, data, template, key, onRender, contentT
 		self.ctx = context || parentView.ctx;
 	} else {
 		self.ctx = context || {};
+		if (type) {
+			self.root = self; // view whose parent is top view
+		}
 	}
 }
 
@@ -1218,18 +1222,15 @@ function getDefaultVal(defaultVal, data) {
 		: defaultVal;
 }
 
-function unmapArray(modelArr) {
-		var arr = [],
-			i = 0,
-			l = modelArr.length;
-		for (; i<l; i++) {
-			arr.push(modelArr[i].unmap());
-		}
-		return arr;
+function addParentRef(ob, ref, parent) {
+	Object.defineProperty(ob, ref, {
+		value: parent,
+		configurable: true
+	});
 }
 
 function compileViewModel(name, type) {
-	var i, constructor,
+	var i, constructor, parent,
 		viewModels = this,
 		getters = type.getters,
 		extend = type.extend,
@@ -1240,33 +1241,34 @@ function compileViewModel(name, type) {
 			merge: merge
 		}, extend),
 		args = "",
-		body = "",
-		g = getters ? getters.length : 0,
+		cnstr = "",
+		getterCount = getters ? getters.length : 0,
 		$observable = $.observable,
 		getterNames = {};
 
-	function GetNew(args) {
+	function JsvVm(args) {
 		constructor.apply(this, args);
 	}
 
 	function vm() {
-		return new GetNew(arguments);
+		return new JsvVm(arguments);
 	}
 
 	function iterate(data, action) {
-		var getterType, defaultVal, prop, ob,
+		var getterType, defaultVal, prop, ob, parentRef,
 			j = 0;
-		for (; j<g; j++) {
+		for (; j < getterCount; j++) {
 			prop = getters[j];
 			getterType = undefined;
 			if (prop + "" !== prop) {
 				getterType = prop;
 				prop = getterType.getter;
+				parentRef = getterType.parentRef;
 			}
 			if ((ob = data[prop]) === undefined && getterType && (defaultVal = getterType.defaultVal) !== undefined) {
 				ob = getDefaultVal(defaultVal, data);
 			}
-			action(ob, getterType && viewModels[getterType.type], prop);
+			action(ob, getterType && viewModels[getterType.type], prop, parentRef);
 		}
 	}
 
@@ -1274,7 +1276,7 @@ function compileViewModel(name, type) {
 		data = data + "" === data
 			? JSON.parse(data) // Accept JSON string
 			: data;            // or object/array
-		var l, prop,
+		var l, prop, childOb, parentRef,
 			j = 0,
 			ob = data,
 			arr = [];
@@ -1298,8 +1300,22 @@ function compileViewModel(name, type) {
 				}
 				arr.push(ob);
 			});
-
 			ob = this.apply(this, arr); // Instantiate this View Model, passing getters args array to constructor
+			j = getterCount;
+			while (j--) {
+				childOb = arr[j];
+				parentRef = getters[j].parentRef;
+				if (parentRef && childOb && childOb.unmap) {
+					if ($isArray(childOb)) {
+						l = childOb.length;
+						while (l--) {
+							addParentRef(childOb[l], parentRef, ob);
+						}
+					} else {
+						addParentRef(childOb, parentRef, ob);
+					}
+				}
+			}
 			for (prop in data) { // Copy over any other properties. that are not get/set properties
 				if (prop !== $expando && !getterNames[prop]) {
 					ob[prop] = data[prop];
@@ -1309,11 +1325,12 @@ function compileViewModel(name, type) {
 		return ob;
 	}
 
-	function merge(data) {
+	function merge(data, parent, parentRef) {
 		data = data + "" === data
 			? JSON.parse(data) // Accept JSON string
 			: data;            // or object/array
-		var j, l, m, prop, mod, found, assigned, ob, newModArr,
+
+		var j, l, m, prop, mod, found, assigned, ob, newModArr, childOb,
 			k = 0,
 			model = this;
 
@@ -1341,7 +1358,10 @@ function compileViewModel(name, type) {
 					mod.merge(ob);
 					newModArr.push(mod);
 				} else {
-					newModArr.push(vm.map(ob));
+					newModArr.push(childOb = vm.map(ob));
+					if (parentRef) {
+						addParentRef(childOb, parentRef, parent);
+					}
 				}
 			}
 			if ($observable) {
@@ -1351,10 +1371,10 @@ function compileViewModel(name, type) {
 			}
 			return;
 		}
-		iterate(data, function(ob, viewModel, getter) {
+		iterate(data, function(ob, viewModel, getter, parentRef) {
 			if (viewModel) {
-				model[getter]().merge(ob); // Update typed property
-			} else {
+				model[getter]().merge(ob, model, parentRef); // Update typed property
+			} else if (model[getter]() !== ob) {
 				model[getter](ob); // Update non-typed property
 			}
 		});
@@ -1370,11 +1390,21 @@ function compileViewModel(name, type) {
 			k = 0,
 			model = this;
 
+		function unmapArray(modelArr) {
+			var arr = [],
+				i = 0,
+				l = modelArr.length;
+			for (; i<l; i++) {
+				arr.push(modelArr[i].unmap());
+			}
+			return arr;
+		}
+
 		if ($isArray(model)) {
 			return unmapArray(model);
 		}
 		ob = {};
-		for (; k<g; k++) {
+		for (; k < getterCount; k++) {
 			prop = getters[k];
 			getterType = undefined;
 			if (prop + "" !== prop) {
@@ -1389,23 +1419,23 @@ function compileViewModel(name, type) {
 				: value;
 		}
 		for (prop in model) {
-			if (prop !== "_is" && !getterNames[prop] && prop !== $expando  && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && !$isFunction(model[prop])) {
+			if (model.hasOwnProperty(prop) && (prop.charAt(0) !== "_" || !getterNames[prop.slice(1)]) && prop !== $expando  && !$isFunction(model[prop])) {
 				ob[prop] = model[prop];
 			}
 		}
 		return ob;
 	}
 
-	GetNew.prototype = proto;
+	JsvVm.prototype = proto;
 
-	for (i=0; i<g; i++) {
+	for (i=0; i < getterCount; i++) {
 		(function(getter) {
 			getter = getter.getter || getter;
 			getterNames[getter] = i+1;
 			var privField = "_" + getter;
 
 			args += (args ? "," : "") + getter;
-			body += "this." + privField + " = " + getter + ";\n";
+			cnstr += "this." + privField + " = " + getter + ";\n";
 			proto[getter] = proto[getter] || function(val) {
 				if (!arguments.length) {
 					return this[privField]; // If there is no argument, use as a getter
@@ -1425,7 +1455,17 @@ function compileViewModel(name, type) {
 		})(getters[i]);
 	}
 
-	constructor = new Function(args, body.slice(0, -1));
+	// Constructor for new viewModel instance.
+	cnstr = new Function(args, cnstr);
+
+	constructor = function() {
+		cnstr.apply(this, arguments);
+		// Pass additional parentRef str and parent obj to have a parentRef pointer on instance
+		if (parent = arguments[getterCount + 1]) {
+			addParentRef(this, arguments[getterCount], parent);
+		}
+	};
+
 	constructor.prototype = proto;
 	proto.constructor = constructor;
 
@@ -1559,7 +1599,7 @@ function registerStore(storeName, storeSettings) {
 * @returns {boolean}
 */
 function addSetting(st) {
-	$viewsSettings[st] = function(value) {
+	$viewsSettings[st] = $viewsSettings[st] || function(value) {
 		return arguments.length
 			? ($subSettings[st] = value, $viewsSettings)
 			: $subSettings[st];
@@ -2599,7 +2639,6 @@ function getTargetSorted(value, tagCtx) {
 	if (!isNaN(start) || !isNaN(end)) { // start or end specified, but not the auto-create Number array scenario of {{for start=xxx end=yyy}}
 		start = +start || 0;
 		end = end === undefined || end > value.length ? value.length : +end;
-//		end = end === undefined ? value.length : +end;
 		value = value.slice(start, end);
 	}
 	if (step > 1) {
@@ -2798,20 +2837,7 @@ if (!(jsr || $ && $.render)) {
 		"for": {
 			sortDataMap: dataMap(getTargetSorted),
 			init: function(val, cloned) {
-				var l, tagCtx, paramsProps, sort,
-					self = this,
-					tagCtxs = self.tagCtxs;
-				l = tagCtxs.length;
-				while (l--) {
-					tagCtx = tagCtxs[l];
-					paramsProps = tagCtx.params.props;
-					tagCtx.argDefault = tagCtx.props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
-
-					if (tagCtx.argDefault !== false && $isArray(tagCtx.args[0])
-						&& (paramsProps.sort !== undefined || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse)) {
-						tagCtx.props.dataMap = self.sortDataMap;
-					}
-				}
+				this.setDataMap(this.tagCtxs);
 			},
 			render: function(val) {
 				// This function is called once for {{for}} and once for each {{else}}.
@@ -2850,6 +2876,21 @@ if (!(jsr || $ && $.render)) {
 					// If nothing was rendered we will look at the next {{else}}. Otherwise, we are done.
 				}
 				return result;
+			},
+			setDataMap: function(tagCtxs) {
+				var tagCtx, props, paramsProps,
+					self = this,
+					l = tagCtxs.length;
+				while (l--) {
+					tagCtx = tagCtxs[l];
+					props = tagCtx.props;
+					paramsProps = tagCtx.params.props;
+					tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
+					props.dataMap = (tagCtx.argDefault !== false && $isArray(tagCtx.args[0]) &&
+						(paramsProps.sort || paramsProps.start || paramsProps.end || paramsProps.step || paramsProps.filter || paramsProps.reverse
+						|| props.sort || props.start || props.end || props.step || props.filter || props.reverse))
+						&& self.sortDataMap;
+				}
 			},
 			flow: true
 		},
@@ -2927,6 +2968,7 @@ if (!$.observe) {
 		observeInnerCbKey = 1,
 		$data = $.data,
 		remove = {}, // flag for removeProperty
+		asyncBatch = [],
 
 	//========================== Top-level functions ==========================
 
@@ -3073,13 +3115,12 @@ if (!$.observe) {
 
 		function filterAndObserveAll(obj, prop, unobs, nestedArray) {
 			var newObject, newParentObs;
-			if (prop !== $expando && (newObject = $observable._fltr(newAllPath, obj[prop], nextParentObs, filter))) {
+			if ((+prop === prop || prop !== $expando) && (newObject = $observable._fltr(newAllPath, obj[prop], nextParentObs, filter))) {
 				newParentObs = nextParentObs.slice();
 				if (nestedArray && updatedTgt && newParentObs[0] !== updatedTgt) {
 					newParentObs.unshift(updatedTgt); // For array change events when observing an array which is not the root, need to add updated array to parentObs
 				}
 				observeAll(namespace, newObject, cb, filter || (nestedArray ? undefined : 0), newParentObs, newAllPath, unobs, objMap);
-				// If nested array, need to observe the array too - so set filter to undefined
 			}
 		}
 
@@ -3171,6 +3212,19 @@ if (!$.observe) {
 	$unobserve = function() {
 		[].push.call(arguments, true); // Add true as additional final argument
 		return $observe.apply(undefined, arguments);
+	},
+
+	batchTrigger = function(async) {
+		var event,
+		batch = this.slice();
+		this.length = 0;
+		this._go = 0;
+		while (event = batch.shift()) {
+			if (!event.skip) {
+				event[0]._trigger(event[1], event[2], true);
+			}
+		}
+		this.paths = {};
 	};
 
 	$observe = function() {
@@ -3193,7 +3247,7 @@ if (!$.observe) {
 			}
 
 			function observeOnOff(cb, object, fullPath, namespace, pathStr, isArrayBinding, off) {
-				var j, evData,
+				var j, evData, dataOb,
 					boundObOrArr = wrapArray(object),
 					prntObs = parentObs,
 					allPth = allPath;
@@ -3248,10 +3302,9 @@ if (!$.observe) {
 						};
 					}
 					$(boundObOrArr).on(namespace, null, evData, onDataChange);
-
 					if (cbBindings) {
 						// Add object to cbBindings
-						cbBindings[$data(object).obId || $data(object, "obId", observeObjKey++)] = object;
+						cbBindings[(dataOb = $data(object)).obId || (dataOb.obId = observeObjKey++)] = object;
 					}
 				}
 			}
@@ -3259,7 +3312,7 @@ if (!$.observe) {
 			function bindArray(cb, arr, unbind, isArray, relPath) {
 				if (allowArray) {
 					// allowArray is 1 if this is a call to observe that does not come from observeAndBind (tag binding), or is from a 'depends' path,
-					// so we allow arrayChange binding. Otherwise allowArray is zero.
+					// or for a tag with tag.onArrayChange = true - so we allow arrayChange binding. Otherwise allowArray is zero.
 					var object,
 						prevAllPath = allPath;
 
@@ -3336,7 +3389,7 @@ if (!$.observe) {
 																				// remove previous observeAll wrapped callback, if inner callback was the same;
 						}
 
-						var arrIndex, skip, dep, obArr, prt,
+						var arrIndex, skip, dep, obArr, prt, fnProp, isGet,
 							obj = object;
 						if (object && object._cxp) {
 							return observeObjectPaths(object[0], [object[1]], callback, contextCb);
@@ -3346,6 +3399,10 @@ if (!$.observe) {
 							if (obj && typeof obj === OBJECT && "" + prop === prop) {
 								if (prop === "") {
 									continue;
+								}
+								if (prop.slice(-2) === "()") {
+									prop = prop.slice(0, -2);
+									isGet = true;
 								}
 								if ((prts.length < depth + 1) && !obj.nodeType) {
 									// Add observer for each token in path starting at depth, and on to the leaf
@@ -3359,6 +3416,7 @@ if (!$.observe) {
 												&& data.ns === initialNs
 												&& data.cb._cId === callback._cId
 												&& data.cb._inId === callback._inId
+												&& !data._arOk === !allowArray
 												&& (data.prop === prop || data.prop === "*" || data.prop === "**")) {
 												if (prt = prts.join(".")) {
 													data.paths.push(prt); // We will skip this binding, but if it is not a leaf binding,
@@ -3422,7 +3480,8 @@ if (!$.observe) {
 								}
 							}
 							if ($isFunction(prop)) {
-								if (dep = prop.depends) {
+								fnProp = prop;
+								if (dep = fnProp.depends) {
 									// This is a computed observable. We will observe any declared dependencies.
 									if (obj._vw && obj._ocp) {
 										// Observable contextual parameter, so context was ocp object. Now move context to view.data for dependencies
@@ -3435,7 +3494,17 @@ if (!$.observe) {
 									}
 									observeObjects(concat.apply([], [[obj], dependsPaths(dep, obj, callback)]));
 								}
-								break;
+
+								if (isGet) {
+									if (!prts[0]) {
+										bindArray(callback, fnProp.call(obj), unobserve);
+										break;
+									}
+									prop = fnProp.call(obj);
+									if (!prop) {
+										break;
+									}
+								}
 							}
 							obj = prop;
 						}
@@ -3547,6 +3616,8 @@ if (!$.observe) {
 				}
 			}
 
+//END OF FUNCTIONS
+
 			var ns = observeStr,
 				paths = this != 1 // Using != for IE<10 bug- see jsviews/issues/237
 					? concat.apply([], arguments) // Flatten the arguments - this is a 'recursive call' with params using the 'wrapped array'
@@ -3555,7 +3626,6 @@ if (!$.observe) {
 				lastArg = paths.pop() || false,
 				m = paths.length;
 
-//END OF FUNCTIONS
 			if (lastArg + "" === lastArg) { // If last arg is a string then this observe call is part of an observeAll call,
 				allPath = lastArg;          // and the last three args are the parentObs array, the filter, and the allPath string.
 				parentObs = paths.pop();
@@ -3618,9 +3688,10 @@ if (!$.observe) {
 		}
 
 		var initialNs,
-			allowArray = this == 1 ? 0 : 1, // If this == 1, this is a call from observeAndBind - doing binding of datalink expressions. We don't bind
-			// arrayChange events in this scenario. Instead, {^{for}} and similar do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
-			// Note deliberately using this == 1, rather than this === 1 because of IE<10 bug- see jsviews/issues/237
+			allowArray = this == 1 ? 0 : 1, // If this == 1, this is a call from observeAndBind (doing binding of datalink expressions),
+			// and tag.onArrayChange is not set to true. We don't bind arrayChange events in this scenario. Instead, {^{for}} and similar
+			// do specific arrayChange binding to the tagCtx.args[0] value, in onAfterLink.
+			// Note deliberately using this == 1, rather than this === 1 because of IE<10 bug - see jsviews/issues/237
 			paths = slice.call(arguments),
 			pth = paths[0];
 
@@ -3631,14 +3702,42 @@ if (!$.observe) {
 		return innerObserve.apply(1, paths);
 	};
 
-	$observable = function(ns, data) {
-		if (arguments.length === 1) {
+	asyncBatch.wait = function() {
+		var batch = this;
+		batch._go = 1;
+		setTimeout(function() {
+			batch.trigger(true);
+			batch._go = 0;
+			batch.paths = {};
+		});
+	};
+
+	$observable = function(ns, data, delay) {
+		if (ns + "" !== ns) {
+			delay = data;
 			data = ns;
 			ns = "";
 		}
-		return $isArray(data)
+		delay = delay === undefined ? $subSettingsAdvanced.asyncObserve : delay;
+		var observable = $isArray(data)
 			? new ArrayObservable(ns, data)
 			: new ObjectObservable(ns, data);
+		if (delay) {
+			if (delay === true) {
+				observable.async = true;
+				delay = asyncBatch;
+			}
+			if (!delay.trigger) {
+				if ($isArray(delay)) {
+					delay.trigger = batchTrigger;
+					delay.paths = {};
+				} else {
+					delay = undefined;
+				}
+			}
+			observable._batch = delay;
+		}
+		return observable;
 	};
 
 	//========================== Initialize ==========================
@@ -3674,10 +3773,11 @@ if (!$.observe) {
 
 		setProperty: function(path, value, nonStrict) {
 			path = path || "";
-			var key, pair, parts,
+			var key, pair, parts, tempBatch,
 				multi = path + "" !== path, // Hash of paths
 				self = this,
-				object = self._data;
+				object = self._data,
+				batch = self._batch;
 
 			if (object) {
 				if (multi) {
@@ -3691,9 +3791,17 @@ if (!$.observe) {
 							self.setProperty(pair.name, pair.value, nonStrict === undefined || nonStrict); //If nonStrict not specified, default to true;
 						}
 					} else {
-						// Object representation where property name is path and property value is value.
-						for (key in path) {
+						if (!batch) {
+							self._batch = tempBatch = [];
+							tempBatch.trigger = batchTrigger;
+							tempBatch.paths = {};
+						}
+						for (key in path) { // Object representation where property name is path and property value is value.
 							self.setProperty(key, path[key], nonStrict);
+						}
+						if (tempBatch) {
+							self._batch.trigger();
+							self._batch = undefined;
 						}
 					}
 				} else if (path !== $expando) {
@@ -3757,8 +3865,24 @@ if (!$.observe) {
 			}
 		},
 
-		_trigger: function(target, eventArgs) {
-			$(target).triggerHandler(propertyChangeStr + (this._ns ? "." + /^\S+/.exec(this._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+		_trigger: function(target, eventArgs, force) {
+			var key, batch, previous,
+				self = this;
+			if ($.hasData(target)) {
+				if (!force && (batch = self._batch)) {
+					if (self.async && !batch._go) {
+						batch.wait();
+					}
+					batch.push([self, target, eventArgs]);
+					key = $data(target).obId + eventArgs.path;
+					if (previous = batch.paths[key]) {
+						batch[previous-1].skip = 1;
+					}
+					batch.paths[key] = batch.length;
+				} else {
+					$(target).triggerHandler(propertyChangeStr + (this._ns ? "." + /^\S+/.exec(this._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+				}
+			}
 		}
 	};
 
@@ -3908,17 +4032,28 @@ if (!$.observe) {
 			return self;
 		},
 
-		_trigger: function(eventArgs, oldLength) {
-			var self = this,
-				_data = self._data,
-				length = _data.length,
-				$_data = $([_data]);
-			if (self._srt) {
-				eventArgs.refresh = true; // We are sorting during refresh
-			} else if (length !== oldLength) { // We have finished sort operations during refresh
-				$_data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
+		_trigger: function(eventArgs, oldLength, force) {
+			var length, _data, batch,
+				self = this;
+			if ($.hasData(_data = self._data)) {
+				if (!force && (batch = self._batch)) {
+					eventArgs._dly = true; // Delayed event (async or batch change)
+					batch.push([self, eventArgs, oldLength]);
+					if (self.async && !batch._go) {
+						batch.wait();
+					}
+				} else {
+					length = _data.length;
+					_data = $([_data]);
+
+					if (self._srt) {
+						eventArgs.refresh = true; // We are sorting during refresh
+					} else if (length !== oldLength) { // We have finished sort operations during refresh
+						_data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
+					}
+					_data.triggerHandler(arrayChangeStr + (self._ns ? "." + /^\S+/.exec(self._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+				}
 			}
-			$_data.triggerHandler(arrayChangeStr + (self._ns ? "." + /^\S+/.exec(self._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
 		}
 	};
 
@@ -4069,8 +4204,9 @@ if (!$.observe) {
 	};
 
 	$sub.advSet = function() { // refresh advanced settings
+		$subSettingsAdvanced = $subSettings.advanced;
 		$sub._gccb = this._gccb; // getContextCallback method
-		global._jsv = $subSettings.advanced._jsv
+		global._jsv = $subSettingsAdvanced._jsv
 			? { // create global _jsv, for accessing views, etc
 					cbBindings: cbBindingsStore
 				}
@@ -4079,6 +4215,10 @@ if (!$.observe) {
 	$sub._dp = dependsPaths;
 	$sub._gck = getCbKey;
 	$sub._obs = $observe;
+	$subSettingsAdvanced = $subSettings.advanced = $subSettingsAdvanced || {
+		useViews: false,
+		_jsv: false // For global access to JsViews store
+	};
 }
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsViews >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -4173,7 +4313,7 @@ $observe = $observable.observe;
 // Event handlers
 //===============
 
-function updateValues(sourceValues, tagElse, bindId, ev) {
+function updateValues(sourceValues, tagElse, async, bindId, ev) {
 // Observably update a data value targeted by the binding.to binding of a 2way data-link binding. Called when elem changes
 // Called when linkedElem of a tag control changes: as updateValue(val, index, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValues(val1, val2, val3, ...) - this: tag
@@ -4276,7 +4416,7 @@ function updateValues(sourceValues, tagElse, bindId, ev) {
 								exprOb = exprOb.sb;
 							}
 						}
-						$observable(target).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
+						$observable(target, async).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
 					}
 				}
 			}
@@ -4639,10 +4779,10 @@ function arrayChangeHandler(ev, eventArgs) { // array change handler for 'array'
 			self._.srt = eventArgs.refresh; // true if part of a 'sort' on refresh
 			switch (action) {
 				case "insert":
-					self.addViews(index, items);
+					self.addViews(index, items, eventArgs._dly);
 					break;
 				case "remove":
-					self.removeViews(index, items.length);
+					self.removeViews(index, items.length, undefined, eventArgs._dly);
 					break;
 				case "move":
 					self.moveViews(eventArgs.oldIndex, index, items.length);
@@ -4836,6 +4976,7 @@ function addBindingMarkers(value, view, tag) {
 function observeAndBind(linkCtx, source, target) {
 	var binding, l, k, linkedElem, exprFnDeps, exprOb, prop, propDeps, depends, tagDepends, bindId, linkedElems,
 		tag = linkCtx.tag,
+		allowArray = !tag,
 		cvtBk = linkCtx.convertBack,
 		handler = linkCtx._hdl;
 	source = typeof source === "object" && source; // If not an object set to false
@@ -4881,6 +5022,7 @@ function observeAndBind(linkCtx, source, target) {
 					}
 				}
 			}
+			allowArray = tag.onArrayChange === undefined || tag.onArrayChange === true;
 		}
 
 		l = exprFnDeps.length;
@@ -4893,7 +5035,7 @@ function observeAndBind(linkCtx, source, target) {
 			}
 		}
 		binding = $observable._apply(
-			1, // Use as 'this' pointer - arbitrary
+			allowArray ? 0 : 1, // 'this' pointer for observeAndBind, used to set allowArray to 1 or 0.
 			[source],
 			exprFnDeps, // flatten the paths - to gather all the dependencies across args and bound params
 			depends,
@@ -5144,7 +5286,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 				}
 			}
 		}
-		if (elCnt) {
+		if (elCnt && !inTag) {
 			// elContent maps tagNames which have only element content, so may not support script nodes.
 			// We are in element-only content, can remove white space, and use data-jsv attributes on elements as markers
 			// Example: <tr data-jsv="/2_#6_"> - close marker for view 2 and open marker for view 6
@@ -5763,8 +5905,10 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 function bindDataLinkTarget(linkCtx, late) {
 	// Add data link bindings for a link expression in data-link attribute markup
 	function handler(ev, eventArgs) {
-		onDataLinkedTagChange.call(linkCtx, ev, eventArgs);
 		// If the link expression uses a custom tag, the onDataLinkedTagChange call will call renderTag, which will set tagCtx on linkCtx
+		if (!eventArgs || !eventArgs.refresh) {
+			onDataLinkedTagChange.call(linkCtx, ev, eventArgs);
+		}
 	}
 	var view,
 		linkCtxType = linkCtx.type;
@@ -6569,14 +6713,17 @@ function updateValue(val, index, tagElse, async, bindId, ev) {
 	if (self && self._tgId) {
 		bindId = self;
 	}
-	values[index||0] = val;
-	if (async) {
-		setTimeout(function() {
-			updateValues(values, tagElse, bindId, ev);
-		});
-	} else {
-		updateValues(values, tagElse, bindId, ev);
+	if (arguments.length < 4) {
+		if (+index !== index) {
+			async = index;
+			tagElse = index = 0;
+		} else if (+tagElse !== tagElse) {
+			async = tagElse;
+			tagElse = 0;
+		}
 	}
+	values[index||0] = val;
+	updateValues(values, tagElse, async, bindId, ev);
 	return self;
 }
 
@@ -6602,8 +6749,9 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		var filtered,
 			nodes = $(this.nodes());
 		if (nodes[0]) {
+			select = deep ? select || "*" : select;
 			filtered = select ? nodes.filter(select) : nodes;
-			nodes = deep && select ? filtered.add(nodes.find(select)) : filtered;
+			nodes = deep ? filtered.add(nodes.find(select)) : filtered;
 		}
 		return nodes;
 	};
@@ -6765,7 +6913,21 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		theTag.updateValue = updateValue;
 
 		theTag.updateValues = function() {
-			return updateValues(arguments, undefined, this);
+			var tagElse, async,
+				tag = this,
+				bindToLength = tag.bindTo ? tag.bindTo.length : 1,
+				extra = arguments.length - bindToLength;
+
+			if (extra) {
+				tagElse = arguments[bindToLength];
+				if (extra > 1) {
+					async = extra > 1 ? arguments[bindToLength + 1] : undefined;
+				} else if (+tagElse !==  tagElse) {
+					async = tagElse;
+					tagElse = 0;
+				}
+			}
+			return updateValues(arguments, tagElse, async, this);
 		};
 
 		theTag.setValues = function() {
@@ -6819,7 +6981,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		theView = tagOrView;
 
 		// Note: a linked view will also, after linking have nodes[], _prv (prevNode), _nxt (nextNode) ...
-		theView.addViews = function(index, dataItems) {
+		theView.addViews = function(index, dataItems, delayed) {
 			// if view is not an array view, do nothing
 			var i, viewsCount,
 				view = this,
@@ -6830,16 +6992,15 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				// view is of type "array"
 				viewsCount = views.length + itemsCount;
 
-				if (viewsCount === view.data.length // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
-						&& renderAndLink(view, index, view.tmpl, views, dataItems, view.ctx) !== false) {
-					if (!view._.srt) { // Not part of a 'sort' on refresh
-						view.fixIndex(index + itemsCount);
-					}
+				if ((delayed || viewsCount === view.data.length) // If delayed or if views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& renderAndLink(view, index, view.tmpl, views, dataItems, view.ctx) !== false
+					&& !view._.srt) { // Not part of a 'sort' on refresh
+					view.fixIndex(index + itemsCount);
 				}
 			}
 		};
 
-		theView.removeViews = function(index, itemsCount, keepNodes, isMove) {
+		theView.removeViews = function(index, itemsCount, keepNodes, delayed) {
 			// view.removeViews() removes all the child views
 			// view.removeViews(index) removes the child view with specified index or key
 			// view.removeViews(index, count) removes the specified nummber of child views, starting with the specified index
@@ -6923,7 +7084,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 					}
 				}
 				if (isArray && itemsCount
-					&& (isMove || viewsCount - itemsCount === view.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
+					&& (delayed || viewsCount - itemsCount === view.data.length)) { // If views not already synced to array (e.g. triggered by array.length propertyChange - jsviews/issues/301)
 					current = index + itemsCount;
 					// Remove indexed items (parentView is data array view);
 					while (current-- > index) {
@@ -7173,6 +7334,7 @@ $tags({
 			}
 		},
 		onUpdate: false,
+		onArrayChange: false,
 		onUnbind: function() {
 			var self = this,
 				oldIsCleanCall = isCleanCall;
@@ -7311,16 +7473,7 @@ $extend($tags["for"], {
 		ev.done = true;
 	},
 	onUpdate: function(ev, eventArgs, tagCtxs) {
-		var tagCtx, props,
-			tag = this,
-			l = tagCtxs.length;
-		while (l--) {
-			tagCtx = tagCtxs[l];
-			props = tagCtx.props;
-			tagCtx.argDefault = props.end === undefined || tagCtx.args.length > 0; // Default to #data except for auto-create range scenario {{for start=xxx end=yyy step=zzz}}
-			props.dataMap = (tagCtx.argDefault !== false && $isArray(tagCtx.args[0])
-				&& (props.sort !== undefined || tagCtx.params.props.start || tagCtx.params.props.end || props.step !== undefined || props.filter || props.reverse)) && tag.sortDataMap;
-		}
+		this.setDataMap(tagCtxs);
 	},
 	onBind: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 		var data,
