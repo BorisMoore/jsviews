@@ -1038,6 +1038,9 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 QUnit.test("Top-level linking", function(assert) {
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	$.view().ctx.root = $.view().data = undefined; // In some scenarios with nested templates, tmpl.render()
+	// can leave topView.data and topView.ctx.root referencing data, causing tests below such as
+	// tmpl.link(expression, container1, data1) works without setting data or root on top view to fail. So we 'start clean' here...
 
 	// =============================== Arrange ===============================
 
@@ -1189,6 +1192,99 @@ QUnit.test("Top-level linking", function(assert) {
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"Top level bindings all removed when content removed from DOM");
 
+	// =============================== Arrange ===============================
+	$("#result").html('<div id="container1"></div><div id="container2"></div><div id="container3" data-link="name + \' \' + ~root.name + \' \' + #parent.type"></div>');
+
+	var tmpl = $.templates("<span></span>{^{:name}} {{:~root.name}} {{:#parent && #parent.type}}"),
+		person1 = {name: "Jo"},
+		person2 = {name: "Bob"};
+
+	// ............................... Act .................................
+	var html = tmpl.render(person1);
+
+	// ............................... Assert .................................
+	assert.equal(html + JSON.stringify($.view().views), "<span></span>Jo Jo {}",
+		"Render does not persist any view hierarchy");
+
+	// =============================== Arrange ===============================
+		$.link("name + ' ' + ~root.name + ' ' + #parent.type", "#container1", person1);
+
+	// ............................... Assert .................................
+	assert.ok(
+		$("#container1").text() === "Jo Jo top" &&
+		$.view().get(true, "link").ctxPrm("root").name === "Jo" &&
+		$.view().get(true, "link").root === $.view().get(true, "link") &&
+		$.view().data === undefined &&
+		$.view().ctx.root === undefined,
+	"tmpl.link(expression, container1, data1) works without setting data or root on top view");
+
+	// ................................ Reset ................................
+	$.unlink("#container1");
+
+	// =============================== Arrange ===============================
+	$.link(true, "#container3", person1);
+
+	// ............................... Assert .................................
+	assert.ok(
+		$("#container3").text() === "Jo Jo top" &&
+		$.view().get(true, "link").ctxPrm("root").name === "Jo" &&
+		$.view().get(true, "link").root === $.view().get(true, "link") &&
+		$.view().data === undefined &&
+		$.view().ctx.root === undefined,
+	"tmpl.link(true, container1, data1) works without setting data or root on top view");
+
+	// ................................ Reset ................................
+	$.unlink("#container3");
+
+	// =============================== Arrange ===============================
+	tmpl.link("#container1", person1);
+	tmpl.link("#container2", person2);
+
+	var spans = $("#result span");
+
+	// ............................... Assert .................................
+	assert.ok(
+		$("#container1").text() === "Jo Jo top" &&
+		$("#container2").text() === "Bob Bob top" &&
+		$.view(spans[0]).ctxPrm("root").name === "Jo" &&
+		$.view(spans[0]).root === $.view(spans[0]) &&
+		$.view(spans[1]).ctxPrm("root").name === "Bob" &&
+		$.view(spans[1]).root === $.view(spans[1]) &&
+		$.view().data === undefined &&
+		$.view().ctx.root === undefined,
+	"tmpl.link(container1, data1) tmpl.link(container2, data2) - to different containers, works without setting data or root on top view");
+
+	// ............................... Act .................................
+	$("#container2").empty();
+	spans = $("#result span");
+
+	// ............................... Assert .................................
+	assert.ok(
+		$("#container1").text() === "Jo Jo top" &&
+		$("#container2").text() === "" &&
+		$.view(spans[0]).ctxPrm("root").name === "Jo" &&
+		$.view(spans[0]).root === $.view(spans[0]) &&
+		spans[1] === undefined &&
+		$.view().data === undefined &&
+		$.view().ctx.root === undefined,
+	"$(container2).empty() removes view hierarchy for that container, and leaves other container hierarchy intact");
+
+	// ............................... Act .................................
+	$("#container1").empty();
+	spans = $("#result span");
+
+	// ............................... Assert .................................
+	assert.ok(
+		$("#container1").text() === "" &&
+		$("#container2").text() === "" &&
+		spans[0] === undefined &&
+		spans[0] === undefined &&
+		$.view().data === undefined &&
+		$.view().ctx.root === undefined,
+	"$(container1).empty() removes other view hierarchy too");
+
+	// ................................ Reset ................................
+	$("#result").empty();
 	$.views.settings.advanced({_jsv: false});
 });
 
@@ -13307,16 +13403,11 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	model = {
 		sortby: "role",
-		cols: ["name", "role"],
-		sort: function(ev, eventArgs) {
-			$.observable(data).setProperty({
-				sortby: data.sortby === "role" ? "name" : "role"
-			});
-		}
+		cols: ["name", "role"]
 	};
 
 	// ............................... Act .................................
-	$.templates('{^{for cols itemVar="~col"}}{^{:~root.sortby === ~col}}{{/for}}').link("#result", model);
+	$.templates('{^{for cols itemVar="~col"}}{^{:~root.sortby === ~col}} {^{:~col}} {{/for}}').link("#result", model);
 
 	res = $("#result").text();
 
@@ -13328,9 +13419,58 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	res += "|" + $("#result").text();
 
+	$.observable(model.cols).insert("other");
+
+	res += "|" + $("#result").text();
+
 	// ............................... Assert .................................
-	assert.equal(res, "falsetrue|truefalse|falsetrue",
+	assert.equal(res, "false name true role |true name false role |false name true role |false name true role false other ",
 		"itemVar variables in item list are distinct variables");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	var data = {items1: [], items: [{name: "Jo"}, {name: "Bob"}]};
+
+	// ............................... Act .................................
+	$.templates(
+	'{^{for items1}}{{else items itemVar="~currentItem"}}' +
+		'{^{:name}} <input data-link="name"/>' +
+		'{^{:~currentItem.name}} <input data-link="~currentItem.name"/>' +
+		'{^{include}}' +
+			'{^{:~currentItem.name}} <input data-link="~currentItem.name"/>' +
+		'{{/include}}' +
+		'{^{for itemVar="~currentItem2"}}' +
+			'{^{:name}} <input data-link="name"/>' +
+			'{^{:~currentItem2.name}} <input data-link="~currentItem2.name"/>' +
+			'{^{if true}}' +
+				'{^{:~currentItem2.name}} <input data-link="~currentItem2.name"/>' +
+			'{{/if}}' +
+		'{{/for}}' +
+		'{^{for ~currentItem itemVar="~currentItem2"}}' +
+			'{^{:name}} <input data-link="name"/>' +
+			'{^{:~currentItem2.name}} <input data-link="~currentItem2.name"/>' +
+			'{^{include}}' +
+				'{^{:~currentItem2.name}} <input data-link="~currentItem2.name"/>' +
+			'{{/include}}' +
+		'{{/for}}' +
+	'{{/for}}').link("#result", data);
+
+	$.observable(data.items).insert({name: "Jeff"});
+
+	var inputs = $("#result input");
+
+	res = "|" + $("#result").text() + inputs[0].value;
+
+	keydown($(inputs[0]).val("Jo0"));
+
+	res += "|" + $("#result").text() + inputs[1].value;
+
+	// ............................... Assert .................................
+	assert.equal(res, "|Jo Jo Jo Jo Jo Jo Jo Jo Jo Bob Bob Bob Bob Bob Bob Bob Bob Bob Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jo|Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Jo0 Bob Bob Bob Bob Bob Bob Bob Bob Bob Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jeff Jo0",
+		"itemVar in nested contexts, on else blocks, etc. with two-way binding, works correctly");
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -22892,6 +23032,60 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ............................... Assert .................................
 	assert.equal(store.arrA.val + store.objA2.val + store.objA3.val + store.objA4.val + store.arrB.val + store.objB2.val + store.objB3.val + store.objB4.val + store.arrC.val + store.objC2.val + store.objC3.val + store.objC4.val + store.arrD.val + store.objD2.val + store.objD3.val + store.objD4.val,
 		"more1more2more3more4more5more6more7more8new9new10new11new12new13new14new15new16", "updateValues() binds to paths computed().val paths");
+
+	// =============================== Arrange ===============================
+
+	$.templates({
+		markup: 
+		"{^{mytag arg prop=prop/}}",
+		tags: {
+			mytag: {
+				bindTo: [0, 'prop'],
+				template: '',
+				init: function() {
+					this.onPropChange = this.onPropChange.bind(this);
+					$.observe(this.tagCtx.props,'prop',this.onPropChange);
+				},
+				onPropChange: function() {
+					this.updateValue("newArg", 0);
+				}
+			}
+		}
+	}).link("#result", {arg: "theArg", prop: "theProp"});
+
+	mytag = $.view().childTags()[0];
+	mytag.updateValue("newProp", 1);
+
+	// ............................... Assert .................................
+	assert.equal(mytag.tagCtx.props.prop + "|" + mytag.tagCtx.args[0],
+		"newProp|newArg", "Changing prop triggers changing arg - works as expected");
+
+	// =============================== Arrange ===============================
+
+	$.templates({
+		markup: 
+		"{^{mytag prop=prop prop2=prop2 /}}",
+		tags: {
+			mytag: {
+				bindTo: ['prop', 'prop2'],
+				template: '',
+				init: function() {
+					this.onPropChange = this.onPropChange.bind(this);
+					$.observe(this.tagCtx.props, 'prop2', this.onPropChange);
+				},
+				onPropChange: function() {
+					this.updateValue("newProp", 0);
+				}
+			}
+		}
+	}).link("#result", {prop2: "theProp2", prop: "theProp"});
+
+	mytag = $.view().childTags()[0];
+	mytag.updateValue("newProp2", 1);
+
+	// ............................... Assert .................................
+	assert.equal(mytag.tagCtx.props.prop + "|" + mytag.tagCtx.props.prop2,
+		"newProp|newProp2", "Changing prop triggers changing other prop - works as expected");
 
 // ............................... Reset .................................
 

@@ -1,4 +1,4 @@
-/*! JsObservable v1.0.3: http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.4: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.3",
+var versionNumber = "v1.0.4",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -1014,6 +1014,7 @@ if (!$.observe) {
 					batch.paths[key] = batch.length;
 				} else {
 					$(target).triggerHandler(propertyChangeStr + (this._ns ? "." + /^\S+/.exec(this._ns)[0] : ""), eventArgs); // If white-space separated namespaces, use first one only
+					eventArgs.oldValue = null; // Avoid holding on to stale objects
 				}
 			}
 		}

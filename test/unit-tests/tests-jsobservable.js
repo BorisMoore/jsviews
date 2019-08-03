@@ -4,7 +4,7 @@
 
 // =============== INIT APP ===============
 
-var viewContent, before, after, lastEvData, lastEventArgs, listeners, result1, handlersCount, elems,
+var viewContent, before, after, lastEvData, lastEventArgsVal, lastEventArgsOldVal, listeners, result1, handlersCount, elems,
 	result = "",
 	calls = 0;
 
@@ -15,7 +15,8 @@ function reset() {
 
 function myListener(ev, eventArgs) {
 	calls++;
-	lastEventArgs = eventArgs;
+	lastEventArgsOldVal = eventArgs.oldValue;
+	lastEventArgsVal = eventArgs.value;
 	lastEvData = ev.data;
 
 	switch (eventArgs.change) {
@@ -1919,7 +1920,7 @@ QUnit.test("Paths", function(assert) {
 	$.observable(person1).setProperty({home: home2}); // Swap object higher in path
 
 	// ............................... Assert .................................
-	assert.equal("" + (lastEventArgs.oldValue === home1) + (lastEventArgs.value === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
+	assert.equal("" + (lastEventArgsOldVal === home1) + (lastEventArgsVal === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
 		+ " eventArgs: oldValue: {\"address\":{\"street\":\"newValue\",\"ZIP\":\"newZip\"}} value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"222\"}}, eventArgs.path: home|",
 	"$.observe(object, some.deep.path, object2, path, cb) is listening to root");
 

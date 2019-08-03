@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.3: http://jsviews.com/ */
+/*! jquery.views.js v1.0.4: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.3",
+var versionNumber = "v1.0.4",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -103,6 +103,8 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	CHECKED = "checked",
 	CHECKBOX = "checkbox",
 	RADIO = "radio",
+	RADIOINPUT = "input[type=",
+	CHECKBOXINPUT = RADIOINPUT + CHECKBOX + "]", // input[type=checkbox]
 	NONE = "none",
 	VALUE = "value",
 	SCRIPT = "SCRIPT",
@@ -145,6 +147,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	getComputedStyle = global.getComputedStyle,
 	$inArray = $.inArray;
 
+RADIOINPUT += RADIO + "]"; // input[type=radio]
 isIE = isIE.indexOf('MSIE ')>0 || isIE.indexOf('Trident/')>0;
 
 $observable = $.observable;
@@ -167,7 +170,7 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 // Called when linkedElem of a tag control changes: as updateValue(val, index, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValues(val1, val2, val3, ...) - this: tag
 	var linkCtx, cvtBack, cnvtName, target, view, binding, sourceValue, origVals, sourceElem, sourceEl,
-		tos, to, tcpTag, exprOb, contextCb, l, m, tag;
+		tos, to, tcpTag, exprOb, contextCb, l, m, tag, vals, ind;
 
 	if (bindId && bindId._tgId) {
 		tag = bindId;
@@ -210,6 +213,16 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 				sourceValues = [[]];
 			}
 			sourceElem._jsvSel = sourceValues;
+		} else if (sourceElem._jsvSel) {
+			// Checkbox group (possibly using {{checkboxgroup}} tag) data-linking to array of strings
+			vals = sourceElem._jsvSel;
+			ind = $inArray(sourceElem.value, vals);
+			if (ind > -1 && !sourceElem.checked) {
+				vals.splice(ind, 1); // Checking this checkbox
+			} else if (ind < 0 && sourceElem.checked) {
+				vals.push(sourceElem.value); // Unchecking this checkbox
+			}
+			sourceValues = [vals.slice()];
 		}
 		origVals = sourceValues;
 		if (cvtBack) {
@@ -513,7 +526,12 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 			attr = attr.slice(5);
 		} else if (attr === CHECKED) {
 			useProp = true;
-			sourceValue = sourceValue && sourceValue !== "false";
+			if (target.name && $isArray(sourceValue)) {
+				target._jsvSel = sourceValue; // Checkbox group (possibly using {{checkboxgroup}} tag) data-linking to array of strings
+				sourceValue = $inArray(target.value, sourceValue) > -1;
+			} else {
+				sourceValue = sourceValue && sourceValue !== "false";
+			}
 			// The string value "false" can occur with data-link="checked{attr:expr}" - as a result of attr, and hence using convertVal()
 			// We will set the "checked" property
 			// We will compare this with the current value
@@ -977,7 +995,7 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 				.on('blur.jsv', '[contenteditable]', onElemChange);
 		}
 
-		var i, k, html, vwInfos, view, placeholderParent, targetEl, refresh, topLevelCall, late,
+		var i, k, html, vwInfos, view, placeholderParent, targetEl, refresh, late, prntView,
 			onRender = addBindingMarkers,
 			replaceMode = context && context.target === "replace",
 			l = to.length;
@@ -985,22 +1003,19 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 		while (l--) { // iterate over 'to' targets. (Usually one, but can be multiple)
 			targetEl = to[l];
 
-			parentView = parentView || $view(targetEl);
-			if (topLevelCall = parentView === topView) {
-				topView.data = (topView.ctx = context || {}).root = from;
-			}
+			prntView = parentView || $view(targetEl);
 			if ("" + tmplOrLinkExpr === tmplOrLinkExpr) {
 				// tmplOrLinkExpr is a string: treat as data-link expression.
-				addDataBinding(late = [], tmplOrLinkExpr, targetEl, parentView, undefined, "expr", from, context);
+				addDataBinding(late = [], tmplOrLinkExpr, targetEl, prntView, undefined, "expr", from, context);
 			} else {
 				if (tmplOrLinkExpr.markup !== undefined) {
 					// This is a call to template.link()
 					if (replaceMode) {
 						placeholderParent = targetEl.parentNode;
 					}
-					parentView._.scp = true; // Set scope flag on parentView for link() call - used to set view.isTop for outermost view of created linked content
-					html = tmplOrLinkExpr.render(from, context, noIteration, parentView, undefined, onRender, true);
-					parentView._.scp = undefined;
+					prntView._.scp = true; // Set scope flag on prntView for link() call - used to set view.isTop for outermost view of created linked content
+					html = tmplOrLinkExpr.render(from, context, noIteration, prntView, undefined, onRender, true);
+					prntView._.scp = undefined;
 					// TODO Consider finding a way to bind data (link) within template without html being different for each view, the HTML can
 					// be evaluated once outside the while (l--), and pushed into a document fragment, then cloned and inserted at each target.
 
@@ -1016,7 +1031,7 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 						prevNode = nextNode = undefined; // When linking from a template, prevNode and nextNode parameters are ignored
 						$(targetEl).empty();
 					}
-				} else if (tmplOrLinkExpr === true && parentView === topView) {
+				} else if (tmplOrLinkExpr === true && prntView === topView) {
 					// $.link(true, selector, data, ctx) - where selector points to elem in top-level content. (If not top-level content, no-op)
 					refresh = {lnk: "top"};
 				} else {
@@ -1046,7 +1061,7 @@ function $link(tmplOrLinkExpr, to, from, context, noIteration, parentView, prevN
 				}
 
 				// Link the content of the element, since this is a call to template.link(), or to $(el).link(true, ...),
-				late = parentView.link(from, targetEl, prevNode, nextNode, html, refresh, context);
+				late = prntView.link(from, targetEl, prevNode, nextNode, html, refresh, context);
 //});
 			}
 			lateLink(late); // Do any deferred linking (lateRender)
@@ -2251,12 +2266,12 @@ function mergeCtxs(tag, newCtxs, replace) { // Merge updated tagCtxs into tag.ta
 		while (l--) {
 			tagCtx = tagCtxs[l];
 			newTagCtx = newCtxs[l];
-			$observable(tagCtx.props).setProperty(newTagCtx.props);
 			$extend(tagCtx.ctx, newTagCtx.ctx); // We don't support propagating ctx variables, ~foo, observably, to nested views. So extend, not setProperty...
 			tagCtx.args = newTagCtx.args;
 			if (refresh) {
 				tagCtx.tmpl = newTagCtx.tmpl;
 			}
+			$observable(tagCtx.props).setProperty(newTagCtx.props);
 		}
 	}
 	$sub._thp(tag, tagCtxs[0]); // tagHandlersFromProps
@@ -3193,7 +3208,7 @@ $tags({
 			if (self.activeElem) {
 				isCleanCall = 0; // Needed when using jquery-1.x, to avoid bug where jQuery calls cleanData on elements that are not being removed
 				self.activeElem.off(self._evs, self._sel, self._hlr);
-				isCleanCall = isCleanCall;
+				isCleanCall = oldIsCleanCall;
 			}
 		},
 		contentCtx: true,
@@ -3215,10 +3230,10 @@ $tags({
 				// use it as container for detecting dom changes
 				domChngCntnr = tag.contents("*")[0];
 				domChngCntnr = domChngCntnr && $view(domChngCntnr).ctx.tag === tag.parent ? domChngCntnr : tag.parentElem;
-				$linkedElem = tag.contents(true, "input[type=radio]");
+				$linkedElem = tag.contents(true, RADIOINPUT);
 			} else {
 				domChngCntnr = linkCtx.elem;
-				$linkedElem = $("input[type=radio]", linkCtx.elem);
+				$linkedElem = $(RADIOINPUT, linkCtx.elem);
 			}
 			tag.linkedElem = $linkedElem;
 			l = $linkedElem.length;
@@ -3236,7 +3251,7 @@ $tags({
 					|| parentTags && parentTags[tag.tagName] === tag) {
 					// Contents have changed so recreate $linkedElem for the radio input elements (including possible new one just inserted)
 					val = tag.cvtArgs()[0];
-					$linkedElem = tag.linkedElem = tag.contents(true, "input[type=radio]");
+					$linkedElem = tag.linkedElem = tag.contents(true, RADIOINPUT);
 					l = $linkedElem.length;
 					while (l--) {
 						// Configure binding and name for each radio input element
@@ -3257,6 +3272,68 @@ $tags({
 			var propParams = tagCtx.params.props;
 			if (propParams && propParams.disabled) {
 				this.linkedElem.prop("disabled", !!tagCtx.props.disabled);
+			}
+		},
+		onUpdate: false, // don't rerender
+		contentCtx: true,
+		dataBoundOnly: true
+	},
+	checkboxgroup: {
+		boundProps: ["disabled"],
+		init: function(tagCtx) {
+			this.name = tagCtx.props.name || (Math.random() + "jsv").slice(9);
+		},
+		onBind: function(tagCtx, linkCtx) {
+			var domChngCntnr,
+				tag = this,
+				tgCtxProps = tagCtx.params.props,
+				cvt = tgCtxProps && tgCtxProps.convert,
+				cvtBk = tgCtxProps && tgCtxProps.convertBack,
+				useDisable = tgCtxProps && tgCtxProps.disabled,
+				linkExpr = tagCtx.params.args[0] + (cvt ? " convert=" + cvt : "") + (cvtBk ? " convertBack=" + cvtBk : ""),
+				$linkedElem = tag.contents(true, CHECKBOXINPUT),
+				l = $linkedElem.length;
+			while (l--) {
+				// Configure the name for each checkbox input element
+				$linkedElem[l].name = $linkedElem[l].name || tag.name;
+			}
+			$linkedElem.link(linkExpr, linkCtx.data);
+
+			// Establish a domchange listener in case this checkboxgroup wraps a {^{for}} or {^{if}} or similar which might dynamically insert new checkbox input elements
+			if (tag.inline) {
+				// If the first element is owned by (rendered by) this tag (not by a childTag such as {^{for}}) use it as container for detecting dom changes
+				domChngCntnr = tag.contents("*")[0];
+				domChngCntnr = domChngCntnr && $.view(domChngCntnr).ctx.tag === tag.parent ? domChngCntnr : tag.parentElem;
+			} else {
+				domChngCntnr = linkCtx.elem;
+			}
+			$(domChngCntnr).on("jsv-domchange", function(ev, forOrIfTagCtx) {
+				var linkedElem,
+					parentTags = forOrIfTagCtx.ctx.parentTags;
+				if (!tag.inline || domChngCntnr !== tag.parentElem // The domChngCntnr is specific to this tag
+					// The domChngCntnr is the parentElem of this tag, so need to make sure dom change event is for a content change within this tag, not outside it.
+					|| parentTags && parentTags[tag.tagName] === tag) {
+					// Contents have changed so recreate $linkedElem for the checkbox input elements (including possible new one just inserted)
+					$linkedElem = tag.contents(true, CHECKBOXINPUT);
+					l = $linkedElem.length;
+					while (l--) {
+						// Configure binding and name for each checkbox input element
+						linkedElem = $linkedElem[l];
+						if (!linkedElem._jsvSel) {
+							linkedElem.name = linkedElem.name || tag.name;
+							$.link(linkExpr, linkedElem, linkCtx.data);
+							if (useDisable) {
+								linkedElem.disabled = !!tagCtx.props.disabled;
+							}
+						}
+					}
+				}
+			});
+		},
+		onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
+			var propParams = tagCtx.params.props;
+			if (propParams && propParams.disabled) {
+				this.contents(true, CHECKBOXINPUT).prop("disabled", !!tagCtx.props.disabled);
 			}
 		},
 		onUpdate: false, // don't rerender
@@ -3641,12 +3718,12 @@ $.each([HTML, "replaceWith", "empty", "remove"], function(i, name) {
 	var oldFn = $.fn[name];
 	$.fn[name] = function() {
 		var result;
-		isCleanCall = 1; // Make sure cleanData does disposal only when coming from these calls.
+		isCleanCall++; // Make sure cleanData does disposal only when coming from these calls.
 		try {
 			result = oldFn.apply(this, arguments);
 		}
 		finally {
-			isCleanCall = 0;
+			isCleanCall--;
 		}
 		return result;
 	};
