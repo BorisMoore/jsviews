@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.4: http://jsviews.com/ */
+/*! jquery.views.js v1.0.5: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.4",
+var versionNumber = "v1.0.5",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
