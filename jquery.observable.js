@@ -1,9 +1,9 @@
-/*! JsObservable v1.0.5: http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.6: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "JsObservable requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.5",
+var versionNumber = "v1.0.6",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
@@ -452,7 +452,7 @@ if (!$.observe) {
 					object = arr;
 					if (relPath) {
 						object = arr[relPath];
-						allPath += "." + relPath;
+						allPath = allPath ? allPath + "." + relPath : allPath;
 					}
 					if (filter && object) {
 						object = $observable._fltr(allPath, object, relPath ? [arr].concat(parentObs) : parentObs, filter);
@@ -960,40 +960,41 @@ if (!$.observe) {
 			var setter, getter, removeProp, eventArgs, view,
 				property = path ? leaf[path] : leaf;
 
-			if ($isFunction(property) && property.set) {
-				// Case of property setter/getter - with convention that property is getter and property.set is setter
-				view = leaf._vw // Case of JsViews 2-way data-linking to an observable context parameter, with a setter.
-					// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
-					|| leaf;
-				getter = property;
-				setter = getter.set === true ? getter : getter.set;
-				property = getter.call(view); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
-				// See unit tests 'Can observe properties of type function'.
-			}
+			if (property !== value || nonStrict && property != value) {
+				if ($isFunction(property) && property.set) {
+					// Case of property setter/getter - with convention that property is getter and property.set is setter
+					view = leaf._vw // Case of JsViews 2-way data-linking to an observable context parameter, with a setter.
+						// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
+						|| leaf;
+					getter = property;
+					setter = getter.set === true ? getter : getter.set;
+					property = getter.call(view); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
+					// See unit tests 'Can observe properties of type function'.
+				}
 
-			if ((property !== value || nonStrict && property != value)
 				// Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
 				// Date objects don't support != comparison. Treat as special case.
-				&& (!(property instanceof Date && value instanceof Date) || property > value || property < value)) {
-				if (setter) {
-					setter.call(view, value);   // set
-					value = getter.call(view);  // get updated value
-				} else if (removeProp = value === remove) {
-					if (property !== undefined) {
-						delete leaf[path];
-						value = undefined;
-					} else {
-						path = undefined; // If value was already undefined, don't trigger handler for removeProp
+				if (!(property instanceof Date && value instanceof Date) || property > value || property < value) {
+					if (setter) {
+						setter.call(view, value);   // set
+						value = getter.call(view);  // get updated value
+					} else if (removeProp = value === remove) {
+						if (property !== undefined) {
+							delete leaf[path];
+							value = undefined;
+						} else {
+							path = undefined; // If value was already undefined, don't trigger handler for removeProp
+						}
+					} else if (path) {
+						leaf[path] = value;
 					}
-				} else if (path) {
-					leaf[path] = value;
-				}
-				if (path) {
-					eventArgs = {change: "set", path: path, value: value, oldValue: property, remove: removeProp};
-					if (leaf._ocp) {
-						eventArgs.ctxPrm = leaf._key;
+					if (path) {
+						eventArgs = {change: "set", path: path, value: value, oldValue: property, remove: removeProp};
+						if (leaf._ocp) {
+							eventArgs.ctxPrm = leaf._key;
+						}
+						this._trigger(leaf, eventArgs);
 					}
-					this._trigger(leaf, eventArgs);
 				}
 			}
 		},

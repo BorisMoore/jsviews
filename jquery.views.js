@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.5: http://jsviews.com/ */
+/*! jquery.views.js v1.0.6: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -7,7 +7,7 @@
  * Also requires jquery.observable.js
  *   See JsObservable at http://jsviews.com/#download and http://github.com/BorisMoore/jsviews
  *
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.5",
+var versionNumber = "v1.0.6",
 	requiresStr = "JsViews requires ";
 
 if (!$ || !$.fn) {
@@ -1787,7 +1787,8 @@ function bindDataLinkTarget(linkCtx, late) {
 	linkCtx._ctxCb = $sub._gccb(view = linkCtx.view); // getContextCallback: _ctxCb, for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 	linkCtx._hdl = handler;
 	// handler._ctx = linkCtx; Could pass linkCtx for use in a depends = function() {} call, so depends is different for different linkCtx's
-	if (linkCtx.elem.nodeName === "SELECT" && linkCtxType === "link" && !linkCtx.attr) {
+	if (linkCtx.elem.nodeName === "SELECT" && linkCtxType === "link" && !linkCtx.attr
+		&& linkCtx.convert !== undefined) { // data-link expression on <select> tag is the assign tag {:...}, not some other expression such as {on ...} (See https://github.com/BorisMoore/jsviews/issues/444)
 		var $elem = $(linkCtx.elem);
 		$elem.on("jsv-domchange", function() {
 			// If the options have changed dynamically under the select, we need to refresh the data-linked selection, using the new options
@@ -2040,8 +2041,10 @@ function callAfterLink(tag, ev, eventArgs) {
 			props = tag.cvtArgs(m, 1); // array of bindFrom args/props
 			l = props.length;
 			while (l--) {
-				val = props[l];
-				tag.setValue(val, l, m);
+				// If the bound property or arg has not yet been set (e.g. during initial rendering),
+				// or has been unset, because onUpdate is set to true, or if onUpdate is false,
+				// but this particular bound arg/prop is being changed observably: call setValue()
+				tag.setValue(props[l], l, m, ev, eventArgs);
 			}
 			if (tag._.unlinked) {
 				tagCtx = tagCtxs[m];
@@ -2595,10 +2598,12 @@ function updateValue(val, index, tagElse, async, bindId, ev) {
 }
 
 function setValues() {
-// tagCtx.setValues() calls tag.setValue() on that tagCtx for each bindTo target
-	var m = arguments.length;
+	// tagCtx.setValues() calls tag.setValue() on that tagCtx for each bindTo target
+	var m = this.tag.bindTo.length,
+		ev = arguments[m],
+		eventArgs = arguments[m+1];
 	while (m--) {
-		this.tag.setValue(arguments[m], m, this.index);
+		this.tag.setValue(arguments[m], m, this.index, ev, eventArgs);
 	}
 }
 
@@ -2726,20 +2731,30 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 			theTag.constructor.prototype.setValue || function(val) { // base method
 				return val;
 			},
-			function(val, indexFrom, tagElse) {
+			function(val, indexFrom, tagElse, ev, eventArgs) {
 				indexFrom = indexFrom || 0;
 				tagElse = tagElse || 0;
 
-				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems,
-					tagCtx = theTag.tagCtxs[tagElse],
-					newVal = theTag.base.call(theTag, val, indexFrom, tagElse);
+				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems, newVal,
+					tagCtx = theTag.tagCtxs[tagElse];
 
-				if (newVal !== undefined) {  // Call tag method tag.setValue(), if implemented
-					val = newVal;
+				if ((eventArgs || val !== undefined) && tagCtx._bdArgs && tagCtx._bdArgs[indexFrom]===val) {
+					if (tagCtx._bdVals) { // If val is not undefined (or is coming from an observable change event), and is a value that was already returned, use stored value and don't call tag.setValue()
+						val = tagCtx._bdVals[indexFrom];
+					}
+				} else {
+					// Call tag method tag.setValue(), if implemented
+					tagCtx._bdArgs = tagCtx._bdArgs || [];
+					tagCtx._bdArgs[indexFrom] = val;
+					newVal = theTag.base.call(theTag, val, indexFrom, tagElse, ev, eventArgs);
+					if (newVal !== undefined) {
+						tagCtx._bdVals = tagCtx._bdVals || [];
+						tagCtx._bdVals[indexFrom] = newVal; // store value, so that if same value is called later we'll use the stored value, and won't call tag.setValue()
+						val = newVal;
+					}
 				}
-				if (val !== undefined && (theTag.convert || theTag._.toIndex[indexFrom] === undefined)
-						&& (linkedCtxParam = theTag.linkedCtxParam)
-						&& linkedCtxParam[indexFrom]
+
+				if (val !== undefined && (linkedCtxParam = theTag.linkedCtxParam) && linkedCtxParam[indexFrom]
 						// If this setValue call corresponds to a tag contextual parameter and the tag has a converter, then we need to set the
 						// value of this contextual parameter (since it is not directly bound to the tag argument/property when there is a converter).
 						&& (linkedCtxPrmKey = linkedCtxParam[indexFrom])
@@ -2970,10 +2985,14 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				return RegExp("^(.*)(" + (str ? "\\/" : "#") + itemView._.id + "_.*)$").exec(str || itemView._prv.getAttribute(jsvAttrStr));
 			}
 			function setPrv(itemView, tokens) {
-				var prv = itemView._prv;
+				var tag,
+					prv = itemView._prv;
 				prv.setAttribute(jsvAttrStr, tokens);
 				tokens.replace(rTagMarkers, function(all, open, close, id) {
-					bindingStore[id].linkCtx.tag[open ? "_prv" : "_nxt"] = prv;
+					tag = bindingStore[id].linkCtx.tag;
+					if (tag.inline) {
+						tag[open ? "_prv" : "_nxt"] = prv;
+					}
 				});
 				tokens.replace(rViewMarkers, function(all, open, close, id) {
 					viewStore[id][open ? "_prv" : "_nxt"] = prv;

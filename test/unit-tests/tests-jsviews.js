@@ -216,6 +216,9 @@ $.views
 				eventData += "onBeforeChange ";
 				return !cancelChange;
 			},
+			setValue: function() {
+				eventData += "setValue ";
+			},
 			onAfterChange: function(ev, eventArgs) {
 				eventData += "onAfterChange ";
 			},
@@ -3981,7 +3984,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	// =============================== Arrange ===============================
 
 	var top =
-	  '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>'
+		'<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>'
 	+ '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>',
 
 	tmpl = $.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
@@ -10007,10 +10010,10 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 
 	// =============================== Arrange ===============================
 var team = {
-  members: [
-    {name: "one", phones:[]},
-    {name: "two", phones:[21, 22]}
-  ]
+	members: [
+		{name: "one", phones:[]},
+		{name: "two", phones:[21, 22]}
+	]
 };
 
 	$.templates(
@@ -10043,7 +10046,7 @@ firstLi = $("li")[0];
 		"After observable move, first li is _prv for {{for}} tags");
 
 	// ................................ Act ..................................
-    $.observable(team.members).remove(0);
+		$.observable(team.members).remove(0);
 
 	// ............................... Assert .................................
 firstLi = $("li")[0];
@@ -13552,7 +13555,7 @@ $.views.settings.trigger(false);
 		res += $("#result").text() + "|";
 	}
 
- 	var tmpl = $.templates(
+	var tmpl = $.templates(
 '<input data-link="foo"/>\
 <input data-link="#data.foo"/>\
 <input data-link="#view.data.foo"/>\
@@ -13601,11 +13604,11 @@ $.views.settings.trigger(false);
 
 	var tmpl = $.templates(
 '{^{if true ~street=address(name)}}\
-  <input id="outerInput" data-link="~street^street"/>\
-  {^{for address ~street=~street^street}}\
-    <div id="innerDiv" data-link="~street"></div>\
-    <input id="innerInput" data-link="~street"/>\
-  {{/for}}\
+	<input id="outerInput" data-link="~street^street"/>\
+	{^{for address ~street=~street^street}}\
+		<div id="innerDiv" data-link="~street"></div>\
+		<input id="innerInput" data-link="~street"/>\
+	{{/for}}\
 {{/if}}');
 
 	// ............................... Act .................................
@@ -13802,11 +13805,61 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	'Within element only content, remove(1) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(); //TagOrigTagFirstTagMiddleTagLastTag|after
+	$.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagOrigTagMiddleTag|after",
-	'Within element only content, remov maintains correctly prevNode, nextNode, element order and binding on views and tags');
+	'Within element only content, remove maintains correctly prevNode, nextNode, element order and binding on views and tags');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
+
+	$.templates('<ul>{^{for things start=0}}<li data-link="{on foo}">{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+		.link("#result", model); // -> OrigTagFirstTagMiddleTagLastTag|after
+	// See https://github.com/BorisMoore/jsviews/issues/442
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(), "OrigTagMiddleTagLastTag|after",
+	'Within element only content, remove(1) maintains correctly prevNode etc. on views and tags, even when using start=0, and with linked {on} tag');
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove();
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(), "OrigTagMiddleTag|after",
+	'Within element only content, remove maintains correctly prevNode etc. on views and tags, even when using start=0, and with linked {on} tag');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
+
+	$.templates("liTmpl", "<li data-link='{on foo}'>{{:thing}}</li>{^{liTag/}}");
+
+	$.templates('<ul data-link="{for things start=0 tmpl=\'liTmpl\'}"></ul>')
+		.link("#result", model); // -> OrigTagFirstTagMiddleTagLastTag
+	// See https://github.com/BorisMoore/jsviews/issues/442
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove(1);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(), "OrigTagMiddleTagLastTag",
+	'Within element only content, using data-linked element {for}, remove(1) maintains correctly even when using start=0, and with linked {on} tag');
+
+	// ................................ Act ..................................
+	$.observable(model.things).remove();
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(), "OrigTagMiddleTag",
+	'Within element only content, using data-linked element {for}, remove maintains correctly even when using start=0, and with linked {on} tag');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -14042,7 +14095,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 			if (arguments[i] === 0) {
 				redItemAt = i;
 			}
-		  seq += i + " " + arguments[i] + "|";
+			seq += i + " " + arguments[i] + "|";
 		}
 		seq += "End";
 		return "Start " + seq + "Start " + seq + "Start " + seq + "Start" + seq + " at: " + redItemAt + "/" + redItemAt + "/" + redItemAt
@@ -16289,7 +16342,7 @@ QUnit.test("$.view() in regular content", function(assert) {
 	// ................................ Act ..................................
 	view = $.view("#result", true);
 
-    var view2 = $.view("#result").get(true);
+		var view2 = $.view("#result").get(true);
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
 		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
@@ -16435,7 +16488,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		linkedCtxParam: ["ht", "wd"],
 		mainElement: "div",
 		template: "<div class='mytag'>{{include tmpl=#content/}}</div><br/>",
-		setValue: function(val, index, tagElse) {
+		setValue: function(val, index, tagElse, ev, eventArgs) {
 			if (val === undefined) {
 				val = this.getValue(tagElse)[index];
 				this.tagCtxs[tagElse].ctxPrm(this.linkedCtxParam[index], val);
@@ -16532,7 +16585,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates(
-		  '<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+			'<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
 		+ '{{if true}}, Inner: {^{:~foo}}'
 			+ '{{if true}}, Nested inner: {^{:~foo}}'
 			+ '{{/if}}'
@@ -16564,7 +16617,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates(
-		  'Property: <input class="prp" data-link="~prp"/> {^{:~prp}} | <br/>'
+			'Property: <input class="prp" data-link="~prp"/> {^{:~prp}} | <br/>'
 		+ 'Function: <input class="fn" data-link="~fn()"/>{^{:is}} | <br/>'
 		+ '{{for items}}'
 			+ 'Inner Property: <input class="prpb" data-link="~prp"/> {^{:~prp}} | <br/>'
@@ -17354,7 +17407,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	}
 
 	listeners();
-  $.unobserve(data, "nm", changeHandler);
+	$.unobserve(data, "nm", changeHandler);
 	listeners();
 	$.unobserve(data, "fullName", changeHandler);
 	listeners();
@@ -18256,7 +18309,7 @@ $.views.settings.trigger(false);
 		linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink setValue ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -18267,7 +18320,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink setValue onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning false) - render not called');
 	eventData = "";
 
@@ -18284,7 +18337,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called, but no render');
 	eventData = "";
 
@@ -18302,7 +18355,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onUpdate (returning true) - render is called');
 	eventData = "";
 
@@ -18322,7 +18375,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for onChange');
 	eventData = "";
 
@@ -18339,7 +18392,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for cancelled onBeforeChange');
 	eventData = "";
 
@@ -18382,7 +18435,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink setValue ",
 	'Data link using: <input data-link="{twoWayTag name}"/> - event order for tag.refresh');
 	eventData = "";
 
@@ -18515,7 +18568,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink setValue ",
 	'Data link using: {^{twoWayTag name}} - event order for init, render, link');
 	eventData = "";
 
@@ -18526,7 +18579,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink setValue onAfterChange true",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
@@ -18541,7 +18594,7 @@ $.views.settings.trigger(false);
 	$.observable(person).setProperty({name: "newName2"});
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -18561,7 +18614,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange false",
 	'Data link using: {^{twoWayTag name}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -18584,7 +18637,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name}} - event order for onChange');
 	eventData = "";
 
@@ -18601,7 +18654,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange ",
 	'Data link using: {^{twoWayTag name}} - event order for cancelled onBeforeChange');
 	eventData = "";
 
@@ -18624,7 +18677,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink setValue ",
 	'Data link using: {^{twoWayTag name}} - event order for tag.refresh');
 	eventData = "";
 
@@ -18702,7 +18755,7 @@ $.views.settings.trigger(false);
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink setValue ",
 	'Data link using: {^{twoWayTag name/}} - event order for init, render, link');
 	eventData = "";
 
@@ -18714,7 +18767,7 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink onAfterChange true",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onAfterLink setValue onAfterChange true",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning false) - render not called; linkedElem not replaced');
 	eventData = "";
 
@@ -18732,7 +18785,7 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -18751,7 +18804,7 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink onAfterChange false",
+	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange false",
 	'Data link using: {^{twoWayTag name/}} - event order for onUpdate (returning true) - render is called; linkedElem is replaced');
 	eventData = "";
 
@@ -18771,7 +18824,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange onUpdate onAfterLink onAfterChange ",
 	'Data link using: {^{twoWayTag name/}} - event order for onChange');
 	eventData = "";
 
@@ -18788,7 +18841,7 @@ $.views.settings.trigger(false);
 	after = tag.value + person.name;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal onBeforeChange ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue onBeforeChange ",
 	'Data link using: {^{twoWayTag name/}} - event order for cancelled onBeforeChange');
 	eventData = "";
 
@@ -18810,7 +18863,7 @@ $.views.settings.trigger(false);
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onUnbind render onBind onAfterLink ",
+	assert.equal(eventData, "onUnbind render onBind onAfterLink setValue ",
 	'Data link using: {^{twoWayTag name/}} - event order for tag.refresh');
 	eventData = "";
 
@@ -20183,6 +20236,9 @@ $.views.settings.trigger(false);
 				eventData += "onBeforeChange ";
 				return !cancelChange;
 			},
+			setValue: function() {
+				eventData += "setValue ";
+			},
 			onAfterChange: function(ev, eventArgs) {
 				eventData += "onAfterChange ";
 				return !cancelChange;
@@ -20324,7 +20380,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink setValue ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for init, render, link');
 	eventData = "";
 
@@ -20335,7 +20391,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink setValue onAfterChange ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onUpdate');
 	eventData = "";
 
@@ -20351,7 +20407,7 @@ $.views.settings.trigger(false);
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue ",
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2}"/> - event order for onChange');
 	eventData = "";
 
@@ -20423,7 +20479,7 @@ $.views.settings.trigger(false);
 	linkedEl = $("#linkedElm")[0];
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "init render onBind onAfterLink ",
+	assert.equal(eventData, "init render onBind onAfterLink setValue ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for init, render, link');
 	eventData = "";
 
@@ -20434,7 +20490,7 @@ $.views.settings.trigger(false);
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink onAfterChange ",
+	assert.equal(eventData, "onBeforeChange onUpdate onAfterLink setValue onAfterChange ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onUpdate');
 	eventData = "";
 
@@ -20450,7 +20506,7 @@ $.views.settings.trigger(false);
 	after = "value:" + tag.value + " name:" + person.name + " name2:" + person.name2;
 
 	// ............................... Assert .................................
-	assert.equal(eventData, "onBeforeUpdateVal ",
+	assert.equal(eventData, "onBeforeUpdateVal setValue ",
 	'Data link using: {^{twoWayTag name linkTo=name2}} - event order for onChange');
 	eventData = "";
 
@@ -21184,7 +21240,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 				$(document.body).off("mousemove");
 			});
 		},
-		setValue: function(val, index, tagElse) {
+		setValue: function(val, index, tagElse, ev, eventArgs) {
 			if (val === undefined) {
 				val = this.getValue(tagElse)[index];
 			} else {
@@ -21710,17 +21766,17 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
-		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
-	"Two-way bound tag with multiple else blocks - tag.setValue() updates linkedElems only");
+	assert.equal(getResult(), "Data: changedFirst-changedMiddle-changedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text: First changedFirst Middle changedMiddle Last changedLast: changedFirst changedMiddle changedLast|",
+	"Two-way bound tag with multiple else blocks - tag.setValue() updates linkedElems and linkedCtxPrms");
 
 	// ................................ Act ..................................
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
-		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
-	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems only");
+	assert.equal(getResult(), "Data: changedFirst2-changedMiddle-changedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text: First changedFirst2 Middle changedMiddle Last changedLast: changedFirst2 changedMiddle changedLast|",
+	"Two-way bound tag with multiple else blocks - tag.setValues() updates linkedElems and linkedCtxPrms");
 
 	// ............................... Assert .................................
 	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
@@ -21819,17 +21875,17 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	mytag.setValue("changedLast", 0, 2);
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst-changedMiddle-changedLast"
-		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
-	"Two-way bound tag (using render method) with multiple else blocks - tag.setValue() updates linkedElems only");
+	assert.equal(getResult(), "Data: changedFirst-changedMiddle-changedLast Inputs: changedFirst-changedMiddle-changedLast"
+		+ " Text: First changedFirst Middle changedMiddle Last changedLast: changedFirst changedMiddle changedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.setValue() updates linkedElems and linkedCtxPrms");
 
 	// ................................ Act ..................................
 	mytag.setValues("changedFirst2");
 
 	// ............................... Assert .................................
-	assert.equal(getResult(), "Data: updatedFirst2-updatedMiddle-updatedLast Inputs: changedFirst2-changedMiddle-changedLast"
-		+ " Text: First updatedFirst2 Middle updatedMiddle Last updatedLast: updatedFirst2 updatedMiddle updatedLast|",
-	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems only");
+	assert.equal(getResult(), "Data: changedFirst2-changedMiddle-changedLast Inputs: changedFirst2-changedMiddle-changedLast"
+		+ " Text: First changedFirst2 Middle changedMiddle Last changedLast: changedFirst2 changedMiddle changedLast|",
+	"Two-way bound tag (using render method) with multiple else blocks - tag.setValues() updates linkedElems and linkedCtxPrms");
 
 	// ............................... Assert .................................
 	assert.ok(mytag.contents("input")[1] === mytag.tagCtxs[1].contents("input")[0]
@@ -22670,7 +22726,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 				convert: function(from, one, two) {
 					return [from + "F", one + "O", two + "T"];
 				},
-				setValue: function(val, ind, tagElse) {
+				setValue: function(val, ind, tagElse, ev, eventArgs) {
 					return val + "V" + ind;
 				},
 				convertBack: function(val, one) {
@@ -22731,7 +22787,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(ret, "cur2-set1V:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-set1V:setval3V0-setval2V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: setValues sets the bindFrom linkedPrm but not the bindTo linkedElem");
 
 	// ................................ Act ..................................
@@ -22740,7 +22796,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	ret = data.current + "-" + data.modified + "-" + data.title + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(ret, "cur2-updatedMod2V-updatedTitle2O:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-updatedMod2V-updatedTitle2O:setval3V0-setval2V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: update() updates bindTo target (variant)");
 
 	// ................................ Act ..................................
@@ -22748,7 +22804,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	ret = data.current + "-" + data.modified + "-" + data.title + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
-	assert.equal(ret, "cur2-updateMod3V-updateTitle3O:setval3V0-setval5V2",
+	assert.equal(ret, "cur2-updateMod3V-updateTitle3O:setval3V0-setval2V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: update() updates bindTo target (variant)");
 
 // ............................... Reset .................................
@@ -22798,7 +22854,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		linkedPrm2 = mytag.tagCtxs[1].contents(".linkedPrm")[0],
 		getRet = function() {
 			return fromCur1.value + "|" + toMod1.value + "|" + fromCur2.value + "|" + toMod2.value + "|"
-	 		+ linkedEl1.value + "|" + linkedPrm1.value + "|" + linkedEl2.value + "|" + linkedPrm2.value;
+			+ linkedEl1.value + "|" + linkedPrm1.value + "|" + linkedEl2.value + "|" + linkedPrm2.value;
 		};
 
 	// ............................... Assert .................................
@@ -23129,6 +23185,9 @@ QUnit.test("Tag control events", function(assert) {
 				onBeforeChange: function(ev, eventArgs) {
 					eventData += "onBeforeChange ";
 				},
+				setValue: function(val, index, tagElse, ev, eventArgs) {
+					eventData += "setValue (arg index: " + index + "-" + (this.tagCtx.args[index]===val) + ") ";
+				},
 				onAfterChange: function(ev, eventArgs) {
 					eventData += "onAfterChange ";
 				},
@@ -23145,7 +23204,8 @@ QUnit.test("Tag control events", function(assert) {
 	}).link("#result", model);
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"One 1 special|init render getType onBind after setValue (arg index: 1-true) setValue (arg index: 0-true) ",
 		'{^{myWidget/}} - Events fire in order during rendering');
 	eventData = "";
 
@@ -23153,7 +23213,8 @@ QUnit.test("Tag control events", function(assert) {
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"Two 1 special|onBeforeChange update onUnbind render getType onBind after setValue (arg index: 0-true) onAfterChange ",
 		'{^{myWidget/}} - Events fire in order during update (setProperty)');
 	eventData = "";
 
@@ -23161,7 +23222,8 @@ QUnit.test("Tag control events", function(assert) {
 	$.observable(model.things).insert(0, {thing: "tree"});
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
 		'{^{myWidget/}} - Events fire in order during update (insert)');
 	eventData = "";
 
@@ -23169,7 +23231,8 @@ QUnit.test("Tag control events", function(assert) {
 	$.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"Two 2 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
 		'{^{myWidget/}} - Events fire in order during update (refresh)');
 	eventData = "";
 
@@ -23233,6 +23296,9 @@ QUnit.test("Tag control events", function(assert) {
 				onBeforeChange: function(ev, eventArgs) {
 					eventData += "onBeforeChange ";
 				},
+				setValue: function(val, index, tagElse, ev, eventArgs) {
+					eventData += "setValue (arg index: " + index + "-" + (this.tagCtx.args[index]===val) + ") ";
+				},
 				onAfterChange: function(ev, eventArgs) {
 					eventData += "onAfterChange ";
 				},
@@ -23253,7 +23319,8 @@ QUnit.test("Tag control events", function(assert) {
 	}).link("#result", model);
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "One 1 special|init render getType onBind after ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"One 1 special|init render getType onBind after setValue (arg index: 1-true) setValue (arg index: 0-true) ",
 		'{^{myCustomArrayChangeWidget/}} - Events fire in order during rendering');
 	eventData = "";
 
@@ -23261,7 +23328,8 @@ QUnit.test("Tag control events", function(assert) {
 	$.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onBeforeChange update onUnbind render getType onBind after onAfterChange ",
+	assert.equal($("#result").text() + "|" + eventData,
+		"Two 1 special|onBeforeChange update onUnbind render getType onBind after setValue (arg index: 0-true) onAfterChange ",
 		'{^{myCustomArrayChangeWidget/}} - Events fire in order during update (setProperty)');
 	eventData = "";
 
@@ -23295,6 +23363,124 @@ QUnit.test("Tag control events", function(assert) {
 
 	// =============================== Arrange ===============================
 
+var i=0,
+vm = {
+	a: "A",
+	p1: "P1",
+	p2: "P2",
+	elsea: "elseA",
+	elsep1: "elseP1",
+	elsep2: "elseP2",
+	other: "O"
+};
+
+	// ................................ Act ..................................
+$.views.templates({
+	markup: "{^{mytag prop1=p1 prop2=p2 a ^other=other}}{{else prop1=elsep1 prop2=elsep2 elsea}}{{/mytag}}",
+	tags: {
+		mytag: {
+			bindTo:["prop1", "prop2", 0],
+			linkedElement: ["input", ".two", ".zero"],
+			template: "<span></span> <input/> <input class='two'/> <input class='zero'/>",
+			setValue: function(value, index, elseBlock, ev, eventArgs) {
+				this.contents("span").text(i);
+				return value + "(index:" + index + " else:" + elseBlock + " iteration:" + i++ + (ev ? " propChange: " + eventArgs.value : "") + ") ";
+			},
+			onUpdate: false
+		}
+	}
+}).link("#result", vm);
+
+var inputs = $("#result input"),
+	spans = $("#result span");
+
+	// ............................... Assert .................................
+	assert.equal("myTag: " + spans[0].innerText + " inputs: " + inputs[0].value + inputs[1].value + inputs[2].value + 
+		"myTagElse: " + spans[1].innerText + " inputs: " + inputs[3].value + inputs[4].value + inputs[5].value,
+			"myTag: 5 inputs: P1(index:0 else:0 iteration:5) P2(index:1 else:0 iteration:4) A(index:2 else:0 iteration:3) " +
+			"myTagElse: 5 inputs: elseP1(index:0 else:1 iteration:2) elseP2(index:1 else:1 iteration:1) elseA(index:2 else:1 iteration:0) ",
+		'SetValue used correctly during rendering');
+
+	// ................................ Act ..................................
+	$.observable(vm).setProperty("a", "AX")
+		.setProperty("p1", "p1X")
+		.setProperty("p2", "p2X")
+		.setProperty("elsea", "elseAX")
+		.setProperty("elsep1", "elseP1X")
+		.setProperty("elsep2", "elseP2X")
+		.setProperty("other", "OX");
+
+	// ............................... Assert .................................
+	assert.equal("myTag: " + spans[0].innerText + " inputs: " + inputs[0].value + inputs[1].value + inputs[2].value + 
+		"myTagElse: " + spans[1].innerText + " inputs: " + inputs[3].value + inputs[4].value + inputs[5].value,
+			"myTag: 11 inputs: p1X(index:0 else:0 iteration:7 propChange: p1X) p2X(index:1 else:0 iteration:8 propChange: p2X) AX(index:2 else:0 iteration:6 propChange: AX) " +
+			"myTagElse: 11 inputs: elseP1X(index:0 else:1 iteration:10 propChange: elseP1X) elseP2X(index:1 else:1 iteration:11 propChange: elseP2X) elseAX(index:2 else:1 iteration:9 propChange: elseAX) ",
+		'SetValue used correctly during updating');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+var i=0,
+vm = {
+	a: undefined,
+	p1: undefined,
+	p2: undefined,
+	elsea: undefined,
+	elsep1: undefined,
+	elsep2: undefined,
+	other: undefined
+};
+
+	// ................................ Act ..................................
+$.views.templates({
+	markup: "{^{mytag prop1=p1 prop2=p2 a ^other=other}}{{else prop1=elsep1 prop2=elsep2 elsea}}{{/mytag}}",
+	tags: {
+		mytag: {
+			bindTo:["prop1", "prop2", 0],
+			linkedElement: ["input", ".two", ".zero"],
+			template: "<span></span> <input/> <input class='two'/> <input class='zero'/>",
+			setValue: function(value, index, elseBlock, ev, eventArgs) {
+				this.contents("span").text(i);
+				return value + "(index:" + index + " else:" + elseBlock + " iteration:" + i++ + (ev ? " propChange: " + eventArgs.value : "") + ") ";
+			},
+			onUpdate: false
+		}
+	}
+}).link("#result", vm);
+
+var inputs = $("#result input"),
+	spans = $("#result span");
+
+	// ............................... Assert .................................
+	assert.equal("myTag: " + spans[0].innerText + " inputs: " + inputs[0].value + inputs[1].value + inputs[2].value + 
+		"myTagElse: " + spans[1].innerText + " inputs: " + inputs[3].value + inputs[4].value + inputs[5].value,
+			"myTag: 5 inputs: undefined(index:0 else:0 iteration:5) undefined(index:1 else:0 iteration:4) undefined(index:2 else:0 iteration:3) " +
+			"myTagElse: 5 inputs: undefined(index:0 else:1 iteration:2) undefined(index:1 else:1 iteration:1) undefined(index:2 else:1 iteration:0) ",
+		'With undefined initial values for bound args/props SetValue is used correctly during rendering');
+
+	// ................................ Act ..................................
+	$.observable(vm).setProperty("a", "AX")
+		.setProperty("p1", "p1X")
+		.setProperty("p2", "p2X")
+		.setProperty("elsea", "elseAX")
+		.setProperty("elsep1", "elseP1X")
+		.setProperty("elsep2", "elseP2X")
+		.setProperty("other", "OX");
+
+	// ............................... Assert .................................
+	assert.equal("myTag: " + spans[0].innerText + " inputs: " + inputs[0].value + inputs[1].value + inputs[2].value + 
+		"myTagElse: " + spans[1].innerText + " inputs: " + inputs[3].value + inputs[4].value + inputs[5].value,
+			"myTag: 11 inputs: p1X(index:0 else:0 iteration:7 propChange: p1X) p2X(index:1 else:0 iteration:8 propChange: p2X) AX(index:2 else:0 iteration:6 propChange: AX) " +
+			"myTagElse: 11 inputs: elseP1X(index:0 else:1 iteration:10 propChange: elseP1X) elseP2X(index:1 else:1 iteration:11 propChange: elseP2X) elseAX(index:2 else:1 iteration:9 propChange: elseAX) ",
+		'With undefined initial values for bound args/props SetValue is used correctly during updating');
+
+	// ................................ Act ..................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
 	// ................................ Act ..................................
 	$.templates({
 		markup: '<div>{^{myNoRenderWidget/}}</div>',
@@ -23315,6 +23501,9 @@ QUnit.test("Tag control events", function(assert) {
 				onBeforeChange: function(ev, eventArgs) {
 					eventData += "onBeforeChange ";
 				},
+				setValue: function(val, index, tagElse, ev, eventArgs) {
+					eventData += "setValue (arg index: " + index + "-" + (this.tagCtx.args[index]===val) + ") ";
+				},
 				onAfterChange: function(ev, eventArgs) {
 					eventData += "onAfterChange ";
 				}
@@ -23323,8 +23512,8 @@ QUnit.test("Tag control events", function(assert) {
 	}).link("#result", person1);
 
 	// ............................... Assert .................................
-	assert.equal($("#result").text() + "|" + eventData, "|init onBind after ", '{^{myNoRenderWidget/}} - A data-linked tag control which does not render fires init and onAfterLink');
-
+	assert.equal($("#result").text() + "|" + eventData, 
+"|init onBind after setValue (arg index: 0-true) ");
 	$("#result").empty();
 });
 

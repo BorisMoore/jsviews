@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.5 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.6 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -6,7 +6,7 @@
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsRender >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsRender:
  * See http://jsviews.com/#jsrender and http://github.com/BorisMoore/jsrender
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.5",
+var versionNumber = "v1.0.6",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp", // Observable contextual parameter
@@ -480,9 +480,7 @@ function contextParameter(key, value, get) {
 						: res[1](res[0].data, res[0], $sub)    // = fn(data, view, $sub) for compiled binding expression
 					: res[0]._ocp; // Observable contextual parameter (uninitialized, or initialized as static expression, so no path dependencies)
 				if (isUpdate) {
-					if (res && newRes !== value) {
-						$sub._ucp(key, value, storeView, obsCtxPrm); // Update observable contextual parameter
-					}
+					$sub._ucp(key, value, storeView, obsCtxPrm); // Update observable contextual parameter
 					return storeView;
 				}
 				res = newRes;
@@ -2938,7 +2936,7 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsObservable >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsObservable:
  * See https://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -3318,7 +3316,7 @@ if (!$.observe) {
 					object = arr;
 					if (relPath) {
 						object = arr[relPath];
-						allPath += "." + relPath;
+						allPath = allPath ? allPath + "." + relPath : allPath;
 					}
 					if (filter && object) {
 						object = $observable._fltr(allPath, object, relPath ? [arr].concat(parentObs) : parentObs, filter);
@@ -3826,40 +3824,41 @@ if (!$.observe) {
 			var setter, getter, removeProp, eventArgs, view,
 				property = path ? leaf[path] : leaf;
 
-			if ($isFunction(property) && property.set) {
-				// Case of property setter/getter - with convention that property is getter and property.set is setter
-				view = leaf._vw // Case of JsViews 2-way data-linking to an observable context parameter, with a setter.
-					// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
-					|| leaf;
-				getter = property;
-				setter = getter.set === true ? getter : getter.set;
-				property = getter.call(view); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
-				// See unit tests 'Can observe properties of type function'.
-			}
+			if (property !== value || nonStrict && property != value) {
+				if ($isFunction(property) && property.set) {
+					// Case of property setter/getter - with convention that property is getter and property.set is setter
+					view = leaf._vw // Case of JsViews 2-way data-linking to an observable context parameter, with a setter.
+						// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
+						|| leaf;
+					getter = property;
+					setter = getter.set === true ? getter : getter.set;
+					property = getter.call(view); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
+					// See unit tests 'Can observe properties of type function'.
+				}
 
-			if ((property !== value || nonStrict && property != value)
 				// Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
 				// Date objects don't support != comparison. Treat as special case.
-				&& (!(property instanceof Date && value instanceof Date) || property > value || property < value)) {
-				if (setter) {
-					setter.call(view, value);   // set
-					value = getter.call(view);  // get updated value
-				} else if (removeProp = value === remove) {
-					if (property !== undefined) {
-						delete leaf[path];
-						value = undefined;
-					} else {
-						path = undefined; // If value was already undefined, don't trigger handler for removeProp
+				if (!(property instanceof Date && value instanceof Date) || property > value || property < value) {
+					if (setter) {
+						setter.call(view, value);   // set
+						value = getter.call(view);  // get updated value
+					} else if (removeProp = value === remove) {
+						if (property !== undefined) {
+							delete leaf[path];
+							value = undefined;
+						} else {
+							path = undefined; // If value was already undefined, don't trigger handler for removeProp
+						}
+					} else if (path) {
+						leaf[path] = value;
 					}
-				} else if (path) {
-					leaf[path] = value;
-				}
-				if (path) {
-					eventArgs = {change: "set", path: path, value: value, oldValue: property, remove: removeProp};
-					if (leaf._ocp) {
-						eventArgs.ctxPrm = leaf._key;
+					if (path) {
+						eventArgs = {change: "set", path: path, value: value, oldValue: property, remove: removeProp};
+						if (leaf._ocp) {
+							eventArgs.ctxPrm = leaf._key;
+						}
+						this._trigger(leaf, eventArgs);
 					}
-					this._trigger(leaf, eventArgs);
 				}
 			}
 		},
@@ -4225,7 +4224,7 @@ if (!$.observe) {
 /* JsViews:
  * Interactive data-driven views using templates and data-linking.
  * See https://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
- * Copyright 2019, Boris Moore
+ * Copyright 2020, Boris Moore
  * Released under the MIT License.
  */
 
@@ -5938,7 +5937,8 @@ function bindDataLinkTarget(linkCtx, late) {
 	linkCtx._ctxCb = $sub._gccb(view = linkCtx.view); // getContextCallback: _ctxCb, for filtering/appending to dependency paths: function(path, object) { return [(object|path)*]}
 	linkCtx._hdl = handler;
 	// handler._ctx = linkCtx; Could pass linkCtx for use in a depends = function() {} call, so depends is different for different linkCtx's
-	if (linkCtx.elem.nodeName === "SELECT" && linkCtxType === "link" && !linkCtx.attr) {
+	if (linkCtx.elem.nodeName === "SELECT" && linkCtxType === "link" && !linkCtx.attr
+		&& linkCtx.convert !== undefined) { // data-link expression on <select> tag is the assign tag {:...}, not some other expression such as {on ...} (See https://github.com/BorisMoore/jsviews/issues/444)
 		var $elem = $(linkCtx.elem);
 		$elem.on("jsv-domchange", function() {
 			// If the options have changed dynamically under the select, we need to refresh the data-linked selection, using the new options
@@ -6191,8 +6191,10 @@ function callAfterLink(tag, ev, eventArgs) {
 			props = tag.cvtArgs(m, 1); // array of bindFrom args/props
 			l = props.length;
 			while (l--) {
-				val = props[l];
-				tag.setValue(val, l, m);
+				// If the bound property or arg has not yet been set (e.g. during initial rendering),
+				// or has been unset, because onUpdate is set to true, or if onUpdate is false,
+				// but this particular bound arg/prop is being changed observably: call setValue()
+				tag.setValue(props[l], l, m, ev, eventArgs);
 			}
 			if (tag._.unlinked) {
 				tagCtx = tagCtxs[m];
@@ -6743,10 +6745,12 @@ function updateValue(val, index, tagElse, async, bindId, ev) {
 }
 
 function setValues() {
-// tagCtx.setValues() calls tag.setValue() on that tagCtx for each bindTo target
-	var m = arguments.length;
+	// tagCtx.setValues() calls tag.setValue() on that tagCtx for each bindTo target
+	var m = this.tag.bindTo.length,
+		ev = arguments[m],
+		eventArgs = arguments[m+1];
 	while (m--) {
-		this.tag.setValue(arguments[m], m, this.index);
+		this.tag.setValue(arguments[m], m, this.index, ev, eventArgs);
 	}
 }
 
@@ -6874,20 +6878,30 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 			theTag.constructor.prototype.setValue || function(val) { // base method
 				return val;
 			},
-			function(val, indexFrom, tagElse) {
+			function(val, indexFrom, tagElse, ev, eventArgs) {
 				indexFrom = indexFrom || 0;
 				tagElse = tagElse || 0;
 
-				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems,
-					tagCtx = theTag.tagCtxs[tagElse],
-					newVal = theTag.base.call(theTag, val, indexFrom, tagElse);
+				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems, newVal,
+					tagCtx = theTag.tagCtxs[tagElse];
 
-				if (newVal !== undefined) {  // Call tag method tag.setValue(), if implemented
-					val = newVal;
+				if ((eventArgs || val !== undefined) && tagCtx._bdArgs && tagCtx._bdArgs[indexFrom]===val) {
+					if (tagCtx._bdVals) { // If val is not undefined (or is coming from an observable change event), and is a value that was already returned, use stored value and don't call tag.setValue()
+						val = tagCtx._bdVals[indexFrom];
+					}
+				} else {
+					// Call tag method tag.setValue(), if implemented
+					tagCtx._bdArgs = tagCtx._bdArgs || [];
+					tagCtx._bdArgs[indexFrom] = val;
+					newVal = theTag.base.call(theTag, val, indexFrom, tagElse, ev, eventArgs);
+					if (newVal !== undefined) {
+						tagCtx._bdVals = tagCtx._bdVals || [];
+						tagCtx._bdVals[indexFrom] = newVal; // store value, so that if same value is called later we'll use the stored value, and won't call tag.setValue()
+						val = newVal;
+					}
 				}
-				if (val !== undefined && (theTag.convert || theTag._.toIndex[indexFrom] === undefined)
-						&& (linkedCtxParam = theTag.linkedCtxParam)
-						&& linkedCtxParam[indexFrom]
+
+				if (val !== undefined && (linkedCtxParam = theTag.linkedCtxParam) && linkedCtxParam[indexFrom]
 						// If this setValue call corresponds to a tag contextual parameter and the tag has a converter, then we need to set the
 						// value of this contextual parameter (since it is not directly bound to the tag argument/property when there is a converter).
 						&& (linkedCtxPrmKey = linkedCtxParam[indexFrom])
@@ -7118,10 +7132,14 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				return RegExp("^(.*)(" + (str ? "\\/" : "#") + itemView._.id + "_.*)$").exec(str || itemView._prv.getAttribute(jsvAttrStr));
 			}
 			function setPrv(itemView, tokens) {
-				var prv = itemView._prv;
+				var tag,
+					prv = itemView._prv;
 				prv.setAttribute(jsvAttrStr, tokens);
 				tokens.replace(rTagMarkers, function(all, open, close, id) {
-					bindingStore[id].linkCtx.tag[open ? "_prv" : "_nxt"] = prv;
+					tag = bindingStore[id].linkCtx.tag;
+					if (tag.inline) {
+						tag[open ? "_prv" : "_nxt"] = prv;
+					}
 				});
 				tokens.replace(rViewMarkers, function(all, open, close, id) {
 					viewStore[id][open ? "_prv" : "_nxt"] = prv;
