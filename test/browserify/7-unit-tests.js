@@ -10,7 +10,7 @@ var isIE8 = window.attachEvent && !window.addEventListener;
 
 if (!isIE8) {
 
-test("jQuery global: require('jquery.views')", function() {
+QUnit.test("jQuery global: require('jquery.views')", function(assert) {
 	// ............................... Hide QUnit global jQuery .................................
 	var jQuery = global.jQuery;
 	global.jQuery = undefined;
@@ -38,7 +38,7 @@ test("jQuery global: require('jquery.views')", function() {
 	result += " " + ($jsr === global.jQuery);
 
 	// ............................... Assert .................................
-	equal(result, "Name: Jo (name-template.html) new name true", "result: jQuery global: require('jquery.views')");
+	assert.equal(result, "Name: Jo (name-template.html) new name true", "result: jQuery global: require('jquery.views')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery

@@ -10,7 +10,7 @@ var isIE8 = window.attachEvent && !window.addEventListener;
 
 if (!isIE8) {
 
-test("No jQuery global: require('jsrender') require('jsviews')", function() {
+QUnit.test("No jQuery global: require('jsrender') require('jsviews')", function(assert) {
 	// ............................... Hide QUnit global jQuery and any previous global jsrender.................................
 	var jQuery = global.jQuery, jsr = global.jsrender;
 	global.jQuery = global.jsrender = undefined;
@@ -21,7 +21,7 @@ test("No jQuery global: require('jsrender') require('jsviews')", function() {
 	// ................................ Act ..................................
 var $jq = require('jquery');
 var $jsr = require('jsrender')($jq); // Unnecessary loading of additional jsrender instance (Test case)
-var $jsr = require('../../')($jq); // Provide jQuery, so $jsr === $jq is local jQuery namespace
+  $jsr = require('../../')($jq); // Provide jQuery, so $jsr === $jq is local jQuery namespace
 
 	// Use require to get server template, thanks to Browserify bundle that used jsrender/tmplify transform
 	var tmpl = require('../templates/name-template.html')($jsr); // Provide $jsr
@@ -36,7 +36,7 @@ var $jsr = require('../../')($jq); // Provide jQuery, so $jsr === $jq is local j
 	result += " " + ($jsr !== jQuery && $jsr === $jq);
 
 	// ............................... Assert .................................
-	equal(result, "Name: Jo (name-template.html) new name true", "result: No jQuery global: require('jsviews')");
+	assert.equal(result, "Name: Jo (name-template.html) new name true", "result: No jQuery global: require('jsviews')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery

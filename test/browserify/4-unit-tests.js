@@ -10,7 +10,7 @@ var isIE8 = window.attachEvent && !window.addEventListener;
 
 if (!isIE8) {
 
-test("No jQuery global: require('jquery.observable')", function() {
+QUnit.test("No jQuery global: require('jquery.observable')", function(assert) {
 	// ............................... Hide QUnit global jQuery .................................
 	var jQuery = global.jQuery;
 	global.jQuery = undefined;
@@ -33,7 +33,7 @@ test("No jQuery global: require('jquery.observable')", function() {
 	result += " " + ($jsr !== jQuery && $jsr === $jq);
 
 	// ............................... Assert .................................
-	equal(result, " new name true", "result: No jQuery global: require('jquery.observable')");
+	assert.equal(result, " new name true", "result: No jQuery global: require('jquery.observable')");
 
 	// ............................... Reset .................................
 	global.jQuery = jQuery; // Replace QUnit global jQuery

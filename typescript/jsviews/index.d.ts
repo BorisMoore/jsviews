@@ -1,5 +1,5 @@
 // Type definitions for JsViews 1.0
-// Version: "v1.0.6"
+// Version: "v1.0.7"
 // Project: http://www.jsviews.com/#jsviews
 // Definitions by: Boris Moore <https://github.com/borismoore>
 // Definitions: https://www.jsviews.com/download/typescript/jsviews/index.d.ts
@@ -644,7 +644,7 @@ interface TagOptions {
   onBeforeChange?: (this: TagInst, ev: EventObject, eventArgs: EvtArgs) => boolean | void ;
   onAfterChange?: (this: TagInst, ev: EventObject, eventArgs: EvtArgs) => void ;
   onArrayChange?: (this: TagInst, ev: EventObject, eventArgs: EvtArgs) => void ;
-  setValue?: (this: TagInst, value: any, index?: number, elseBlock?: number) => void ;
+  setValue?: (this: TagInst, value: any, index?: number, elseBlock?: number, ev?: EventObject, eventArgs?: EvtArgs) => void ;
   domChange?: (this: TagInst, ...args: any[]) => void;
 }
 

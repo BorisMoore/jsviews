@@ -10114,7 +10114,7 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	$.templates(
 		'{^{for skip}}{{:~rndr(#data)}}'
-	+ '{{else people start=p_st end=p_en reverse=p_rev}}|{{:~rndr(#data)}}'
+	+ '{{else people ~foo="test" start=p_st end=p_en reverse=p_rev}}|{{:~rndr(#data)}}'
 	+ '{{else things sort=t_srt filter=t_flt start=t_st end=t_en step=t_stp mapDepends=t_mapdeps}}|{{:~rndr(is)}}'
 	+ '{{else}}None{{/for}}'
 	)
@@ -11374,6 +11374,35 @@ QUnit.test('data-link="{on ...', function(assert) {
 	$("#result").empty();
 	thing.type = "shape";
 	delete thing.check;
+
+
+
+	// =============================== Arrange ===============================
+
+	$.templates('<div data-link="{on ~util[0].swap context=~util[0].data}">{^{:type}} </div>')
+		.link("#result", thing, {
+			util:
+				[{
+					swap: swap,
+					data: thing
+				}]
+		});
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+	$("#result div").click();
+	after = $("#result").text();
+
+	// ............................... Assert .................................
+	assert.equal(before + "|" + after,
+	"shape |line ",
+	'{on ~util[0].swap} calls util[0].swap helper method on click');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	thing.type = "shape";
+
+
 
 	// =============================== Arrange ===============================
 	var res = "1: ";
@@ -23513,7 +23542,57 @@ var inputs = $("#result input"),
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData, 
-"|init onBind after setValue (arg index: 0-true) ");
+"|init onBind after setValue (arg index: 0-true) ",
+"Event sequence for a non-rendering custom tag control is correct");
+
+	// ................................ Reset ................................
+	person1.lastName = "One";
+	model.things = [];
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+eventData = "Init| ";
+
+	$.templates({
+		markup: '<div>{^{mytag lastName/}}</div>',
+		tags: {
+			mytag: {
+				setValue: function(val, index, tagElse, ev, eventArgs) {
+					eventData += "setValue(arg:" + val + " index: " + index + "-" + (this.tagCtx.args[index]===val) + ") ";
+				},
+				test1: function(ev, eventArgs) {
+					this.updateValue("One");
+				},
+				test2: function(ev, eventArgs) {
+					this.updateValue()
+				}
+			}
+		}
+	}).link("#result", person1);
+
+	var mytag = $.view().childTags("mytag")[0];
+
+eventData += "\nUpdate to One| ";
+mytag.updateValue("One"); // Same value so no-op
+$.observable(person1).setProperty("lastName", "One"); // Same value so no-op
+
+eventData += "\nUpdate to Two| ";
+mytag.updateValue("Two"); // Change value
+$.observable(person1).setProperty("lastName", "One"); // Change back to value previously passed in setValue() call
+
+eventData += "\nUpdate to Two and setValue to Three, twice| ";
+mytag.updateValue("Two");
+mytag.setValue("Three");
+$.observable(person1).setProperty("lastName", "Three");
+
+	// ............................... Assert .................................
+	assert.equal(eventData, 
+"Init| setValue(arg:One index: 0-true) \nUpdate to One| \nUpdate to Two| setValue(arg:One index: 0-true) \nUpdate to Two and setValue to Three, twice| setValue(arg:Three index: 0-false) setValue(arg:Three index: 0-true) ",
+"SetValue correctly called twice in a row for the same value - in response to bindFrom data value being returned to previous value, following call to tag.updateValue()");
+
+	// ................................ Act ..................................
 	$("#result").empty();
 });
 

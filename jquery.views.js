@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.6: http://jsviews.com/ */
+/*! jquery.views.js v1.0.7: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,8 +44,8 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.6",
-	requiresStr = "JsViews requires ";
+var versionNumber = "v1.0.7",
+	requiresStr = "jquery.views.js requires ";
 
 if (!$ || !$.fn) {
 	// jQuery is not loaded.
@@ -60,9 +60,18 @@ var $observe, $observable,
 	$isArray = $.isArray,
 	$views = $.views;
 
+if (!$.render) {
+	// JsRender is not loaded.
+	throw requiresStr + "jsrender.js"; // jsrender.js must be loaded before JsViews and after jQuery
+}
+if ($views.jsviews !== versionNumber) {
+	throw requiresStr + "query.observable.js " + versionNumber; // Wrong version number
+}
+
+
 if (!$views || !$views.map || $views.jsviews !== versionNumber) {
-		// JsRender is not loaded.
-	throw requiresStr + "JsRender " + versionNumber; // jsrender.js must be loaded before JsViews and after jQuery
+	// JsRender is not loaded.
+	throw requiresStr + "jsrender.js " + versionNumber; // jsrender.js must be loaded before JsViews and after jQuery
 }
 
 var document = global.document,
@@ -123,6 +132,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	isCleanCall = 0,
 	oldCleanData = $.cleanData,
 	oldJsvDelimiters = $viewsSettings.delimiters,
+	linkExprStore = {}, // Compiled functions for data-link expressions
 	safeFragment = document.createDocumentFragment(),
 	qsa = document.querySelector,
 
@@ -154,10 +164,14 @@ $observable = $.observable;
 
 if (!$observable) {
 	// JsObservable is not loaded.
-	throw requiresStr + "JsObservable"; // jquery.observable.js must be loaded before JsViews
+	throw requiresStr + "jquery.observable.js"; // jquery.observable.js must be loaded before JsViews
 }
 
 $observe = $observable.observe;
+
+$subSettings._clFns = function() {
+	linkExprStore = {};
+};
 
 //========================== Top-level functions ==========================
 
@@ -243,7 +257,7 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 				target = to[0];
 				tcpTag = to.tag; // If this is a tag contextual parameter - the owner tag
 				sourceValue = (target && target._ocp && !target._vw
-					? origVals  // If to target is for tag contextual parameter set to static expression (or uninitialized) - we are
+					? origVals // If to target is for tag contextual parameter set to static expression (or uninitialized) - we are
 					// binding to tag.ctx.foo._ocp - and we use original values, without applying cvtBack converter
 					: sourceValues // Otherwise use the converted value
 				)[l];
@@ -274,7 +288,7 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 								contextCb = exprOb._cpCtx; // Context callback for contextual view
 							}
 							while (exprOb && exprOb.sb) { // Step through chained computed values to leaf one...
-								target = contextCb(exprOb, target);
+								target = contextCb(exprOb);
 								exprOb = exprOb.sb;
 							}
 						}
@@ -334,9 +348,7 @@ function onDataLinkedTagChange(ev, eventArgs) {
 
 		// Set linkCtx on view, dynamically, just during this handler call
 		view._lc = linkCtx;
-		if (eventArgs) {
-			linkCtx.eventArgs = eventArgs;
-		}
+
 		if (eventArgs || linkCtx._toLk) {
 			// If eventArgs are defined, this is a data update
 			// Otherwise this is the initial data-link rendering call. Bind on this the first time it gets called
@@ -403,7 +415,7 @@ function onDataLinkedTagChange(ev, eventArgs) {
 				}
 
 				sourceValue = tag.tagName === ":" // Call convertVal if it is a {{cvt:...}} - otherwise call renderTag
-					? $sub._cnvt(tag.convert, view, sourceValue[0]) // convertVal()    // convertVal(converter, view, tagCtx, onError)
+					? $sub._cnvt(tag.convert, view, sourceValue[0]) // convertVal(converter, view, tagCtx, onError)
 					: $sub._tag(tag, view, view.tmpl, sourceValue, true, onError); // renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError)
 			} else if (linkFn._tag) {
 				// For {{: ...}} with either cvt or cvtBack we call convertVal to get the sourceValue and instantiate the tag
@@ -1690,17 +1702,7 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 		// If isLink then this is a top-level linking: .link(expression, target, data, ....) or
 		// .link(true, target, data, ....) scenario - and data and context are passed in separately from the view
 		data = isLink ? data : currentView.data;
-
-		// Compiled linkFn expressions could be stored in the tmpl.links array of the template
-		// TODO - consider also caching globally so that if {{:foo}} or data-link="foo" occurs in different places,
-		// the compiled template for this is cached and only compiled once...
-		//links = currentView.links || currentView.tmpl.links;
-
 		tmpl = currentView.tmpl;
-
-//			if (!(linkTags = links[linkMarkup])) {
-		// This is the first time this view template has been linked, so we compile the data-link expressions, and store them on the template.
-
 		linkMarkup = normalizeLinkTag(linkMarkup, defaultAttr(node));
 		lastIndex = rTagDatalink.lastIndex = 0;
 		while (tokens = rTagDatalink.exec(linkMarkup)) { // TODO require } to be followed by whitespace or $, and remove the \}(!\}) option.
@@ -1752,9 +1754,9 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 			//     i.e. data-link="a.b.c". Avoid creating new instances of Function every time. Can use a default function for all of these...
 
 			linkCtx.expr = attr + tagExpr;
-			linkFn = tmpl.links[tagExpr];
+			linkFn = linkExprStore[tagExpr];
 			if (!linkFn) {
-				tmpl.links[tagExpr] = linkFn = $sub.tmplFn(tagExpr.replace(rEscapeQuotes, "\\$&"), tmpl, true, convertBack, hasElse);
+				linkExprStore[tagExpr] = linkFn = $sub.tmplFn(tagExpr.replace(rEscapeQuotes, "\\$&"), tmpl, true, convertBack, hasElse);
 			}
 			linkCtx.fn = linkFn;
 			bindDataLinkTarget(linkCtx, late);
@@ -2202,7 +2204,7 @@ function resolveDataTargetPath(targetPath, source, contextCb) {
 	// Iteratively process targetPath, resolving ~a.b.c paths for contextual parameters
 	var path, bindtoOb, to, l, obsCtxPrm, view, topCp, data;
 
-	while (targetPath && targetPath !== _ocp && (to = contextCb(path = targetPath.split("^").join("."), source)) && (l = to.length)) {
+	while (targetPath && targetPath !== _ocp && (to = contextCb(path = targetPath.split("^").join("."))) && (l = to.length)) {
 		if (obsCtxPrm = to[0]._cxp) { // Two-way binding to a contextual parameter reference, ~foo (declared as ~foo=expr on a parent tag)
 			topCp = topCp || obsCtxPrm;
 			view = to[0][0];
@@ -2738,7 +2740,9 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems, newVal,
 					tagCtx = theTag.tagCtxs[tagElse];
 
-				if ((eventArgs || val !== undefined) && tagCtx._bdArgs && tagCtx._bdArgs[indexFrom]===val) {
+				if (tagCtx._bdArgs && (eventArgs || val !== undefined) && tagCtx._bdArgs[indexFrom]===val
+					&& (!eventArgs || eventArgs.change !== "set" || ev.target !== val && eventArgs.value !== val)) {
+
 					if (tagCtx._bdVals) { // If val is not undefined (or is coming from an observable change event), and is a value that was already returned, use stored value and don't call tag.setValue()
 						val = tagCtx._bdVals[indexFrom];
 					}
@@ -2804,7 +2808,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				tagElse = arguments[bindToLength];
 				if (extra > 1) {
 					async = extra > 1 ? arguments[bindToLength + 1] : undefined;
-				} else if (+tagElse !==  tagElse) {
+				} else if (+tagElse !== tagElse) {
 					async = tagElse;
 					tagElse = 0;
 				}
@@ -2813,7 +2817,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 		};
 
 		theTag.setValues = function() {
-		// tag.setValues(a, b, c) calls tagCtx.setValues(a, b, c)  on the first tagCtx
+		// tag.setValues(a, b, c) calls tagCtx.setValues(a, b, c) on the first tagCtx
 			setValues.apply(theTag.tagCtx, arguments);
 			return theTag;
 		};
@@ -2914,11 +2918,9 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 						}
 						$(nodesToRemove).remove();
 					}
-					if (!viewToRemove._elCnt) {
-						try {
-							prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
-							nextNode.parentNode.removeChild(nextNode);
-						} catch (e) {}
+					if (!viewToRemove._elCnt && prevNode) {
+						prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
+						nextNode.parentNode.removeChild(nextNode);
 					}
 					setArrayChangeLink(viewToRemove);
 					for (bindId in viewToRemove._.bnds) {
@@ -3181,7 +3183,7 @@ $tags({
 					// Get the path for the preceding object (context object) of handler (which is the last arg), compile function
 					// to return that context object, and run compiled function against data
 					contextOb = /^(.*)[.^][\w$]+$/.exec(tagCtx.params.args.slice(-params.length - 1)[0]);
-					contextOb = contextOb && $sub.tmplFn(delimOpenChar1 + ":" + contextOb[1] + delimCloseChar0, view.tmpl, true)(linkCtx.data, view);
+					contextOb = contextOb && $sub.tmplFn(delimOpenChar1 + ":" + contextOb[1] + delimCloseChar0, view.tmpl, true)(linkCtx.data, view, $sub);
 				}
 
 				if (tag._evs) {
@@ -3474,7 +3476,7 @@ $extend($tags["for"], {
 			tagCtx = tagCtxs[i];    // loop through tagCtxs up to selected
 			map = tagCtx.map;
 			data = tagCtx.map
-				? map.tgt      // 'data' is mapped data
+				? map.tgt             // 'data' is mapped data
 				: tagCtx.args.length
 					? tagCtx.args[0]    // or args[0]
 					: tagCtx.view.data; // or defaults to current data.
@@ -3776,13 +3778,17 @@ $sub._glt = function(elem) { // get linked tags (Used in validate.js)
 
 $sub._gccb = function(view) { // Return a callback for accessing the context of a template/data-link expression - and converting ~foo, #foo etc.
 	// TODO Consider exposing or allowing override, as public API
-	return function(path, object, depth) {
+	return function(path, depth) {
 		// TODO consider only calling the contextCb on the initial token in path '~a.b.c' and not calling again on
 		// the individual tokens, 'a', 'b', 'c'... Currently it is called multiple times
 		var tokens, tag, items, helper, last, nextPath, l, obsCtxPrm, addedTagCpDep, key, bindTo;
 		if (view && path) {
 			if (path._cpfn) {
-				return path._cpfn.call(view.tmpl, object, view, $sub); // exprOb for computed property
+				try {
+					return $subSettingsAdvanced.cache ? view.getCache(path._cpKey) : path._cpfn.call(view.tmpl, view.data, view, $sub); // exprOb for computed property
+				} catch(e) {
+					return;
+				}
 			}
 			if (path.charAt(0) === "~") {
 				// We return new items to insert into the sequence, replacing the "~a.b.c" string:
@@ -3866,12 +3872,11 @@ $sub._cp = function(paramVal, paramExpr, view, tagCtxPrm) { // Create tag or inl
 				return this;
 			};
 		} else if (paramExpr) { // With no convert/convertBack and no bindTo/bindFrom difference, tag contextual parameter 2way binds to bindTo/bindFrom value.
-				// So tag.updateValue() updates external value, which updates contextual  parameter through 2way binding
+				// So tag.updateValue() updates external value, which updates contextual parameter through 2way binding
 			var params = delimOpenChar1 + ":" + paramExpr + delimCloseChar0,
-				links = topView.tmpl.links, // Use topView links, as for compiled top-level linking expressions. To do - should this ever get disposed?
-				linkFn = links[params];
+				linkFn = linkExprStore[params];
 			if (!linkFn) {
-				links[params] = linkFn = $sub.tmplFn(params, view.tmpl, true);
+				linkExprStore[params] = linkFn = $sub.tmplFn(params, view.tmpl, true);
 			}
 			paramVal = linkFn.deps[0]
 				? [view, linkFn] // compiled expression
