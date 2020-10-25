@@ -1995,7 +1995,7 @@ QUnit.module("template.link()");
 QUnit.test("Helper overriding", function(assert) {
 var done = assert.async();
 
-// ................................ Reset ................................
+	// ................................ Reset ................................
 	home1.address = address1; // reset Prop
 	person1._firstName = "Jo"; // reset Prop
 	person1.lastName = "One"; // reset Prop
@@ -2206,7 +2206,7 @@ done();
 QUnit.test('data-link="expression"', function(assert) {
 var done = assert.async();
 
-// ................................ Reset ................................
+	// ................................ Reset ................................
 	home1.address = address1; // reset Prop
 	person1._firstName = "Jo"; // reset Prop
 	person1.lastName = "One"; // reset Prop
@@ -3650,14 +3650,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
-		markup: '<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
-		converters: {
-			cvt: function (value) {
-				return value
-			}
-		}
-	});
+	tmpl = $.templates('<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>');
 
 	model = {
 			selected: 4,
@@ -3675,7 +3668,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res, "4:-(-1)|4:4(0)|",
-		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option');
+		'<select data-link="{selected}">{^{for items}}... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
 	tmpl = $.templates({
@@ -3731,7 +3724,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res, "4:-(-1)|4:4(0)|",
-		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converterBack only');
+		'<select data-link="{:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with convertBack only');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -3762,7 +3755,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res, "4:-(-1)|4:4(0)|",
-		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converter only');
+		'<select data-link="{cvt:selected:}">{^{for items}}... Dynamic subsequent insertion of selected option, with converter only');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -3787,7 +3780,337 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(res, "4:-(-1)|4:4(0)|",
-		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent setting of data array with selected option');
+		'<select data-link="selected">{^{for items}}... Dynamic subsequent setting of data array with selected option');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	function testSelect(model, chg) {
+		var res = getSelection();
+
+		$.observable(model.items).insert(0, ["a", "b", "c"]);
+		res += getSelection();
+
+		$.observable(model.items).refresh(["z", "x", "y"]);
+		res += getSelection();
+
+		$.observable(model.items).refresh(["c", "x", "b"]);
+		res += getSelection();
+
+		$.observable(model).setProperty("selected", "x");
+		res += getSelection();
+
+		$("#result select").val('c').change();
+		res += getSelection();
+
+		return res;
+	}
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '<select data-link="{lower:selected:upper}">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
+		converters: {
+			lower: function(val) {
+				return val.toLowerCase();
+			},
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:b(1)|B:-(-1)|B:b(2)|x:x(1)|C:c(0)|",
+		'<select data-link="{lower:selected:upper}">{^{for items}}... Dynamic subsequent insertion of selected option, with converters');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '<select data-link="selected convert=\'lower\' convertBack=\'upper\'">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
+		converters: {
+			lower: function(val) {
+				return val.toLowerCase();
+			},
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:b(1)|B:-(-1)|B:b(2)|x:x(1)|C:c(0)|",
+		'<select data-link="selected convert=\'lower\' convertBack=\'upper\'">{^{for items}}... Dynamic subsequent insertion of selected option, with converters alt version2');
+
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '<select data-link="selected convert=~lower convertBack=~upper">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
+		helpers: {
+			lower: function(val) {
+				return val.toLowerCase();
+			},
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:b(1)|B:-(-1)|B:b(2)|x:x(1)|C:c(0)|",
+		'<select data-link="selected convert=~lower convertBack=~upper">{^{for items}}... Dynamic subsequent insertion of selected option, with helpers as converters');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag selected items}}{{else selected2}}{{/selTag}}',
+		tags: {
+			selTag: {
+				template: "<select>{^{for ~root.items}}<option>{{:#data}}</option>{{/for}}</select>",
+				linkedElement: "select"
+			}
+		}
+	});
+
+	model = {
+			selected: "b",
+			selected2: "c",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "b:-(-1)|b:bc(1)|b:-(-1)|b:bc(2)|x:xc(1)|c:cc(0)|",
+		'Custom selTag with linkedElement:"select"... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
+		tags: {
+			selTag: {
+				template: "<select>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				linkedElement: [undefined, "select"],
+				bindTo: [0, 1],
+				convert: function(foo, val) {
+					return [foo, val.toLowerCase()];
+				},
+				convertBack: function(foo, val) {
+					return [foo, val.toUpperCase()];
+				}
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedElement:[undefined, "select"] and converters... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
+		converters: {
+			lower: function(foo, val) {
+				return [foo, val.toLowerCase()];
+			},
+			upper: function(foo, val) {
+				return [foo, val.toUpperCase()];
+			}
+		},
+		tags: {
+			selTag: {
+				template: "<select>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				linkedElement: [undefined, "select"],
+				bindTo: [0, 1],
+				convert: "lower",
+				convertBack: "upper"
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedElement:[undefined, "select"] and registered converters... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag 1 selected options=items convert=~lower convertBack=\'upper\'}}{{else 1 selected2 options=items}}{{/selTag}}',
+		converters: {
+			upper: function(foo, val) {
+				return [foo, val.toUpperCase()];
+			}
+		},
+		helpers: {
+			lower: function(foo, val) {
+				return [foo, val.toLowerCase()];
+			}
+		},
+		tags: {
+			selTag: {
+				template: "<select>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				linkedElement: [undefined, "select"],
+				bindTo: [0, 1]
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedElement:[undefined, "select"] and external converters... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag selected options=items convert=~lower convertBack=\'upper\'}}{{else selected2 options=items}}{{/selTag}}',
+		converters: {
+			upper: function(val) {
+				return val.toUpperCase();
+			}
+		},
+		helpers: {
+			lower: function(val) {
+				return val.toLowerCase();
+			}
+		},
+		tags: {
+			selTag: {
+				template: "<select data-link='~sel'>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				linkedCtxParam: "sel"
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedCtxParam:"sel" and external converters... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+
+		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
+		converters: {
+			lower: function(foo, val) {
+				return [foo, val.toLowerCase()];
+			}
+		},
+		tags: {
+			selTag: {
+				template: "<select data-link='~sel'>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				bindTo: [0, 1],
+				linkedCtxParam: [undefined, "sel"],
+				convert: "lower",
+				convertBack: function(foo, val) {
+					return [foo, val.toUpperCase()];
+				}
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedCtxParam:[undefined, "sel"] and converters... Dynamic subsequent insertion of selected option');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({
+		markup: '{^{selTag 1 selected options=items convert=~lower convertBack=\'upper\'}}{{else 1 selected2 options=items}}{{/selTag}}',
+		converters: {
+			upper: function(foo, val) {
+				return [foo, val.toUpperCase()];
+			}
+		},
+		helpers: {
+			lower: function(foo, val) {
+				return [foo, val.toLowerCase()];
+			}
+		},
+		tags: {
+			selTag: {
+				template: "<select data-link='~sel'>{^{for ~tagCtx.props.options}}<option>{{:#data}}</option>{{/for}}</select>",
+				bindTo: [0, 1],
+				linkedCtxParam: [undefined, "sel"],
+			}
+		}
+	});
+
+	model = {
+			selected: "B",
+			selected2: "C",
+			items: []
+		};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	// ............................... Assert .................................
+	assert.equal(testSelect(model), "B:-(-1)|B:bc(1)|B:-(-1)|B:bc(2)|x:xc(1)|C:cc(0)|",
+		'Custom selTag with linkedCtxParam:[undefined, "sel"] and external converters... Dynamic subsequent insertion of selected option');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -3894,6 +4217,54 @@ setTimeout(function() {
 	assert.equal(res, "trueJim:2|NooneJim:1|Bob:0|:-1|Noone:1|Jim:2|trueNoone:1|",
 		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
+	$.observable(model).setProperty("selected", ["J"]);
+
+	res = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.selected).insert("B");
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.selected).refresh(["J", ""]);
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.people).insert({name: "Fred",  id: "F"});
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.selected).refresh(["F", "B"]);
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", "J");
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "trueJim:2|BobJim:0|NooneJim:1|NooneJim:1|BobFred:0|Jim:2|",
+		'Multiselect works with both setProperty as string or as array, and if array then array change operations work too');
+
+	$("#result select")[0].multiple = false;
+
+	res = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", "F");
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model).setProperty("selected", ["F"]);
+
+	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	$.observable(model.selected).insert(0, "B");
+
+	res += $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "falseJim:2|Fred:3|Fred:3|falseBob:0|",
+		'select (multiple=false) works with both setProperty as string or as array, and if array then array change operations work too');
+
 	// ................................ Reset ................................
 	$("#result").empty();
 
@@ -3944,7 +4315,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var top =
+	var topLevel =
 	'<div data-link="{radiogroup selected}">'
 		+ '<label><input type="radio" value="Bob"/>:Bob</label>'
 		+ '<label><input type="radio" value="Jim"/>:Jim</label>'
@@ -3954,7 +4325,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		+ '<label><input type="radio" value="Jim"/>:Jim</label>'
 	+ '</div>';
 
-	$("#result").html(top);
+	$("#result").html(topLevel);
 
 	// ............................... Act .................................
 
@@ -3983,11 +4354,11 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var top =
+	topLevel =
 		'<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>'
-	+ '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>',
+	+ '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>';
 
-	tmpl = $.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
+	var tmpl = $.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
 
 	model = {
 			selected: "Jim",
@@ -3999,7 +4370,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	newName = "new";
 
-	$("#result").html(top);
+	$("#result").html(topLevel);
 
 	// ............................... Act .................................
 	$.link(true, "#result", model, {itemTmpl: tmpl});
@@ -4415,6 +4786,665 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+'{^{if rg1}}'
+	+ '<div data-link="{radiogroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
++ '{{/if}}'
++ '{^{if rg2}}'
+	+ '<div data-link="{radiogroup selected}">'
+		+ '<label><input type="radio" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
++ '{{/if}}'
+	);
+
+	model = {
+		rg1: true,
+		rg2: true,
+		selected: "Jim",
+		people: []
+	};
+	newName = "newName";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - starting out with no items');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("rg1", false);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - one set to false');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("selected", "Jim");
+
+	$.observable(model).setProperty("rg1", true);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - one set back to true');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+});
+
+QUnit.test('data-link="{checkboxgroup}"', function(assert) {
+
+	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+
+	// =============================== Arrange ===============================
+
+	var topLevel =
+	'<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="Bob"/>:Bob</label>'
+		+ '<label><input type="checkbox" value="Jim"/>:Jim</label>'
+	+ '</div>'
++ '<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="Bob"/>:Bob</label>'
+		+ '<label><input type="checkbox" value="Jim"/>:Jim</label>'
+	+ '</div>';
+
+	$("#result").html(topLevel);
+
+	// ............................... Act .................................
+
+	var model = {
+			selected: ["Jim"]
+		};
+
+	$.link(true, "#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", ["Bob"]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").eq(1).prop("checked", true).change(); // Check second checkbox button
+
+	res += $("#result input:checked").parent().text() + "|" + model.selected;
+
+	// ............................... Assert .................................
+	assert.equal(res, ":Jim:Jim|:Bob:Bob|:Bob:Jim:Bob:Jim|Bob,Jim",
+		'data-link="{checkboxgroup selected}" top-level');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+
+	topLevel =
+		'<div data-link="{for people tmpl=~itemTmpl} {checkboxgroup selected}"></div>'
+	+ '<div data-link="{for people tmpl=~itemTmpl} {checkboxgroup selected}"></div>';
+
+	var tmpl = $.templates('<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'),
+
+	model = {
+			selected: ["Jim"],
+			people: [
+				{name: "Bob"},
+				{name: "Jim"}
+			]
+		},
+
+	newName = "new";
+
+	$("#result").html(topLevel);
+
+	// ............................... Act .................................
+	$.link(true, "#result", model, {itemTmpl: tmpl});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").eq(1).prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":Jim:Jim|:new:new||new,Jim-:Jim:Jim|",
+		'data-link="{checkboxgroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+			selected: ["Jim"],
+			people: [
+				{name: "Bob"},
+				{name: "Jim"}
+			]
+		},
+		newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":Jim|:new||new,Bob-:Bob|",
+		'data-link="{checkboxgroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":JIM|:NEW||new,None-:NONE|",
+		'data-link="{checkboxgroup selected}" ... <input.../>...{^{for ...}}...<input ... data-link="name">');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res,":NONE:BOB:JIMUPDATED|new,None,jimUpdated-:NONE:JIMUPDATED|",
+		'data-link="{checkboxgroup selected}" ... {^{for ...}}...<input ... data-link="name"> - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({markup:
+		'<div data-link="{checkboxgroup selected convert=~lower convertBack=\'upper\' linkTo=selectedOut}">'
+		+ '<label><input type="checkbox" value="none"/>:none</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name}}</label>'
+		+ '{{/for}}'
+	+ '</div>',
+		converters: {
+			upper: function(val) {
+				return val.map(function(x) {return x.toUpperCase();})
+			}
+		}
+	});
+
+	model = {
+		selected: ["JIM"],
+		people: [
+			{name: "bob"},
+			{name: "jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model, {
+		lower: function(val) {
+			return val.map(function(x) {return x.toLowerCase();})
+		}
+	});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":jim|:new||new-NEW,NONE-:none|",
+		'data-link="{checkboxgroup selected convert=... convertBack=... linkTo=...}"');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox button
+
+	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res, ":none:bob:jimUpdated|new-NEW,JIMUPDATED-:none:jimUpdated|",
+		'data-link="{checkboxgroup selected convert=... convertBack=... linkTo=...}" - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected}">'
+		+ '<input type="checkbox" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
+		+ '{^{for people}}'
+			+ '<input type="checkbox" value="{{:name}}" data-link="value^{:name} id{:name + \'Id\'}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "JIM|NEW||new,None-NONE|",
+		'data-link="{checkboxgroup selected}" with labels by for/id');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox button
+
+	res += model.selected + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|new,None,jimUpdated-NONE|",
+		'data-link="{checkboxgroup selected}" with labels by for/id - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":JIM:JIM|:NEW:NEW||new,None-:NONE:NONE|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups with same selected bindings');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|new,None,jimUpdated-:NONE:JIMUPDATED:NONE:JIMUPDATED|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups with same selected bindings - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: ["Jim"],
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||new,Bob-:BOB:BOB|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups with same selected bindings - starting out with no items, so no checkbox buttons');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'<div data-link="{checkboxgroup selected name=\'rad1\'}">'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	+ '<div data-link="{checkboxgroup selected name=\'rad1\'}">'
+		+ '<label><input type="checkbox" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
+	);
+
+	model = {
+		selected: ["Jim"],
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox button
+
+	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
+
+	// ............................... Assert .................................
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||new,Bob-:BOB:BOB|rad1|rad2",
+		'data-link="{checkboxgroup selected}" - name for group can be specified rather than auto-generated - on item or on checkboxgroup tag');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+'{^{if rg1}}'
+	+ '<div data-link="{checkboxgroup selected}">'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
++ '{{/if}}'
++ '{^{if rg2}}'
+	+ '<div data-link="{checkboxgroup selected}">'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+ '</div>'
++ '{{/if}}'
+	);
+
+	model = {
+		rg1: true,
+		rg2: true,
+		selected: ["Jim"],
+		people: []
+	};
+	newName = "newName";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("rg1", false);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - one set to false');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("selected", ["Jim"]);
+
+	$.observable(model).setProperty("rg1", true);
+
+	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - one set back to true');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// ............................... Assert .................................
+	assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}" && !$._data(model).events,
+	 "$(container).empty removes current listeners and two-way bindings");
+	$.views.settings.advanced({_jsv: false}); // For using viewsAndBindings()
 });
 
 QUnit.test('data-link="{tag...}"', function(assert) {
@@ -8036,6 +9066,19 @@ QUnit.test("{^{:expression}}", function(assert) {
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+
+	// =============================== Arrange ===============================
+
+	$.templates("{^{:\"'\" + 1 + '\"' + 2 + '\\' + 3}}")
+		.link("#result");
+
+	// ................................ Act ..................................
+	before = $("#result").text();
+
+	// ............................... Assert .................................
+	assert.equal(before,
+	"'1\"2\\3",
+	"Data link using: {^{:'1\"2\\3}}");
 
 	// =============================== Arrange ===============================
 
@@ -12023,7 +13066,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
@@ -12040,7 +13083,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|",
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||Bob-:BOB:BOB|",
 		'{^{radiogroup selected}} - two radiogroups with same selected bindings - starting out with no items, so no radio buttons');
 
 	// ................................ Reset ................................
@@ -12071,7 +13114,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
@@ -12088,11 +13131,585 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	res += model.selected + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
 
 	// ............................... Assert .................................
-	assert.equal(res, ":NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|||Bob-:BOB:BOB|rad1|rad2",
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||Bob-:BOB:BOB|rad1|rad2",
 		'{^{radiogroup selected}} - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+'{^{if rg1}}'
+	+ '{^{radiogroup selected name="rad1"}}'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
++ '{{/if}}'
++ '{^{if rg2}}'
+	+ '{^{radiogroup selected name="rad1"}}'
+		+ '<label><input type="radio" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="radio" data-link="value{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/radiogroup}}'
++ '{{/if}}'
+	);
+
+	model = {
+		rg1: true,
+		rg2: true,
+		selected: "Jim",
+		people: []
+	};
+	newName = "newName";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "2>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - starting out with no items');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("rg1", false);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - one set to false');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("selected", "Jim");
+
+	$.observable(model).setProperty("rg1", true);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selected", newName);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "2>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - one set back to true');
 
 	// ................................ Reset ................................
 	$("#result").empty();
+
+});
+
+QUnit.test('{^{checkboxgroup}}', function(assert) {
+	$.views.settings.advanced({_jsv: true});
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople}}'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	var model = {
+			selectedPeople: ["Jim"],
+			people: [
+				{name: "Bob"},
+				{name: "Jim"}
+			]
+		},
+		newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selectedPeople", [newName, "Jim"]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.selectedPeople).remove();
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({name: "new"});
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":Jim|:Jim:new|:Jim|new,Jim,Bob-:Bob:Jim|new,Jim-:Jim|new,Jim-:Jim:new|",
+		'{^{checkboxgroup selectedPeople}}{^{for ...}}...<input ... value="{{:name}}">');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	var tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople}}'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selectedPeople", [newName, "Bob"]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":JIM|:BOB:NEW|:BOB|new,Bob,None-:NONE:BOB|",
+		'{^{checkboxgroup selectedPeople}}...<input.../>...{^{for ...}}...<input ... data-link="name">');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|new,Bob,None,jimUpdated-:NONE:BOB:JIMUPDATED|",
+		'{^{checkboxgroup selectedPeople}}...{^{for ...}}...<input ... data-link="name"> - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates({markup:
+		'{^{checkboxgroup selectedPeople convert=~lower convertBack="upper" linkTo=selectedOut}}'
+		+ '<label><input type="checkbox" value="none"/>:none</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}',
+		converters: {
+			upper: function(val) {
+				return val.map(function(x) {return x.toUpperCase();})
+			}
+		}
+	});
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: [
+			{name: "bob"},
+			{name: "jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model, {
+		lower: function(val) {
+			return val.map(function(x) {return x.toLowerCase();})
+		}
+	});
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":jim|:new||new-NEW,NONE-:none|",
+		'{^{checkboxgroup selectedPeople convert=... convertBack=... linkTo=...}}');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox
+
+	res += model.selectedPeople + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res, ":none:bob:jimUpdated|new-NEW,JIMUPDATED-:none:jimUpdated|",
+		'{^{checkboxgroup selectedPeople convert=... convertBack=... linkTo=...}} - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople}}'
+		+ '<input type="checkbox" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
+		+ '{^{for people}}'
+			+ '<input type="checkbox" data-link="value{:name} id{:name + \'Id\'}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "JIM|NEW||new,None-NONE|",
+		'{^{checkboxgroup selectedPeople}} with labels by for/id');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox
+
+	res += model.selectedPeople + "-" + $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
+
+	assert.equal(res, ":NONE:BOB:JIMUPDATED|new,None,jimUpdated-NONE|",
+		'{^{checkboxgroup selectedPeople}} with labels by for/id - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople}}'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	+ '{^{checkboxgroup selectedPeople}}'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: [
+			{name: "Bob"},
+			{name: "Jim"}
+		]
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert({
+		name: newName
+	});
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":JIM:JIM|:NEW:NEW||new,None-:NONE:NONE|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups with same selectedPeople bindings');
+
+	// ............................... Act .................................
+	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+
+	res = $("#result").text() + "|";
+
+	$("#result input").eq(2).prop("checked", true).change(); // Check third checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	assert.equal(res, ":NONE:BOB:JIMUPDATED:NONE:BOB:JIMUPDATED|new,None,jimUpdated-:NONE:JIMUPDATED:NONE:JIMUPDATED|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups with same selected bindings - updated label and value');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople}}'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	+ '{^{checkboxgroup selectedPeople}}'
+		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||new,Bob-:BOB:BOB|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups with same selected bindings - starting out with no items, so no checkboxes');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+		'{^{checkboxgroup selectedPeople name="rad1"}}'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	+ '{^{checkboxgroup selectedPeople name="rad1"}}'
+		+ '<label><input type="checkbox" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
+	);
+
+	model = {
+		selectedPeople: ["Jim"],
+		people: []
+	};
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).remove(2);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	$("#result input").first().prop("checked", true).change(); // Check first checkbox
+
+	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|" + $("#result input:checked")[0].name + "|" + $("#result input:checked")[1].name;
+
+	// ............................... Assert .................................
+	assert.equal(res, ":NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW||new,Bob-:BOB:BOB|rad1|rad2",
+		'{^{checkboxgroup selectedPeople}} - name for group can be specified rather than auto-generated - on item or on checkboxgroup tag');
+
+	// =============================== Arrange ===============================
+	tmpl = $.templates(
+'{^{if rg1}}'
+	+ '{^{checkboxgroup selectedPeople name="rad1"}}'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
++ '{{/if}}'
++ '{^{if rg2}}'
+	+ '{^{checkboxgroup selectedPeople name="rad1"}}'
+		+ '<label><input type="checkbox" value="None" name="rad2"/>:NONE</label>'
+		+ '{^{for people}}'
+			+ '<label><input type="checkbox" data-link="value{:name}" name="rad2"/>:{^{:name^toUpperCase()}}</label>'
+		+ '{{/for}}'
+	+'{{/checkboxgroup}}'
++ '{{/if}}'
+	);
+
+	model = {
+		rg1: true,
+		rg2: true,
+		selectedPeople: ["Jim"],
+		people: []
+	};
+	newName = "new";
+
+	// ............................... Act .................................
+	tmpl.link("#result", model);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "2>:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("rg1", false);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEW|:NEW|:NEW|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - one set to false');
+
+	$.observable(model.people).refresh([]);
+
+	$.observable(model).setProperty("selectedPeople", ["Jim"]);
+
+	$.observable(model).setProperty("rg1", true);
+
+	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
+	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+
+	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+
+	$.observable(model).setProperty("selectedPeople", [newName]);
+
+	res += $("#result input:checked").parent().text() + "|";
+
+	// ............................... Assert .................................
+	assert.equal(res, "2>:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
+		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - one set back to true');
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}", "WHAT");
+	$.views.settings.advanced({_jsv: false});
 
 });
 
@@ -13174,6 +14791,59 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	$.views.settings.advanced({_jsv: false});
 });
 
+QUnit.test("contextual parameter", function(assert) {
+
+	// =============================== Arrange ===============================
+	var teams = [
+		{title: "The A Team", members: [{name: "Jeff"}, {name: "Maria"}]},
+		{title: "The B Team", members: [{name: "Francis"}]}
+	];
+
+	// ................................ Act ..................................
+	$.templates(
+		"{{if members.length ~teamTitle=title ~teamData=#data ~teamIndex=#index}}"
+		+ "{{for members itemVar='~member'}}"
+			+ "{{:~teamTitle}} "
+			+ "{{:~teamData.title}} "
+			+ "{{:~teamIndex}} "
+			+ "{{:~member.name}} "
+		+ "{{/for}}"
+	+ "{{/if}}"
+	).link("#result", teams);
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(),
+		"The A Team The A Team 0 Jeff The A Team The A Team 0 Maria The B Team The B Team 1 Francis ",
+		"contextual parameter passing to inner context");
+
+	// =============================== Arrange ===============================
+	var ct = 1;
+
+	// ................................ Act ..................................
+	$.templates("{^{include ~f=~hlp('foo') }}{^{:~f}}{{/include}}").link("#result", {}, {
+		hlp: function() {
+			return ct++;
+		}
+	});
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(),
+		"1",
+		"contextual parameter function (with quotes) is cached and called only once");
+	// See https://github.com/BorisMoore/jsviews/issues/440#issuecomment-660853490
+
+	// ................................ Act ..................................
+	$.templates("{^{if 1 ~a='A'+\"B\"+'\"'+\"'\"+\"\\'\"}}{^{:'Inner'+~a}}{{/if}}").link("#result");
+
+	// ............................... Assert .................................
+	assert.equal($("#result").text(),
+		"InnerAB\"'\\'",
+		"contextual parameter correctly escaping quotes and backslash");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+});
+
 QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	// =============================== Arrange ===============================
 
@@ -13249,7 +14919,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 
-// =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 
 	var things = [
 		{
@@ -13286,7 +14956,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 
-// =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 
 	var things = [
 		{
@@ -14167,7 +15837,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	$(".wrap2").find("li:first").css("color", "red");
 	$(".wrap3").find("li:nth-of-type(2)").css("color", "red");
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
@@ -14176,7 +15846,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(1,0,2,3,4),
 		'moved one item from 0 to 1');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
@@ -14185,7 +15855,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'moved one item from 0  to 1 again (actually swaps back to orginal positions');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0);
 
 	// ............................... Assert .................................
@@ -14194,7 +15864,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(1,0,2,3,4),
 		'moved one item back from 1 to 0');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0); // Return to original position
 	move(1, 0, 0);
 
@@ -14204,7 +15874,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'move(1, 0, 0) does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 1);
 
 	// ............................... Assert .................................
@@ -14213,7 +15883,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'move(1, 1) does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1, 2);
 
 	// ............................... Assert .................................
@@ -14222,7 +15892,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,0,1,3,4),
 		'move(0, 1, 2) moves 2 items');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1, 4);
 
 	// ............................... Assert .................................
@@ -14231,7 +15901,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(4,2,0,1,3),
 		'move(0, 1, 4) moves 4 items');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0, 4);
 
 	// ............................... Assert .................................
@@ -14240,7 +15910,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,0,1,3,4),
 		'move(1, 0, 4) moves back 4 items');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1, 5);
 
 	// ............................... Assert .................................
@@ -14249,7 +15919,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,0,1,3,4),
 		'move(0, 1, 5): moving more than total items does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 2, 4);
 
 	// ............................... Assert .................................
@@ -14258,7 +15928,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,0,1,3,4),
 		'move(1, 2, 4): moving up items beyond last item does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(2, 1, 8);
 
 	// ............................... Assert .................................
@@ -14267,7 +15937,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,1,3,4,0),
 		'move(2, 1, 8): moving back items from beyond last item will move just the existing ones');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	remove(1,1);
 
 	// ............................... Assert .................................
@@ -14276,7 +15946,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,3,4,0),
 		'remove(1,1): works correctly');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	remove(0);
 
 	// ............................... Assert .................................
@@ -14285,7 +15955,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(3,4,0),
 		'remove(0): works correctly');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(2, 0);
 
 	// ............................... Assert .................................
@@ -14294,7 +15964,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,3,4),
 		'move(2, 0): works correctly');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	remove(2);
 	move(0,1,2);
 	insert(0, 2);
@@ -14390,7 +16060,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	$(".wrap2").find("li:first").css("color", "red");
 	$(".wrap3").find("li:nth-of-type(2)").css("color", "red");
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
@@ -14399,7 +16069,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(1,0,2,3,4),
 		'Complex template: moved one item from 0 to 1');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1);
 
 	// ............................... Assert .................................
@@ -14408,7 +16078,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'Complex template: moved one item from 0  to 1 again (actually swaps back to orginal positions');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0);
 
 	// ............................... Assert .................................
@@ -14417,7 +16087,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(1,0,2,3,4),
 		'Complex template: moved one item back from 1 to 0');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0); // Return to original position
 	move(1, 0, 0);
 
@@ -14427,7 +16097,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'Complex template: move(1, 0, 0) does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 1);
 
 	// ............................... Assert .................................
@@ -14436,7 +16106,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(0,1,2,3,4),
 		'Complex template: move(1, 1) does nothing');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1, 2);
 
 	// ............................... Assert .................................
@@ -14445,7 +16115,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(2,0,1,3,4),
 		'Complex template: move(0, 1, 2) moves 2 items');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(0, 1, 4);
 
 	// ............................... Assert .................................
@@ -14454,7 +16124,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 		current(4,2,0,1,3),
 		'Complex template: move(0, 1, 4) moves 4 items');
 
-// ................................ Act ..................................
+	// ................................ Act ..................................
 	move(1, 0, 4);
 
 	// ............................... Assert .................................
@@ -22042,7 +23712,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		"0,updatedLast2|0,updatedLast2|0,updatedFirst2--updatedFirst2,updatedLast2|updatedFirst2,updatedLast2|updatedLast2,updatedFirst2",
 	"Two-way tag with multiple bindings and multiple else blocks - calls to tag.cvtArgs(), tagCtx.cvtArgs() tag.bndArgs() tagCtx.bndArgs() work correctly");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22363,7 +24033,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "JoBlowJoBlow|JeffBlyeJeffBlye|PeteBlyePeteBlye|PeteBainsPeteBains|JimBainsJimBains|JimBanksJimBanks",
 	"Two-way tag, no template: setting tag.linkedElem(s) and tagCtx|displayElem|mainElem in onBind lead to correct 2-way binding, on inputs in wrapped content");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22454,7 +24124,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "cur2-updated2:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): update() updates bindTo target (variant)");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22545,7 +24215,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "cur2-updated2:setval2",
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target (variant)");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22643,7 +24313,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "cur2-updated2:setval2",
 	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): update() updates bindTo target (variant)");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22734,7 +24404,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "cur2-updated2:set1-setval2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): update() updates bindTo target (variant)");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -22836,7 +24506,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(ret, "cur2-updateMod3V-updateTitle3O:setval3V0-setval2V2",
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: update() updates bindTo target (variant)");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
@@ -22982,7 +24652,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(getRet(), "from1|upd1B|from2|upd2B|el1|set1|el2|set2",
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): setValues {{else}}");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -23041,7 +24711,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(data.arrA[0].val + data.objA2['0'].val + data.objA3.x.val + data.objA4.x.val + data.arrB[0].val + data.objB2['0'].val + data.objB3.x.val + data.objB4.x.val + data.arrC[0].val + data.objC2['0'].val + data.objC3.x.val + data.objC4.x.val + data.arrD[0].val + data.objD2['0'].val + data.objD3.x.val + data.objD4.x.val,
 		"more1more2more3more4more5more6more7more8new9new10new11new12new13new14new15new16", "updateValues() binds to paths with [...].val accessors");
 
-// ............................... Reset .................................
+	// ............................... Reset .................................
 
 	$("#result").empty();
 
@@ -23172,10 +24842,395 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	assert.equal(mytag.tagCtx.props.prop + "|" + mytag.tagCtx.props.prop2,
 		"newProp|newProp2", "Changing prop triggers changing other prop - works as expected");
 
-// ............................... Reset .................................
-
+	// ............................... Reset .................................
 	$("#result").empty();
 	$.views.settings.trigger(true);
+});
+
+QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties', function(assert) {
+
+	// =============================== Arrange ===============================
+	var model = {title: "t", val: "v", mode: "m", arr: ["a", "b", "c"], items: ["a", "b", "c", "d"]};
+	var cvt, cvtBk;
+
+	res = "";
+	cvt = function(arr, val, title, mode) {
+		var ret = [arr, val, title, mode];
+		return ret;
+	}
+	cvtBk = function(arr, val, title) {
+		var ret = [arr, val, title];
+		return ret;
+	}
+
+	$.templates({
+		markup: 
+	'<input data-link="val" /><input data-link="title" /><input data-link="mode" /><br/>'
++ '{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
++ '{^{for items}}<label><input name="sports" type="checkbox" value="{{:}}"data-link="{same:~root.arr:same}" /> {{:}}</label><br/>{{/for}}<br/>'
++ '<select multiple data-link="{same:arr:same}">{^{for items}}<option>{{:}}</option>{{/for}}</select><br/>'
++ '{^{mytag arr val title=title mode=mode/}}',
+		tags: {
+			mytag: {
+				onUpdate: false,
+				bindTo: [0, 1, "title"],
+				bindFrom: [0, 1, "title", "mode"],
+				linkedElement: [".multi", undefined, ".title"],
+				linkedCtxParam: [undefined, "sel", undefined, "mode"],
+				template: "<select multiple class='multi'><option value='a'>a</option><option value='b'>b</option><option value='c'>c</option><option value='d'>d</option></select>"
+							+ "<input class='sel' data-link='~sel'/><input class='title' />{^{:~mode}}",
+				convert: "from",
+				convertBack: "to"
+			}
+		},
+		converters: {
+			from: function(arr, val, title, mode) {
+				return cvt(arr, val, title, mode);
+			},
+			to: function(arr, val, title) {
+				return cvtBk(arr, val, title);
+			},
+			same: function(val) {
+				return val;
+			}
+		}
+	}).link("#result", model);
+
+	function getSelection() {
+		res += $("#result select option:selected").text() + "-" + $("#result input:checked").parent().text() + ":" + model.arr + ":" + model.val + ":" + model.title + ":" + model.mode + "|";
+	}
+
+	getSelection();
+	$("#result select").eq(0).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$("#result select").eq(0).val([]).change();
+	getSelection();
+	$("#result input:checkbox").eq(0).prop("checked", true).change(); // Check first checkbox button of {{checkboxgroup}}
+	getSelection();
+	$("#result input:checkbox").eq(6).prop("checked", true).change(); // Check third checkbox button of direct data-linked group
+	getSelection();
+	$("#result select").eq(1).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$.observable(model.arr).refresh(["d", "b"]);
+	getSelection();
+	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	getSelection();
+	$("#result input").eq(0).val("newVal").trigger("input");
+	getSelection();
+	$("#result input").eq(1).val("newTitle").trigger("input");
+	getSelection();
+	$("#result input").eq(2).val("newMode").trigger("input");
+	getSelection();
+	$("#result .sel").val("newVal2").trigger("input");
+	getSelection();
+	$("#result .title").val("newTitle2").trigger("input");
+	getSelection();
+
+	// ............................... Assert .................................
+	assert.equal(res, "abcabc- a b c a b c:a,b,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|abcabc- a b c a b c:a,b,c:v:t:m|"
+	+ "abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|-::v:t:m|aa- a a:a:v:t:m|acac- a c a c:a,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|"
+	+ "abcabc- a b c a b c:a,b,c:v:t:m|abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|bdbd- b d b d:d,b:v:t:m|abcabc- a b c a b c:c,a,b:v:t:m|"
+	+ "abcabc- a b c a b c:c,a,b:newVal:t:m|abcabc- a b c a b c:c,a,b:newVal:newTitle:m|abcabc- a b c a b c:c,a,b:newVal:newTitle:newMode|"
+	+ "abcabc- a b c a b c:c,a,b:newVal2:newTitle:newMode|abcabc- a b c a b c:c,a,b:newVal2:newTitle2:newMode|",
+		"Return aray of params");
+
+	// ............................... Reset .................................
+	model.title = "t";
+	model.val = "v";
+	model.mode = "m";
+	model.arr = ["a", "b", "c"];
+	model.items = ["a", "b", "c", "d"];
+	res = "";
+
+	// =============================== Arrange ===============================
+	cvt = function(arr, val, title, mode) {
+		var ret = [arr, val, title, mode, 1];
+		ret.arg0 = false;
+		return ret;
+	}
+	cvtBk = function(arr, val, title) {
+		var ret = [arr, val, title, 2];
+		ret.arg0 = false;
+		return ret;
+	}
+
+	getSelection();
+	$("#result select").eq(0).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$("#result select").eq(0).val([]).change();
+	getSelection();
+	$("#result input:checkbox").eq(0).prop("checked", true).change(); // Check first checkbox button of {{checkboxgroup}}
+	getSelection();
+	$("#result input:checkbox").eq(6).prop("checked", true).change(); // Check third checkbox button of direct data-linked group
+	getSelection();
+	$("#result select").eq(1).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$.observable(model.arr).refresh(["d", "b"]);
+	getSelection();
+	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	getSelection();
+	$("#result input").eq(0).val("newVal").trigger("input");
+	getSelection();
+	$("#result input").eq(1).val("newTitle").trigger("input");
+	getSelection();
+	$("#result input").eq(2).val("newMode").trigger("input");
+	getSelection();
+	$("#result .sel").val("newVal2").trigger("input");
+	getSelection();
+	$("#result .title").val("newTitle2").trigger("input");
+	getSelection();
+
+	// ............................... Assert .................................
+	assert.equal(res, "abcabc- a b c a b c:a,b,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|abcabc- a b c a b c:a,b,c:v:t:m|"
+	+ "abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|-::v:t:m|aa- a a:a:v:t:m|acac- a c a c:a,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|"
+	+ "abcabc- a b c a b c:a,b,c:v:t:m|abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|bdbd- b d b d:d,b:v:t:m|abcabc- a b c a b c:c,a,b:v:t:m|"
+	+ "abcabc- a b c a b c:c,a,b:newVal:t:m|abcabc- a b c a b c:c,a,b:newVal:newTitle:m|abcabc- a b c a b c:c,a,b:newVal:newTitle:newMode|"
+	+ "abcabc- a b c a b c:c,a,b:newVal2:newTitle:newMode|abcabc- a b c a b c:c,a,b:newVal2:newTitle2:newMode|",
+		"Return array of wrong size, with arg0 flag false");
+
+	// ............................... Reset .................................
+	model.title = "t";
+	model.val = "v";
+	model.mode = "m";
+	model.arr = ["a", "b", "c"];
+	model.items = ["a", "b", "c", "d"];
+	res = "";
+
+	// =============================== Arrange ===============================
+
+	cvt = function(arr, val, title, mode) {
+		arr.arg0 = true;
+		return arr;
+	}
+	cvtBk = function(arr, val, title) {
+		arr.arg0 = true;
+		return arr;
+	}
+
+	getSelection();
+	$("#result select").eq(0).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$("#result select").eq(0).val([]).change();
+	getSelection();
+	$("#result input:checkbox").eq(0).prop("checked", true).change(); // Check first checkbox button of {{checkboxgroup}}
+	getSelection();
+	$("#result input:checkbox").eq(6).prop("checked", true).change(); // Check third checkbox button of direct data-linked group
+	getSelection();
+	$("#result select").eq(1).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$.observable(model.arr).refresh(["d", "b"]);
+	getSelection();
+	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	getSelection();
+
+	// ............................... Assert .................................
+	assert.equal(res, "abcabc- a b c a b c:a,b,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|abcabc- a b c a b c:a,b,c:v:t:m|"
+	+ "abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|-::v:t:m|aa- a a:a:v:t:m|acac- a c a c:a,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|"
+	+ "abcabc- a b c a b c:a,b,c:v:t:m|abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|bdbd- b d b d:d,b:v:t:m|abcabc- a b c a b c:c,a,b:v:t:m|",
+		"Return just first param, an array, with arg0 flag true");
+
+	// ............................... Reset .................................
+	model.title = "t";
+	model.val = "v";
+	model.mode = "m";
+	model.arr = ["a", "b", "c"];
+	model.items = ["a", "b", "c", "d"];
+	res = "";
+
+	// =============================== Arrange ===============================
+
+	cvt = function(arr) {
+		return arr;
+	}
+	cvtBk = function(arr) {
+		return arr;
+	}
+
+	$.templates({
+		markup: 
+	'{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
++ '{^{for items}}<label><input name="sports" type="checkbox" value="{{:}}"data-link="{same:~root.arr:same}" /> {{:}}</label><br/>{{/for}}<br/>'
++ '<select multiple data-link="{same:arr:same}">{^{for items}}<option>{{:}}</option>{{/for}}</select><br/>'
++ '{^{mytag arr convert="from" convertBack="to"/}}',
+		tags: {
+			mytag: {
+				onUpdate: false,
+				linkedElement: [".multi"],
+				template: "<select multiple class='multi'><option value='a'>a</option><option value='b'>b</option><option value='c'>c</option><option value='d'>d</option></select>",
+			}
+		},
+		converters: {
+			from: function(arr, val, title, mode) {
+				return cvt(arr, val, title, mode);
+			},
+			to: function(arr, val, title) {
+				return cvtBk(arr, val, title);
+			},
+			same: function(val) {
+				return val;
+			}
+		}
+	}).link("#result", model);
+
+	getSelection();
+	$("#result select").eq(0).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$("#result select").eq(0).val([]).change();
+	getSelection();
+	$("#result input:checkbox").eq(0).prop("checked", true).change(); // Check first checkbox button of {{checkboxgroup}}
+	getSelection();
+	$("#result input:checkbox").eq(6).prop("checked", true).change(); // Check third checkbox button of direct data-linked group
+	getSelection();
+	$("#result select").eq(1).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$.observable(model.arr).refresh(["d", "b"]);
+	getSelection();
+	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	getSelection();
+
+	// ............................... Assert .................................
+	assert.equal(res, "abcabc- a b c a b c:a,b,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|abcabc- a b c a b c:a,b,c:v:t:m|"
++ "abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|-::v:t:m|aa- a a:a:v:t:m|acac- a c a c:a,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|"
++ "abcabc- a b c a b c:a,b,c:v:t:m|abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|bdbd- b d b d:d,b:v:t:m|abcabc- a b c a b c:c,a,b:v:t:m|",
+	"Only one array param");
+
+	// ............................... Reset .................................
+	model.title = "t";
+	model.val = "v";
+	model.mode = "m";
+	model.arr = ["a", "b", "c"];
+	model.items = ["a", "b", "c", "d"];
+	res = "";
+
+	// =============================== Arrange ===============================
+	cvt = function(arr) {
+		return arr;
+	}
+	cvtBk = function(arr) {
+		return arr;
+	}
+
+	$.templates({
+		markup: 
+	'{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
++ '{^{for items}}<label><input name="sports" type="checkbox" value="{{:}}"data-link="{same:~root.arr:same}" /> {{:}}</label><br/>{{/for}}<br/>'
++ '<select multiple data-link="{same:arr:same}">{^{for items}}<option>{{:}}</option>{{/for}}</select><br/>'
++ '{^{mytag arr convert="from" convertBack="to"/}}',
+		tags: {
+			mytag: {
+				mainElement: ".multi",
+				onUpdate: false,
+				onBind: function(tagCtx) {
+					var tag = this;
+					tagCtx.mainElem.on("change", function(ev) {
+						var selected = Array.apply(null, ev.target.selectedOptions).map(function(el) { return el.value; });
+						tag.updateValues(selected);
+						ev.preventDefault();
+					});
+				},
+				setValue: function(value) {
+					this.tagCtx.mainElem.val(value);
+				},
+				template: "<select multiple class='multi'><option value='a'>a</option><option value='b'>b</option><option value='c'>c</option><option value='d'>d</option></select>",
+			}
+		},
+		converters: {
+			from: function(arr, val, title, mode) {
+				return cvt(arr, val, title, mode);
+			},
+			to: function(arr, val, title) {
+				return cvtBk(arr, val, title);
+			},
+			same: function(val) {
+				return val;
+			}
+		}
+	}).link("#result", model);
+
+	getSelection();
+	$("#result select").eq(0).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(0).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$("#result select").eq(0).val([]).change();
+	getSelection();
+	$("#result input:checkbox").eq(0).prop("checked", true).change(); // Check first checkbox button of {{checkboxgroup}}
+	getSelection();
+	$("#result input:checkbox").eq(6).prop("checked", true).change(); // Check third checkbox button of direct data-linked group
+	getSelection();
+	$("#result select").eq(1).val(["a"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c"]).change();
+	getSelection();
+	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
+	getSelection();
+	$.observable(model.arr).refresh(["d", "b"]);
+	getSelection();
+	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	getSelection();
+
+	// ............................... Assert .................................
+	assert.equal(res, "abcabc- a b c a b c:a,b,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|abcabc- a b c a b c:a,b,c:v:t:m|"
++ "abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|-::v:t:m|aa- a a:a:v:t:m|acac- a c a c:a,c:v:t:m|aa- a a:a:v:t:m|abab- a b a b:a,b:v:t:m|"
++ "abcabc- a b c a b c:a,b,c:v:t:m|abcdabcd- a b c d a b c d:a,b,c,d:v:t:m|bdbd- b d b d:d,b:v:t:m|abcabc- a b c a b c:c,a,b:v:t:m|",
+	"Programmatic, with only one array param");
+
+	// ............................... Reset .................................
+	$("#result").empty();
 });
 
 QUnit.test("Tag control events", function(assert) {
@@ -23277,7 +25332,7 @@ QUnit.test("Tag control events", function(assert) {
 	model.things = [];
 	eventData = "";
 
-// =============================== Arrange ===============================
+	// =============================== Arrange ===============================
 	eventData = "";
 	model.things = [{thing: "box"}]; // reset Prop
 
