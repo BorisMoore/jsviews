@@ -1,4 +1,4 @@
-/*! JsObservable v1.0.8: http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.9: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "jquery.observable.js requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.8",
+var versionNumber = "v1.0.9",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 
