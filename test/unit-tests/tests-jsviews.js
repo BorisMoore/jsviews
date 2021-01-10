@@ -6125,6 +6125,144 @@ QUnit.test("Computed observables in paths", function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 
+	// =============================== Arrange ===============================
+
+	function name() {
+		return this._name;
+	}
+
+	name.set = function(val) {
+		this._name = val;
+	}
+	var data = {
+			_name: "Bob",
+			name: name,
+			a: function() { return this; }
+		},
+		hlprs = {
+
+			util: {
+				myFn: function() {
+				return "myFn";
+			},
+			_name: "Fred",
+			myname: name
+		}
+	};
+
+	var tmpl = $.templates('<input data-link="name()" /><input data-link="a().name()" /><input data-link="~util.myFn()" /><input data-link="~util.myname()" /><input data-link="~util.myname()" />');
+	tmpl.link("#result", data, hlprs);
+
+	var inputs = $("#result input"),
+		i, j;
+
+	// ................................ Act ..................................
+
+	res = "";
+	for (i=0; i<5; i++) {
+		$(inputs[i]).val(inputs[i].value + "X").trigger("input");
+		res += "|";
+		for (j=0; j<5; j++) {
+			res += inputs[j].value + " ";
+		}
+	}
+
+	assert.equal(res, "|BobX BobX myFn Fred Fred |BobXX BobXX myFn Fred Fred |BobXX BobXX myFnX Fred Fred |BobXX BobXX myFnX FredX FredX |BobXX BobXX myFnX FredXX FredXX ",
+		"computed functions with setters");
+
+	// =============================== Arrange ===============================
+
+		// See https://github.com/BorisMoore/jsviews/issues/451
+		name.set = undefined;
+		data._name = "Bob";
+		hlprs.util._name = "Fred";
+
+	tmpl.link("#result", data, hlprs);
+
+	res = "";
+
+	// ................................ Act ..................................
+
+	for (i=0; i<5; i++) {
+		$(inputs[i]).val(inputs[i].value + "X").trigger("input");
+		res += "|";
+		for (j=0; j<5; j++) {
+			res += inputs[j].value + " ";
+		}
+	}
+
+	assert.equal(res, "|BobXXX BobXX myFnX FredXX FredXX |BobXXX BobXXX myFnX FredXX FredXX |BobXXX BobXXX myFnXX FredXX FredXX |BobXXX BobXXX myFnXX FredXXX FredXX |BobXXX BobXXX myFnXX FredXXX FredXXX ",
+		"Computed functions with no setters (2way binding is now a noop)");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+	res = "";
+
+	// =============================== Arrange ===============================
+
+	res = "";
+
+	function name() {
+		return this._name;
+	}
+
+	name.set = function(val) {
+		this._name = val;
+	}
+
+	data = {
+		name: name,
+		_name: "Bob"
+	};
+
+	$.views.tags({
+		tag1: {
+			template: '<div>{^{:~arg1}}</div><input data-link="~arg1"/>',
+			bindTo: [0],
+			linkedCtxParam: ["arg1"],
+			onBind: function() {
+				res += ("tag1.onBind ");
+			},
+			onUnbind: function() {
+				res += ("tag1.onUnbind ");
+			},
+			onUpdate: true
+		}
+	});
+	tmpl = $.templates("{^{tag1 name()/}}");
+	tmpl.link("#result", data);
+
+	// ................................ Act ..................................
+
+	var $input = $("#result input");
+	$input.val($input[0].value + "X").trigger("input");
+	res += $input[0].value + " " + $("#result").text() + " ";
+
+	assert.equal(res, "tag1.onBind BobX BobX ",
+		"computed functions, with linkedCtxParam & setters");
+
+	// =============================== Arrange ===============================
+
+	res = "";
+	// See https://github.com/BorisMoore/jsviews/issues/451
+	name.set = undefined;
+	data._name = "Bob";
+
+	tmpl.link("#result", data);
+
+	// ................................ Act ..................................
+
+	$input = $("#result input"),
+	$input.val($input[0].value + "X").trigger("input");
+	res += $input[0].value + " " + $("#result").text() + " ";
+
+	assert.equal(res, "tag1.onUnbind tag1.onBind BobX Bob ",
+		"computed functions with linkedCtxParam & without setters (2way binding is now a noop)");
+
+	// ................................ Reset ................................
+	$("#result").empty();
+
+
 	$.views.settings.advanced({_jsv: false});
 });
 

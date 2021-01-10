@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.9 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.10 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -6,7 +6,7 @@
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsRender >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsRender:
  * See http://jsviews.com/#jsrender and http://github.com/BorisMoore/jsrender
- * Copyright 2020, Boris Moore
+ * Copyright 2021, Boris Moore
  * Released under the MIT License.
  */
 
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.9",
+var versionNumber = "v1.0.10",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
@@ -2235,7 +2235,8 @@ function parseParams(params, pathBindings, tmpl, isLinkExpr) {
 			}
 			if (rtPrnDot && bindings) {
 				// This is a binding to a path in which an object is returned by a helper/data function/expression, e.g. foo()^x.y or (a?b:c)^x.y
-				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes, to return the new object, and trigger re-binding of the subsequent path)
+				// We create a compiled function to get the object instance (which will be called when the dependent data of the subexpression changes,
+				// to return the new object, and trigger re-binding of the subsequent path)
 				expr = pathStart[fnDp-1];
 				if (full.length - 1 > ind - (expr || 0)) { // We need to compile a subexpression
 					expr = $.trim(full.slice(expr, ind + all.length));
@@ -3021,7 +3022,7 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsObservable >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsObservable:
  * See https://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
- * Copyright 2020, Boris Moore
+ * Copyright 2021, Boris Moore
  * Released under the MIT License.
  */
 
@@ -3847,7 +3848,7 @@ if (!$.observe) {
 			return this._data;
 		},
 
-		setProperty: function(path, value, nonStrict) {
+		setProperty: function(path, value, nonStrict, isCpfn) {
 			path = path || "";
 			var key, pair, parts, tempBatch,
 				multi = path + "" !== path, // Hash of paths
@@ -3887,7 +3888,7 @@ if (!$.observe) {
 						object = object[parts.shift()];
 					}
 					if (object) {
-						self._setProperty(object, parts[0], value, nonStrict);
+						self._setProperty(object, parts[0], value, nonStrict, isCpfn);
 					}
 				}
 			}
@@ -3899,12 +3900,13 @@ if (!$.observe) {
 			return this;
 		},
 
-		_setProperty: function(leaf, path, value, nonStrict) {
+		_setProperty: function(leaf, path, value, nonStrict, isCpfn) {
 			var setter, getter, removeProp, eventArgs, view,
 				property = path ? leaf[path] : leaf;
-
-			if (property !== value || nonStrict && property != value) {
-				if ($isFunction(property) && property.set) {
+			if ($isFunction(property) && !$isFunction(value)) {
+				if (isCpfn && !property.set) {
+					return; // getter function with no setter defined. So will not trigger update
+				}	else if (property.set) {
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
 					view = leaf._vw // Case of JsViews 2-way data-linking to an observable context parameter, with a setter.
 						// The view will be the this pointer for getter and setter. Note: this is the one scenario where path is "".
@@ -3914,7 +3916,8 @@ if (!$.observe) {
 					property = getter.call(view); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function.
 					// See unit tests 'Can observe properties of type function'.
 				}
-
+			}
+			if (property !== value || nonStrict && property != value) {
 				// Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
 				// Date objects don't support != comparison. Treat as special case.
 				if (!(property instanceof Date && value instanceof Date) || property > value || property < value) {
@@ -4308,7 +4311,7 @@ if (!$.observe) {
 /* JsViews:
  * Interactive data-driven views using templates and data-linking.
  * See https://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
- * Copyright 2020, Boris Moore
+ * Copyright 2021, Boris Moore
  * Released under the MIT License.
  */
 
@@ -4519,7 +4522,7 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 								exprOb = exprOb.sb;
 							}
 						}
-						$observable(target, async).setProperty(to[1], sourceValue); // 2way binding change event - observably updating bound object
+						$observable(target, async).setProperty(to[1], sourceValue, undefined, to.isCpfn); // 2way binding change event - observably updating bound object
 					}
 				}
 			}
@@ -6381,7 +6384,7 @@ function defineBindToDataTargets(binding, tag, cvtBk) {
 	// we bind to the path on the returned object, exprOb.ob, as target. Otherwise our target is the first path, paths[0], which we will convert
 	// with contextCb() for paths like ~a.b.c or #x.y.z
 
-	var pathIndex, path, lastPath, bindtoOb, to, bindTo, paths, k, obsCtxPrm, linkedCtxParam, contextCb, targetPaths, bindTos, fromIndex,
+	var pathIndex, path, lastPath, bindtoOb, to, bindTo, paths, k, obsCtxPrm, linkedCtxParam, contextCb, targetPaths, bindTos, fromIndex, isCpfn,
 		tagElse = 1,
 		tos = [],
 		linkCtx = binding.linkCtx,
@@ -6419,11 +6422,12 @@ function defineBindToDataTargets(binding, tag, cvtBk) {
 								path = lastPath = lastPath.sb;
 							}
 							path = lastPath.sb || path && path.path;
+							isCpfn = lastPath._cpfn && !lastPath.sb; // leaf binding to computed property/function "a.b.c()"
 							lastPath = path ? path.slice(1) : bindtoOb.path;
 						}
 						to = path
 							? [bindtoOb, // 'exprOb' for this expression and view-binding. So bindtoOb.ob is current object returned by expression.
-									lastPath]
+								lastPath]
 							: resolveDataTargetPath(lastPath, source, contextCb); // Get 'to' for target path: lastPath
 					} else {
 						// Contextual parameter ~foo with no external binding - has ctx.foo = [{_ocp: xxx}] and binds to ctx.foo._ocp
@@ -6439,6 +6443,7 @@ function defineBindToDataTargets(binding, tag, cvtBk) {
 						// This is a binding for a tag contextual parameter (e.g. <input data-link="~wd"/> within a tag block content
 						to = obsCtxPrm;
 					}
+					to.isCpfn = isCpfn;
 					bindTos.unshift(to);
 				}
 			}
@@ -6983,7 +6988,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 				indexFrom = indexFrom || 0;
 				tagElse = tagElse || 0;
 
-				var linkedElem, linkedEl, linkedCtxParam, linkedCtxPrmKey, indexTo, linkedElems, newVal,
+				var linkedElem, linkedEl, linkedCtxParam, indexTo, linkedElems, newVal,
 					tagCtx = theTag.tagCtxs[tagElse];
 
 				if (tagCtx._bdArgs && (eventArgs || val !== undefined) && tagCtx._bdArgs[indexFrom]===val
@@ -7004,12 +7009,10 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 					}
 				}
 
-				if (val !== undefined && (linkedCtxParam = theTag.linkedCtxParam) && linkedCtxParam[indexFrom]
+				if (val !== undefined && (linkedCtxParam = theTag.linkedCtxParam) && linkedCtxParam[indexFrom]) {
 						// If this setValue call corresponds to a tag contextual parameter and the tag has a converter, then we need to set the
 						// value of this contextual parameter (since it is not directly bound to the tag argument/property when there is a converter).
-						&& (linkedCtxPrmKey = linkedCtxParam[indexFrom])
-					) {
-					tagCtx.ctxPrm(linkedCtxPrmKey, val);
+					tagCtx.ctxPrm(linkedCtxParam[indexFrom], val);
 				}
 				indexTo = theTag._.toIndex[indexFrom];
 				if (indexTo !== undefined) {
