@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.10: http://jsviews.com/ */
+/*! jquery.views.js v1.0.11: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.10",
+var versionNumber = "v1.0.11",
 	requiresStr = "jquery.views.js requires ";
 
 if (!$ || !$.fn) {
@@ -1286,15 +1286,13 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 						if (deferChar === "+") {
 							if (deferPath.charAt(j) === "-") {
 								j--;
-								targetParent = targetParent.previousSibling;
+								targetParent = targetParent.previousElementSibling; // IE9 or later only
 							} else {
 								targetParent = targetParent.parentNode;
 							}
 						} else {
-							targetParent = targetParent.lastChild;
+							targetParent = targetParent.lastElementChild; // IE9 or later only
 						}
-						// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
-						// since we have removed white space within elCnt. Hence support IE < 9
 					}
 				}
 				if (bindChar === "^") {

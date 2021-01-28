@@ -5,8 +5,10 @@
 /* Setup */
 var inputOrKeydownContentEditable,
 	useInput = "oninput" in document,
-	inputOrKeydown = useInput ? "input" : "keydown";
-	inputOrKeydownContentEditable = "input";
+	inputOrKeydown = useInput ? "input" : "keydown",
+	isIE = window.navigator.userAgent;
+	isIE = isIE.indexOf('MSIE ')>0 || isIE.indexOf('Trident/')>0;
+	inputOrKeydownContentEditable = isIE ? "keydown" : "input";
 
 function keydown(elem) {
 	if (useInput) {
@@ -1292,7 +1294,8 @@ QUnit.test("Top-level linking", function(assert) {
 });
 
 QUnit.test("$.link() and $().link() variants", function(assert) {
-	var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
@@ -1969,7 +1972,8 @@ setTimeout(function() {
 	// ................................ Reset ................................
 	$.views.settings.advanced({_jsv: false});
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 }, 0);
@@ -1993,7 +1997,8 @@ done();
 QUnit.module("template.link()");
 
 QUnit.test("Helper overriding", function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Reset ................................
 	home1.address = address1; // reset Prop
@@ -2197,14 +2202,16 @@ setTimeout(function() {
 	});
 	$("#result").empty();
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 }, 0);
 });
 
 QUnit.test('data-link="expression"', function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Reset ................................
 	home1.address = address1; // reset Prop
@@ -2588,7 +2595,8 @@ setTimeout(function() {
 
 	$.views.settings.advanced({_jsv: false});
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 });
 
@@ -3266,7 +3274,8 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 QUnit.test('data-link="{cvt:expression:cvtBack}"', function(assert) {
 
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 	// ................................ Reset ................................
 	$("#result").empty();
 	person1._firstName = "Jo"; // reset Prop
@@ -3413,7 +3422,7 @@ setTimeout(function() {
 	$("#result").empty();
 	person1.lastName = "One"; // reset Prop
 
-done();
+	if (assert.async) { done() } else { start() }
 
 }, 0);
 }, 0);
@@ -3424,7 +3433,8 @@ done();
 
 QUnit.test('Two-way binding', function(assert) {
 
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 	// =============================== Arrange ===============================
 	var tmpl = $.templates('<input data-link="address.street"/><div data-link="address.street"></div>');
 
@@ -4305,7 +4315,8 @@ setTimeout(function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 
@@ -5780,19 +5791,29 @@ QUnit.test("Computed observables in paths", function(assert) {
 	+ " {{/for}}</table>");
 
 	// ............................... Assert .................................
-	testTemplate("deep table",
-	"<table>{^{for items}}"
-		+ "<tbody><tr><td>{{:name}}</td></tr></tbody>"
-		+ "<tbody class='groupdata'>"
-			+ "{^{for ~getItems(expanded) ~row=row}}"
-				+ "<tr>"
-					+ "<td>{{:~row}}{{:#data}}</td>"
-				+ "</tr>"
-			+ "{{/for}}"
-		+ "</tbody>"
-	+ " {{/for}}</table>");
+	testTemplate("deep div2 with comments", // See https://github.com/BorisMoore/jsviews/issues/452
+	"<!-- comment1 -->{^{for items}}<!-- comment1 -->"
+		+ "<span><!-- comment1 -->{{:name}}<!-- comment1 --></span><!-- comment1 -->"
+		+ "<div><div><!-- comment1 -->{^{for ~getItems(expanded) ~row=row}}<!-- comment1 -->"
+			+ "<!-- comment1 --><span><!-- comment1 --></span><!-- comment1 -->"
+			+ "<span class='groupdata'><!-- comment1 -->{{:~row}}<!-- comment1 -->{{:#data}}<!-- comment1 --></span><!-- comment1 -->"
+		+ "{{/for}}<!-- comment1 --><div><!-- comment1 --></div><!-- comment1 --></div><!-- comment1 --></div><!-- comment1 -->"
+	+ "{{/for}}<!-- comment1 -->");
 
-	// =============================== Arrange ===============================
+	// ............................... Assert .................................
+	testTemplate("deep table with comments", // See https://github.com/BorisMoore/jsviews/issues/452
+	"<!-- comment1 --><table><!-- comment1 -->{^{for items}}<!-- comment1 -->"
+		+ "<tbody><tr><td><!-- comment1 -->{{:name}}<!-- comment1 --></td><!-- comment1 --></tr><!-- comment1 --></tbody><!-- comment1 -->"
+		+ "<tbody class='groupdata'><!-- comment1 -->"
+			+ "{^{for ~getItems(expanded) ~row=row}}<!-- comment1 -->"
+				+ "<tr><!-- comment1 -->"
+					+ "<td>{{:~row}}{^{:#data}}<!-- comment1 --></td>"
+				+ "</tr><!-- comment1 -->"
+			+ "{{/for}}<!-- comment1 --><!-- comment1 -->"
+		+ "</tbody><!-- comment1 --><!-- comment1 -->"
+	+ " {{/for}}<!-- comment1 --><!-- comment1 --></table><!-- comment1 -->");
+
+// =============================== Arrange ===============================
 	var ret = "",
 		people1 = [{address: {street: "1 first street"}}],
 		people2 = [{address: {street: "1 second street"}}, {address: {street: "2 second street"}}],
@@ -6589,7 +6610,8 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 });
 
 QUnit.test("Computed observables in two-way binding", function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	// =============================== Arrange ===============================
 	var fullName = function(reversed) {
@@ -7375,7 +7397,8 @@ setTimeout(function() {
 	// ................................ Reset ................................
 	$("#result").empty();
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 }, 0);
@@ -11995,7 +12018,8 @@ QUnit.test("{^{props}} basic", function(assert) {
 });
 
 QUnit.test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
@@ -12095,7 +12119,8 @@ setTimeout(function() {
 
 	$.views.settings.advanced({_jsv: false});
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 });
@@ -14603,7 +14628,8 @@ QUnit.test('{^{on}}', function(assert) {
 });
 
 QUnit.test('data-link="{tag...} and {^{tag}} in same template"', function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -14784,7 +14810,8 @@ setTimeout(function() {
 	// TODO ADDITIONAL TESTS:
 	// 1: link(null, data) to link whole document
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 });
 
@@ -20124,7 +20151,8 @@ QUnit.test("Modifying content, initializing widgets/tag controls, using data-lin
 });
 
 QUnit.test('two-way bound tag controls', function(assert) {
-var done = assert.async();
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
 
 $.views.settings.trigger(false);
 
@@ -21148,7 +21176,8 @@ setTimeout(function() {
 
 	$.views.settings.trigger(true);
 
-done();
+	if (assert.async) { done() } else { start() }
+
 }, 0);
 }, 0);
 }, 0);
@@ -21519,8 +21548,9 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 QUnit.test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 	$.views.settings.trigger(false);
-	var done = assert.async(),
-		res = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var res = "",
 		person = {name: "Jo"};
 
 	$.templates('<input data-link="name trigger=true" />').link("#result", person);
@@ -21565,14 +21595,16 @@ QUnit.test("Global trigger=false local trigger=true - triggers after keydown: <i
 		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(container)');
 
-		done();
+		if (assert.async) { done() } else { start() }
+
 	}, 0);
 });
 
 QUnit.test("Global trigger=true local trigger=false - does not trigger after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
-	var done = assert.async(),
-		res = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var res = "",
 		person = {name: "Jo"};
 
 	$.templates('<input data-link="name trigger=false" />').link("#result", person);
@@ -21610,14 +21642,16 @@ QUnit.test("Global trigger=true local trigger=false - does not trigger after key
 		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=false" />: No handlers after $.unlink(container)');
 
-		done();
+	if (assert.async) { done() } else { start() }
+
 	}, 0);
 });
 
 QUnit.test("Global trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
-	var done = assert.async(),
-		res = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var res = "",
 		person = {name: "Jo"};
 
 	$.templates('<input data-link="name" />').link("#result", person);
@@ -21661,14 +21695,16 @@ QUnit.test("Global trigger=true - triggers after keydown: <input/>", function(as
 		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name" />: handlers are removed by $.unlink(container)');
 
-		done();
+	if (assert.async) { done() } else { start() }
+
 	}, 0);
 });
 
 QUnit.test("Global trigger=true - <input type='checkbox'/>", function(assert) {
 	// =============================== Arrange ===============================
-	var done = assert.async(),
-		res = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var res = "",
 		person = {member: true};
 
 	$.templates('<input type="checkbox" data-link="member" />').link("#result", person);
@@ -21703,15 +21739,16 @@ QUnit.test("Global trigger=true - <input type='checkbox'/>", function(assert) {
 		// ................................ Act ..................................
 		$.unlink("#result");
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 });
 
 QUnit.test("trigger=\'keydown\' - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
 
-	var done = assert.async(),
-		res = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var res = "",
 		person = {name: "Jo"};
 
 	$.templates('<input data-link="name trigger=\'keydown\'" />').link("#result", person);
@@ -21755,15 +21792,16 @@ QUnit.test("trigger=\'keydown\' - triggers after keydown: <input/>", function(as
 		assert.ok($._data(linkedElem).events === undefined,
 		'Data link using: <input data-link="name trigger=\'keydown\'" />: handlers are removed by $.unlink(container)');
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 });
 
 QUnit.test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", function(assert) {
 	// =============================== Arrange ===============================
 
-	var done = assert.async(),
-		before = "",
+	var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var before = "",
 		person = {name: "Jo"};
 
 	$.templates({
@@ -21811,15 +21849,16 @@ QUnit.test("Global trigger=true - triggers after keydown: {^{twoWayTag}}", funct
 		assert.ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 });
 
 QUnit.test("Global trigger=true - triggers - after keydown: {^{textbox}}", function(assert) {
 	// =============================== Arrange ===============================
 
-	var done = assert.async(),
-		before = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var before = "",
 		person = {name: "Jo"};
 
 	$.views.tags({
@@ -21881,7 +21920,7 @@ QUnit.test("Global trigger=true - triggers - after keydown: {^{textbox}}", funct
 		assert.ok($._data(linkedElem).events === undefined,
 		'Top-level data link using: {^{textbox name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 
 });
@@ -21889,8 +21928,9 @@ QUnit.test("Global trigger=true - triggers - after keydown: {^{textbox}}", funct
 QUnit.test("Custom tag trigger:... option", function(assert) {
 	// =============================== Arrange ===============================
 
-	var done = assert.async(),
-		before = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var before = "",
 		person = {name: "Jo", trig:true};
 
 	$.views.tags({
@@ -21938,7 +21978,7 @@ QUnit.test("Custom tag trigger:... option", function(assert) {
 		"Jo|Jo|NewName2|AnotherNewName1",
 		'{^{textbox/}} with option trigger:false - triggers after change, not after keydown. But {^{textbox trigger=true/}} overrides option and triggers on keydown');
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 	}, 0);
 
@@ -21948,8 +21988,9 @@ QUnit.test("Global trigger=true - triggers after keydown: {^{contentEditable}}",
 	// =============================== Arrange ===============================
 $.views.settings.trigger(true);
 
-	var done = assert.async(),
-		before = "",
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var before = "",
 		person = {name: "Jo <b>Smith</b>"};
 
 	$.views.tags({
@@ -22025,7 +22066,7 @@ setTimeout(function() {
 
 $.views.settings.trigger(true);
 
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 	}, 0);
 	}, 0);
@@ -25309,7 +25350,16 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 				onBind: function(tagCtx) {
 					var tag = this;
 					tagCtx.mainElem.on("change", function(ev) {
-						var selected = Array.apply(null, ev.target.selectedOptions).map(function(el) { return el.value; });
+// 							debugger;
+// 						var selected = Array.apply(null, ev.target.selectedOptions).map(function(el) {
+// 							return el.value;
+// 						});
+						var selected = Array.apply(null, ev.target.options).filter(function(el) {
+							return el.selected;
+						})
+						.map(function(el) {
+							return el.value;
+						});
 						tag.updateValues(selected);
 						ev.preventDefault();
 					});
@@ -25350,7 +25400,7 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a"]).change();
 	getSelection();
-	$("#result select").eq(1).val(["a", "b"]).change();
+	$("#result select").eq(1).val(["a", "b"]).change();  // Gives "ab-::v:t:m|", should give  abab- a b a b:a,b:v:t:m"
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c"]).change();
 	getSelection();

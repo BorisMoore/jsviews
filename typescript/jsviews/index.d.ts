@@ -1,5 +1,5 @@
 // Type definitions for JsViews 1.0
-// Version: "v1.0.10"
+// Version: "v1.0.11"
 // Project: http://www.jsviews.com/#jsviews
 // Definitions by: Boris Moore <https://github.com/borismoore>
 // Definitions: https://www.jsviews.com/download/typescript/jsviews/index.d.ts

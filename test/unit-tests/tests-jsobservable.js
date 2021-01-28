@@ -5082,8 +5082,10 @@ QUnit.test("$.views.viewModels", function(assert) {
 
 QUnit.test("setProperty/insert/remove etc. using async or batched events", function(assert) {
 	// =============================== Arrange ===============================
-	var done = assert.async(),
-		count = 0,
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+
+	var count = 0,
 		batch = [],
 		person = { first: "Jo", last: "Blow" },
 		numbers = [0],
@@ -5151,14 +5153,15 @@ QUnit.test("setProperty/insert/remove etc. using async or batched events", funct
 		// ................................ Reset ................................
 		result = "";
 		$.unobserve();
-		done();
+	if (assert.async) { done() } else { start() }
 	}, 0);
 });
 
 QUnit.test("setProperty/insert/remove etc. using namespaces", function(assert) {
 	// =============================== Arrange ===============================
-	var done = assert.async(),
-		count = 0,
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var count = 0,
 		batch = [],
 		person = { first: "Jo", last: "Blow" },
 		numbers = [0],
@@ -5236,7 +5239,7 @@ QUnit.test("setProperty/insert/remove etc. using namespaces", function(assert) {
 		// ................................ Reset ................................
 		result = "";
 		$.unobserve();
-		done();
+		if (assert.async) { done() } else { start() }
 	}, 0);
 });
 

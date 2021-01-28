@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.10 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.11 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.10",
+var versionNumber = "v1.0.11",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
@@ -757,7 +757,7 @@ function renderTag(tagName, parentView, tmpl, tagCtxs, isUpdate, onError) {
 			tag.linkCtx = linkCtx;
 			if (tag._.bnd = boundTag || linkCtx.fn) {
 				// Bound if {^{tag...}} or data-link="{tag...}"
-				tag._.ths = tagCtx.params.props.this; // Tag has a this=expr binding, to get javascript reference to tag instance
+				tag._.ths = tagCtx.params.props["this"]; // Tag has a this=expr binding, to get javascript reference to tag instance
 				tag._.lt = tagCtxs.lt; // If a late path @some.path has not returned @some object, mark tag as late
 				tag._.arrVws = {};
 			} else if (tag.dataBoundOnly) {
@@ -1119,6 +1119,8 @@ function compileTmpl(name, tmpl, parentTmpl, options) {
 						// Look for server-generated script block with id "./some/file.html"
 						elem = document.getElementById(value);
 					}
+				} else if (value.charAt(0) === "#") {
+					elem = document.getElementById(value.slice(1));
 				} else if ($.fn && !$sub.rTmpl.test(value)) {
 					try {
 						elem = $(value, document)[0]; // if jQuery is loaded, test for selector returning elements, and get first element
@@ -5514,15 +5516,13 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 						if (deferChar === "+") {
 							if (deferPath.charAt(j) === "-") {
 								j--;
-								targetParent = targetParent.previousSibling;
+								targetParent = targetParent.previousElementSibling; // IE9 or later only
 							} else {
 								targetParent = targetParent.parentNode;
 							}
 						} else {
-							targetParent = targetParent.lastChild;
+							targetParent = targetParent.lastElementChild; // IE9 or later only
 						}
-						// Note: Can use previousSibling and lastChild, not previousElementSibling and lastElementChild,
-						// since we have removed white space within elCnt. Hence support IE < 9
 					}
 				}
 				if (bindChar === "^") {
