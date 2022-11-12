@@ -1,5 +1,7 @@
 ## JsViews: next-generation MVVM and MVP framework - bringing templates to life
 
+[![CDNJS version](https://img.shields.io/cdnjs/v/jsviews.svg)](https://cdnjs.com/libraries/jsviews)
+
 *The power of MVVM, the flexibility of JavaScript, the speed and ease of JsRender templates and jQuery*<br/>
 
 **JsViews** builds on top of **[JsRender](http://www.jsviews.com/#jsrender)** templates, and adds data-binding and **[observable data](http://www.jsviews.com/#jsobservable)**, to provide a fully-fledged MVVM platform for easily creating interactive data-driven single-page apps and websites.
