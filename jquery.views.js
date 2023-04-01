@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.12: http://jsviews.com/ */
+/*! jquery.views.js v1.0.13: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -7,7 +7,7 @@
  * Also requires jquery.observable.js
  *   See JsObservable at http://jsviews.com/#download and http://github.com/BorisMoore/jsviews
  *
- * Copyright 2021, Boris Moore
+ * Copyright 2023, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.12",
+var versionNumber = "v1.0.13",
 	requiresStr = "jquery.views.js requires ";
 
 if (!$ || !$.fn) {
