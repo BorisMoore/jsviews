@@ -1,4 +1,4 @@
-/*! jsviews.js v1.0.13 single-file version: http://jsviews.com/ */
+/*! jsviews.js v1.0.14 single-file version: http://jsviews.com/ */
 /*! includes JsRender, JsObservable and JsViews - see: http://jsviews.com/#download */
 
 /* Interactive data-driven views using JsRender templates */
@@ -6,7 +6,7 @@
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsRender >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsRender:
  * See http://jsviews.com/#jsrender and http://github.com/BorisMoore/jsrender
- * Copyright 2023, Boris Moore
+ * Copyright 2024, Boris Moore
  * Released under the MIT License.
  */
 
@@ -47,7 +47,7 @@ if (!$ || !$.fn) {
 	throw "JsViews requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.13",
+var versionNumber = "v1.0.14",
 
 	jsvStoreName, rTag, rTmplString, topView, $views, $observe, $observable, $expando,
 	_ocp = "_ocp",      // Observable contextual parameter
@@ -436,7 +436,7 @@ function contextParameter(key, value, get) {
 				// Not a contextual parameter
 				// Set storeView to tag (if this is a tag.ctxPrm() call) or to root view ("data" view of linked template)
 				storeView = storeView.tagCtx || $isFunction(res)
-					? storeView // Is a tag, not a view, or is a computed contextual parameter, so scope to the callView, no the 'scope view'
+					? storeView // Is a tag, not a view, or is a computed contextual parameter, so scope to the callView, not the 'scope view'
 					: (storeView = storeView.scope || storeView,
 						!storeView.isTop && storeView.ctx.tag // If this view is in a tag, set storeView to the tag
 							|| storeView);
@@ -3025,7 +3025,7 @@ if (jsrToJq) { // Moving from jsrender namespace to jQuery namepace - copy over 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< JsObservable >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /* JsObservable:
  * See https://www.jsviews.com/#jsobservable and http://github.com/borismoore/jsviews
- * Copyright 2023, Boris Moore
+ * Copyright 2024, Boris Moore
  * Released under the MIT License.
  */
 
@@ -4314,7 +4314,7 @@ if (!$.observe) {
 /* JsViews:
  * Interactive data-driven views using templates and data-linking.
  * See https://www.jsviews.com/#jsviews and http://github.com/BorisMoore/jsviews
- * Copyright 2023, Boris Moore
+ * Copyright 2024, Boris Moore
  * Released under the MIT License.
  */
 
@@ -4384,7 +4384,6 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	rTagMarkers = /(?:(#)|(\/))(\d+)(\^)/g,
 	rOpenTagMarkers = /(#)()(\d+)(\^)/g,
 	rMarkerTokens = /(?:(#)|(\/))(\d+)([_^])([-+@\d]+)?/g,
-	rSplitBindings = /&(\d+)\+?/g,
 	rShallowArrayPath = /^[^.]*$/, // No '.' in path
 	getComputedStyle = global.getComputedStyle,
 	$inArray = $.inArray;
@@ -4461,14 +4460,14 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 			sourceElem._jsvSel = sourceValues;
 		} else if (sourceElem._jsvSel) {
 			// Checkbox group (possibly using {{checkboxgroup}} tag) data-linking to array of strings
-			vals = sourceElem._jsvSel;
+			vals = sourceElem._jsvSel.slice();
 			ind = $inArray(sourceElem.value, vals);
 			if (ind > -1 && !sourceElem.checked) {
-				vals.splice(ind, 1); // Checking this checkbox
+				vals.splice(ind, 1); // Unchecking this checkbox
 			} else if (ind < 0 && sourceElem.checked) {
-				vals.push(sourceElem.value); // Unchecking this checkbox
+				vals.push(sourceElem.value); // Checking this checkbox
 			}
-			sourceValues = [vals.slice()];
+			sourceValues = [vals];
 		}
 		origVals = sourceValues;
 		l = tos.length;
@@ -4542,7 +4541,8 @@ function onElemChange(ev) {
 	var bindId, val,
 		source = ev.target,
 		fromAttr = defaultAttr(source),
-		setter = fnSetters[fromAttr];
+		setter = fnSetters[fromAttr],
+		rSplitBindings = /&(\d+)\+?/g;
 
 	if (!source._jsvTr || ev.delegateTarget !== activeBody && source.type !== "number" || ev.type === "input") {
 		// If this is an element using trigger, ignore event delegated (bubbled) to activeBody
@@ -4553,7 +4553,6 @@ function onElemChange(ev) {
 				: $(source).attr(fromAttr);
 
 		source._jsvChg = 1; // // Set 'changing' marker to prevent linkedElem change event triggering its own refresh
-		rSplitBindings.lastIndex = 0; // Ensure starts at zero
 		while (bindId = rSplitBindings.exec(source._jsvBnd)) {
 			// _jsvBnd is a string with the syntax: "&bindingId1&bindingId2"
 			updateValue(val, source._jsvInd, source._jsvElse, undefined, bindId[1], ev);
@@ -4702,7 +4701,7 @@ function setDefer(elem, value) {
 function updateContent(sourceValue, linkCtx, attr, tag) {
 	// When called for a tag, either in tag.refresh() or onDataLinkedTagChange(), returns tag
 	// When called (in onDataLinkedTagChange) for target HTML returns true
-	// When called (in onDataLinkedTagChange) for other targets returns boolean for "changed"
+	// When called (in onDataLinkedTagChange) for other targets returns boolean for "change"
 	var setter, prevNode, nextNode, late, nodesToRemove, useProp, tokens, id, openIndex, closeIndex, testElem, nodeName, cStyle, jsvSel,
 		renders = attr !== NONE && sourceValue !== undefined && !linkCtx._noUpd && !((attr === VALUE || attr === HTML) && (!tag && linkCtx.elem._jsvChg)),
 		// For data-link="^{...}", don't update the first time (no initial render) - e.g. to leave server rendered values.
@@ -6004,7 +6003,6 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 			// and each is using the same rTagDatalink instance.
 			rTagDatalink.lastIndex = rTagIndex;
 		}
-//		}
 	}
 }
 
@@ -6866,7 +6864,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 
 	var l, m, tagCtx, boundProps, bindFrom, key, theTag, theView;
 
-	tagOrView.contents = function(deep, select) {
+	tagOrView.contents = function(deep, select, select2) {
 		// For a view, a tag or a tagCtx, return jQuery object with the content nodes,
 		if (deep !== !!deep) {
 			// deep not boolean, so this is contents(selector)
@@ -6880,7 +6878,9 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 			filtered = select ? nodes.filter(select) : nodes;
 			nodes = deep ? filtered.add(nodes.find(select)) : filtered;
 		}
-		return nodes;
+		return select2							// select2 is optional selector for an additional filtering. e.g checkboxgroup with
+			? nodes.filter(select2)		// selector for binding to subset of checkbox <input> elements
+			: nodes;
 	};
 
 	tagOrView.nodes = function(withMarkers, prevNode, nextNode) {
@@ -7096,14 +7096,44 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 			return theTag;
 		};
 
-		theTag.domChange = function() { // domChange notification support
-			var elem = this.parentElem,
-				hasListener = $._data(elem).events,
-				domChangeNotification = "jsv-domchange";
-
+		theTag.domChange = function(forOrIfTagCtx, linkCtx, eventArgs, ev) {
+			// domChange notification support, called by {^{for}}, onArrayChange, {^{if}} onAfterLink etc.
+			var bindId, linkTag, view, elem,
+				tag = theTag,
+				domChangeNotification = "jsv-domchange",
+				rSplitBindings = /&(\d+)\+?/g,
+				tagParElem = tag.parentElem,
+				hasListener = $._data(tagParElem).events;
 			if (hasListener && hasListener[domChangeNotification]) {
-				// Only trigger handler if there is a handler listening for this event. (Note using triggerHandler - so no event bubbling.)
-				$(elem).triggerHandler(domChangeNotification, arguments);
+				// If the parent element of this tag has a 'jsv-domchange' event handler binding, we will trigger it.
+				// e.g. <ul data-link="{on 'jsv-domchange' ~root.domchange}">, or <select data-link="selected">...
+				$(tagParElem).triggerHandler(domChangeNotification, arguments);
+			}
+			while (tagParElem !== activeBody) { // Step up through inline tags, whether unlinked, or data-linked with same 'tagParElem' parentElem
+				while (tag && (!tag.parentElem || tag.parentElem === tagParElem)) {
+					if (tag.onDomChange) { // If inline tag has an onDomChange method, invoke it
+						tag.onDomChange(tagCtx, linkCtx, eventArgs, ev);
+					}
+					view = tag.tagCtx.view || topView;
+					tag = view.tag;
+					while (!tag && view.parent && !view.isTop) { // Step up through parent views, and find next parent tag
+						view = view.parent;
+						tag = view.tag;
+					}
+				}
+				elem = tagParElem; // We will step through elements from the parentElem of the previous tag
+				tagParElem = tag && tag.parentElem || activeBody; // We will stop on element inside the parentElem of the next tag
+				while (elem && elem !== tagParElem) {             // Step up through parentElements
+					while (bindId = rSplitBindings.exec(elem._jsvBnd)) { // Step through linked tag bindings on this elem (_jsvBnd has syntax: "&bindingId1&bindingId2")
+						if (linkTag = bindingStore[bindId[1]]) {
+							linkTag = linkTag.linkCtx.tag;
+							if (linkTag && linkTag.onDomChange) { // If linked tag has an onDomChange method, invoke it
+								linkTag.onDomChange(tagCtx, linkCtx, eventArgs, ev);
+							}
+						}
+					}
+					elem = elem.parentElement;
+				}
 			}
 		};
 
@@ -7493,58 +7523,57 @@ $tags({
 			this.name = tagCtx.props.name || (Math.random() + "jsv").slice(9);
 		},
 		onBind: function(tagCtx, linkCtx) {
-			var domChngCntnr, $linkedElem, l,
+			var $linkedElem, l,
 				tag = this,
-				useDisable = tagCtx.params.props;
-			useDisable = useDisable && useDisable.disabled;
+				filter = tagCtx.args[1], // args[1] is an optional selector to choose a filtered subset of radio buttons
+				linkExpr = tagCtx.params.args[0],
+				propParams = tagCtx.params.props,
+				useDisable = propParams && propParams.disabled;
+
 			if (tag.inline) {
-				// If the first element is owned by (rendered by) this tag (not by a childTag such as {^{for}})
-				// use it as container for detecting dom changes
-				domChngCntnr = tag.contents("*")[0];
-				domChngCntnr = domChngCntnr && $view(domChngCntnr).ctx.tag === tag.parent ? domChngCntnr : tag.parentElem;
-				$linkedElem = tag.contents(true, RADIOINPUT);
+				$linkedElem = tag.contents(true, RADIOINPUT, filter);
 			} else {
-				domChngCntnr = linkCtx.elem;
 				$linkedElem = $(RADIOINPUT, linkCtx.elem);
+				if (filter) {
+					$linkedElem = $linkedElem.filter(filter); // Obtain filtered list of radio inputs
+				}
 			}
-			tag.linkedElem = $linkedElem;
 			l = $linkedElem.length;
 			while (l--) {
 				// Configure the name for each radio input element
 				$linkedElem[l].name = $linkedElem[l].name || tag.name;
 			}
-			// Establish a domchange listener in case this radiogroup wraps a {^{for}} or {^{if}} or similar
-			// which might dynamically insert new radio input elements
-			$(domChngCntnr).on("jsv-domchange", tag._dmChg = function(ev, forOrIfTagCtx, linkCtx, eventArgs) {
-				var linkedElem, val,
-					parentTags = forOrIfTagCtx.ctx.parentTags;
-				if (!eventArgs.refresh &&
-					(!tag.inline ||
-						domChngCntnr !== tag.parentElem ||
-						// If the tag is inline, and the domChngCntnr is the parentElem, then we need to
-						// make sure dom change event is fora content change within this tag, not outside it.
-						parentTags && parentTags[tag.tagName] === tag
-					)
-				) {
-					// Contents have changed so recreate $linkedElem for the radio input elements (including possible new one just inserted)
+			// Data-link each checkbox input element using the checkboxgroup data-link expression
+			for (l in propParams) {
+				linkExpr += " " + l + "=" + propParams[l];
+			}
+			$linkedElem.link(linkExpr, linkCtx.data, undefined, undefined, linkCtx.view); // data-link the checkboxes
+			tag.linkedElem = $linkedElem;
+
+			// This onDomChange method is called by nested tags such as {^{for}} or {^{if}}, when DOM contents are changed
+			tag.onDomChange = function(forOrIfTagCtx, linkCtx, eventArgs, ev) {
+				var linkedElem, l,
 					val = tag.cvtArgs()[0];
-					$linkedElem = tag.linkedElem = tag.contents(true, RADIOINPUT);
-					l = $linkedElem.length;
-					while (l--) {
-						// Configure binding and name for each radio input element
-						linkedElem = $linkedElem[l];
-						linkedElem._jsvLkEl = tag;
+
+				tag.linkedElem = $linkedElem = tag.contents(true, RADIOINPUT, filter); // Obtain updated (possibly filtered) list
+				l = $linkedElem.length;
+				// Contents may have changed so recreate $linkedElem for any additional radio button input elements
+				while (l--) {
+					// Configure binding and name for each radio input element
+					linkedElem = $linkedElem[l];
+					if (!linkedElem._jsvLkEl) {
+						// This is a new inserted radio button, so we will data-link it based on the radiogroup binding
 						linkedElem.name = linkedElem.name || tag.name;
+						linkedElem._jsvLkEl = tag;
 						linkedElem._jsvBnd = "&" + tag._tgId + "+";
 						linkedElem.checked = val === linkedElem.value;
 						if (useDisable) {
 							linkedElem.disabled = !!tagCtx.props.disabled;
 						}
+						$.link(linkExpr, linkedElem, linkCtx.data);
 					}
-					tag.linkedElems = tagCtx.linkedElems = [$linkedElem];
 				}
-			});
-			tag._dmChg.tgt = domChngCntnr; // Used to remove listener in onUnbind
+			};
 		},
 		onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 			var propParams = tagCtx.params.props;
@@ -7552,13 +7581,7 @@ $tags({
 				this.linkedElem.prop("disabled", !!tagCtx.props.disabled);
 			}
 		},
-		onUnbind: function() {
-			var tag = this;
-			if (tag._dmChg) {
-				$(tag._dmChg.tgt).off("jsv-domchange", tag._dmChg); // Remove listener
-				tag._dmChg = undefined;
-			}
-		},
+		flow: true,
 		onUpdate: false, // don't rerender
 		contentCtx: true,
 		dataBoundOnly: true
@@ -7569,75 +7592,63 @@ $tags({
 			this.name = tagCtx.props.name || (Math.random() + "jsv").slice(9);
 		},
 		onBind: function(tagCtx, linkCtx) {
-			var domChngCntnr,
+			var $linkedElem, l,
 				tag = this,
-				tgCtxProps = tagCtx.params.props,
-				useDisable = tgCtxProps && tgCtxProps.disabled,
+				filter = tagCtx.args[1], // args[1] is an optional selector to choose a filtered subset of checkboxes
 				linkExpr = tagCtx.params.args[0],
-				$linkedElem = tag.contents(true, CHECKBOXINPUT),
-				l = $linkedElem.length;
+				propParams = tagCtx.params.props,
+				useDisable = propParams && propParams.disabled;
+
+			if (tag.inline) {
+				$linkedElem = tag.contents(true, CHECKBOXINPUT, filter); // Obtain (optionally filtered) list of checkbox elements
+			} else {
+				tag.lateRender = true;
+				$linkedElem = $(CHECKBOXINPUT, linkCtx.elem); // Obtain list of checkbox inputs
+				if (filter) {
+					$linkedElem =  $linkedElem.filter(filter); // Filter the list
+				}
+			}
+			// Configure the name for each checkbox input element
+			l = $linkedElem.length;
 			while (l--) {
-				// Configure the name for each checkbox input element
 				$linkedElem[l].name = $linkedElem[l].name || tag.name;
 				$linkedElem[l]._jsvLkEl = tag;
 			}
-			for (l in tgCtxProps) {
-				linkExpr += " " + l + "=" + tgCtxProps[l];
+			// Data-link each checkbox input element using the checkboxgroup data-link expression
+			for (l in propParams) {
+				linkExpr += " " + l + "=" + propParams[l];
 			}
-			$linkedElem.link(linkExpr, linkCtx.data, undefined, undefined, linkCtx.view);
+			$linkedElem.link(linkExpr, linkCtx.data, undefined, undefined, linkCtx.view); // data-link the checkboxes
 			tag.linkedElem = $linkedElem;
-			if (tag.inline) {
-				// If the first element is owned by (rendered by) this tag (not by a childTag such as {^{for}})
-				// use it as container for detecting dom changes
-				domChngCntnr = tag.contents("*")[0];
-				domChngCntnr = domChngCntnr && $.view(domChngCntnr).ctx.tag === tag.parent ? domChngCntnr : tag.parentElem;
-			} else {
-				domChngCntnr = linkCtx.elem;
-			}
-			// Establish a domchange listener in case this checkboxgroup wraps a {^{for}} or {^{if}} or similar
-			// which might dynamically insert new checkbox input elements
-			$(domChngCntnr).on("jsv-domchange", tag._dmChg = function(ev, forOrIfTagCtx, linkCtx, eventArgs) {
+
+			// This onDomChange method is called by nested tags such as {^{for}} or {^{if}}, when DOM contents are changed
+			tag.onDomChange = function(forOrIfTagCtx, linkCtx, eventArgs, ev) {
 				var linkedElem,
-					parentTags = forOrIfTagCtx.ctx.parentTags;
-				if (!eventArgs.refresh &&
-					(!tag.inline ||
-						domChngCntnr !== tag.parentElem ||
-						// If the tag is inline, and the domChngCntnr is the parentElem, then we need to
-						// make sure dom change event is fora content change within this tag, not outside it.
-						parentTags && parentTags[tag.tagName] === tag
-					)
-				) {
-					// Contents have changed so recreate $linkedElem for the checkbox input elements (including possible new one just inserted)
-					$linkedElem = tag.contents(true, CHECKBOXINPUT);
+					$linkedElem = tag.contents(true, CHECKBOXINPUT, filter), // Obtain updated (possibly filtered) list
 					l = $linkedElem.length;
-					while (l--) {
-						// Configure binding and name for each checkbox input element
-						linkedElem = $linkedElem[l];
-						if (!linkedElem._jsvSel) {
-							linkedElem.name = linkedElem.name || tag.name;
-							$.link(linkExpr, linkedElem, linkCtx.data);
-							if (useDisable) {
-								linkedElem.disabled = !!tagCtx.props.disabled;
-							}
-						}
+				// Contents may have changed so recreate $linkedElem for any additional checkbox input elements
+				while (l--) {
+					// Configure binding and name for each checkbox input element
+					linkedElem = $linkedElem[l];
+					if (useDisable) {
+						linkedElem.disabled = !!tagCtx.props.disabled;
+					}
+					if (!linkedElem._jsvSel) {
+						// This is a new inserted checkbox, so we will data-link it based on the checkboxgroup binding
+						linkedElem.name = linkedElem.name || tag.name;
+						$.link(linkExpr, linkedElem, linkCtx.data);
 					}
 				}
-			});
-			tag._dmChg.tgt = domChngCntnr; // Used to remove listener in onUnbind
+			};
 		},
 		onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 			var propParams = tagCtx.params.props;
 			if (propParams && propParams.disabled) {
-				this.contents(true, CHECKBOXINPUT).prop("disabled", !!tagCtx.props.disabled);
+				this.contents(true, CHECKBOXINPUT, tagCtx.args[1]).prop("disabled", !!tagCtx.props.disabled);
+				// args[1] is an optional selector to choose filtered subset of checkboxes
 			}
 		},
-		onUnbind: function() {
-			var tag = this;
-			if (tag._dmChg) {
-				$(tag._dmChg.tgt).off("jsv-domchange", tag._dmChg); // Remove listener
-				tag._dmChg = undefined;
-			}
-		},
+		flow: true,
 		onUpdate: false, // don't rerender
 		contentCtx: true,
 		dataBoundOnly: true
@@ -7700,7 +7711,7 @@ $extend($tags["for"], {
 				}
 			}
 		}
-		tag.domChange(tagCtx, linkCtx, eventArgs);
+		tag.domChange(tagCtx, linkCtx, eventArgs, ev);  // Call onDomChange method on ancestors such as checkboxgroup, to notify new content
 		ev.done = true;
 	},
 	onUpdate: function(ev, eventArgs, tagCtxs) {
@@ -7742,11 +7753,11 @@ $extend($tags["for"], {
 			}
 		}
 		if (eventArgs) {
-			tag.domChange(tagCtx, linkCtx, eventArgs);
+			tag.domChange(tagCtx, linkCtx, eventArgs, ev);  // Call onDomChange method on ancestors such as checkboxgroup, to notify new content
 		}
 	},
-	onAfterLink: function(tagCtx) {
-		var data, map, props,
+	onAfterLink: function() {
+		var data, map, props, tagCtx,
 			tag = this,
 			i = 0,
 			tagCtxs = tag.tagCtxs,
@@ -7800,7 +7811,7 @@ $extend($tags["if"], {
 	},
 	onAfterLink: function(tagCtx, linkCtx, ctx, ev, eventArgs) {
 		if (eventArgs) {
-			this.domChange(tagCtx, linkCtx, eventArgs);
+			this.domChange(tagCtx, linkCtx, eventArgs, ev); // Call onDomChange method on ancestors such as checkboxgroup, to notify new content
 		}
 	}
 });

@@ -1,9 +1,9 @@
-/*! JsObservable v1.0.13: http://jsviews.com/#jsobservable */
+/*! JsObservable v1.0.14: http://jsviews.com/#jsobservable */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2023, Boris Moore
+ * Copyright 2024, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ if (!$ || !$.fn) {
 	throw "jquery.observable.js requires jQuery"; // We require jQuery
 }
 
-var versionNumber = "v1.0.13",
+var versionNumber = "v1.0.14",
 	_ocp = "_ocp", // Observable contextual parameter
 	$observe, $observable,
 

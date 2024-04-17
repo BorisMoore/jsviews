@@ -4827,8 +4827,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	// ............................... Act .................................
 	tmpl.link("#result", model);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
@@ -4839,15 +4838,14 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - starting out with no items');
 
 	$.observable(model.people).refresh([]);
 
 	$.observable(model).setProperty("rg1", false);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
@@ -4858,7 +4856,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - one set to false');
 
 	$.observable(model.people).refresh([]);
@@ -4867,8 +4865,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	$.observable(model).setProperty("rg1", true);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
@@ -4879,7 +4876,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - one set back to true');
 
 	// ................................ Reset ................................
@@ -5394,8 +5391,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	// ............................... Act .................................
 	tmpl.link("#result", model);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -5406,15 +5402,14 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
 
 	$.observable(model.people).refresh([]);
 
 	$.observable(model).setProperty("rg1", false);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -5425,7 +5420,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - one set to false');
 
 	$.observable(model.people).refresh([]);
@@ -5434,8 +5429,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	$.observable(model).setProperty("rg1", true);
 
-	res = "" + $._data($("#result div")[0]).events["jsv-domchange"].length + $._data($("#result div")[1]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -5446,7 +5440,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "11>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - one set back to true');
 
 	// ................................ Reset ................................
@@ -13327,8 +13321,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	// ............................... Act .................................
 	tmpl.link("#result", model);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13339,15 +13332,14 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "2>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - starting out with no items');
 
 	$.observable(model.people).refresh([]);
 
 	$.observable(model).setProperty("rg1", false);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13358,7 +13350,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
+	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - one set to false');
 
 	$.observable(model.people).refresh([]);
@@ -13367,8 +13359,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	$.observable(model).setProperty("rg1", true);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13379,7 +13370,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "2>:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - one set back to true');
 
 	// ................................ Reset ................................
@@ -13814,8 +13805,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	// ............................... Act .................................
 	tmpl.link("#result", model);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13826,15 +13816,14 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "2>:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
 
 	$.observable(model.people).refresh([]);
 
 	$.observable(model).setProperty("rg1", false);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13845,7 +13834,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "1>:NONE||:NONE:BOB:JIM:NEW|:NEW|:NEW|",
+	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEW|:NEW|:NEW|",
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - one set to false');
 
 	$.observable(model.people).refresh([]);
@@ -13854,8 +13843,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	$.observable(model).setProperty("rg1", true);
 
-	res = "" + $._data($("#result")[0]).events["jsv-domchange"].length
-	+ ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
+	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
 	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
@@ -13866,7 +13854,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	res += $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, "2>:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
+	assert.equal(res, ">:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - one set back to true');
 
 	// ................................ Reset ................................
@@ -14608,7 +14596,7 @@ QUnit.test('{^{on}}', function(assert) {
 			name: "Jo",
 			doit: function() {
 				var button = $("button");
-				res = (Math.round(10*button.width())/10) + "|" + (Math.round(10*button.height())/10) + "|" + button[0].id + "|" + button[0].className;
+				res = (Math.round(button.width())) + "|" + (Math.round(button.height())) + "|" + button[0].id + "|" + button[0].className;
 			}
 		};
 
