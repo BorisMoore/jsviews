@@ -3787,6 +3787,56 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	assert.equal(result, "|setList| list: 2, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 2falsefalse{}",
 	"observe 'list^[].a' unobserve 'list^[].*' works correctly");
 
+	// ................................ Act ..................................
+	reset();
+
+	$.observe(data, 'list^[].a', 'list^[].b', cb);
+
+	result += "|setList| ";
+
+	$.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	observablyChange(data.list);
+	result += $._data(data.list).events.arrayChange.length + $._data(data).events.propertyChange.length;
+
+	$.unobserve(data, 'list^[].*', cb);
+
+	result += !!$._data(data.list).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	assert.equal(result, "|setList| list: 2, |Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, a: 2a3, b: 2b3, a: 3a3, b: 3b3, 3falsefalse{}",
+	"observe 'list^[].a' 'list^[].b' unobserve 'list^[].*' works correctly");
+
+	// ................................ Act ..................................
+	function resetComputedList() {
+		result = "",
+		data = {
+			_list: [
+				{a: "0a", b: "0b"},
+				{a: "1a", b: "1b"}
+			],
+			list: function() {
+				return this._list;
+			}
+		};
+	}
+
+	resetComputedList();
+
+	$.observe(data, 'list()^[].a', 'list()^[].b', cb);
+
+	result += "|setList| ";
+
+	observablyChange(data.list());
+	result += $._data(data.list()).events.arrayChange.length + $._data(data).events.propertyChange.length;
+
+	$.unobserve(data, 'list()^[].*', cb);
+
+	result += !!$._data(data.list()).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
+
+	// ............................... Assert .................................
+	assert.equal(result, "|setList| |Set01| a: 0a2, b: 0b2, a: 1a2, b: 1b2, |Insert23| |Set0123| a: 0a3, b: 0b3, a: 1a3, b: 1b3, a: 2a3, b: 2b3, a: 3a3, b: 3b3, 3falsefalse{}",
+	"observe 'list()^[].a' 'list()^[].b' unobserve 'list()^[].*' works correctly");
+
 	// =============================== Arrange ===============================
 	reset = function() {
 		result = "",
