@@ -4847,7 +4847,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 					// Insert and link new content
 					late = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId});
 				} else {
-					// data-linked value targeting innerHTML: data-link="html{:expr}" or contenteditable="true"
+					// data-linked value targeting innerHTML: data-link="html{:expr}" or is contenteditable
 					renders = renders && targetVal !== sourceValue;
 					if (renders) {
 						$target.empty();
@@ -4964,7 +4964,7 @@ function defaultAttr(elem, to, linkGetVal) {
 	var nodeName = elem.nodeName.toLowerCase(),
 		attr =
 			$subSettingsAdvanced._fe[nodeName] // get form element binding settings for input textarea select or optgroup
-			|| elem.contentEditable === TRUE && {to: HTML, from: HTML}; // Or if contentEditable set to "true" set attr to "html"
+			|| isContentEditable(elem) && { to: HTML, from: HTML }; // Or if is contentEditable set attr to "html"
 	return attr
 		? (to
 			? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -5830,7 +5830,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 		: (self.parentElem    // view.link()
 			|| document.body);  // link(null, data) to link the whole document
 
-	validate = !$subSettingsAdvanced.noValidate && parentNode.contentEditable !== TRUE;
+	validate = !$subSettingsAdvanced.noValidate && !isContentEditable(parentNode);
 	parentTag = parentNode.tagName.toLowerCase();
 	elCnt = !!elContent[parentTag];
 
@@ -6344,7 +6344,7 @@ function asyncOnElemChange(ev) {
 
 function bindTriggerEvent($elem, trig, onoff) {
 	// Bind keydown, or other trigger - (rather than use the default change event bubbled to activeBody)
-	if (trig === true && useInput && (!isIE || $elem[0].contentEditable !== TRUE)) { // IE oninput event is not raised for contenteditable changes
+	if (trig === true && useInput && (!isIE || !isContentEditable($elem[0]))) { // IE oninput event is not raised for contenteditable changes
 		$elem[onoff]("input.jsv", onElemChange); // For HTML5 browser with "oninput" support - for mouse editing of text
 	} else {
 		trig = typeof trig === STRING ? trig : "keydown.jsv"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
@@ -6370,7 +6370,7 @@ function bindLinkedElChange(tag, linkedElem) {
 	}
 	// Trigger is noop except for text box, textarea, contenteditable...
 	newTrig = newTrig && (linkedElem.tagName === "INPUT" && linkedElem.type !== CHECKBOX && linkedElem.type !== RADIO
-		|| linkedElem.type === "textarea" || linkedElem.contentEditable === TRUE) && newTrig || false;
+		|| linkedElem.type === "textarea" || isContentEditable(linkedElem)) && newTrig || false;
 
 	if (oldTrig !== newTrig) {
 		$linkedElem = $(linkedElem);
@@ -6688,6 +6688,11 @@ function inputAttrib(elem) {
 function changeHandler(view, name, tag) {
 	// Get onBeforeChange, onAfterChange, onAfterCreate handler - if there is one;
 	return tag && tag[name] || view.ctx[name] && view.ctxPrm(name) || $views.helpers[name];
+}
+
+function isContentEditable(elem) {
+	return elem.contentEditable === TRUE
+		|| elem.contentEditable === "plaintext-only";
 }
 
 //========================== Initialize ==========================
@@ -7036,7 +7041,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 											$(linkedEl).val(val); // Use jQuery for attrHooks - can't just set value (on select, for example)
 										}
 									} else {
-										linkedEl[linkedEl.contentEditable === TRUE ? "innerHTML" : TEXTCONTENT] = val;
+										linkedEl[isContentEditable(linkedEl) ? "innerHTML" : TEXTCONTENT] = val;
 									}
 								}
 								if (tagCtx.props.name) {
