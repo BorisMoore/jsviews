@@ -1,5 +1,5 @@
 /* test, equal, module, ok*/
-(function($, undefined) {
+(function(jsv, $, undefined) {
 "use strict";
 
 // =============== INIT APP ===============
@@ -67,7 +67,7 @@ fullName.depends = function(object) { // object is also the this pointer, so we 
 
 fullName.set = function(val) {
 	val = val.split(" ");
-	$.observable(this).setProperty({
+	jsv.observable(this).setProperty({
 		lastName: val.pop(),
 		firstName: val.join(" ")
 	});
@@ -181,18 +181,18 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 
 	// =============================== Arrange ===============================
 	reset();
-	$.observable(undefined).setProperty("street", "abc");
+	jsv.observable(undefined).setProperty("street", "abc");
 
 	// ............................... Assert .................................
 	assert.equal(result, "",
-	"$.observable(undefined).setProperty(...) does nothing");
+	"jsv.observable(undefined).setProperty(...) does nothing");
 
 	// =============================== Arrange ===============================
 	reset();
-	$.observe(person1.home.address, "street", myListener);
+	jsv.observe(person1.home.address, "street", myListener);
 
 	// ................................ Act ..................................
-	$.observable(person1.home.address).setProperty("street", "newValue");
+	jsv.observable(person1.home.address).setProperty("street", "newValue");
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|",
@@ -206,7 +206,7 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observable(person1.home).setProperty("address.street", "newValue");
+	jsv.observable(person1.home).setProperty("address.street", "newValue");
 
 	// ............................... Assert .................................
 	assert.equal(result, result1,
@@ -218,16 +218,16 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 
 	// =============================== Teardown ===============================
 
-	$.unobserve();
-	$.unobserve(person1.home.address, "street", myListener);
+	jsv.unobserve();
+	jsv.unobserve(person1.home.address, "street", myListener);
 
 	// =============================== Arrange ===============================
 	var person = {dob: "10/24/1990"};
 
-	$.observe(person, "dob", myListener);
+	jsv.observe(person, "dob", myListener);
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty("dob", "10/24/1991");
+	jsv.observable(person).setProperty("dob", "10/24/1991");
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: dob, eventArgs: oldValue: 10/24/1990 value: 10/24/1991, eventArgs.path: dob|",
@@ -239,7 +239,7 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	// ................................ Act ..................................
 	var dt = new Date("10/24/1980");
 	
-	$.observable(person).setProperty("dob", dt);
+	jsv.observable(person).setProperty("dob", dt);
 
 	// ............................... Assert .................................
 	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: 10/24/1991 value: "1980-10-24T07:00:00.000Z", eventArgs.path: dob|',
@@ -252,7 +252,7 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	var dt2 = new Date(dt);
 	dt2.setDate(dt2.getDate() + 2);
 	
-	$.observable(person).setProperty("dob", dt2);
+	jsv.observable(person).setProperty("dob", dt2);
 
 	// ............................... Assert .................................
 	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-24T07:00:00.000Z" value: "1980-10-26T07:00:00.000Z", eventArgs.path: dob|',
@@ -262,7 +262,7 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty("dob", "1/24/2002");
+	jsv.observable(person).setProperty("dob", "1/24/2002");
 
 	// ............................... Assert .................................
 	assert.equal(result, 'calls: 1, ev.data: prop: dob, eventArgs: oldValue: "1980-10-26T07:00:00.000Z" value: 1/24/2002, eventArgs.path: dob|',
@@ -270,7 +270,31 @@ QUnit.test("PropertyChange: setProperty()", function(assert) {
 
 	// ................................ Reset ................................
 	reset();
-	$.unobserve(person, "dob", myListener);
+	jsv.unobserve(person, "dob", myListener);
+
+	// =============================== Arrange ===============================
+
+	// ................................ Act ..................................
+	// jsv.observable(person1).setProperty("home.__proto__.pollute", "BROKEN");
+
+	// // ............................... Assert .................................
+	// assert.equal(person2.__proto__.pollute, undefined,
+	// "setProperty cannot be used to pollute the object prototype"); // https://github.com/BorisMoore/jsrender/issues/374
+
+	// ................................ Reset ................................
+	person1.home.address.street = "StreetOne"; // reset Prop
+	reset();
+
+	// =============================== Teardown ===============================
+
+	jsv.unobserve();
+	jsv.unobserve(person1.home.address, "street", myListener);
+
+
+
+
+
+
 
 });
 
@@ -282,7 +306,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	var things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(0, "a");
+	jsv.observable(things).insert(0, "a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "a 1 2",
@@ -292,7 +316,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(1, "a");
+	jsv.observable(things).insert(1, "a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 a 2",
@@ -302,7 +326,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(2, "a");
+	jsv.observable(things).insert(2, "a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 a",
@@ -312,7 +336,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("a");
+	jsv.observable(things).insert("a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 a",
@@ -322,7 +346,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(1, ["a", "b"]);
+	jsv.observable(things).insert(1, ["a", "b"]);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 a b 2",
@@ -332,7 +356,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(["a", "b", "c"]);
+	jsv.observable(things).insert(["a", "b", "c"]);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 a b c",
@@ -342,7 +366,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("1", "b");
+	jsv.observable(things).insert("1", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 b 2",
@@ -352,7 +376,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("0", "b");
+	jsv.observable(things).insert("0", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "b 1 2",
@@ -362,7 +386,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("a", "b");
+	jsv.observable(things).insert("a", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -372,7 +396,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("1a", "b");
+	jsv.observable(things).insert("1a", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 b 2",
@@ -382,7 +406,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = [];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("a");
+	jsv.observable(things).insert("a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "a",
@@ -392,7 +416,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(1);
+	jsv.observable(things).insert(1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" ") + (things[2] === 1), "1 2 1true",
@@ -402,7 +426,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(0);
+	jsv.observable(things).insert(0);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" ") + (things[2] === 0), "1 2 0true",
@@ -412,7 +436,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(undefined);
+	jsv.observable(things).insert(undefined);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 ",
@@ -422,7 +446,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(1, undefined);
+	jsv.observable(things).insert(1, undefined);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1  2",
@@ -432,7 +456,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(0, undefined);
+	jsv.observable(things).insert(0, undefined);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), " 1 2",
@@ -442,7 +466,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert([undefined, null, 0, 1, "2"]);
+	jsv.observable(things).insert([undefined, null, 0, 1, "2"]);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2   0 1 2",
@@ -452,7 +476,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert("a", "b");
+	jsv.observable(things).insert("a", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -462,7 +486,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(-1, "a");
+	jsv.observable(things).insert(-1, "a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -472,7 +496,7 @@ QUnit.test("JsObservable: insert()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).insert(10, "a");
+	jsv.observable(things).insert(10, "a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 a",
@@ -485,7 +509,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	var things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(0);
+	jsv.observable(things).remove(0);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "2",
@@ -495,7 +519,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(1);
+	jsv.observable(things).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1",
@@ -505,7 +529,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(2);
+	jsv.observable(things).remove(2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -515,7 +539,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove();
+	jsv.observable(things).remove();
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1",
@@ -525,7 +549,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(1, 2);
+	jsv.observable(things).remove(1, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4",
@@ -535,7 +559,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(1, 10);
+	jsv.observable(things).remove(1, 10);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1",
@@ -545,7 +569,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove("1c", "2.001 euros");
+	jsv.observable(things).remove("1c", "2.001 euros");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4",
@@ -555,7 +579,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove("a");
+	jsv.observable(things).remove("a");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -565,7 +589,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove("a", "b");
+	jsv.observable(things).remove("a", "b");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -575,7 +599,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = [];
 
 	// ................................ Act ..................................
-	$.observable(things).remove();
+	jsv.observable(things).remove();
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "",
@@ -585,7 +609,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(-1);
+	jsv.observable(things).remove(-1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -595,7 +619,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(10);
+	jsv.observable(things).remove(10);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -605,7 +629,7 @@ QUnit.test("JsObservable: remove()", function(assert) {
 	things = ["1", "2"];
 
 	// ................................ Act ..................................
-	$.observable(things).remove(10);
+	jsv.observable(things).remove(10);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2",
@@ -618,7 +642,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	var things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 2);
+	jsv.observable(things).move(1, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 3 2 4",
@@ -628,7 +652,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(2, 1);
+	jsv.observable(things).move(2, 1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 3 2 4",
@@ -638,7 +662,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 3);
+	jsv.observable(things).move(1, 3);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 3 4 2",
@@ -648,7 +672,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 2, 2);
+	jsv.observable(things).move(1, 2, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4 2 3",
@@ -658,7 +682,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 3, 2);
+	jsv.observable(things).move(1, 3, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4 2 3",
@@ -668,7 +692,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 2, 3);
+	jsv.observable(things).move(1, 2, 3);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -678,7 +702,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 6, 2);
+	jsv.observable(things).move(1, 6, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4 2 3",
@@ -688,7 +712,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 1);
+	jsv.observable(things).move(1, 1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -698,7 +722,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 1, 3);
+	jsv.observable(things).move(1, 1, 3);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -708,7 +732,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1);
+	jsv.observable(things).move(1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -718,7 +742,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move();
+	jsv.observable(things).move();
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -728,7 +752,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(10, 0);
+	jsv.observable(things).move(10, 0);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -738,7 +762,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(0, 10);
+	jsv.observable(things).move(0, 10);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "2 3 4 1",
@@ -748,7 +772,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(3, 0, 6);
+	jsv.observable(things).move(3, 0, 6);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "4 1 2 3",
@@ -758,7 +782,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(-1, 2);
+	jsv.observable(things).move(-1, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -768,7 +792,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(-1, 2);
+	jsv.observable(things).move(-1, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -778,7 +802,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, -1);
+	jsv.observable(things).move(1, -1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -788,7 +812,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 2, -1);
+	jsv.observable(things).move(1, 2, -1);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -798,7 +822,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("a", 2);
+	jsv.observable(things).move("a", 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -808,7 +832,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", "2px");
+	jsv.observable(things).move("1c", "2.001 euros", "2px");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 4 2 3",
@@ -818,7 +842,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("c", "2.001 euros", "2px");
+	jsv.observable(things).move("c", "2.001 euros", "2px");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -828,7 +852,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", "euros", "2px");
+	jsv.observable(things).move("1c", "euros", "2px");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -838,7 +862,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", "px");
+	jsv.observable(things).move("1c", "2.001 euros", "px");
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -848,7 +872,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", undefined);
+	jsv.observable(things).move("1c", "2.001 euros", undefined);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 3 2 4",
@@ -858,7 +882,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", "2.001 euros", null);
+	jsv.observable(things).move("1c", "2.001 euros", null);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 3 2 4",
@@ -868,7 +892,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", undefined);
+	jsv.observable(things).move("1c", undefined);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -878,7 +902,7 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = ["1", "2", "3", "4"];
 
 	// ................................ Act ..................................
-	$.observable(things).move("1c", null);
+	jsv.observable(things).move("1c", null);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "1 2 3 4",
@@ -888,16 +912,16 @@ QUnit.test("JsObservable: move()", function(assert) {
 	things = [];
 
 	// ................................ Act ..................................
-	$.observable(things).move(1, 2);
+	jsv.observable(things).move(1, 2);
 
 	// ............................... Assert .................................
 	assert.equal(things.join(" "), "",
 	'move(1, 2) does nothing if array is empty');
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
-QUnit.module("API - $.observe() (jso)");
+QUnit.module("API - jsv.observe() (jso)");
 
 QUnit.test("depends, for computed observables", function(assert) {
 
@@ -935,13 +959,13 @@ QUnit.test("depends, for computed observables", function(assert) {
 		app = {};
 
 	// ................................ Act ..................................
-	$.observe(app, "person^fullName", "more", callback1);
+	jsv.observe(app, "person^fullName", "more", callback1);
 
-	$.observe(app, "person^fullName", callback2);
+	jsv.observe(app, "person^fullName", callback2);
 
 	result = out1 + out2 + cbs.length + "|";
 
-	$.observable(app).setProperty("person", {
+	jsv.observable(app).setProperty("person", {
 		fullName: fullName,
 		_first: "Jo",
 		_last: "Blow",
@@ -955,7 +979,7 @@ QUnit.test("depends, for computed observables", function(assert) {
 		'Depends for computed observable is called once during each new handler binding of observable object (before calling handler)');
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("person.more", "SomeMore");
+	jsv.observable(app).setProperty("person.more", "SomeMore");
 
 	result = out1 + " " + out2;
 
@@ -964,7 +988,7 @@ QUnit.test("depends, for computed observables", function(assert) {
 		'Can set different depends for different binding of same computed observable (here, only first depends expression has "more")');
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("person._first", "Pete");
+	jsv.observable(app).setProperty("person._first", "Pete");
 
 	result = out1 + " " + out2;
 
@@ -984,15 +1008,15 @@ QUnit.test("depends, for computed observables", function(assert) {
 		'Can manually trigger handlers copied from depends function call, for later updates from non-observable changes');
 
 	// =============================== Teardown ===============================
-	$.unobserve(); // Unobserve everything
-	// $.unobserve(app, app.person); // Or could do this...
+	jsv.unobserve(); // Unobserve everything
+	// jsv.unobserve(app, app.person); // Or could do this...
 
 	reset();
 });
 
 QUnit.test("Array", function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 	// Using the same event handler for arrayChange and propertyChange
@@ -1000,72 +1024,72 @@ QUnit.test("Array", function(assert) {
 	var myArray = [1, 2];
 
 	// ................................ Act ..................................
-	$.observe(myArray, myListener);
+	jsv.observe(myArray, myListener);
 
-	$.observable(myArray).insert(10);
+	jsv.observable(myArray).insert(10);
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
 		"regularCallbackCalls: 1, eventArgs: change: insert|1 true",
-		"$.observe(myArray, myListener) listens just to array change on the array");
+		"jsv.observe(myArray, myListener) listens just to array change on the array");
 
 	// ................................ Act ..................................
 	reset();
-	$.unobserve(myArray, myListener);
+	jsv.unobserve(myArray, myListener);
 
-	$.observable(myArray).insert(11);
+	jsv.observable(myArray).insert(11);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(myArray).events, "true",
-		"$.unobserve(myArray, myListener) removes the arraychange handler");
+		"jsv.unobserve(myArray, myListener) removes the arraychange handler");
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(myArray, "length", myListener);
+	jsv.observe(myArray, "length", myListener);
 
-	$.observable(myArray).insert(14);
+	jsv.observable(myArray).insert(14);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(myArray).events.arrayChange + " " + $._data(myArray).events.propertyChange.length,
 		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 4 value: 5, eventArgs.path: length|true 1",
-		'$.observe(myArray, "length", myListener) listens to length propertyChange on the array, but not to array change on the array');
+		'jsv.observe(myArray, "length", myListener) listens to length propertyChange on the array, but not to array change on the array');
 
 	reset();
 
-	$.unobserve(myArray, "length", myListener);
+	jsv.unobserve(myArray, "length", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(myArray).events, "true",
-		'$.unobserve(myArray, "length", myListener) removes the propertychange handler');
+		'jsv.unobserve(myArray, "length", myListener) removes the propertychange handler');
 
 	// ................................ Act ..................................
-	$.observe(myArray, myArray, "length", myListener);
+	jsv.observe(myArray, myArray, "length", myListener);
 
-	$.observable(myArray).insert(15);
+	jsv.observable(myArray).insert(15);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(myArray).events.arrayChange + " " + $._data(myArray).events.propertyChange.length,
 		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|regularCallbackCalls: 2, eventArgs: change: insert|false 1",
-		'$.observe(myArray, myArray, "length", myListener) listens to length propertyChange on the array, and to array change on the array');
+		'jsv.observe(myArray, myArray, "length", myListener) listens to length propertyChange on the array, and to array change on the array');
 
 	// ................................ Reset ..................................
 	reset();
-	$.unobserve(myArray, myListener);
+	jsv.unobserve(myArray, myListener);
 
 	// ................................ Act ..................................
-	$.observe(myArray, myListener);
-	$.observe(myArray, "length", myListener);
-	$.unobserve(myArray, myArray, "length", myListener);
+	jsv.observe(myArray, myListener);
+	jsv.observe(myArray, "length", myListener);
+	jsv.unobserve(myArray, myArray, "length", myListener);
 
-	$.observable(myArray).insert(15);
+	jsv.observable(myArray).insert(15);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(myArray).events, "true",
-		'$.unobserve(myArray, myArray, "length", myListener) removes the propertychange handler and the array handler');
+		'jsv.unobserve(myArray, myArray, "length", myListener) removes the propertychange handler and the array handler');
 
 	// ................................ Reset ..................................
 	reset();
-	$.unobserve(myArray, myListener);
+	jsv.unobserve(myArray, myListener);
 
 	// =============================== Arrange ===============================
 	reset();
@@ -1077,14 +1101,14 @@ QUnit.test("Array", function(assert) {
 		myListener(ev, eventArgs);
 		if (!done && eventArgs.change === "remove") {
 			done = true;
-			$.observable(myArray).remove();
+			jsv.observable(myArray).remove();
 		}
 	}
 
-	$.observe(myArray, listenAndChangeAgain);
-	$.observe(myArray, "length", listenAndChangeAgain);
+	jsv.observe(myArray, listenAndChangeAgain);
+	jsv.observe(myArray, "length", listenAndChangeAgain);
 
-	$.observable(myArray).remove(1);
+	jsv.observable(myArray).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(myArray).events.arrayChange.length + " " + !$._data(myArray).events.propertyChange,
@@ -1092,10 +1116,10 @@ QUnit.test("Array", function(assert) {
 			+ "regularCallbackCalls: 2, eventArgs: change: remove|"
 			+ "calls: 3, ev.data: prop: length, eventArgs: oldValue: 2 value: 1, eventArgs.path: length|"
 			+ "regularCallbackCalls: 4, eventArgs: change: remove|1 false",
-		'$.observe(myArray, "length", listenAndChangeAgain) with cascading changes preserves expected order on callbacks for array and array.length change');
+		'jsv.observe(myArray, "length", listenAndChangeAgain) with cascading changes preserves expected order on callbacks for array and array.length change');
 
 	// ................................ Reset ..................................
-	$.unobserve(myArray, listenAndChangeAgain);
+	jsv.unobserve(myArray, listenAndChangeAgain);
 
 	// =============================== Arrange ===============================
 	reset();
@@ -1104,94 +1128,94 @@ QUnit.test("Array", function(assert) {
 			altArray = [4, 3, 2, 1],
 			obj = {name: {first: "n", arr: initialArray}};
 
-	$.observe(obj, "name.arr", myListener);
+	jsv.observe(obj, "name.arr", myListener);
 
 	// ................................ Act ..................................
-	$.observable(initialArray).insert(10);
+	jsv.observable(initialArray).insert(10);
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(initialArray).events.arrayChange.length + " " + $._data(obj.name).events.propertyChange.length + " " + !$._data(initialArray).events.propertyChange,
 		"regularCallbackCalls: 1, eventArgs: change: insert|1 1 true",
-		'$.observe(object, "a.b.myArray", myListener) listens to array change on the array, and to property change for setting the array');
+		'jsv.observe(object, "a.b.myArray", myListener) listens to array change on the array, and to property change for setting the array');
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj).setProperty("name.arr", altArray);
+	jsv.observable(obj).setProperty("name.arr", altArray);
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2,10] value: [4,3,2,1], eventArgs.path: arr|",
-	'$.observe(object, "a.b.myArray", myListener) listens to property change for swapping the array property');
+	'jsv.observe(object, "a.b.myArray", myListener) listens to property change for swapping the array property');
 
 	// ............................... Assert .................................
 	reset();
 	assert.equal(!$._data(initialArray).events + " " + $._data(altArray).events.arrayChange.length, "true 1",
-	'$.observable(obj).setProperty("name.arr", newArray) removes the arrayChange handler on previous array, and adds arrayChange to new array');
+	'jsv.observable(obj).setProperty("name.arr", newArray) removes the arrayChange handler on previous array, and adds arrayChange to new array');
 
 	// ................................ Act ..................................
-	$.observable(obj.name.arr).insert(11);
+	jsv.observable(obj.name.arr).insert(11);
 
 	// ............................... Assert .................................
 	assert.equal(result, "regularCallbackCalls: 1, eventArgs: change: insert|",
-	'$.observe(object, "a.b.myArray", myListener) listens to array changes on leaf array property (regular callback)');
+	'jsv.observe(object, "a.b.myArray", myListener) listens to array changes on leaf array property (regular callback)');
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj.name).events.propertyChange.length + $._data(obj.name.arr).events.arrayChange.length;
-	$.unobserve(obj, "name.arr", myListener);
+	jsv.unobserve(obj, "name.arr", myListener);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 2 && !$._data(obj.name).events && !$._data(obj.name.arr).events,
-	'$.unobserve(object, "a.b.myArray") removes both arrayChange and propertyChange event handlers');
+	'jsv.unobserve(object, "a.b.myArray") removes both arrayChange and propertyChange event handlers');
 	reset();
 
-	$.observe(obj, "name.arr", "name.arr.length", myListener);
+	jsv.observe(obj, "name.arr", "name.arr.length", myListener);
 
-	$.observable(obj.name.arr).insert(16);
+	jsv.observable(obj.name.arr).insert(16);
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name.arr).events.propertyChange.length + " " + $._data(obj.name).events.propertyChange.length,
 		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 5 value: 6, eventArgs.path: length|"
 		+ "regularCallbackCalls: 2, eventArgs: change: insert|1 1 1",
-		'$.observe(object, "a.b.array", "a.b.array.length", myListener) listens to array change on the array, to setting the array, and to length propertyChange on the array');
+		'jsv.observe(object, "a.b.array", "a.b.array.length", myListener) listens to array change on the array, to setting the array, and to length propertyChange on the array');
 
 	// ................................ Act ..................................
 	reset();
-	$.unobserve(obj, "name.arr", "name.arr.length", myListener);
+	jsv.unobserve(obj, "name.arr", "name.arr.length", myListener);
 
-	$.observable(obj.name.arr).insert(17);
+	jsv.observable(obj.name.arr).insert(17);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(obj.name.arr).events + " " + !$._data(obj.name).events, "true true",
-		'$.unobserve(object, "a.b.array", "a.b.array.length", myListener) removes the arraychange handler and the propertychange handlers');
+		'jsv.unobserve(object, "a.b.array", "a.b.array.length", myListener) removes the arraychange handler and the propertychange handlers');
 
 	// ................................ Act ..................................
-	$.observe(obj, "name.arr^length", myListener);
+	jsv.observe(obj, "name.arr^length", myListener);
 
-	$.observable(obj.name.arr).insert(16);
+	jsv.observable(obj.name.arr).insert(16);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(obj.name.arr).events.arrayChange + " " + $._data(obj.name.arr).events.propertyChange.length + " " + $._data(obj.name).events.propertyChange.length,
 		"calls: 1, ev.data: prop: length, eventArgs: oldValue: 7 value: 8, eventArgs.path: length|true 1 1",
-		'$.observe(object, "a.b.array^length", myListener) listens to setting array and changing array length, but not to arrayChange on the array');
+		'jsv.observe(object, "a.b.array^length", myListener) listens to setting array and changing array length, but not to arrayChange on the array');
 
 	// ................................ Act ..................................
 	reset();
-	$.unobserve(obj, "name.arr^length", myListener);
+	jsv.unobserve(obj, "name.arr^length", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(obj.name.arr).events + " " + !$._data(obj.name).events, "true true",
-		'$.unobserve(object, "a.b.array^length", myListener) removes the arraychange handler and the propertychange handler');
+		'jsv.unobserve(object, "a.b.array^length", myListener) removes the arraychange handler and the propertychange handler');
 
 	// ................................ Act ..................................
-	$.observe(obj, "name.*", myListener);
+	jsv.observe(obj, "name.*", myListener);
 
-	$.observable(obj.name.arr).insert(18);
+	jsv.observable(obj.name.arr).insert(18);
 
-	$.observable(obj.name).setProperty({
+	jsv.observable(obj.name).setProperty({
 		first: "1st",
 		notThereBefore: "2nd",
 		arr: initialArray
 	});
-	$.observable(obj.name.arr).insert(19);
+	jsv.observable(obj.name.arr).insert(19);
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name).events.propertyChange.length + " " + !$._data(altArray).events,
@@ -1200,7 +1224,7 @@ QUnit.test("Array", function(assert) {
 		+ "calls: 3, ev.data: prop: *, eventArgs: oldValue: undefined value: 2nd, eventArgs.path: notThereBefore|"
 		+ "calls: 4, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,16,18] value: [1,2,10], eventArgs.path: arr|"
 		+ "regularCallbackCalls: 5, eventArgs: change: insert|1 1 true",
-		'$.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
+		'jsv.observe(object, "a.b.*", myListener) listens to all propertyChange events on object.a.b and to array change on any array properties of object.a.b');
 
 		"regularCallbackCalls: 1, eventArgs: change: insert|"
 		"calls: 2, ev.data: prop: *, eventArgs: oldValue: [4,3,2,1,11,16,17,16,18] value: [1,2,10], eventArgs.path: arr|"
@@ -1210,13 +1234,13 @@ QUnit.test("Array", function(assert) {
 
 	// ................................ Act ..................................
 	reset();
-	$.unobserve(obj, "name.*", myListener);
+	jsv.unobserve(obj, "name.*", myListener);
 
-	$.observable(obj.name.arr).insert(17);
+	jsv.observable(obj.name.arr).insert(17);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(obj.name.arr).events, "true",
-		'$.unobserve(object, "a.b.*", myListener) removes the propertychange handler and any arraychange handlers');
+		'jsv.unobserve(object, "a.b.*", myListener) removes the propertychange handler and any arraychange handlers');
 
 	// =============================== Arrange ===============================
 	obj = {name: {first: "n", arr: initialArray}};
@@ -1225,18 +1249,18 @@ QUnit.test("Array", function(assert) {
 		newArray3 = [3, 3];
 
 	reset();
-	$.observe(obj, "name.*", myListener);
+	jsv.observe(obj, "name.*", myListener);
 
-	$.observable(obj.name.arr).insert(18);
+	jsv.observable(obj.name.arr).insert(18);
 
-	$.observable(obj.name).setProperty({
+	jsv.observable(obj.name).setProperty({
 		first: newArray1,
 		arrayNotThereBefore: newArray2,
 		arr: newArray3
 	});
-	$.observable(obj.name.first).insert(10);
-	$.observable(obj.name.arrayNotThereBefore).insert(11);
-	$.observable(obj.name.arr).insert(12);
+	jsv.observable(obj.name.first).insert(10);
+	jsv.observable(obj.name.arrayNotThereBefore).insert(11);
+	jsv.observable(obj.name.arr).insert(12);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(initialArray).events + " " + $._data(obj.name).events.propertyChange.length + " "
@@ -1249,17 +1273,17 @@ QUnit.test("Array", function(assert) {
 		+ "regularCallbackCalls: 6, eventArgs: change: insert|"
 		+ "regularCallbackCalls: 7, eventArgs: change: insert|"
 		+ "true 1 1 1 1",
-		'$.observe(object, "a.b.*", myListener) listens to array change on any array properties of object.a.b whether intially present, or added subsequently');
+		'jsv.observe(object, "a.b.*", myListener) listens to array change on any array properties of object.a.b whether intially present, or added subsequently');
 
 	// ................................ Act ..................................
 	reset();
-	$.unobserve(obj, "name.*", myListener);
+	jsv.unobserve(obj, "name.*", myListener);
 
-	$.observable(obj.name.arr).insert(17);
+	jsv.observable(obj.name.arr).insert(17);
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(obj.name.arr).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events + " " + !$._data(newArray1).events, "true true true true",
-		'$.unobserve(object, "a.b.*", myListener) removes the propertychange handler and any arraychange handlers');
+		'jsv.unobserve(object, "a.b.*", myListener) removes the propertychange handler and any arraychange handlers');
 
 	// =============================== Arrange ===============================
 	// Using an array event handler
@@ -1270,49 +1294,49 @@ QUnit.test("Array", function(assert) {
 		+ ", eventArgs: change: " + eventArgs.change + "|";
 	};
 
-	$.observe(obj, "name.arr", myListener);
+	jsv.observe(obj, "name.arr", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj).setProperty("name.arr", [4, 3, 2, 1]);
+	jsv.observable(obj).setProperty("name.arr", [4, 3, 2, 1]);
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: arr, eventArgs: oldValue: [1,2] value: [4,3,2,1], eventArgs.path: arr|",
-	'$.observe(object, "a.b.myArray", cbWithArrayCallback) listens to property change for swapping the array property');
+	'jsv.observe(object, "a.b.myArray", cbWithArrayCallback) listens to property change for swapping the array property');
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj.name.arr).insert(12);
+	jsv.observable(obj.name.arr).insert(12);
 
 	// ............................... Assert .................................
 	assert.equal(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
-	'$.observe(object, "a.b.myArray", cbWithArrayCallback) listens also to array changes on leaf array property (array callback handler)');
+	'jsv.observe(object, "a.b.myArray", cbWithArrayCallback) listens also to array changes on leaf array property (array callback handler)');
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj.name.arr).events.arrayChange.length + " " + $._data(obj.name).events.propertyChange.length;
-	$.unobserve(obj, "name.arr", myListener);
+	jsv.unobserve(obj, "name.arr", myListener);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === "1 1" && !$._data(obj.name.arr).events && !$._data(obj.name).events,
-	'$.unobserve(object, "a.b.myArray") removes arrayChange and propertyChange event handlers');
+	'jsv.unobserve(object, "a.b.myArray") removes arrayChange and propertyChange event handlers');
 
 	// =============================== Arrange ===============================
-	$.observe(obj.name.arr, myListener);
+	jsv.observe(obj.name.arr, myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(obj.name.arr).insert(13);
+	jsv.observable(obj.name.arr).insert(13);
 
 	// ............................... Assert .................................
 	assert.equal(result, "arrayListenerCalls: 0, eventArgs: change: insert|",
-	'$.observe(myArray, cbWithArrayCallback) listens to array changes (array callback handler)');
+	'jsv.observe(myArray, cbWithArrayCallback) listens to array changes (array callback handler)');
 	// ................................ Act ..................................
 	handlersCount = $._data(obj.name.arr).events.arrayChange.length;
-	$.unobserve(obj.name.arr, myListener);
+	jsv.unobserve(obj.name.arr, myListener);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 1 && !$._data(obj.name.arr).events,
-	'$.unobserve(myArray) removes arrayChange event handler');
+	'jsv.unobserve(myArray) removes arrayChange event handler');
 	// -----------------------------------------------------------------------
 
 	// =============================== Arrange ===============================
@@ -1321,20 +1345,20 @@ QUnit.test("Array", function(assert) {
 	function onch2() {}
 
 	// ................................ Act ..................................
-	$.observe(people, "length", onch);
-	$.observe(people, "length", onch2);
-	$.observe(people, "length2", onch);
-	$.observe(people, "length2", onch2);
-	$.unobserve(people, "length2", onch);
-	$.unobserve(people, "length2", onch2);
-	$.unobserve(people, "length", onch);
-	$.unobserve(people, "length", onch2);
+	jsv.observe(people, "length", onch);
+	jsv.observe(people, "length", onch2);
+	jsv.observe(people, "length2", onch);
+	jsv.observe(people, "length2", onch2);
+	jsv.unobserve(people, "length2", onch);
+	jsv.unobserve(people, "length2", onch2);
+	jsv.unobserve(people, "length", onch);
+	jsv.unobserve(people, "length", onch2);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(people).events]), "[{},null]",
 		"observe/unobserve array - API calls in different orders: all bindings removed when unobserve called");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("observe/unobserve alternative signatures", function(assert) {
@@ -1342,17 +1366,17 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// ................................ Reset ................................
 	person1.home.address.street = "StreetOne"; // reset Prop
 	person1.home.address.ZIP = "111"; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 	reset();
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(person1.home.address, "street", myListener);
-	$.observable(person1.home.address).setProperty("street", "newValue");
+	jsv.observe(person1.home.address, "street", myListener);
+	jsv.observable(person1.home.address).setProperty("street", "newValue");
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|",
-	"$.observe(object, path, myListener)");
+	"jsv.observe(object, path, myListener)");
 
 	// ................................ Reset ................................
 	person1.home.address.street = "StreetOne"; // reset Prop
@@ -1361,12 +1385,12 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "street", myListener);
-	$.observable(person1.home.address).setProperty("street", "newValue");
+	jsv.unobserve(person1.home.address, "street", myListener);
+	jsv.observable(person1.home.address).setProperty("street", "newValue");
 
 	// ............................... Assert .................................
 	assert.equal(result, "",
-	"$.unobserve(object, path, myListener)");
+	"jsv.unobserve(object, path, myListener)");
 
 	// ................................ Reset ................................
 	person1.home.address.street = "StreetOne"; // reset Prop
@@ -1375,13 +1399,13 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	jsv.observe(person1.home.address, "street", "ZIP", myListener);
+	jsv.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
 				+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
-	"$.observe(object, path1, path2, myListener)");
+	"jsv.observe(object, path1, path2, myListener)");
 
 	// ................................ Reset ................................
 	person1.home.address.street = "StreetOne"; // reset Prop
@@ -1391,12 +1415,12 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "street", "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	jsv.unobserve(person1.home.address, "street", "ZIP", myListener);
+	jsv.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "",
-	"$.unobserve(object, path1, path2, myListener) removes previous handlers");
+	"jsv.unobserve(object, path1, path2, myListener) removes previous handlers");
 
 	// ................................ Reset ................................
 	person1.home.address.street = "StreetOne"; // reset Prop
@@ -1409,10 +1433,10 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	function onch2(ev, eventArgs) {}
 
 	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.observe(person, "last", onch2);
-	$.unobserve(person, "last", onch);
-	$.unobserve(person, "last", onch2);
+	jsv.observe(person, "last", onch);
+	jsv.observe(person, "last", onch2);
+	jsv.unobserve(person, "last", onch);
+	jsv.unobserve(person, "last", onch2);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
@@ -1422,14 +1446,14 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	person = {first: "F", last: " L"};
 
 	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.observe(person, "last", onch2);
-	$.observe(person, "first", onch);
-	$.observe(person, "first", onch2);
-	$.unobserve(person, "last", onch);
-	$.unobserve(person, "last", onch2);
-	$.unobserve(person, "first", onch);
-	$.unobserve(person, "first", onch2);
+	jsv.observe(person, "last", onch);
+	jsv.observe(person, "last", onch2);
+	jsv.observe(person, "first", onch);
+	jsv.observe(person, "first", onch2);
+	jsv.unobserve(person, "last", onch);
+	jsv.unobserve(person, "last", onch2);
+	jsv.unobserve(person, "first", onch);
+	jsv.unobserve(person, "first", onch2);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
@@ -1445,98 +1469,98 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	};
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person, "name", myListener);
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve(person, "name", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve with path and handler works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person, myListener);
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve(person, myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve without path works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person, "name");
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve(person, "name");
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve without handler works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(person);
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve(person);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve without path and handler works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve(myListener);
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve(myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve with handler only works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", myListener);
-	$.unobserve();
+	jsv.observe(person, "name", myListener);
+	jsv.unobserve();
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve() (unobserves all) works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", "address^street", "phones", myListener);
-	$.unobserve(person, "name", "address^street", "phones", myListener);
+	jsv.observe(person, "name", "address^street", "phones", myListener);
+	jsv.unobserve(person, "name", "address^street", "phones", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve with multiple paths and handler works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", "address^street", "phones", myListener);
-	$.unobserve(person, "*", person.address, "*");
+	jsv.observe(person, "name", "address^street", "phones", myListener);
+	jsv.unobserve(person, "*", person.address, "*");
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve with deep paths using '*' works");
 
 	// ................................ Act ..................................
-	$.observe(person, "name", "address^street", "phones", myListener);
+	jsv.observe(person, "name", "address^street", "phones", myListener);
 
-	$.unobserve(person, person.address, person.phones);
+	jsv.unobserve(person, person.address, person.phones);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve(object1, object2) removes handlers from each object");
 
 	// ................................ Act ..................................
-	$.unobserve(person);
-	$.unobserve(person.address);
-	$.unobserve(person.phones);
+	jsv.unobserve(person);
+	jsv.unobserve(person.address);
+	jsv.unobserve(person.phones);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve(object1) works");
 
 	// ................................ Act ..................................
-	$.observe(person, "phones", myListener);
-	$.unobserve();
+	jsv.observe(person, "phones", myListener);
+	jsv.unobserve();
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve() removes handlers from all objects");
 
 	// ................................ Act ..................................
-	$.observe(person.phones, myListener);
-	$.unobserve(person.phones);
+	jsv.observe(person.phones, myListener);
+	jsv.unobserve(person.phones);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person.phones).events]), "[{},null]",
@@ -1545,8 +1569,8 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// ................................ Act ..................................
 	function notBound() {}
 
-	$.observe(person, "name", "address^street", "phones", myListener);
-	$.unobserve(person, person.address, person.phones, notBound);
+	jsv.observe(person, "name", "address^street", "phones", myListener);
+	jsv.unobserve(person, person.address, person.phones, notBound);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person).events.propertyChange.length + $._data(person.address).events.propertyChange.length + $._data(person.phones).events.arrayChange.length,
@@ -1554,7 +1578,7 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 		"unobserve(object1, object2, unboundHandler) with another (unused) handler does nothing");
 
 	// ................................ Act ..................................
-	$.unobserve(notBound);
+	jsv.unobserve(notBound);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person).events.propertyChange.length + $._data(person.address).events.propertyChange.length + $._data(person.phones).events.arrayChange.length,
@@ -1562,17 +1586,17 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 		"unobserve(unboundHandler) with another (unused) handler does nothing");
 
 	// ................................ Act ..................................
-	$.unobserve(myListener);
-	$.observe(person.phones, myListener);
-	$.unobserve(person.phones, notBound);
+	jsv.unobserve(myListener);
+	jsv.observe(person.phones, myListener);
+	jsv.unobserve(person.phones, notBound);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person.phones).events.arrayChange.length, "1",
 		"unobserve(array, unboundHandler), with another (unused) handler does nothing");
 
-	$.unobserve(myListener);
+	jsv.unobserve(myListener);
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("observe/unobserve using namespaces", function(assert) {
@@ -1586,176 +1610,176 @@ QUnit.test("observe/unobserve using namespaces", function(assert) {
 		result += "Listener3 change: " + eventArgs.change + " Handler ns: '" + ev.data.ns + "' Caller ns: '" + ev.namespace + "' calls: " + calls + "|";
 	}
 
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 	var thing = {val: "initVal"};
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
+	jsv.observable(thing).setProperty("val", "newVal");
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(thing).events.propertyChange.length,
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
-		"$.observe(namespace, object, path, cb)");
+		"jsv.observe(namespace, object, path, cb)");
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.unobserve("my.nmspace", thing);
+	jsv.unobserve("my.nmspace", thing);
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
+	jsv.observable(thing).setProperty("val", "newVal");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
 		"[{},null]",
-		"$.observe(namespace, object, path, cb); $.unobserve(namespace, object); removes all events added with the same namespace");
+		"jsv.observe(namespace, object, path, cb); jsv.unobserve(namespace, object); removes all events added with the same namespace");
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.unobserve(thing);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.unobserve(thing);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
+	jsv.observable(thing).setProperty("val", "newVal");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
 		"[{},null]",
-		"$.observe(namespace, object, path, cb); $.unobserve(object); removes all events even if added with the namespace");
+		"jsv.observe(namespace, object, path, cb); jsv.unobserve(object); removes all events even if added with the namespace");
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.unobserve("my2.nmspace", thing);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.unobserve("my2.nmspace", thing);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
+	jsv.observable(thing).setProperty("val", "newVal");
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(thing).events.propertyChange.length,
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|1",
-		"$.observe(namespace, object, path, cb); $.unobserve(otherNamespace, object); does not remove events if added with a different namespace");
+		"jsv.observe(namespace, object, path, cb); jsv.unobserve(otherNamespace, object); does not remove events if added with a different namespace");
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("my.nmspace", thing);
+	jsv.observable(thing).setProperty("val", "newVal2");
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(thing).events.propertyChange.length,
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
-		"$.observe(namespace1, object, path, cb); $.observe(namespace2, object, path, cb); $.unobserve(namespace1, object); Add two events with different namespaces, then remove one of the namespaces - leaves the other handlers");
+		"jsv.observe(namespace1, object, path, cb); jsv.observe(namespace2, object, path, cb); jsv.unobserve(namespace1, object); Add two events with different namespaces, then remove one of the namespaces - leaves the other handlers");
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("my.nmspace", thing);
+	jsv.observable(thing).setProperty("val", "newVal2");
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(thing).events.propertyChange.length,
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 3, ev.data: prop: val, eventArgs: oldValue: newVal value: newVal2, eventArgs.path: val|1",
-		'$.observe("my.nmspace your.nmspace", object, path, cb); $.unobserve(my.nmspace, object); Whitepace separated namespaces adds events for each namespace, then remove one of the namespaces - leaves the other handlers - as in previous test');
+		'jsv.observe("my.nmspace your.nmspace", object, path, cb); jsv.unobserve(my.nmspace, object); Whitepace separated namespaces adds events for each namespace, then remove one of the namespaces - leaves the other handlers - as in previous test');
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my.nmspace your.nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("my.nmspace your.nmspace", thing);
+	jsv.observable(thing).setProperty("val", "newVal2");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "[{},null]",
-		'$.unobserve("my.nmspace your.nmspace", object); $.unobserve with whitepace separated namespaces removes handler for each namespace');
+		'jsv.unobserve("my.nmspace your.nmspace", object); jsv.unobserve with whitepace separated namespaces removes handler for each namespace');
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("my your", thing);
-	$.observable(thing).setProperty("val", "newVal2");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("my your", thing);
+	jsv.observable(thing).setProperty("val", "newVal2");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "[{},null]",
-		'$.unobserve("my your", object); $.unobserve with whitepace separated namespaces removes handler for each namespace');
+		'jsv.unobserve("my your", object); jsv.unobserve with whitepace separated namespaces removes handler for each namespace');
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("nmspace", thing);
-	$.observable(thing).setProperty("val", "newVal2");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("nmspace", thing);
+	jsv.observable(thing).setProperty("val", "newVal2");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
 		"calls: 1, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "calls: 2, ev.data: prop: val, eventArgs: oldValue: initVal value: newVal, eventArgs.path: val|"
 		+ "[{},null]",
-		'$.observe("my.nmspace", object, path, cb); $.observe("your.nmspace", object, path, cb); $.unobserve("nmspace", object); removes all handlers for "nmspace" no matter what other namespaces were used ("my", "your", for example');
+		'jsv.observe("my.nmspace", object, path, cb); jsv.observe("your.nmspace", object, path, cb); jsv.unobserve("nmspace", object); removes all handlers for "nmspace" no matter what other namespaces were used ("my", "your", for example');
 
 	// ................................ Reset ................................
 	thing.val = "initVal"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.observe("my.nmspace", thing, "val", myListener);
-	$.observe("your.nmspace", thing, "val", myListener);
+	jsv.observe("my.nmspace", thing, "val", myListener);
+	jsv.observe("your.nmspace", thing, "val", myListener);
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(thing).setProperty("val", "newVal");
-	$.unobserve("p_foo", thing); // does nothing - removes handlers that listened to changes of "foo" property - but there were none...
-	$.observable(thing).setProperty("val", "newVal2");
-	$.unobserve("p_val", thing); // removes handlers that listened to changes of "val" property
-	$.observable(thing).setProperty("val", "newVal3");
+	jsv.observable(thing).setProperty("val", "newVal");
+	jsv.unobserve("p_foo", thing); // does nothing - removes handlers that listened to changes of "foo" property - but there were none...
+	jsv.observable(thing).setProperty("val", "newVal2");
+	jsv.unobserve("p_val", thing); // removes handlers that listened to changes of "val" property
+	jsv.observable(thing).setProperty("val", "newVal3");
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(thing).events]),
@@ -1780,74 +1804,74 @@ QUnit.test("observe/unobserve using namespaces", function(assert) {
 	};
 
 	// ................................ Act ..................................
-	$.observe("ns", person, "name", myListener);
-	$.unobserve("ns", person, "name", myListener);
+	jsv.observe("ns", person, "name", myListener);
+	jsv.unobserve("ns", person, "name", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, with path and handler works");
 
 	// ................................ Act ..................................
-	$.observe("ns", person, "name", myListener);
-	$.unobserve("ns", person);
+	jsv.observe("ns", person, "name", myListener);
+	jsv.unobserve("ns", person);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, without path and handler works");
 
 	// ................................ Act ..................................
-	$.observe("ns", person, "name", "address^street", "phones", myListener);
-	$.unobserve("ns", person, "name", "address^street", "phones", myListener);
+	jsv.observe("ns", person, "name", "address^street", "phones", myListener);
+	jsv.unobserve("ns", person, "name", "address^street", "phones", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events, $._data(person.address).events, $._data(person.phones).events]), "[{},null,null,null]",
 		"unobserve using namespaces, with multiple paths and handler works");
 
 	// ................................ Act ..................................
-	$.observe("ns", person.phones, myListener);
-	$.unobserve("ns", person.phones);
+	jsv.observe("ns", person.phones, myListener);
+	jsv.unobserve("ns", person.phones);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person.phones).events]), "[{},null]",
 		"unobserve using namespaces, for array works");
 
 	// ................................ Act ..................................
-	$.observe("ns", person, "name", "address^street", "phones", myListener);
-	$.unobserve("ns", person, "*", person.address, "*");
+	jsv.observe("ns", person, "name", "address^street", "phones", myListener);
+	jsv.unobserve("ns", person, "*", person.address, "*");
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces, with deep paths using '*' works");
 
 	// ................................ Act ..................................
-	$.observe("ns.a.b", person, "name", "address^street", "phones", myListener);
-	$.observe("ns.a.b", person, "name", myListener2);
-	$.unobserve("ns.b", myListener); // Removes handlers that include all namespace tokens, any object, for this handler
-	$.observable(person).setProperty("name", "newVal");
+	jsv.observe("ns.a.b", person, "name", "address^street", "phones", myListener);
+	jsv.observe("ns.a.b", person, "name", myListener2);
+	jsv.unobserve("ns.b", myListener); // Removes handlers that include all namespace tokens, any object, for this handler
+	jsv.observable(person).setProperty("name", "newVal");
 
 	// ............................... Assert .................................
 	assert.equal(result + $._data(person).events.propertyChange.length, "Listener2 change: set Handler ns: 'ns.a.b' Caller ns: '' calls: 1|1",
 		"unobserve using just namespaces and handler works");
 	reset();
-	$.unobserve();
+	jsv.unobserve();
 
 	// ................................ Act ..................................
-	$.observe("ns.a.b", person, "name", "address^street", "phones", myListener);
-	$.observe("ns.a.b", person, "phones", myListener2);
-	$.unobserve("ns.b"); // Removes handlers that include all namespace tokens, any object, any handler
+	jsv.observe("ns.a.b", person, "name", "address^street", "phones", myListener);
+	jsv.observe("ns.a.b", person, "phones", myListener2);
+	jsv.unobserve("ns.b"); // Removes handlers that include all namespace tokens, any object, any handler
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(person).events]), "[{},null]",
 		"unobserve using namespaces and no object, paths or handler works");
 
 	// ................................ Act ..................................
-	$.observe("ns.a.b", person, "name", "address^street", "phones", myListener3);
-	$.observe("ns.a.b", person, "name", myListener2);
-	$.observe("ns.a.c", person, "name", myListener2);
-	$.observe("b.c.ns", person, "name", myListener2);
-	$.observable("ns.b", person).setProperty("name", "newVal2");
-	$.observable("ns.b", person).removeProperty("name");
-	$.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
+	jsv.observe("ns.a.b", person, "name", "address^street", "phones", myListener3);
+	jsv.observe("ns.a.b", person, "name", myListener2);
+	jsv.observe("ns.a.c", person, "name", myListener2);
+	jsv.observe("b.c.ns", person, "name", myListener2);
+	jsv.observable("ns.b", person).setProperty("name", "newVal2");
+	jsv.observable("ns.b", person).removeProperty("name");
+	jsv.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(person).events]),
@@ -1858,22 +1882,22 @@ QUnit.test("observe/unobserve using namespaces", function(assert) {
 	+ "Listener2 change: set Handler ns: 'ns.a.b' Caller ns: 'b.ns' calls: 5|"
 	+ "Listener2 change: set Handler ns: 'b.c.ns' Caller ns: 'b.ns' calls: 6|"
 	+ "[{},null]",
-		'$.observable("ns.b", object).setProperty triggers only observe handlers that include those namespace tokens');
+		'jsv.observable("ns.b", object).setProperty triggers only observe handlers that include those namespace tokens');
 	reset();
-	$.unobserve();
+	jsv.unobserve();
 
 	// ................................ Act ..................................
-	$.observe("ns.a.b", person.phones, myListener3);
-	$.observe("ns.a.b", person.phones, myListener2);
-	$.observe("ns.a.c", person.phones, myListener2);
-	$.observe("b.c.ns", person.phones, myListener2);
-	$.observable("ns.b", person.phones).insert({number: "999"});
-	$.observable("ns.b", person.phones).remove();
-	$.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
+	jsv.observe("ns.a.b", person.phones, myListener3);
+	jsv.observe("ns.a.b", person.phones, myListener2);
+	jsv.observe("ns.a.c", person.phones, myListener2);
+	jsv.observe("b.c.ns", person.phones, myListener2);
+	jsv.observable("ns.b", person.phones).insert({number: "999"});
+	jsv.observable("ns.b", person.phones).remove();
+	jsv.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
 
 
-	$.observe("ns", person.phones, myListener);
-	$.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
+	jsv.observe("ns", person.phones, myListener);
+	jsv.unobserve("ns"); // Removes handlers that include 'ns' namespace token, any object, any handler
 
 	// ............................... Assert .................................
 	assert.equal(result + JSON.stringify([_jsv.cbBindings, $._data(person.phones).events]),
@@ -1884,11 +1908,11 @@ QUnit.test("observe/unobserve using namespaces", function(assert) {
 	+ "Listener2 change: remove Handler ns: 'ns.a.b' Caller ns: 'b.ns' calls: 5|"
 	+ "Listener2 change: remove Handler ns: 'b.c.ns' Caller ns: 'b.ns' calls: 6|"
 	+ "[{},null]",
-		'$.observable("ns.b", object).insert (array) triggers only observe handlers that include those namespace tokens');
+		'jsv.observable("ns.b", object).insert (array) triggers only observe handlers that include those namespace tokens');
 
 	reset();
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("Paths", function(assert) {
@@ -1905,89 +1929,89 @@ QUnit.test("Paths", function(assert) {
 	var originalAddress = person1.home.address;
 
 	// ................................ Act ..................................
-	$.observe(person1, "home^address.street", person1.home.address, "ZIP", myListener);
-	$.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
+	jsv.observe(person1, "home^address.street", person1.home.address, "ZIP", myListener);
+	jsv.observable(person1.home.address).setProperty({street: "newValue", ZIP: "newZip"});
 
 	// ............................... Assert .................................
 	assert.ok(result === "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetOne value: newValue, eventArgs.path: street|"
 		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip, eventArgs.path: ZIP|",
-	"$.observe(object, some.deep.path, object2, path, cb) is listening to leaf");
+	"jsv.observe(object, some.deep.path, object2, path, cb) is listening to leaf");
 
 	// ................................ Reset ................................
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({home: home2}); // Swap object higher in path
+	jsv.observable(person1).setProperty({home: home2}); // Swap object higher in path
 
 	// ............................... Assert .................................
 	assert.equal("" + (lastEventArgsOldVal === home1) + (lastEventArgsVal === home2) + result, "truetruecalls: 1, ev.data: prop: home, path: address^street,"
 		+ " eventArgs: oldValue: {\"address\":{\"street\":\"newValue\",\"ZIP\":\"newZip\"}} value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"222\"}}, eventArgs.path: home|",
-	"$.observe(object, some.deep.path, object2, path, cb) is listening to root");
+	"jsv.observe(object, some.deep.path, object2, path, cb) is listening to root");
 
 	// ................................ Reset ................................
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(address1).setProperty({street: "newValue2", ZIP: "newZip2"});
+	jsv.observable(address1).setProperty({street: "newValue2", ZIP: "newZip2"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: ZIP, eventArgs: oldValue: newZip value: newZip2, eventArgs.path: ZIP|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is no longer listening to original leaf on that path - 'i.e. 'street', but is listening to other paths as before - 'i.e. 'ZIP'");
+	"jsv.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is no longer listening to original leaf on that path - 'i.e. 'street', but is listening to other paths as before - 'i.e. 'ZIP'");
 
 	// ................................ Reset ................................
-	$.observable(address1).setProperty({street: "Street1", ZIP: "111"}); // reset Prop
+	jsv.observable(address1).setProperty({street: "Street1", ZIP: "111"}); // reset Prop
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
+	jsv.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newValue2, eventArgs.path: street|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is now listening to leaf on new descendant objects - 'i.e. 'street' on 'address2'");
+	"jsv.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is now listening to leaf on new descendant objects - 'i.e. 'street' on 'address2'");
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty("home", null); // Set object higher up on path to null
-	$.observable(person1).setProperty("home", home1); // Set object higher up to different object
+	jsv.observable(person1).setProperty("home", null); // Set object higher up on path to null
+	jsv.observable(person1).setProperty("home", home1); // Set object higher up to different object
 	reset();
 
-	$.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
-	$.observable(address1).setProperty({street: "newValue3", ZIP: "newZip3"});
+	jsv.observable(address2).setProperty({street: "newValue2", ZIP: "newZip2"});
+	jsv.observable(address1).setProperty({street: "newValue3", ZIP: "newZip3"});
 
 	// ............................... Assert .................................
 
 	assert.equal(result, "calls: 1, ev.data: prop: street, eventArgs: oldValue: Street1 value: newValue3, eventArgs.path: street|"
 		+ "calls: 2, ev.data: prop: ZIP, eventArgs: oldValue: 111 value: newZip3, eventArgs.path: ZIP|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after setting object to null, higher up on deep path, then setting to new object, is no longer listening to that path on original descendant objects but is now listening to the path on new descendant objects");
+	"jsv.observe(object, 'home.address.street', object2, 'ZIP', cb) after setting object to null, higher up on deep path, then setting to new object, is no longer listening to that path on original descendant objects but is now listening to the path on new descendant objects");
 
 	// ................................ Reset ................................
 	reset();
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty("home", home2); // Set object higher up to different object
-	$.observable(home1).setProperty("address", {street: "ignoreThisStreet", ZIP: "ignoreZip"});
-	$.observable(home2).setProperty("address", {street: "address3Street", ZIP: "address3Zip"});
+	jsv.observable(person1).setProperty("home", home2); // Set object higher up to different object
+	jsv.observable(home1).setProperty("address", {street: "ignoreThisStreet", ZIP: "ignoreZip"});
+	jsv.observable(home2).setProperty("address", {street: "address3Street", ZIP: "address3Zip"});
 
 	// ............................... Assert .................................
 	assert.equal(result,
 			"calls: 1, ev.data: prop: home, path: address^street, eventArgs: oldValue: {\"address\":{\"street\":\"newValue3\",\"ZIP\":\"newZip3\"}} value: {\"address\":{\"street\":\"newValue2\",\"ZIP\":\"newZip2\"}}, eventArgs.path: home|"
 		+ "calls: 2, ev.data: prop: address, path: street, eventArgs: oldValue: {\"street\":\"newValue2\",\"ZIP\":\"newZip2\"} value: {\"street\":\"address3Street\",\"ZIP\":\"address3Zip\"}, eventArgs.path: address|",
-	"$.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is listening to intermediate paths on new object - 'i.e. 'address'");
+	"jsv.observe(object, 'home.address.street', object2, 'ZIP', cb) after swapping higher up on deep path, is listening to intermediate paths on new object - 'i.e. 'address'");
 
 	// ................................ Reset ................................
 	reset();
 
 	// ................................ Act ..................................
-	$.unobserve(person1, "home^address.street", originalAddress, "ZIP", myListener);
+	jsv.unobserve(person1, "home^address.street", originalAddress, "ZIP", myListener);
 
 	// ............................... Assert .................................
 	assert.ok(!$._data(person1).events && !$._data(person1.home.address).events,
-	"$.unobserve(object, 'home.address.street', object2, 'ZIP', cb) removes the current listeners from that path");
+	"jsv.unobserve(object, 'home.address.street', object2, 'ZIP', cb) removes the current listeners from that path");
 
 	// ................................ Reset ................................
 	reset();
 
-	$.observe(person1, "home^address.street", person1.home.address, "ZIP", "ZIP", "foo", myListener);
-	$.observe(person1.home.address, "street", function() {});
+	jsv.observe(person1, "home^address.street", person1.home.address, "ZIP", "ZIP", "foo", myListener);
+	jsv.observe(person1.home.address, "street", function() {});
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1.home.address).events.propertyChange.length + " "
@@ -1996,7 +2020,7 @@ QUnit.test("Paths", function(assert) {
 	"Avoid duplicate handlers");
 
 	// ................................ Act ..................................
-	$.unobserve(person1, "home^address.ZIP");
+	jsv.unobserve(person1, "home^address.ZIP");
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1.home.address).events.propertyChange.length + " "
@@ -2005,14 +2029,14 @@ QUnit.test("Paths", function(assert) {
 	"unobserve(object, paths) - with no callback specified: Remove handlers only for selected properties");
 
 	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*", myListener);
+	jsv.unobserve(person1.home.address, "*", myListener);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1.home.address).events.propertyChange.length, "1",
 	'unobserve(object, "*", myListener) removes all handlers on this object for any props, for this callback');
 
 	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*");
+	jsv.unobserve(person1.home.address, "*");
 
 	// ............................... Assert .................................
 	assert.ok(!$._data(person1.home.address).events,
@@ -2024,14 +2048,14 @@ QUnit.test("Paths", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(person1.home.address, "*", "ZIP", myListener);
+	jsv.observe(person1.home.address, "*", "ZIP", myListener);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1.home.address).events.propertyChange.length, "1",
 	'Add a listener for "*" - avoids duplicates');
 
 	// ................................ Act ..................................
-	$.observable(person1.home.address).setProperty({street: "newValue4", ZIP: "newZip4"});
+	jsv.observable(person1.home.address).setProperty({street: "newValue4", ZIP: "newZip4"});
 
 	// ............................... Assert .................................
 
@@ -2040,7 +2064,7 @@ QUnit.test("Paths", function(assert) {
 	'listen to both "*" and specific prop. Note: Eliminates duplicates for specific props when there is also a "*"');
 
 	// ................................ Reset ................................
-	$.unobserve(person1.home.address, "*");
+	jsv.unobserve(person1.home.address, "*");
 	address1.street = "StreetOne"; // reset Prop
 	address1.ZIP = "111"; // reset Prop
 	address2.street = "StreetTwo"; // reset Prop
@@ -2051,18 +2075,18 @@ QUnit.test("Paths", function(assert) {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(person1, "work^address.street", myListener);
-	$.observable(person1).setProperty({work: home2});
-	$.observable(address2).setProperty({street: "newAddress2"});
+	jsv.observe(person1, "work^address.street", myListener);
+	jsv.observable(person1).setProperty({work: home2});
+	jsv.observable(address2).setProperty({street: "newAddress2"});
 
 	// ............................... Assert .................................
 	assert.equal(result,
 			"calls: 1, ev.data: prop: work, path: address^street, eventArgs: oldValue: undefined value: {\"address\":{\"street\":\"StreetTwo\",\"ZIP\":\"newZip2\"}}, eventArgs.path: work|"
 		+ "calls: 2, ev.data: prop: street, eventArgs: oldValue: StreetTwo value: newAddress2, eventArgs.path: street|",
-	'observing a deep path into missing properties, followed by $.observable(...).setProperty calls which supply the missing object property then modify subobjects deeper down the path lead to the correct callback events');
+	'observing a deep path into missing properties, followed by jsv.observable(...).setProperty calls which supply the missing object property then modify subobjects deeper down the path lead to the correct callback events');
 
 	// ................................ Reset ................................
-	$.unobserve(person1, "work^address.street");
+	jsv.unobserve(person1, "work^address.street");
 	address2.street = "StreetTwo"; // reset Prop
 	delete person1.work; // reset Prop
 	reset();
@@ -2070,22 +2094,22 @@ QUnit.test("Paths", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.unobserve(person1.home.address, "*");
+	jsv.unobserve(person1.home.address, "*");
 
 	// ............................... Assert .................................
 	assert.ok(!$._data(person1.home.address).events,
 	'unobserve(object, "*") removes all handlers on this object for any props, both "*" and specific props, for any callback');
 
 	// ................................ Act ..................................
-	$.observe(person1, "fullName", myListener);
+	jsv.observe(person1, "fullName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property');
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Mr Jo value: Mr newFirst, eventArgs.path: firstName|"
@@ -2104,7 +2128,7 @@ QUnit.test("Paths", function(assert) {
 	+ $._data(model.person1).events.propertyChange.length;
 
 	// ................................ Act ..................................
-	$.unobserve(person1, "fullName", myListener);
+	jsv.unobserve(person1, "fullName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(listeners + ". After: "
@@ -2112,14 +2136,14 @@ QUnit.test("Paths", function(assert) {
 	'unobserve(object, "computed", cb) removes handlers');
 
 	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", myListener);
+	jsv.observe(model, "person1^fullName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property on a deep path');
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	// ............................... Assert .................................
 
@@ -2138,7 +2162,7 @@ QUnit.test("Paths", function(assert) {
 	+ $._data(model.person1).events.propertyChange.length;
 
 	// ................................ Act ..................................
-	$.unobserve(model, "person1^fullName", myListener);
+	jsv.unobserve(model, "person1^fullName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(listeners + ". After: "
@@ -2147,14 +2171,14 @@ QUnit.test("Paths", function(assert) {
 	'unobserve(object, "computed", cb) removes handlers');
 
 	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1^firstName", "person1^lastName", "person1^firstName", myListener);
+	jsv.observe(model, "person1^fullName", "person1^firstName", "person1^lastName", "person1^firstName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal("" + $._data(person1).events.propertyChange.length, "3",
 	'Add a listener for computed property on deep path plus redundant computed dependency plus redundant computed prop.');
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: firstName, eventArgs: oldValue: Sir Jo value: Sir newFirst, eventArgs.path: firstName|"
@@ -2173,7 +2197,7 @@ QUnit.test("Paths", function(assert) {
 	+ $._data(model.person1).events.propertyChange.length;
 
 	// ................................ Act ..................................
-	$.unobserve(model, "person1^fullName", myListener);
+	jsv.unobserve(model, "person1^fullName", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(listeners + ". After: "
@@ -2183,35 +2207,35 @@ QUnit.test("Paths", function(assert) {
 	'unobserve(object, "computed", cb) removes handlers');
 
 	// =============================== Arrange ===============================
-	$.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
+	jsv.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
 
 	listeners = $._data(model).events.propertyChange.length + " "
 	+ $._data(model.person1).events.propertyChange.length + " "
 	+ $._data(model.person1.home).events.propertyChange.length + " "
 	+ $._data(model.person1.home.address).events.propertyChange.length;
 
-	assert.equal(listeners, "2 1 1 1", 'No duplicate handlers for $.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb)');
+	assert.equal(listeners, "2 1 1 1", 'No duplicate handlers for jsv.observe(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb)');
 
 	// ................................ Act ..................................
-	$.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
+	jsv.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", myListener);
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
 		+ !$._data(model.person1).events + " "
 		+ !$._data(model.person1.home).events + " "
 		+ !$._data(model.person1.home.address).events, "true true true true",
-	'$.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb) removes all handlers');
+	'jsv.unobserve(model, "person1", "person2", "person1.*", "person1.home.address^street", "person1^home.address.ZIP", "person1.home^address.*", cb) removes all handlers');
 
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1.home.address.*", myListener);
+	jsv.observe(model, "person1^fullName", "person1.home.address.*", myListener);
 
-	$.unobserve(model);
+	jsv.unobserve(model);
 
 	handlersCount = !$._data(model).events + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.unobserve(person1);
+	jsv.unobserve(person1);
 
 	// ............................... Assert .................................
 	assert.equal(handlersCount + "|" + !$._data(model).events + " " + !$._data(model.person1).events + " " + $._data(model.person1.home.address).events.propertyChange.length,
@@ -2221,27 +2245,27 @@ QUnit.test("Paths", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(model, "person1^fullName", "person1.address.*", myListener);
-	$.observe(model, "person1^fullName", "person1.home.address.street", "person1.home.address.*", myListener);
+	jsv.observe(model, "person1^fullName", "person1.address.*", myListener);
+	jsv.observe(model, "person1^fullName", "person1.home.address.street", "person1.home.address.*", myListener);
 
 	handlersCount = $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.observe(model, "person1^fullName", function() {});
+	jsv.observe(model, "person1^fullName", function() {});
 
 	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.unobserve(model, myListener);
+	jsv.unobserve(model, myListener);
 
 	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.unobserve(person1, myListener);
+	jsv.unobserve(person1, myListener);
 
 	handlersCount += "|" + $._data(model).events.propertyChange.length + " " + $._data(model.person1).events.propertyChange.length + " " + $._data(model.person1.home.address).events.propertyChange.length;
 
-	$.unobserve(model, "*", person1, "*");
-	$.unobserve(model.person1.home.address);
-	$.unobserve(model.person1.home);
-	$.unobserve(settings);
+	jsv.unobserve(model, "*", person1, "*");
+	jsv.unobserve(model.person1.home.address);
+	jsv.unobserve(model.person1.home);
+	jsv.unobserve(settings);
 
 	// ............................... Assert .................................
 	assert.equal("" + handlersCount + " " + !$._data(model).events + " " + !$._data(model.person1).events + " " + !$._data(model.person1.home.address).events, "1 4 1|2 7 1|1 7 1|1 3 1 true true true",
@@ -2250,11 +2274,11 @@ QUnit.test("Paths", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(person1, "fullName", myListener);
-	$.observe(settings, "*", myListener);
+	jsv.observe(person1, "fullName", myListener);
+	jsv.observe(settings, "*", myListener);
 	handlersCount = $._data(person1).events.propertyChange.length + $._data(settings).events.propertyChange.length;
 
-	$.unobserve(person1, "*", settings, "*");
+	jsv.unobserve(person1, "*", settings, "*");
 
 	// ............................... Assert .................................
 	assert.equal("" + handlersCount + " " + !$._data(person1).events + " " + !$._data(settings).events, "4 true true",
@@ -2263,9 +2287,9 @@ QUnit.test("Paths", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.observe(settings, "onFoo", myListener);
-	$.observable(settings).setProperty("onFoo", function onfoonew() {return; });
-	$.unobserve(settings);
+	jsv.observe(settings, "onFoo", myListener);
+	jsv.observable(settings).setProperty("onFoo", function onfoonew() {return; });
+	jsv.unobserve(settings);
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(settings).events && result, "calls: 1, ev.data: prop: onFoo, eventArgs: oldValue: function onFoo1()  value: function onfoonew() , eventArgs.path: onFoo|",
@@ -2299,90 +2323,69 @@ QUnit.test("observe context helper", function(assert) {
 	}
 
 	// ................................ Act ..................................
-	$.observe(main, "title", "%name", myListener, observeCtxHelper);
-	$.observable(main).setProperty({title: "newTitle"});
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(main, "title", "%name", myListener, observeCtxHelper);
+	jsv.observable(main).setProperty({title: "newTitle"});
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: title, eventArgs: oldValue: foo value: newTitle, eventArgs.path: title|"
 							+ "calls: 2, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths");
+	"jsv.observe(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths");
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve({}, "%name", myListener, observeCtxHelper);
+	jsv.unobserve({}, "%name", myListener, observeCtxHelper);
 
 	// ................................ Reset ................................
 	obj.name = "One";
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	"jsv.unobserve(object, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
-	$.unobserve(main, "title", "%name", myListener, observeCtxHelper);
+	jsv.unobserve(main, "title", "%name", myListener, observeCtxHelper);
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(str, myListener);
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(str, myListener);
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "",
-	"$.observe(path, cb): Observe with no root object and no observeCtxHelper does nothing");
+	"jsv.observe(path, cb): Observe with no root object and no observeCtxHelper does nothing");
 
 	// ................................ Reset ................................
 	obj.name = "One";
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(str, myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "",
-	"$.observe(path, cb): Observe with no root object and with observeCtxHelper does nothing");
+	"jsv.observe(path, cb): Observe with no root object and with observeCtxHelper does nothing");
 
 	// ................................ Reset ................................
 	obj.name = "One";
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(null, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(null, "%name", myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(null, path, cb, observeCtxHelper) observe with null as root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
+	"jsv.observe(null, path, cb, observeCtxHelper) observe with null as root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(null, "%name", myListener, observeCtxHelper);
+	jsv.unobserve(null, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(null, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
-	reset();
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(undefined, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
-
-	// ............................... Assert .................................
-	assert.equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(undefined, path, cb, observeCtxHelper) observe with undefined root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
-
-	// ................................ Act ..................................
-	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(undefined, "%name", myListener, observeCtxHelper);
-
-	// ............................... Assert .................................
-	assert.ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(undefined, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
+	"jsv.unobserve(null, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
 	// ................................ Reset ................................
@@ -2390,55 +2393,20 @@ QUnit.test("observe context helper", function(assert) {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(undefined, str, myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
-
-	// ............................... Assert .................................
-	assert.equal(result, "",
-	"$.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(null, myListener, observeCtxHelper);
-	$.observe(0, myListener, observeCtxHelper);
-	$.observe(false, myListener, observeCtxHelper);
-	$.observe(true, myListener, observeCtxHelper);
-	$.observe(2, myListener, observeCtxHelper);
-
-	$.observe(null, str, myListener, observeCtxHelper);
-	$.observe(0, str, myListener, observeCtxHelper);
-	$.observe(false, str, myListener, observeCtxHelper);
-	$.observe(true, str, myListener, observeCtxHelper);
-	$.observe(2, str, myListener, observeCtxHelper);
-
-	$.observable(obj).setProperty({name: "newName"});
-
-	// ............................... Assert .................................
-	assert.equal(result, "",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
-
-	// ................................ Reset ................................
-	obj.name = "One";
-
-	// =============================== Arrange ===============================
-	// ................................ Act ..................................
-	$.observe(true, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(undefined, "%name", myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+	"jsv.observe(undefined, path, cb, observeCtxHelper) observe with undefined root object can use observeCtxHelper to substitute objects and paths. Correctly observes object(s) mapped by observeCtxHelper");
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(true, "%name", myListener, observeCtxHelper);
+	jsv.unobserve(undefined, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+	"jsv.unobserve(undefined, path, cb, observeCtxHelper) uses observeCtxHelper correctly to substitute objects and paths and unobserve from mapped <objects,paths>");
 	reset();
 
 	// ................................ Reset ................................
@@ -2446,20 +2414,76 @@ QUnit.test("observe context helper", function(assert) {
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.observe(false, "%name", myListener, observeCtxHelper);
-	$.observable(obj).setProperty({name: "newName"});
+	jsv.observe(undefined, str, myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
+
+	// ............................... Assert .................................
+	assert.equal(result, "",
+	"jsv.observe(path, cb, observeCtxHelper) observe with no root object can use observeCtxHelper to substitute objects and paths. If no object is mapped by observeCtxHelper, does nothing");
+
+	// ................................ Reset ................................
+	obj.name = "One";
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	jsv.observe(null, myListener, observeCtxHelper);
+	jsv.observe(0, myListener, observeCtxHelper);
+	jsv.observe(false, myListener, observeCtxHelper);
+	jsv.observe(true, myListener, observeCtxHelper);
+	jsv.observe(2, myListener, observeCtxHelper);
+
+	jsv.observe(null, str, myListener, observeCtxHelper);
+	jsv.observe(0, str, myListener, observeCtxHelper);
+	jsv.observe(false, str, myListener, observeCtxHelper);
+	jsv.observe(true, str, myListener, observeCtxHelper);
+	jsv.observe(2, str, myListener, observeCtxHelper);
+
+	jsv.observable(obj).setProperty({name: "newName"});
+
+	// ............................... Assert .................................
+	assert.equal(result, "",
+	"jsv.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+
+	// ................................ Reset ................................
+	obj.name = "One";
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	jsv.observe(true, "%name", myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
 
 	// ............................... Assert .................................
 	assert.equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
-	"$.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+	"jsv.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 
 	// ................................ Act ..................................
 	handlersCount = $._data(obj).events.propertyChange.length;
-	$.unobserve(false, "%name", myListener, observeCtxHelper);
+	jsv.unobserve(true, "%name", myListener, observeCtxHelper);
 
 	// ............................... Assert .................................
 	assert.ok(handlersCount === 1 && !$._data(obj).events,
-	"$.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+	"jsv.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+	reset();
+
+	// ................................ Reset ................................
+	obj.name = "One";
+
+	// =============================== Arrange ===============================
+	// ................................ Act ..................................
+	jsv.observe(false, "%name", myListener, observeCtxHelper);
+	jsv.observable(obj).setProperty({name: "newName"});
+
+	// ............................... Assert .................................
+	assert.equal(result, "calls: 1, ev.data: prop: name, eventArgs: oldValue: One value: newName, eventArgs.path: name|",
+	"jsv.observe(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
+
+	// ................................ Act ..................................
+	handlersCount = $._data(obj).events.propertyChange.length;
+	jsv.unobserve(false, "%name", myListener, observeCtxHelper);
+
+	// ............................... Assert .................................
+	assert.ok(handlersCount === 1 && !$._data(obj).events,
+	"jsv.unobserve(foo, path, ...): When first parameter foo is not a string or object, it is skipped");
 	reset();
 
 	// ................................ Reset ................................
@@ -2470,7 +2494,7 @@ QUnit.test("observe context helper", function(assert) {
 
 QUnit.test("dataMap", function(assert) {
 	// =============================== Arrange ===============================
-	var sortMap = $.views.map(function(rows, options) {
+	var sortMap = jsv.views.map(function(rows, options) {
 		rows = rows.slice(); // Copy rows, then sort if sortby is provided in options
 		if (options && options.sortby) {
 			rows = rows.slice().sort(function(a, b) {
@@ -2563,7 +2587,7 @@ QUnit.test("dataMap", function(assert) {
 		'map.options is the current options - as passed to .update(options)');
 
 	// ................................ Act ..................................
-	$.observable(data.rows).insert({
+	jsv.observable(data.rows).insert({
 		id: "new",
 		name: "Mary",
 		role: "Broker"
@@ -2593,7 +2617,7 @@ QUnit.test("dataMap", function(assert) {
 		'sortMap.map(data.rows, {sortby: "name"}, myTarget) replaces contents of myTarget array with sorted copy of source array');
 
 	// ................................ Act ..................................
-	$.observable(data.rows).remove();
+	jsv.observable(data.rows).remove();
 
 	// ............................... Assert .................................
 	assert.equal(viewSrcTgt(map1, "role") + "/" + viewSrcTgt(map2, "name"),
@@ -2665,7 +2689,7 @@ QUnit.test("dataMap", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var observableSortMap = $.views.map({
+	var observableSortMap = jsv.views.map({
 		baseMap: sortMap,
 		obsSrc: function(map, ev, eventArgs) {
 			var i, l, item, items,
@@ -2677,7 +2701,7 @@ QUnit.test("dataMap", function(assert) {
 					item = items[i];
 					var index = $.inArray(item, target);
 					if (index > -1) {
-						$.observable(target).remove(index); // Remove corresponding target. No need to resort
+						jsv.observable(target).remove(index); // Remove corresponding target. No need to resort
 					}
 				}
 				break;
@@ -2714,7 +2738,7 @@ QUnit.test("dataMap", function(assert) {
 		'map.options is the current options - as passed to .update(options)');
 
 	// ................................ Act ..................................
-	$.observable(data.rows).insert({
+	jsv.observable(data.rows).insert({
 		id: "new",
 		name: "Mary",
 		role: "Broker"
@@ -2744,7 +2768,7 @@ QUnit.test("dataMap", function(assert) {
 		'observableSortMap.map(data.rows, {sortby: "name"}, myTarget) replaces contents of myTarget array with sorted copy of source array');
 
 	// ................................ Act ..................................
-	$.observable(data.rows).remove(2, 2);
+	jsv.observable(data.rows).remove(2, 2);
 
 	// ............................... Assert .................................
 	assert.equal(viewSrcTgt(map1, "role") + "/" + viewSrcTgt(map2, "name"),
@@ -2831,7 +2855,7 @@ QUnit.test("dataMap", function(assert) {
 
 	map1.map(otherRows);
 
-	$.observable(otherRows).insert(1, [
+	jsv.observable(otherRows).insert(1, [
 		{
 			id: "idOther3",
 			name: "Isabel",
@@ -2854,7 +2878,7 @@ QUnit.test("dataMap", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var observableSortMap2 = $.views.map({
+	var observableSortMap2 = jsv.views.map({
 		baseMap: observableSortMap,
 		obsTgt: function(map, ev, eventArgs) {
 			var i, l, item, items,
@@ -2866,12 +2890,12 @@ QUnit.test("dataMap", function(assert) {
 					item = items[i];
 					var index = $.inArray(item, source);
 					if (index > -1) {
-						$.observable(source).remove(index); // Remove corresponding source. No need to resort
+						jsv.observable(source).remove(index); // Remove corresponding source. No need to resort
 					}
 				}
 				break;
 			case "insert":
-				$.observable(source).insert(eventArgs.items); // Insert into source
+				jsv.observable(source).insert(eventArgs.items); // Insert into source
 				map.update(); // Re-sort target - by calling update
 			}
 		}
@@ -2884,7 +2908,7 @@ QUnit.test("dataMap", function(assert) {
 	assert.equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Ariel|AMADEUS,ARIEL,JEFF",
 		'map = observableSortMap2.map(data.rows, {sortby: "name"}) with obsTgt creates a map with sorted target');
 
-	$.observable(map1.tgt).insert(1, [
+	jsv.observable(map1.tgt).insert(1, [
 		{
 			id: "new",
 			name: "Mary",
@@ -2900,7 +2924,7 @@ QUnit.test("dataMap", function(assert) {
 	assert.equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Ariel,Mary,Jane|AMADEUS,ARIEL,JANE,JEFF,MARY",
 		'If map has an obsTgt method, observable changes to target trigger observable source updates too');
 
-	$.observable(map1.tgt).remove(1, 2);
+	jsv.observable(map1.tgt).remove(1, 2);
 
 	assert.equal(viewSrcTgt(map1, "name"), "Jeff,Amadeus,Mary|AMADEUS,JEFF,MARY",
 		'If map has an obsTgt method, observable changes to target trigger observable source updates too');
@@ -2916,59 +2940,60 @@ QUnit.test("observeAll", function(assert) {
 		data = {
 			person: {
 				name: "Pete",
-				address: {
+				address: { 
 				street: "1st Ave"
 				},
 				phones: [{number: "111 111 1111"}, {number:"222 222 2222"}]
 			}
 		};
 
-	$.observable(data).observeAll(observeAllCb1);
+	jsv.observable(data).observeAll(observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable(data.person).setProperty({
+	jsv.observable(data.person).setProperty({
 		name: "Hermione",
 		"address.street": "Main St"
 	});
 
-	$.observable(data.person).setProperty({
+	jsv.observable(data.person).setProperty({
 		address: {street: "New Street"},
 		phones: [{number:"123 123 1234"}]
 	});
 
-	$.observable(data.person.phones[0]).setProperty("foo", 34);
+	jsv.observable(data.person.phones[0]).setProperty("foo", 34);
 
-	$.observable(data.person.phones).insert({
+	
+	jsv.observable(data.person.phones).insert({
 		number:"456 456 AAAA"
 	});
 
-	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
 
-	$.observable(data.person.phones).remove(0);
+	jsv.observable(data.person.phones).remove(0);
 
-	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+	jsv.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
 
-	$.observable(data.person.phones).insert({
+	jsv.observable(data.person.phones).insert({
 		number:"456 456 BBBB"
 	});
 
-	$.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+	jsv.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
 
-	$.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
 
-	$.observable(data.person.phones[1]).removeProperty("subnum.b");
+	jsv.observable(data.person.phones[1]).removeProperty("subnum.b");
 
-	$.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+	jsv.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
 
-	$.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
+	jsv.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
 
-	$.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+	jsv.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
 
-	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
 
-	$.observable(data.person.phones).remove(0);
+	jsv.observable(data.person.phones).remove(0);
 
-	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+	jsv.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
 
 // ............................... Assert .................................
 	result += "DATA: " + JSON.stringify(data);
@@ -3035,15 +3060,15 @@ QUnit.test("observeAll", function(assert) {
 
 	'observeAll scenarios, with observeAll.path() etc.');
 
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 
 	reset();
 
 	// =============================== Arrange ===============================
-	$.observable(model).observeAll(observeAllCb1);
+	jsv.observable(model).observeAll(observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({
+	jsv.observable(model).setProperty({
 		"person1.home.address": {
 			street: "1st",
 			ZIP: "00000"
@@ -3052,9 +3077,9 @@ QUnit.test("observeAll", function(assert) {
 		"person1.home.address.ZIP": "33333",
 		things: [{thing: "tree"}]
 	});
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	jsv.observable(model.things).insert({thing: "bush"});
+	jsv.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	jsv.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -3077,7 +3102,7 @@ QUnit.test("observeAll", function(assert) {
 	assert.equal(listeners, "1 1 1 1 1 1 1", 'observeAll maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
 
 	// ................................ Act ..................................
-	$.observable(model).observeAll(observeAllCb1);
+	jsv.observable(model).observeAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3091,7 +3116,7 @@ QUnit.test("observeAll", function(assert) {
 	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll more than once does not add extra event bindings');
 
 	// ................................ Act ..................................
-	$.observable(model).observeAll(observeAllCb3);
+	jsv.observable(model).observeAll(observeAllCb3);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3105,7 +3130,7 @@ QUnit.test("observeAll", function(assert) {
 	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with a different callback adds one binding for the new callback on each object or array');
 
 	// ................................ Act ..................................
-	$.observable(model).unobserveAll(observeAllCb1);
+	jsv.observable(model).unobserveAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3119,9 +3144,9 @@ QUnit.test("observeAll", function(assert) {
 	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling unobserveAll(myCallback) removes just my callback bindings');
 
 	// ................................ Act ..................................
-	$.observable(model).observeAll(observeAllCb1);
+	jsv.observable(model).observeAll(observeAllCb1);
 
-	$.observable(model.things).unobserveAll(observeAllCb1);
+	jsv.observable(model.things).unobserveAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3132,10 +3157,10 @@ QUnit.test("observeAll", function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling $.observable(objectOrArrayInTree).unobserveAll(myCallback) removes just my callback bindings in the subtree only');
+	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling jsv.observable(objectOrArrayInTree).unobserveAll(myCallback) removes just my callback bindings in the subtree only');
 
 	// ................................ Act ..................................
-	$.observable(model).unobserveAll();
+	jsv.observable(model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -3149,22 +3174,22 @@ QUnit.test("observeAll", function(assert) {
 	'unobserveAll() with no callback removes all bindings from the tree');
 
 	// ................................ Act ..................................
-	$.observable(model.things).observeAll(observeAllCb2);
+	jsv.observable(model.things).observeAll(observeAllCb2);
 
 	// ............................... Assert .................................
 	listeners = $._data(model.things).events.arrayChange.length + " "
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1", '$.observable(someArray).observeAll(observeAllCb2) works correctly');
+	assert.equal(listeners, "1 1 1", 'jsv.observable(someArray).observeAll(observeAllCb2) works correctly');
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
-	$.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
-	$.observable(model.things).remove(2);
+	jsv.observable(model.things).insert({thing: "bush"});
+	jsv.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	jsv.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	jsv.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
+	jsv.observable(model.things).remove(2);
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -3174,16 +3199,16 @@ QUnit.test("observeAll", function(assert) {
 + 'ObserveAll Path: root[1] eventArgs: change: set|path: thing|value: bush++|oldValue: bush+|remove: false|'
 + 'ObserveAll Path: root eventArgs: change: remove|index: 2|items: [object Object]|',
 
-	'$.observable(someArray).observeAll(observeAllCb2) raises the correct array change events');
+	'jsv.observable(someArray).observeAll(observeAllCb2) raises the correct array change events');
 
-	$.observable(model.things).unobserveAll(observeAllCb2);
+	jsv.observable(model.things).unobserveAll(observeAllCb2);
 
 	// ............................... Assert .................................
 	listeners = "" + !!$._data(model.things).events + " "
 	+ !!$._data(model.things[0]).events + " "
 	+ !!$._data(model.things[1]).events;
 
-	assert.equal(listeners, "false false false", '$.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
+	assert.equal(listeners, "false false false", 'jsv.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
 
 	// ................................ Reset ..................................
 	model = {
@@ -3210,52 +3235,52 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 			}
 		};
 
-	$.observe(data, "**", observeAllCb1);
+	jsv.observe(data, "**", observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable(data.person).setProperty({
+	jsv.observable(data.person).setProperty({
 		name: "Hermione",
 		"address.street": "Main St"
 	});
 
-	$.observable(data.person).setProperty({
+	jsv.observable(data.person).setProperty({
 		address: {street: "New Street"},
 		phones: [{number:"123 123 1234"}]
 	});
 
-	$.observable(data.person.phones[0]).setProperty("foo", 34);
+	jsv.observable(data.person.phones[0]).setProperty("foo", 34);
 
-	$.observable(data.person.phones).insert({
+	jsv.observable(data.person.phones).insert({
 		number:"456 456 AAAA"
 	});
 
-	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
 
-	$.observable(data.person.phones).remove(0);
+	jsv.observable(data.person.phones).remove(0);
 
-	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+	jsv.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
 
-	$.observable(data.person.phones).insert({
+	jsv.observable(data.person.phones).insert({
 		number:"456 456 BBBB"
 	});
 
-	$.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+	jsv.observable(data.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
 
-	$.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("subnum.a", "a" + inc++);
 
-	$.observable(data.person.phones[1]).removeProperty("subnum.b");
+	jsv.observable(data.person.phones[1]).removeProperty("subnum.b");
 
-	$.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+	jsv.observable(data.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
 
-	$.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
+	jsv.observable(data.person.phones[2]).setProperty("number", data.person.phones[2].number + inc++);
 
-	$.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+	jsv.observable(data.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
 
-	$.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
+	jsv.observable(data.person.phones[1]).setProperty("number", data.person.phones[1].number + inc++);
 
-	$.observable(data.person.phones).remove(0);
+	jsv.observable(data.person.phones).remove(0);
 
-	$.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
+	jsv.observable(data.person.phones[0]).setProperty("number", data.person.phones[0].number + inc++);
 
 // ............................... Assert .................................
 	result += "DATA: " + JSON.stringify(data);
@@ -3322,15 +3347,15 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 
 	'observeAll scenarios using "**", with observeAll.path() etc.');
 
-	$.unobserve(data, "**");
+	jsv.unobserve(data, "**");
 
 	reset();
 
 	// =============================== Arrange ===============================
-	$.observe(model, "**", observeAllCb1);
+	jsv.observe(model, "**", observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({
+	jsv.observable(model).setProperty({
 		"person1.home.address": {
 			street: "1st",
 			ZIP: "00000"
@@ -3339,9 +3364,9 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 		"person1.home.address.ZIP": "33333",
 		things: [{thing: "tree"}]
 	});
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	jsv.observable(model.things).insert({thing: "bush"});
+	jsv.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	jsv.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -3350,7 +3375,7 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 + 'ObserveAll Path: root.things eventArgs: change: "insert"|index: 1|items: [{"thing":"bush"}]|'
 + 'ObserveAll Path: root.things eventArgs: change: "refresh"|oldItems: [{"thing":"tree"},{"thing":"bush\"}]|'
 + 'ObserveAll Path: root.things[0] eventArgs: change: "set"|path: "thing"|value: "bush+"|oldValue: "bush"|remove: false|',
-	'$.observe(data, "**", ...) works as observeAll and raises correct change events');
+	'jsv.observe(data, "**", ...) works as observeAll and raises correct change events');
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3361,10 +3386,10 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1 1 1 1 1", '$.observe(data, "**", ...) works as observeAll and maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
+	assert.equal(listeners, "1 1 1 1 1 1 1", 'jsv.observe(data, "**", ...) works as observeAll and maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
 
 	// ................................ Act ..................................
-	$.observe(model, "**", observeAllCb1);
+	jsv.observe(model, "**", observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3375,10 +3400,10 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling $.observe(data, "**", ...) more than once does not add extra event bindings');
+	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling jsv.observe(data, "**", ...) more than once does not add extra event bindings');
 
 	// ................................ Act ..................................
-	$.observe(model, "**", observeAllCb3);
+	jsv.observe(model, "**", observeAllCb3);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3389,10 +3414,10 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling $.observe(data, "**", ...) with a different callback adds one binding for the new callback on each object or array');
+	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling jsv.observe(data, "**", ...) with a different callback adds one binding for the new callback on each object or array');
 
 	// ................................ Act ..................................
-	$.unobserve(model, "**", observeAllCb1);
+	jsv.unobserve(model, "**", observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3403,12 +3428,12 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling $.unobserve(data, "**", myCallback) removes just my callback bindings');
+	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling jsv.unobserve(data, "**", myCallback) removes just my callback bindings');
 
 	// ................................ Act ..................................
-	$.observe(model, "**", observeAllCb1);
+	jsv.observe(model, "**", observeAllCb1);
 
-	$.unobserve(model.things, "**", observeAllCb1);
+	jsv.unobserve(model.things, "**", observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -3419,10 +3444,10 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling $.unobserve(objectOrArrayInTree, "**", myCallback) removes just my callback bindings in the subtree only');
+	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling jsv.unobserve(objectOrArrayInTree, "**", myCallback) removes just my callback bindings in the subtree only');
 
 	// ................................ Act ..................................
-	$.unobserve(model, "**");
+	jsv.unobserve(model, "**");
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -3436,40 +3461,40 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	'unobserveAll() with no callback removes all bindings from the tree');
 
 	// ................................ Act ..................................
-	$.observe(model.things, "**", observeAllCb2);
+	jsv.observe(model.things, "**", observeAllCb2);
 
 	// ............................... Assert .................................
 	listeners = $._data(model.things).events.arrayChange.length + " "
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1", '$.observe(someArray, "**", observeAllCb2) works correctly');
+	assert.equal(listeners, "1 1 1", 'jsv.observe(someArray, "**", observeAllCb2) works correctly');
 
-	$.unobserve(model.things, "**", observeAllCb2);
+	jsv.unobserve(model.things, "**", observeAllCb2);
 
 	listeners = "" + !!$._data(model.things).events + " "
 	+ !!$._data(model.things[0]).events + " "
 	+ !!$._data(model.things[1]).events;
 
-	assert.equal(listeners, "false false false", '$.unobserve(someArray, "**", observeAllCb2) removes listeners correctly');
+	assert.equal(listeners, "false false false", 'jsv.unobserve(someArray, "**", observeAllCb2) removes listeners correctly');
 
 	// ................................ Act ..................................
-	$.observe(model, "things.**", observeAllCb2);
+	jsv.observe(model, "things.**", observeAllCb2);
 
 	// ............................... Assert .................................
 	listeners = $._data(model.things).events.arrayChange.length + " "
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1", '$.observe(data, "arrayProp.**", observeAllCb2) works correctly');
+	assert.equal(listeners, "1 1 1", 'jsv.observe(data, "arrayProp.**", observeAllCb2) works correctly');
 
 	// ................................ Act ..................................
 	reset();
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
-	$.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
-	$.observable(model.things).remove(2);
+	jsv.observable(model.things).insert({thing: "bush"});
+	jsv.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	jsv.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	jsv.observable(model.things[1]).setProperty("thing", model.things[1].thing + "+");
+	jsv.observable(model.things).remove(2);
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -3478,17 +3503,17 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 + 'ObserveAll Path: root[0] eventArgs: change: set|path: thing|value: tree+|oldValue: tree|remove: false|'
 + 'ObserveAll Path: root[1] eventArgs: change: set|path: thing|value: bush++|oldValue: bush+|remove: false|'
 + 'ObserveAll Path: root eventArgs: change: remove|index: 2|items: [object Object]|',
-		'$.observe(data, "arrayProp.**", ...) works as observeAll and raises correct change events');
+		'jsv.observe(data, "arrayProp.**", ...) works as observeAll and raises correct change events');
 
 	// ................................ Act ..................................
-	$.unobserve(model, "things.**", observeAllCb2);
+	jsv.unobserve(model, "things.**", observeAllCb2);
 
 	// ............................... Assert .................................
 	listeners = "" + !!$._data(model.things).events + " "
 	+ !!$._data(model.things[0]).events + " "
 	+ !!$._data(model.things[1]).events;
 
-	assert.equal(listeners, "false false false", '$.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
+	assert.equal(listeners, "false false false", 'jsv.unobserve(data, "arrayProp.**", observeAllCb2) removes listeners correctly');
 
 	reset();
 
@@ -3509,9 +3534,9 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 		}
 	}
 
-	$.observe(model, "owner", "person^address.street", "person.**", "person^**", "person^name", observeAllCb4);
+	jsv.observe(model, "owner", "person^address.street", "person.**", "person^**", "person^name", observeAllCb4);
 
-	$.observable(model).setProperty({
+	jsv.observable(model).setProperty({
 		owner: "Jeff",
 		person: {
 			name: "Pete",
@@ -3523,54 +3548,54 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	});
 
 	// ................................ Act ..................................
-	$.observable(model.person).setProperty({
+	jsv.observable(model.person).setProperty({
 		name: "Hermione",
 		"address.street": "Main St"
 	});
 
-	$.observable(model.person).setProperty({
+	jsv.observable(model.person).setProperty({
 		address: {street: "New Street"},
 		phones: [{number:"123 123 1234"}]
 	});
 
-	$.observable(model).setProperty({
+	jsv.observable(model).setProperty({
 		"person.name": "John",
 		"person.address.street": "Last St"
 	});
 
-	$.observable(model.person.phones[0]).setProperty("foo", 34);
+	jsv.observable(model.person.phones[0]).setProperty("foo", 34);
 
-	$.observable(model.person.phones).insert({
+	jsv.observable(model.person.phones).insert({
 		number:"456 456 AAAA"
 	});
 
-	$.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
+	jsv.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
 
-	$.observable(model.person.phones).remove(0);
+	jsv.observable(model.person.phones).remove(0);
 
-	$.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
+	jsv.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
 
-	$.observable(model.person.phones).insert({
+	jsv.observable(model.person.phones).insert({
 		number:"456 456 BBBB"
 	});
 
-	$.observable(model.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
+	jsv.observable(model.person.phones[1]).setProperty("subnum", {a: 11, b: 22});
 
-	$.observable(model.person.phones[1]).setProperty("subnum.a", "a" + inc++);
+	jsv.observable(model.person.phones[1]).setProperty("subnum.a", "a" + inc++);
 
-	$.observable(model.person.phones[1]).removeProperty("subnum.b");
+	jsv.observable(model.person.phones[1]).removeProperty("subnum.b");
 
-	$.observable(model.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
+	jsv.observable(model.person.phones).insert(1, [{number:"456 456 CCCC"}, {number:"456 456 DDDD"}]);
 
-	$.observable(model.person.phones[2]).setProperty("number", model.person.phones[2].number + inc++);
+	jsv.observable(model.person.phones[2]).setProperty("number", model.person.phones[2].number + inc++);
 
-	$.observable(model.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
+	jsv.observable(model.person.phones).refresh([{number:"456 456 EEEE"}, {number:"456 456 FFFF"}]);
 
-	$.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
+	jsv.observable(model.person.phones[1]).setProperty("number", model.person.phones[1].number + inc++);
 
-	$.observable(model.person.phones).remove(0);
+	jsv.observable(model.person.phones).remove(0);
 
-	$.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
+	jsv.observable(model.person.phones[0]).setProperty("number", model.person.phones[0].number + inc++);
 
 	// ............................... Assert .................................
 
@@ -3637,7 +3662,7 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 	assert.equal(listeners, "2 1 1 1 1", 'observeAll scenarios using multiple paths, with or without "**", duplicate listeners are avoided');
 
 	// ................................ Reset ..................................
-	$.unobserve(model, "**");
+	jsv.unobserve(model, "**");
 
 	reset();
 
@@ -3652,7 +3677,7 @@ QUnit.test('observe(... "**" ...)', function(assert) {
 });
 
 QUnit.test('observe(... "[]" ...)', function(assert) {
-		$.views.settings.advanced({_jsv: true});
+		jsv.views.settings.advanced({_jsv: true});
 
 	// =============================== Arrange ===============================
 	var cb = function cb(ev, eventArgs) {
@@ -3672,15 +3697,15 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	observablyChange = function(list) {
 		result += "|Set01| ";
-		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
-		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		jsv.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		jsv.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
 		result += "|Insert23| ";
-		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		jsv.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
 		result += "|Set0123| ";
-		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
-		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
-		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
-		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+		jsv.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		jsv.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		jsv.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		jsv.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
 	},
 
 	result = "",
@@ -3688,12 +3713,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data, 'list.[].*', cb);
+	jsv.observe(data, 'list.[].*', cb);
 
 	observablyChange(data.list);
 	result += !!$._data(data.list).events;
 
-	$.unobserve(data, 'list.[].*', cb);
+	jsv.unobserve(data, 'list.[].*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -3704,12 +3729,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'list.[]^*', cb);
+	jsv.observe(data, 'list.[]^*', cb);
 
 	observablyChange(data.list);
 	result += $._data(data.list).events.arrayChange.length;
 
-	$.unobserve(data, 'list.[]^*', cb);
+	jsv.unobserve(data, 'list.[]^*', cb);
 
 	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3720,12 +3745,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'list.[]^a', cb);
+	jsv.observe(data, 'list.[]^a', cb);
 
 	observablyChange(data.list);
 	result += $._data(data.list).events.arrayChange.length;
 
-	$.unobserve(data, 'list.[]^*', cb);
+	jsv.unobserve(data, 'list.[]^*', cb);
 
 	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3735,12 +3760,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data, 'list.[].a', cb);
+	jsv.observe(data, 'list.[].a', cb);
 
 	observablyChange(data.list);
 	result += !!$._data(data.list).events;
 
-	$.unobserve(data, 'list.[]^*', cb);
+	jsv.unobserve(data, 'list.[]^*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -3751,16 +3776,16 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'list.[]^a', cb);
+	jsv.observe(data, 'list.[]^a', cb);
 
 	observablyChange(data.list);
 	result += $._data(data.list).events.arrayChange.length;
 
-	$.unobserve(data, 'list.[].*', cb);
+	jsv.unobserve(data, 'list.[].*', cb);
 
 	result += $._data(data.list).events.arrayChange.length;
 
-	$.unobserve(data, 'list.[]', cb);
+	jsv.unobserve(data, 'list.[]', cb);
 
 	result += !!$._data(data.list).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3771,15 +3796,15 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'list^[].a', cb);
+	jsv.observe(data, 'list^[].a', cb);
 
 	result += "|setList| ";
 
-	$.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	jsv.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
 	observablyChange(data.list);
 	result += $._data(data.list).events.arrayChange.length + $._data(data).events.propertyChange.length;
 
-	$.unobserve(data, 'list^[].*', cb);
+	jsv.unobserve(data, 'list^[].*', cb);
 
 	result += !!$._data(data.list).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3790,15 +3815,15 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'list^[].a', 'list^[].b', cb);
+	jsv.observe(data, 'list^[].a', 'list^[].b', cb);
 
 	result += "|setList| ";
 
-	$.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	jsv.observable(data).setProperty({list: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
 	observablyChange(data.list);
 	result += $._data(data.list).events.arrayChange.length + $._data(data).events.propertyChange.length;
 
-	$.unobserve(data, 'list^[].*', cb);
+	jsv.unobserve(data, 'list^[].*', cb);
 
 	result += !!$._data(data.list).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3822,14 +3847,14 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	resetComputedList();
 
-	$.observe(data, 'list()^[].a', 'list()^[].b', cb);
+	jsv.observe(data, 'list()^[].a', 'list()^[].b', cb);
 
 	result += "|setList| ";
 
 	observablyChange(data.list());
 	result += $._data(data.list()).events.arrayChange.length + $._data(data).events.propertyChange.length;
 
-	$.unobserve(data, 'list()^[].*', cb);
+	jsv.unobserve(data, 'list()^[].*', cb);
 
 	result += !!$._data(data.list()).events + "" + !!$._data(data).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3852,25 +3877,25 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	observablyChange = function(list) {
 		result += "|Set01| ";
-		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
-		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		jsv.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		jsv.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
 		result += "|Insert23| ";
-		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		jsv.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
 		result += "|Set0123| ";
-		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
-		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
-		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
-		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+		jsv.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		jsv.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		jsv.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		jsv.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
 	};
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data.deeplist, '[].sublist.[].*', cb);
+	jsv.observe(data.deeplist, '[].sublist.[].*', cb);
 
 	observablyChange(data.deeplist[0].sublist);
 	result += !!$._data(data.deeplist[0].sublist).events;
 
-	$.unobserve(data.deeplist, '[].sublist.[].*', cb);
+	jsv.unobserve(data.deeplist, '[].sublist.[].*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -3881,12 +3906,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.deeplist, '[].sublist.[]^*', cb);
+	jsv.observe(data.deeplist, '[].sublist.[]^*', cb);
 
 	observablyChange(data.deeplist[0].sublist);
 	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
 
-	$.unobserve(data.deeplist, '[].sublist.[]^*', cb);
+	jsv.unobserve(data.deeplist, '[].sublist.[]^*', cb);
 
 	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3897,12 +3922,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'deeplist.[].sublist.[]^a', cb);
+	jsv.observe(data, 'deeplist.[].sublist.[]^a', cb);
 
 	observablyChange(data.deeplist[0].sublist);
 	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
 
-	$.unobserve(data, 'deeplist.[].sublist.[]^*', cb);
+	jsv.unobserve(data, 'deeplist.[].sublist.[]^*', cb);
 
 	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3912,12 +3937,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data.deeplist, '[].sublist.[].a', cb);
+	jsv.observe(data.deeplist, '[].sublist.[].a', cb);
 
 	observablyChange(data.deeplist[0].sublist);
 	result += !!$._data(data.deeplist[0].sublist).events;
 
-	$.unobserve(data.deeplist, '[].sublist.[]^*', cb);
+	jsv.unobserve(data.deeplist, '[].sublist.[]^*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -3928,16 +3953,16 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.deeplist, '[].sublist.[]^a', cb);
+	jsv.observe(data.deeplist, '[].sublist.[]^a', cb);
 
 	observablyChange(data.deeplist[0].sublist);
 	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
 
-	$.unobserve(data.deeplist, '[].sublist.[].*', cb);
+	jsv.unobserve(data.deeplist, '[].sublist.[].*', cb);
 
 	result += $._data(data.deeplist[0].sublist).events.arrayChange.length;
 
-	$.unobserve(data.deeplist, '[].sublist.[]', cb);
+	jsv.unobserve(data.deeplist, '[].sublist.[]', cb);
 
 	result += !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3948,15 +3973,15 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.deeplist, '[].sublist^[].a', cb);
+	jsv.observe(data.deeplist, '[].sublist^[].a', cb);
 
 	result += "|setList| ";
 
-	$.observable(data.deeplist[0]).setProperty({sublist: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
+	jsv.observable(data.deeplist[0]).setProperty({sublist: [{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]});
 	observablyChange(data.deeplist[0].sublist);
 	result += $._data(data.deeplist[0].sublist).events.arrayChange.length + $._data(data.deeplist[0]).events.propertyChange.length;
 
-	$.unobserve(data.deeplist, '[].sublist^[].*', cb);
+	jsv.unobserve(data.deeplist, '[].sublist^[].*', cb);
 
 	result += !!$._data(data.deeplist[0].sublist).events + "" + !!$._data(data.deeplist[0]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -3967,16 +3992,16 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 
 	reset();
-	$.observe(data.deeplist, '[]^sublist.[].a', cb);
+	jsv.observe(data.deeplist, '[]^sublist.[].a', cb);
 
 	result += "|insertDeepList| ";
 
-	$.observable(data.deeplist).insert(0, {sublist: [{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]});
+	jsv.observable(data.deeplist).insert(0, {sublist: [{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]});
 	observablyChange(data.deeplist[0].sublist);
 	observablyChange(data.deeplist[1].sublist);
 	result += $._data(data.deeplist).events.arrayChange.length + $._data(data.deeplist[0].sublist).events.arrayChange.length + $._data(data.deeplist[0]).events.propertyChange.length;
 
-	$.unobserve(data.deeplist, '[]^sublist.[].a', cb);
+	jsv.unobserve(data.deeplist, '[]^sublist.[].a', cb);
 
 	result += !!$._data(data.deeplist).events + "" + !!$._data(data.deeplist[0]).events + "" + !!$._data(data.deeplist[0].sublist).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4000,25 +4025,25 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	observablyChange = function(list) {
 		result += "|Set01| ";
-		$.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
-		$.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
+		jsv.observable(list[0]).setProperty({a: "0a2", b: "0b2"});
+		jsv.observable(list[1]).setProperty({a: "1a2", b: "1b2"});
 		result += "|Insert23| ";
-		$.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
+		jsv.observable(list).insert([{a: "2a", b: "2b"}, {a: "3a", b: "3b"}]);
 		result += "|Set0123| ";
-		$.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
-		$.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
-		$.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
-		$.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
+		jsv.observable(list[0]).setProperty({a: "0a3", b: "0b3"});
+		jsv.observable(list[1]).setProperty({a: "1a3", b: "1b3"});
+		jsv.observable(list[2]).setProperty({a: "2a3", b: "2b3"});
+		jsv.observable(list[3]).setProperty({a: "3a3", b: "3b3"});
 	};
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data.listoflist, '[].[].*', cb);
+	jsv.observe(data.listoflist, '[].[].*', cb);
 
 	observablyChange(data.listoflist[0]);
 	result += !!$._data(data.listoflist[0]).events;
 
-	$.unobserve(data.listoflist, '[].[].*', cb);
+	jsv.unobserve(data.listoflist, '[].[].*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -4029,12 +4054,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.listoflist, '[].[]^*', cb);
+	jsv.observe(data.listoflist, '[].[]^*', cb);
 
 	observablyChange(data.listoflist[0]);
 	result += $._data(data.listoflist[0]).events.arrayChange.length;
 
-	$.unobserve(data.listoflist, '[].[]^*', cb);
+	jsv.unobserve(data.listoflist, '[].[]^*', cb);
 
 	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4045,12 +4070,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data, 'listoflist.[].[]^a', cb);
+	jsv.observe(data, 'listoflist.[].[]^a', cb);
 
 	observablyChange(data.listoflist[0]);
 	result += $._data(data.listoflist[0]).events.arrayChange.length;
 
-	$.unobserve(data, 'listoflist.[].[]^*', cb);
+	jsv.unobserve(data, 'listoflist.[].[]^*', cb);
 
 	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4060,12 +4085,12 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 
 	// ................................ Act ..................................
 	reset();
-	$.observe(data.listoflist, '[].[].a', cb);
+	jsv.observe(data.listoflist, '[].[].a', cb);
 
 	observablyChange(data.listoflist[0]);
 	result += !!$._data(data.listoflist[0]).events;
 
-	$.unobserve(data.listoflist, '[].[]^*', cb);
+	jsv.unobserve(data.listoflist, '[].[]^*', cb);
 
 	result += JSON.stringify(_jsv.cbBindings);
 
@@ -4076,16 +4101,16 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.listoflist, '[].[]^a', cb);
+	jsv.observe(data.listoflist, '[].[]^a', cb);
 
 	observablyChange(data.listoflist[0]);
 	result += $._data(data.listoflist[0]).events.arrayChange.length;
 
-	$.unobserve(data.listoflist, '[].[].*', cb);
+	jsv.unobserve(data.listoflist, '[].[].*', cb);
 
 	result += $._data(data.listoflist[0]).events.arrayChange.length;
 
-	$.unobserve(data.listoflist, '[].[]', cb);
+	jsv.unobserve(data.listoflist, '[].[]', cb);
 
 	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4096,15 +4121,15 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.listoflist, '[]^[].a', cb);
+	jsv.observe(data.listoflist, '[]^[].a', cb);
 
 	result += "|setList| ";
 
-	$.observable(data.listoflist[0]).refresh([{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]);
+	jsv.observable(data.listoflist[0]).refresh([{a: "2a4", b: "2b4"}, {a: "3a4", b: "3b4"}]);
 	observablyChange(data.listoflist[0]);
 	result += $._data(data.listoflist[0]).events.arrayChange.length;
 
-	$.unobserve(data.listoflist, '[]^[].*', cb);
+	jsv.unobserve(data.listoflist, '[]^[].*', cb);
 
 	result += !!$._data(data.listoflist[0]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4115,16 +4140,16 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	// ................................ Act ..................................
 	reset();
 
-	$.observe(data.listoflist, '[]^[].a', cb);
+	jsv.observe(data.listoflist, '[]^[].a', cb);
 
 	result += "|insertDeepList| ";
 
-	$.observable(data.listoflist).insert(0, [[{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]]);
+	jsv.observable(data.listoflist).insert(0, [[{a: "00a", b: "00b"}, {a: "01a", b: "01b"}]]);
 	observablyChange(data.listoflist[0]);
 	observablyChange(data.listoflist[1]);
 	result += $._data(data.listoflist).events.arrayChange.length + $._data(data.listoflist[0]).events.arrayChange.length + $._data(data.listoflist[1]).events.arrayChange.length;
 
-	$.unobserve(data.listoflist, '[]^[].a', cb);
+	jsv.unobserve(data.listoflist, '[]^[].a', cb);
 
 	result += !!$._data(data.listoflist).events + "" + !!$._data(data.listoflist[0]).events + "" + !!$._data(data.listoflist[1]).events + JSON.stringify(_jsv.cbBindings);
 
@@ -4132,7 +4157,7 @@ QUnit.test('observe(... "[]" ...)', function(assert) {
 	assert.equal(result, "|insertDeepList| |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, |Set01| a: 0a2, a: 1a2, |Insert23| |Set0123| a: 0a3, a: 1a3, a: 2a3, a: 3a3, 3falsefalsefalse{}",
 	"observe '[]^[].a' unobserve '[]^[].a' works correctly");
 
-		$.views.settings.advanced({_jsv: false});
+		jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("observeAll - cyclic graphs", function(assert) {
@@ -4149,12 +4174,12 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		}
 	];
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "Hermione");
+	jsv.observable(data).setProperty("name", "Hermione");
 
-	$.observable(data.children[0]).setProperty("name", "Mary");
+	jsv.observable(data.children[0]).setProperty("name", "Mary");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -4163,7 +4188,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic children/parent graph");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events && !$._data(data.children).events && !$._data(data.children[0]).events && !$._data(data.children[0].parent).events,
 		"unobserveAll with cyclic children/parent graph removes all handlers");
 
@@ -4184,25 +4209,25 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		}
 	];
 	var child = data.children[0];
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "Hermione");
+	jsv.observable(data).setProperty("name", "Hermione");
 
-	$.observable(data.children[1]).setProperty("name", "Mary");
+	jsv.observable(data.children[1]).setProperty("name", "Mary");
 
-	$.observable(data.children).remove(0);
+	jsv.observable(data.children).remove(0);
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data.children).insert({
+	jsv.observable(data.children).insert({
 			parent: data,
 			name: "Inserted"
 		});
 	child = data.children[0];
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data.children).remove(1);
-	$.observable(data.children).remove();
+	jsv.observable(data.children).remove(1);
+	jsv.observable(data.children).remove();
 	result += "ChildListener: " + !!$._data(child).events + "|";
 	result += "ArrayListener: " + !!$._data(data.children).events + "|";
 
@@ -4217,7 +4242,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic children/parent graph, including remove action");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events && !$._data(data.children).events,
 		"unobserveAll with cyclic children/parent graph removes all handlers");
 
@@ -4232,13 +4257,13 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 			name: "Pete"
 		};
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "Hermione");
+	jsv.observable(data).setProperty("name", "Hermione");
 
-	$.observable(data.child).setProperty("name", "Mary");
-	$.observable(data.descendant).setProperty("name", "Jane");
+	jsv.observable(data.child).setProperty("name", "Mary");
+	jsv.observable(data.descendant).setProperty("name", "Jane");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -4248,7 +4273,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic child/parent graph with dup property child/descendant");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events && !$._data(data.child).events && !$._data(data.descendant).events,
 		"unobserveAll with cyclic cyclic child/parent graph with dup property child/descendant removes all handlers");
 
@@ -4267,7 +4292,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	child = data.children[0];
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
 
@@ -4275,7 +4300,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data.children).refresh([{
+	jsv.observable(data.children).refresh([{
 			parent: data,
 			name: "Fresh"
 		}]);
@@ -4287,7 +4312,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 	child = data.children[0];
 	result += "NewChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data).removeProperty("children");
+	jsv.observable(data).removeProperty("children");
 
 	result += "ArrayListener: " + !!$._data(children).events + "|";
 
@@ -4301,7 +4326,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic children/parent graph - action refresh, remove array properties");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events,
 		"unobserveAll with cyclic cyclic children/parent graph removes all handlers");
 
@@ -4320,7 +4345,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	child = data.children[0];
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
 
@@ -4328,13 +4353,13 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data.children).remove();
+	jsv.observable(data.children).remove();
 
 	result += "ArrayListener: " + !!$._data(children).events + "|";
 
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data).setProperty("children", "string");
+	jsv.observable(data).setProperty("children", "string");
 
 	result += "ArrayListener: " + !!$._data(children).events + "|";
 
@@ -4346,7 +4371,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic children/parent graph - action set array to string");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events,
 		"unobserveAll with cyclic cyclic children/parent graph removes all handlers");
 
@@ -4365,14 +4390,14 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	child = data.children[0];
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "Hermione");
+	jsv.observable(data).setProperty("name", "Hermione");
 
-	$.observable(child).setProperty("name", "Mary");
+	jsv.observable(child).setProperty("name", "Mary");
 
-	$.observable(data.children).refresh([{
+	jsv.observable(data.children).refresh([{
 			parent: data,
 			name: "Fresh"
 		}]);
@@ -4384,7 +4409,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 
 	result += "ArrayListener: " + !!$._data(children).events + "|";
 
-	$.observable(data).removeProperty("children");
+	jsv.observable(data).removeProperty("children");
 
 	result += "ArrayListener: " + !!$._data(children).events + "|";
 
@@ -4399,7 +4424,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic children/parent graph - action remove array property");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	//ok(!$._data(data).events && !$._data(data.children).events && !$._data(data.children[0]).events && !$._data(data.children[0].parent).events && !$._data(data.descendants[0].parent).events,
 	//	"unobserveAll with cyclic cyclic children/parent graph with dup property children/descendants removes all handlers");
 
@@ -4414,17 +4439,17 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 			name: "Pete"
 		};
 
-	$.observable(data).observeAll(observeAllCb2);
+	jsv.observable(data).observeAll(observeAllCb2);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "Hermione");
+	jsv.observable(data).setProperty("name", "Hermione");
 
-	$.observable(child).setProperty("name", "Mary");
+	jsv.observable(child).setProperty("name", "Mary");
 
-	$.observable(data).setProperty("child", undefined);
+	jsv.observable(data).setProperty("child", undefined);
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
-	$.observable(data).removeProperty("descendant");
+	jsv.observable(data).removeProperty("descendant");
 	result += "ChildListener: " + !!$._data(child).events + "|";
 
 	// ............................... Assert .................................
@@ -4436,7 +4461,7 @@ QUnit.test("observeAll - cyclic graphs", function(assert) {
 		"observeAll with cyclic child/parent graph with dup property child/descendant, with set undefined and removeProperty actions");
 
 	// ................................ Act ..................................
-	$.observable(data).unobserveAll();
+	jsv.observable(data).unobserveAll();
 	assert.ok(!$._data(data).events,
 		"unobserveAll with cyclic cyclic child/parent graph with dup property child/descendant removes all handlers");
 
@@ -4450,10 +4475,10 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	reset();
 
 	// =============================== Arrange ===============================
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({
+	jsv.observable(model).setProperty({
 		"person1.home.address": {
 			street: "1st",
 			ZIP: "00000"
@@ -4462,9 +4487,9 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		"person1.home.address.ZIP": "33333",
 		things: [{thing: "tree"}]
 	});
-	$.observable(model.things).insert({thing: "bush"});
-	$.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
-	$.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
+	jsv.observable(model.things).insert({thing: "bush"});
+	jsv.observable(model.things).refresh([model.things[1], model.things[0], model.things[1]]);
+	jsv.observable(model.things[2]).setProperty("thing", model.things[2].thing + "+");
 
 	// ............................... Assert .................................
 	assert.equal(result, 
@@ -4487,7 +4512,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	assert.equal(listeners, "1 1 1 1 1 1 1", 'observeAll with namespace maintains a single event handler binding on every object in the graph, regardless of structural observable changes made');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4501,7 +4526,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling observeAll with namespace more than once does not add extra event bindings');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb3);
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb3);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4515,7 +4540,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with namespace with a different callback adds one binding for the new callback on each object or array');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).unobserveAll();
+	jsv.observable("my.nmspace", model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -4526,11 +4551,11 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ !$._data(model.things[0]).events + " "
 		+ !$._data(model.things[1]).events,
 		"true true true true true true true",
-		'Calling $.observable("my.nmspace", object).unobserveAll() removes all bindings with that namespace');
+		'Calling jsv.observable("my.nmspace", object).unobserveAll() removes all bindings with that namespace');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
-	$.observable("our.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("our.nmspace", model).observeAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4544,7 +4569,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with different namespaces adds one binding for each namespace for each object or array');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).unobserveAll();
+	jsv.observable("my.nmspace", model).unobserveAll();
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4555,10 +4580,10 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling $.observable("my.nmspace", object).unobserveAll() removes all bindings with that namespace');
+	assert.equal(listeners, "1 1 1 1 1 1 1", 'Calling jsv.observable("my.nmspace", object).unobserveAll() removes all bindings with that namespace');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace our.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace our.nmspace", model).observeAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4572,9 +4597,9 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	assert.equal(listeners, "2 2 2 2 2 2 2", 'Calling observeAll with whitespace-separated namespaces adds one binding for each namespace (if not already bound) for each object or array');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
 
-	$.observable("my.nmspace", model.things).unobserveAll(observeAllCb1);
+	jsv.observable("my.nmspace", model.things).unobserveAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model).events.propertyChange.length + " "
@@ -4585,10 +4610,10 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling $.observable("my.nmspace", objectOrArrayInTree).unobserveAll(myCallback) removes just my callback bindings in the subtree only');
+	assert.equal(listeners, "2 2 2 2 1 1 1", 'Calling jsv.observable("my.nmspace", objectOrArrayInTree).unobserveAll(myCallback) removes just my callback bindings in the subtree only');
 
 	// ................................ Act ..................................
-	$.observable(model).unobserveAll();
+	jsv.observable(model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -4602,21 +4627,21 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	'unobserveAll() with no callback and no namespace removes all bindings from the tree');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model.things).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace", model.things).observeAll(observeAllCb1);
 
 	// ............................... Assert .................................
 	listeners = $._data(model.things).events.arrayChange.length + " "
 	+ $._data(model.things[0]).events.propertyChange.length + " "
 	+ $._data(model.things[1]).events.propertyChange.length;
 
-	assert.equal(listeners, "1 1 1", '$.observable("my.nmspace", someArray).observeAll(changeHandler) works correctly');
+	assert.equal(listeners, "1 1 1", 'jsv.observable("my.nmspace", someArray).observeAll(changeHandler) works correctly');
 
-	$.observable(model.things).unobserveAll(observeAllCb1);
+	jsv.observable(model.things).unobserveAll(observeAllCb1);
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
-	$.observable("our.nmspace", model).observeAll(observeAllCb1);
-	$.observable("my.nmspace our.nmspace", model).unobserveAll();
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("our.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("my.nmspace our.nmspace", model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -4627,12 +4652,12 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ !$._data(model.things[0]).events + " "
 		+ !$._data(model.things[1]).events,
 		"true true true true true true true",
-	'$.observable("my.nmspace our.nmspace", model).unobserveAll() removes all bindings for each namespace in whitespace-separated list');
+	'jsv.observable("my.nmspace our.nmspace", model).unobserveAll() removes all bindings for each namespace in whitespace-separated list');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace", model).observeAll(observeAllCb1);
-	$.observable("our.nmspace", model).observeAll(observeAllCb1);
-	$.observable("nmspace", model).unobserveAll();
+	jsv.observable("my.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("our.nmspace", model).observeAll(observeAllCb1);
+	jsv.observable("nmspace", model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -4643,12 +4668,12 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ !$._data(model.things[0]).events + " "
 		+ !$._data(model.things[1]).events,
 		"true true true true true true true",
-	'$.observable("nmspace", model).unobserveAll() removes all bindings for all namespaces that include that namespace component');
+	'jsv.observable("nmspace", model).unobserveAll() removes all bindings for all namespaces that include that namespace component');
 
 	// ................................ Act ..................................
-	$.observable("my.nmspace.a", model).observeAll(observeAllCb1);
-	$.observable("our.a.nmspace.b", model).observeAll(observeAllCb1);
-	$.observable("nmspace.a", model).unobserveAll();
+	jsv.observable("my.nmspace.a", model).observeAll(observeAllCb1);
+	jsv.observable("our.a.nmspace.b", model).observeAll(observeAllCb1);
+	jsv.observable("nmspace.a", model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(!$._data(model).events + " "
@@ -4659,7 +4684,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ !$._data(model.things[0]).events + " "
 		+ !$._data(model.things[1]).events,
 		"true true true true true true true",
-	'$.observable("nmspace.a", model).unobserveAll() removes all bindings for all namespaces that include those namespace components');
+	'jsv.observable("nmspace.a", model).unobserveAll() removes all bindings for all namespaces that include those namespace components');
 
 	// =============================== Arrange ===============================
 
@@ -4675,13 +4700,13 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	// ................................ Act ..................................
 
 	reset();
-	$.observable("my.nmspace.a", model).observeAll(myListener1);
-	$.observable("our.a.nmspace.b", model).observeAll(myListener2);
+	jsv.observable("my.nmspace.a", model).observeAll(myListener1);
+	jsv.observable("our.a.nmspace.b", model).observeAll(myListener2);
 
-	$.observable(model).setProperty("amount", 1);
-	$.observable(model.things).insert("water");
+	jsv.observable(model).setProperty("amount", 1);
+	jsv.observable(model.things).insert("water");
 
-	$.observable(model).unobserveAll();
+	jsv.observable(model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(model).events + " "
@@ -4696,18 +4721,18 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ "Listener1 change: insert Handler ns: 'my.nmspace.a' Caller ns: '' calls: 3|"
 		+ "Listener2 change: insert Handler ns: 'our.a.nmspace.b' Caller ns: '' calls: 4|"
 		+ "true true true true true true true",
-	'$.observable(model).setProperty(...)/insert(...) triggers all listeners in all namespaces');
+	'jsv.observable(model).setProperty(...)/insert(...) triggers all listeners in all namespaces');
 
 	// ................................ Act ..................................
 
 	reset();
-	$.observable("my.nmspace.a", model).observeAll(myListener1);
-	$.observable("our.a.nmspace.b", model).observeAll(myListener2);
+	jsv.observable("my.nmspace.a", model).observeAll(myListener1);
+	jsv.observable("our.a.nmspace.b", model).observeAll(myListener2);
 
-	$.observable("my.a", model.things).insert("bread");
-	$.observable("a.my", model).setProperty("amount", 2);
+	jsv.observable("my.a", model.things).insert("bread");
+	jsv.observable("a.my", model).setProperty("amount", 2);
 
-	$.observable("a", model).unobserveAll();
+	jsv.observable("a", model).unobserveAll();
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(model).events + " "
@@ -4720,18 +4745,18 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		"Listener1 change: insert Handler ns: 'my.nmspace.a' Caller ns: 'a.my' calls: 1|"
 		+ "Listener1 change: set Handler ns: 'my.nmspace.a' Caller ns: 'a.my' calls: 2|"
 		+ "true true true true true true true",
-	'$.observable("a.b", model).setProperty(...)/insert(...) triggers all listeners whose namespaces include all of these tokens');
+	'jsv.observable("a.b", model).setProperty(...)/insert(...) triggers all listeners whose namespaces include all of these tokens');
 
 	// ................................ Act ..................................
 
 	reset();
-	$.observable("my.nmspace.a", model).observeAll(myListener1);
-	$.observable("our.a.nmspace.b", model).observeAll(myListener2);
+	jsv.observable("my.nmspace.a", model).observeAll(myListener1);
+	jsv.observable("our.a.nmspace.b", model).observeAll(myListener2);
 
-	$.observable("nmspace.a", model).setProperty("amount", 3);
-	$.observable("a.nmspace", model.things).insert("cheese");
+	jsv.observable("nmspace.a", model).setProperty("amount", 3);
+	jsv.observable("a.nmspace", model.things).insert("cheese");
 
-	$.unobserve("a.nmspace");
+	jsv.unobserve("a.nmspace");
 
 	// ............................... Assert .................................
 	assert.equal(result + !$._data(model).events + " "
@@ -4746,7 +4771,7 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ "Listener1 change: insert Handler ns: 'my.nmspace.a' Caller ns: 'a.nmspace' calls: 3|"
 		+ "Listener2 change: insert Handler ns: 'our.a.nmspace.b' Caller ns: 'a.nmspace' calls: 4|"
 		+ "true true true true true true true",
-	'$.observable("a.b", model).setProperty(...)/insert(...) triggers all listeners  whose namespaces include all of these tokens');
+	'jsv.observable("a.b", model).setProperty(...)/insert(...) triggers all listeners  whose namespaces include all of these tokens');
 
 // ................................ Reset ..................................
 	reset();
@@ -4785,19 +4810,19 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 	reset();
 	var team = {person: {phones: []}};
 
-	$.observable("a.b.c", team).observeAll(myListener3);
+	jsv.observable("a.b.c", team).observeAll(myListener3);
 
-	$.observable("a", team).setProperty({
+	jsv.observable("a", team).setProperty({
 		person: {
 			name: "Pete",
 			phones: [],
 			friend: {}
 		}
 	});
-	$.observable("b", team.person.friend).setProperty("name","newName1");
-	$.observable("c", team.person.phones).insert("newPhone");
-	$.observable("d", team.person.friend).setProperty("name","newName2");
-	$.observable("e", team.person.phones).insert("newPhone2");
+	jsv.observable("b", team.person.friend).setProperty("name","newName1");
+	jsv.observable("c", team.person.phones).insert("newPhone");
+	jsv.observable("d", team.person.friend).setProperty("name","newName2");
+	jsv.observable("e", team.person.phones).insert("newPhone2");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -4808,26 +4833,26 @@ QUnit.test("observeAll/unobserveAll using namespaces", function(assert) {
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
 		"call observeAll namespaces");
 
-$.unobserve("a.b.c");
+jsv.unobserve("a.b.c");
 
 // ................................ Act ..................................
 
 	reset();
 	team = {person: {phones: []}};
 
-	$.observe("a.b.c", team, "**", myListener3);
+	jsv.observe("a.b.c", team, "**", myListener3);
 
-	$.observable("a", team).setProperty({
+	jsv.observable("a", team).setProperty({
 		person: {
 			name: "Pete",
 			phones: [],
 			friend: {}
 		}
 	});
-	$.observable("b", team.person.friend).setProperty("name","newName1");
-	$.observable("c", team.person.phones).insert("newPhone");
-	$.observable("d", team.person.friend).setProperty("name","newName2");
-	$.observable("e", team.person.phones).insert("newPhone2");
+	jsv.observable("b", team.person.friend).setProperty("name","newName1");
+	jsv.observable("c", team.person.phones).insert("newPhone");
+	jsv.observable("d", team.person.friend).setProperty("name","newName2");
+	jsv.observable("e", team.person.phones).insert("newPhone2");
 
 	// ............................... Assert .................................
 	assert.equal(result,
@@ -4838,26 +4863,26 @@ $.unobserve("a.b.c");
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
 		'call observe with "**" - namespaces');
 
-	$.unobserve("a.b.c");
+	jsv.unobserve("a.b.c");
 
 // ................................ Act ..................................
 
 	reset();
 	team = {person: {phones: []}};
 
-	$.observe("a.b.c", team, "person^phones", "person^friend.name", myListener3);
+	jsv.observe("a.b.c", team, "person^phones", "person^friend.name", myListener3);
 
-	$.observable("a", team).setProperty({
+	jsv.observable("a", team).setProperty({
 		person: {
 			name: "Pete",
 			phones: [],
 			friend: {}
 		}
 	});
-	$.observable("b", team.person.friend).setProperty("name","newName1");
-	$.observable("c", team.person.phones).insert("newPhone");
-	$.observable("d", team.person.friend).setProperty("name","newName2");
-	$.observable("e", team.person.phones).insert("newPhone2");
+	jsv.observable("b", team.person.friend).setProperty("name","newName1");
+	jsv.observable("c", team.person.phones).insert("newPhone");
+	jsv.observable("d", team.person.friend).setProperty("name","newName2");
+	jsv.observable("e", team.person.phones).insert("newPhone2");
 
 	// ............................... Assert .................................
 
@@ -4867,28 +4892,28 @@ $.unobserve("a.b.c");
 		+ "myListener3 change: 'insert' Caller ns: 'c' Handler ns: 'a.b.c' calls: 3|",
 		"call observe deep paths, with namespaces");
 
-$.unobserve("a.b.c");
+jsv.unobserve("a.b.c");
 
 // ................................ Act ..................................
 
 	reset();
 	team = {person: {phones: []}};
 
-	$.observable("a.b.c", team).observeAll(myListener3);
+	jsv.observable("a.b.c", team).observeAll(myListener3);
 
-	$.observable("a", team).setProperty({
+	jsv.observable("a", team).setProperty({
 		person: {name: "Pete"}
 	});
 
-	$.unobserve("a.b.c", myListener3);
+	jsv.unobserve("a.b.c", myListener3);
 
 	// ............................... Assert .................................
-	$.views.settings.advanced({_jsv: true});
+	jsv.views.settings.advanced({_jsv: true});
 
 	assert.equal(JSON.stringify([_jsv.cbBindings, $._data(team).events, $._data(team.person).events]), "[{},null,null]",
 		"observe/unobserve with namespaces - all bindings removed when unobserve called");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 
 	reset();
 
@@ -4898,10 +4923,10 @@ $.unobserve("a.b.c");
 //}
 });
 
-if ($.views.tags) { // $.views.viewModels requires JsRender to be loaded
-QUnit.test("$.views.viewModels", function(assert) {
+if (jsv.views.tags) { // jsv.views.viewModels requires JsRender to be loaded
+QUnit.test("jsv.views.viewModels", function(assert) {
 	// =============================== Arrange ===============================
-	var Constr = $.views.viewModels({getters: ["a", "b"]});
+	var Constr = jsv.views.viewModels({getters: ["a", "b"]});
 	// ................................ Act ..................................
 	var vm = Constr("a1 ", "b1 ");
 	var result = vm.a() + vm.b();
@@ -4912,7 +4937,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(result, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
+	Constr = jsv.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
 		this.c(val + this.a() + this.b() + this.c());
 	}}});
 	// ................................ Act ..................................
@@ -4923,7 +4948,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(result, "before a1 b1 c1 ", "viewModels, two getters, one method");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({extend: {add: function(val) {
+	Constr = jsv.views.viewModels({extend: {add: function(val) {
 		this.foo = val;
 	}}});
 	// ................................ Act ..................................
@@ -4934,7 +4959,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(result, "before", "viewModels, no getters, one method");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({getters: []});
+	Constr = jsv.views.viewModels({getters: []});
 	// ................................ Act ..................................
 	vm = Constr();
 	result = JSON.stringify(vm);
@@ -4942,18 +4967,18 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(result, "{}", "viewModels, no getters, no methods");
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b"]
 		}
 	});
 	// ................................ Act ..................................
-	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
+	vm = jsv.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
 	var changes = "";
 	function observeAllHandler(ev, evArgs) {
 		changes += evArgs.value;
 	}
-	$.observable(vm).observeAll(observeAllHandler);
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	result = vm.a() + vm.b();
 	vm.a("a2 ");
@@ -4981,17 +5006,17 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(result, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	var viewModels = $.views.viewModels({
+	var viewModels = jsv.views.viewModels({
 		T1: {
 			getters: ["a", {getter: "b"}, "c", "d", {getter: "e", type: undefined}, {getter: "f", type: null}, {getter: "g", type: "foo"}, {getter: "h", type: ""}]
 		}
 	}, {});
 	// ................................ Act ..................................
 	vm = viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 ", d: "d1 ", e: "e1 ", f: "f1 ", g: "g1 ", h: "h1 "});
-	$.observable(vm).observeAll(observeAllHandler);
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	result = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
 	vm.a("a2 ");
@@ -5021,10 +5046,10 @@ QUnit.test("$.views.viewModels", function(assert) {
 		"viewModels unmap, multiple unmapped getters, no methods");
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b", "c"],
 			extend : {
@@ -5036,8 +5061,8 @@ QUnit.test("$.views.viewModels", function(assert) {
 	});
 
 	// ................................ Act ..................................
-	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
-	$.observable(vm).observeAll(observeAllHandler);
+	vm = jsv.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	vm.add("before ");
 	result = vm.c();
@@ -5064,10 +5089,10 @@ QUnit.test("$.views.viewModels", function(assert) {
 	changes = "";
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b"]
 		},
@@ -5075,13 +5100,13 @@ QUnit.test("$.views.viewModels", function(assert) {
 			getters: [{getter: "t1", type: "T1"}, {getter: "t1Arr", type: "T1"}, {getter: "t1OrNull", type: "T1", defaultVal: null}]
 		}
 	});
-	viewModels = $.views.viewModels;
+	viewModels = jsv.views.viewModels;
 	// ................................ Act ..................................
 	var t1 = viewModels.T1.map({a: "a1 ", b: "b1 "}); // Create a T1
 	var t2 = viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: [t1.unmap(), {a: "a2 ", b: "b2 "}]}); // Create a T2 (using unmap to scrape values the T1: vm)
 
-	$.observable(t1).observeAll(observeAllHandler);
-	$.observable(t2).observeAll(observeAllHandler);
+	jsv.observable(t1).observeAll(observeAllHandler);
+	jsv.observable(t2).observeAll(observeAllHandler);
 
 	result = JSON.stringify(t2.unmap());
 
@@ -5099,7 +5124,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	changes = "";
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// ................................ Act ..................................
 	var t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
@@ -5143,23 +5168,23 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	function makeChanges(delay) {
 		result+= count + ": Set first and last";
-		$.observable(person, delay).setProperty({first: person.first + count, last: person.last + count});
+		jsv.observable(person, delay).setProperty({first: person.first + count, last: person.last + count});
 		result+= count + ": Insert number " + count;
-		$.observable(numbers, delay).insert([count, count+"b"]);
+		jsv.observable(numbers, delay).insert([count, count+"b"]);
 		result+= count + ": Set first";
-		$.observable(person, delay).setProperty("first", person.first + "!");
+		jsv.observable(person, delay).setProperty("first", person.first + "!");
 		result+= count + ": Remove number " + numbers[numbers.length - 1];
-		$.observable(numbers, delay).remove();
+		jsv.observable(numbers, delay).remove();
 	}
 
 	function reset() {
-		$.observable(person).setProperty({first: "Jo", last: "Blow"});
-		$.observable(numbers).remove(1, numbers.length-1);
+		jsv.observable(person).setProperty({first: "Jo", last: "Blow"});
+		jsv.observable(numbers).remove(1, numbers.length-1);
 		count = 1;
 		result = "";
 	}
 
-	$.observe(person, "*", numbers, "**", function(ev, eventArgs) {
+	jsv.observe(person, "*", numbers, "**", function(ev, eventArgs) {
 		var message = " Event:";
 		if (eventArgs.change === "set") {
 			message += "Set " + eventArgs.path + ": - " + eventArgs.value;
@@ -5202,7 +5227,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 		// ................................ Reset ................................
 		result = "";
-		$.unobserve();
+		jsv.unobserve();
 	if (assert.async) { done() } else { start() }
 	}, 0);
 });
@@ -5219,23 +5244,23 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	function makeChanges(ns, delay) {
 		result+= count + ": Set first and last";
-		$.observable(ns, person, delay).setProperty({first: person.first + count, last: person.last + count});
+		jsv.observable(ns, person, delay).setProperty({first: person.first + count, last: person.last + count});
 		result+= count + ": Insert number " + count;
-		$.observable(ns, numbers, delay).insert([count, count+"b"]);
+		jsv.observable(ns, numbers, delay).insert([count, count+"b"]);
 		result+= count + ": Set first";
-		$.observable(ns, person, delay).setProperty("first", person.first + "!");
+		jsv.observable(ns, person, delay).setProperty("first", person.first + "!");
 		result+= count + ": Remove number " + numbers[numbers.length - 1];
-		$.observable(ns, numbers, delay).remove();
+		jsv.observable(ns, numbers, delay).remove();
 	}
 
 	function reset() {
-		$.observable(person).setProperty({first: "Jo", last: "Blow"});
-		$.observable(numbers).remove(1, numbers.length-1);
+		jsv.observable(person).setProperty({first: "Jo", last: "Blow"});
+		jsv.observable(numbers).remove(1, numbers.length-1);
 		count = 1;
 		result = "";
 	}
 
-	$.observe("my.name.spaces", person, "*", numbers, "**", function(ev, eventArgs) {
+	jsv.observe("my.name.spaces", person, "*", numbers, "**", function(ev, eventArgs) {
 		var message = " Event:";
 		if (eventArgs.change === "set") {
 			message += "Set " + eventArgs.path + ": - " + eventArgs.value;
@@ -5288,9 +5313,9 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 		// ................................ Reset ................................
 		result = "";
-		$.unobserve();
+		jsv.unobserve();
 		if (assert.async) { done() } else { start() }
 	}, 0);
 });
 
-})(this.jQuery);
+})(this.jsviews || this.jQuery, this.jsviews && this.jsviews.$ || this.jQuery);

@@ -1,4 +1,4 @@
-/*! jquery.views.js v1.0.15: http://jsviews.com/ */
+/*! jquery.views.js v1.0.16: http://jsviews.com/ */
 /*
  * Interactive data-driven views using JsRender templates.
  * Subcomponent of JsViews
@@ -7,7 +7,7 @@
  * Also requires jquery.observable.js
  *   See JsObservable at http://jsviews.com/#download and http://github.com/BorisMoore/jsviews
  *
- * Copyright 2024, Boris Moore
+ * Copyright 2025, Boris Moore
  * Released under the MIT License.
  */
 
@@ -44,7 +44,7 @@ var setGlobals = $ === false; // Only set globals if script block in browser (no
 jsr = jsr || setGlobals && global.jsrender;
 $ = $ || global.jQuery;
 
-var versionNumber = "v1.0.15",
+var versionNumber = "v1.0.16",
 	requiresStr = "jquery.views.js requires ";
 
 if (!$ || !$.fn) {
@@ -57,7 +57,8 @@ if (jsr && !jsr.fn) {
 }
 
 var $observe, $observable,
-	$isArray = $.isArray,
+	$isFunction = function(ob) { return typeof ob === "function"; },
+	$isArray = Array.isArray,
 	$views = $.views;
 
 if (!$.render) {
@@ -67,7 +68,6 @@ if (!$.render) {
 if ($views.jsviews !== versionNumber) {
 	throw requiresStr + "query.observable.js " + versionNumber; // Wrong version number
 }
-
 
 if (!$views || !$views.map || $views.jsviews !== versionNumber) {
 	// JsRender is not loaded.
@@ -79,7 +79,6 @@ var document = global.document,
 	$sub = $views.sub,
 	$subSettings = $sub.settings,
 	$extend = $sub.extend,
-	$isFunction = $.isFunction,
 	$expando = $.expando,
 	$converters = $views.converters,
 	$tags = $views.tags,
@@ -103,7 +102,6 @@ if ($.link) { return $; } // JsViews is already loaded
 $subSettings.trigger = true;
 
 var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, viewStore, oldAdvSet, useInput,
-	isIE = window.navigator.userAgent,
 	TEXTCONTENT = document.textContent !== undefined ? "textContent" : "innerText",
 	jsvAttrStr = "data-jsv",
 	elementChangeStr = "change.jsv",
@@ -119,6 +117,7 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	VALUE = "value",
 	SCRIPT = "SCRIPT",
 	TRUE = "true",
+	PLAIN = "plaintext-only",
 	closeScript = '"></script>',
 	openScript = '<script type="jsv',
 	deferAttr = jsvAttrStr + "-df",
@@ -158,7 +157,6 @@ var activeBody, rTagDatalink, $view, $viewsLinkAttr, linkViewsSel, wrapMap, view
 	$inArray = $.inArray;
 
 RADIOINPUT += RADIO + "]"; // input[type=radio]
-isIE = isIE.indexOf('MSIE ')>0 || isIE.indexOf('Trident/')>0;
 
 $observable = $.observable;
 
@@ -183,7 +181,7 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 // Observably update a data value targeted by the binding.to binding of a 2way data-link binding. Called when elem changes
 // Called when linkedElem of a tag control changes: as updateValue(val, index, tagElse, bindId, ev) - this: undefined
 // Called directly as tag.updateValues(val1, val2, val3, ...) - this: tag
-	var linkCtx, cvtBack, cnvtName, target, view, binding, sourceValue, origVals, sourceElem, sourceEl,
+	var linkCtx, cvtBack, cnvtName, target, view, binding, sourceValue, origVals, sourceElem, sourceEl, linkedElem, linkedElems,
 		tos, to, tcpTag, exprOb, contextCb, l, m, tag, vals, ind;
 
 	if (bindId && bindId._tgId) {
@@ -229,12 +227,28 @@ function updateValues(sourceValues, tagElse, async, bindId, ev) {
 			sourceElem._jsvSel = sourceValues;
 		} else if (sourceElem._jsvSel) {
 			// Checkbox group (possibly using {{checkboxgroup}} tag) data-linking to array of strings
-			vals = sourceElem._jsvSel.slice();
-			ind = $inArray(sourceElem.value, vals);
-			if (ind > -1 && !sourceElem.checked) {
-				vals.splice(ind, 1); // Unchecking this checkbox
-			} else if (ind < 0 && sourceElem.checked) {
-				vals.push(sourceElem.value); // Checking this checkbox
+			tag = sourceElem._jsvLkEl;
+			if (tag && tag.tagCtx.params.props.linkTo) {
+				// checkboxgroup tag with linkTo property - binds to linkTo data
+				linkedElems = tag.linkedElem;
+				l = linkedElems.length;
+				vals = [];
+
+				while (l--) {
+					linkedElem = linkedElems[l];
+					if (linkedElem.checked) {
+						vals.unshift(linkedElem.value); // to follow same order as checkboxes
+					}
+				}
+			} else {
+				// checkboxgroup tag with no linkTo property - binds to source data
+				vals = sourceElem._jsvSel.slice();
+				ind = $inArray(sourceElem.value, vals);
+				if (ind > -1 && !sourceElem.checked) {
+					vals.splice(ind, 1); // Unchecking this checkbox
+				} else if (ind < 0 && sourceElem.checked) {
+					vals.push(sourceElem.value); // Checking this checkbox
+				}
 			}
 			sourceValues = [vals];
 		}
@@ -540,6 +554,11 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 			attr = attr.slice(5);
 		} else if (attr === CHECKED) {
 			useProp = true;
+
+			if (target.name && sourceValue == undefined &&
+				target._jsvLkEl && target._jsvLkEl.tagName === "checkboxgroup") {
+				sourceValue = []; // If checkboxgroup bound to non-initialized array, we initialize as empty array.
+			}
 			if (target.name && $isArray(sourceValue)) {
 				target._jsvSel = sourceValue; // Checkbox group (possibly using {{checkboxgroup}} tag) data-linking to array of strings
 				sourceValue = $inArray(target.value, sourceValue) > -1;
@@ -561,7 +580,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 			sourceValue = target.value === sourceValue;
 			// If the data value corresponds to the value attribute of this radio button input, set the checked property to true
 			// Otherwise set the checked property to false
-		} else if (attr === "selected" || attr === "disabled" || attr === "multiple" || attr === "readonly") {
+		} else if (attr === "selected" || attr === "disabled" || attr === "multiple" || attr === "readonly" || attr === "required") {
 			sourceValue = (sourceValue && sourceValue !== "false") ? attr : null;
 			// Use attr, not prop, so when the options (for example) are changed dynamically, but include the previously selected value,
 			// they will still be selected after the change
@@ -614,7 +633,7 @@ function updateContent(sourceValue, linkCtx, attr, tag) {
 					// Insert and link new content
 					late = view.link(view.data, target, prevNode, nextNode, sourceValue, tag && {tag: tag._tgId});
 				} else {
-					// data-linked value targeting innerHTML: data-link="html{:expr}" or contenteditable="true"
+					// data-linked value targeting innerHTML: data-link="html{:expr}" or is contenteditable
 					renders = renders && targetVal !== sourceValue;
 					if (renders) {
 						$target.empty();
@@ -731,7 +750,7 @@ function defaultAttr(elem, to, linkGetVal) {
 	var nodeName = elem.nodeName.toLowerCase(),
 		attr =
 			$subSettingsAdvanced._fe[nodeName] // get form element binding settings for input textarea select or optgroup
-			|| elem.contentEditable === TRUE && {to: HTML, from: HTML}; // Or if contentEditable set to "true" set attr to "html"
+			|| (elem.contentEditable === TRUE || elem.contentEditable === PLAIN) && { to: HTML, from: HTML }; // Or if is contentEditable set attr to "html"
 	return attr
 		? (to
 			? ((nodeName === "input" && elem.type === RADIO) // For radio buttons, bind from value, but bind to 'radio' - special value.
@@ -1597,7 +1616,7 @@ function viewLink(outerData, parentNode, prevNode, nextNode, html, refresh, cont
 		: (self.parentElem    // view.link()
 			|| document.body);  // link(null, data) to link the whole document
 
-	validate = !$subSettingsAdvanced.noValidate && parentNode.contentEditable !== TRUE;
+	validate = !$subSettingsAdvanced.noValidate;
 	parentTag = parentNode.tagName.toLowerCase();
 	elCnt = !!elContent[parentTag];
 
@@ -1749,12 +1768,12 @@ function addDataBinding(late, linkMarkup, node, currentView, boundTagId, isLink,
 			if (tokens[6]) {
 				convertBack = tokens[10] || undefined;
 				linkCtx.convert = tokens[5] || "";
-				if (convertBack !== undefined && defaultAttr(node)) {
-					if (attr) {
+				if (convertBack !== undefined) {
+					if (attr) { // attr is the target, such as disabled{:linkExpr}. Always a from binding, never a to binding
 						syntaxError(tagExpr + "- Remove target: " + attr);
 					}
-					// Default target, so allow 2 way binding
-					linkCtx.convertBack = convertBack = convertBack.slice(1);
+					// No attr, so default target, so allow 2 way binding
+					linkCtx.convertBack = convertBack = convertBack.slice(1);  // ":myCvt" => "myCvt"
 				}
 			}
 			// Compile the linkFn expression which evaluates and binds a data-link expression
@@ -2111,7 +2130,7 @@ function asyncOnElemChange(ev) {
 
 function bindTriggerEvent($elem, trig, onoff) {
 	// Bind keydown, or other trigger - (rather than use the default change event bubbled to activeBody)
-	if (trig === true && useInput && (!isIE || $elem[0].contentEditable !== TRUE)) { // IE oninput event is not raised for contenteditable changes
+	if (trig === true && useInput) {
 		$elem[onoff]("input.jsv", onElemChange); // For HTML5 browser with "oninput" support - for mouse editing of text
 	} else {
 		trig = typeof trig === STRING ? trig : "keydown.jsv"; // Set trigger to (true || truey non-string (e.g. 1) || 'keydown')
@@ -2137,7 +2156,7 @@ function bindLinkedElChange(tag, linkedElem) {
 	}
 	// Trigger is noop except for text box, textarea, contenteditable...
 	newTrig = newTrig && (linkedElem.tagName === "INPUT" && linkedElem.type !== CHECKBOX && linkedElem.type !== RADIO
-		|| linkedElem.type === "textarea" || linkedElem.contentEditable === TRUE) && newTrig || false;
+		|| linkedElem.type === "textarea" || linkedElem.contentEditable === TRUE || linkedElem.contentEditable === PLAIN) && newTrig || false;
 
 	if (oldTrig !== newTrig) {
 		$linkedElem = $(linkedElem);
@@ -2173,7 +2192,7 @@ function defineBindToDataTargets(binding, tag, cvtBk) {
 			if (targetPaths = targetPathsElses[tagElse]) {
 				bindTo = targetPaths._jsvto ? ["jsvto"] : (bindTo || [0]);
 				if (!tagElse && tag && tag._.ths) {
-					// Tag has a this=expr bindign for which we will create an additional 'to' target (at index bindTo.length)
+					// Tag has a this=expr binding for which we will create an additional 'to' target (at index bindTo.length)
 					bindTo = bindTo.concat("this");
 				}
 				k = bindTo.length;
@@ -2806,7 +2825,7 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 											$(linkedEl).val(val); // Use jQuery for attrHooks - can't just set value (on select, for example)
 										}
 									} else {
-										linkedEl[linkedEl.contentEditable === TRUE ? "innerHTML" : TEXTCONTENT] = val;
+										linkedEl[linkedEl.contentEditable === TRUE || linkedEl.contentEditable === PLAIN ? "innerHTML" : TEXTCONTENT] = val;
 									}
 								}
 								if (tagCtx.props.name) {
@@ -3315,7 +3334,7 @@ $tags({
 				// Configure the name for each radio input element
 				$linkedElem[l].name = $linkedElem[l].name || tag.name;
 			}
-			// Data-link each checkbox input element using the checkboxgroup data-link expression
+			// Data-link each radio input element using the radiogroup data-link expression
 			for (l in propParams) {
 				linkExpr += " " + l + "=" + propParams[l];
 			}
@@ -3323,7 +3342,7 @@ $tags({
 			tag.linkedElem = $linkedElem;
 
 			// This onDomChange method is called by nested tags such as {^{for}} or {^{if}}, when DOM contents are changed
-			tag.onDomChange = function(forOrIfTagCtx, linkCtx, eventArgs, ev) {
+			tag.onDomChange = function() {
 				var linkedElem, l,
 					val = tag.cvtArgs()[0];
 
@@ -3342,7 +3361,7 @@ $tags({
 						if (useDisable) {
 							linkedElem.disabled = !!tagCtx.props.disabled;
 						}
-						$.link(linkExpr, linkedElem, linkCtx.data);
+						$.link(linkExpr, linkedElem, linkCtx.data, undefined, undefined, linkCtx.view);
 					}
 				}
 			};
@@ -3394,10 +3413,11 @@ $tags({
 			tag.linkedElem = $linkedElem;
 
 			// This onDomChange method is called by nested tags such as {^{for}} or {^{if}}, when DOM contents are changed
-			tag.onDomChange = function(forOrIfTagCtx, linkCtx, eventArgs, ev) {
+			tag.onDomChange = function() {
 				var linkedElem,
 					$linkedElem = tag.contents(true, CHECKBOXINPUT, filter), // Obtain updated (possibly filtered) list
 					l = $linkedElem.length;
+				tag.linkedElem = $linkedElem;
 				// Contents may have changed so recreate $linkedElem for any additional checkbox input elements
 				while (l--) {
 					// Configure binding and name for each checkbox input element
@@ -3408,7 +3428,8 @@ $tags({
 					if (!linkedElem._jsvSel) {
 						// This is a new inserted checkbox, so we will data-link it based on the checkboxgroup binding
 						linkedElem.name = linkedElem.name || tag.name;
-						$.link(linkExpr, linkedElem, linkCtx.data);
+						linkedElem._jsvLkEl = tag;
+						$.link(linkExpr, linkedElem, linkCtx.data, undefined, undefined, linkCtx.view);
 					}
 				}
 			};

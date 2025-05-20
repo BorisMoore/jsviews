@@ -1,14 +1,12 @@
 /*global test, equal, module, ok, _jsv, viewsAndBindings*/
-(function(global, $, undefined) {
+(function(jsv, $, undefined) {
 "use strict";
 
 /* Setup */
 var inputOrKeydownContentEditable,
 	useInput = "oninput" in document,
 	inputOrKeydown = useInput ? "input" : "keydown",
-	isIE = window.navigator.userAgent;
-	isIE = isIE.indexOf('MSIE ')>0 || isIE.indexOf('Trident/')>0;
-	inputOrKeydownContentEditable = isIE ? "keydown" : "input";
+	inputOrKeydownContentEditable = "input";
 
 function keydown(elem) {
 	if (useInput) {
@@ -17,7 +15,6 @@ function keydown(elem) {
 		elem.keydown();
 	}
 }
-
 // =============== Model ===============
 function fullName(reverse, upper) {
 	var name = reverse ? (this.lastName + " " + this.firstName()) : this.firstName() + " " + this.lastName;
@@ -35,7 +32,7 @@ fullName.depends = function(object) { // object is also the this pointer, so we 
 
 fullName.set = function(val) {
 	val = val.split(" ");
-	$.observable(this).setProperty({
+	jsv.observable(this).setProperty({
 		lastName: val.pop(),
 		firstName: val.join(" ")
 	});
@@ -124,7 +121,7 @@ var cancelChange = false,
 	cancelUpdate = false,
 	eventData = "";
 
-$.views
+jsv.views
 	.converters({
 		upper_: updown,
 		cvtBack: function(val) {
@@ -231,7 +228,7 @@ $.views
 	});
 
 var topData = {people: people};
-$.views.tags({
+jsv.views.tags({
 	myWrap: {
 		init: function(tc) {
 			var test = tc.props.val;
@@ -275,7 +272,7 @@ $.views.tags({
 	}
 });
 
-$.templates({
+jsv.templates({
 
 	tmplHierarchy:
 
@@ -440,17 +437,17 @@ QUnit.module("Template structure");
 
 QUnit.test("Template validation", function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using window._jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using window._jsv
 
 	// =============================== Arrange ===============================
-		$.templates('<div {{if 1}}title="{{:a}}"{{/if}}>{{if 1}}X{{:a}}{{/if}}</div>')
+		jsv.templates('<div {{if 1}}title="{{:a}}"{{/if}}>{{if 1}}X{{:a}}{{/if}}</div>')
 		.link("#result", {a: "yes"});
 
 	// ............................... Assert .................................
 	assert.ok($("#result div").text() === "Xyes" && $("#result div").prop("title") === "yes", "Tag markup works within element content, or within element markup, for non element-only elements (<div>)");
 
 	// =============================== Arrange ===============================
-		$.templates('<ul {{if 1}}title="{{:a}}"{{/if}}><li>{{if 1}}X{{:a}}{{/if}}</li></ul>')
+		jsv.templates('<ul {{if 1}}title="{{:a}}"{{/if}}><li>{{if 1}}X{{:a}}{{/if}}</li></ul>')
 		.link("#result", {a: "yes"});
 
 	// ............................... Assert .................................
@@ -458,7 +455,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<svg height="210" width="400"><path data-link="d{:path}" /></svg>'
+		jsv.templates('<svg height="210" width="400"><path data-link="d{:path}" /></svg>'
 			+ '<math><mi>x</mi><mspace data-link="width{:width}"/><mi>y</mi></math>'
 			+ '<div><span><svg><path d="M150 0 L75 200 L225 200 Z" /></svg><math><mi>x</mi><mspace width="3em"/><mi>y</mi></math></span>{{:thing}}</div>')
 		.link("#result", {width: "3em", path: "M250 0 L75 200 L225 200 Z", thing: "egg"});
@@ -473,7 +470,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		var tmpl = $.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>'); // throws syntax error
+		var tmpl = jsv.templates('<table>{{for things}}<tr><td>}{{:thing}}</td></tr>{{/for}}</table>'); // throws syntax error
 		tmpl.link("#result", {things: [{thing: "Orig"}]});
 	} catch (e) {
 		res = e.message;
@@ -485,7 +482,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:thing}}<span></div>') // throws syntax error
+		jsv.templates('<div>{{:thing}}<span></div>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -497,7 +494,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}</span></div>') // throws syntax error
+		jsv.templates('<div>{{:Thing}}</span></div>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -509,7 +506,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<span>{{:Thing}}</span></span>') // throws syntax error
+		jsv.templates('<span>{{:Thing}}</span></span>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -521,7 +518,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<span>{{:Thing}}</span></div>')
+		jsv.templates('<span>{{:Thing}}</span></div>')
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -533,7 +530,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}<span/></div>') // throws syntax error
+		jsv.templates('<div>{{:Thing}}<span/></div>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -545,7 +542,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}') // throws syntax error
+		jsv.templates('<div>{{:Thing}}') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -557,7 +554,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('</div>{{:Thing}}') // throws syntax error
+		jsv.templates('</div>{{:Thing}}') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -569,7 +566,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div/>') // throws syntax error
+		jsv.templates('<div/>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -581,7 +578,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div>{{:Thing}}<input></input></div>') // throws syntax error
+		jsv.templates('<div>{{:Thing}}<input></input></div>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -592,13 +589,13 @@ QUnit.test("Template validation", function(assert) {
 	res = "";
 
 	// =============================== Arrange ===============================
-	$.templates('prop: <input id="last" data-link="lastName"/><br><div><br/>'
+	jsv.templates('prop: <input id="last" data-link="lastName"/><br><div><br/>'
 		+ '{{if true}}<input id="{{:\'last\'}}" data-link="lastName">{{/if}}<img/></div><img>')
 		.link("#result", person1);
 	// ................................ Act ..................................
 	res = $("#result input")[0].value + $("#result input")[1].value;
 
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 	res += $("#result input")[0].value + $("#result input")[1].value;
 
 	// ............................... Assert .................................
@@ -607,13 +604,13 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	var markupData = {markup: "<img/><img>"};
-	$.templates('{^{:markup}}')
+	jsv.templates('{^{:markup}}')
 		.link("#result", markupData);
 
 	// ................................ Act ..................................
 	res = "" + ($("#result").html().indexOf("<img><img>")>60);
 
-	$.observable(markupData).setProperty("markup", "<br/><br>");
+	jsv.observable(markupData).setProperty("markup", "<br/><br>");
 	res += "|" + ($("#result").html().indexOf("<br><br>")>60);
 
 	// ............................... Assert .................................
@@ -621,7 +618,7 @@ QUnit.test("Template validation", function(assert) {
 	res = "";
 
 	// =============================== Arrange ===============================
-	$.templates('<input {{if true}}id="last"{{/if}} {{if false}}id="first"{{/if}} data-link="lastName"/>')
+	jsv.templates('<input {{if true}}id="last"{{/if}} {{if false}}id="first"{{/if}} data-link="lastName"/>')
 		.link("#result", {lastName: "Blow"});
 
 	// ............................... Assert .................................
@@ -630,7 +627,7 @@ QUnit.test("Template validation", function(assert) {
 	res = "";
 
 	// =============================== Arrange ===============================
-	$.templates('<input data-link="lastName" {{if true}}id="last"/> {{else}}/>{{/if}}')
+	jsv.templates('<input data-link="lastName" {{if true}}id="last"/> {{else}}/>{{/if}}')
 		.link("#result", {lastName: "Blow"});
 
 	// ............................... Assert .................................
@@ -640,7 +637,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input {^{if true}}id="last"{{/if}} data-link="lastName">') // throws syntax error
+		jsv.templates('<input {^{if true}}id="last"{{/if}} data-link="lastName">') // throws syntax error
 		.link("#result", {lastName: "Blow"});
 	} catch (e) {
 		res = e.message;
@@ -653,7 +650,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input data-link="lastName" {^{if true}}id="last"/> {{else}}/>{{/if}}') // throws syntax error
+		jsv.templates('<input data-link="lastName" {^{if true}}id="last"/> {{else}}/>{{/if}}') // throws syntax error
 		.link("#result", {lastName: "Blow"});
 	} catch (e) {
 		res = e.message;
@@ -665,7 +662,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<span {^{if true}}id="last"{{/if}}>a</span>')
+		jsv.templates('<span {^{if true}}id="last"{{/if}}>a</span>')
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -678,7 +675,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div {^{:true}}>a</div>') // throws syntax error
+		jsv.templates('<div {^{:true}}>a</div>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -691,7 +688,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div {{:true}}>a</div>') // does not throw syntax error
+		jsv.templates('<div {{:true}}>a</div>') // does not throw syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -704,7 +701,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<div class="{{attr:\'myClass\'}}">a</div>') // does not throw syntax error
+		jsv.templates('<div class="{{attr:\'myClass\'}}">a</div>') // does not throw syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -717,7 +714,7 @@ QUnit.test("Template validation", function(assert) {
 
 	// =============================== Arrange ===============================
 	try {
-		$.templates('<input data-link="value{:foo:}"/>') // throws syntax error
+		jsv.templates('<input data-link="value{:foo:}"/>') // throws syntax error
 		.link("#result", {thing: "Orig"});
 	} catch (e) {
 		res = e.message;
@@ -733,7 +730,7 @@ QUnit.test("Template validation", function(assert) {
 	person1.lastName = "One";
 	// The syntax error exceptions thrown above meant some views were not fully linked.
 	// We will 'force remove' them from the viewStore, the top view children, and the bindingStore.
-	var v, viewstore = $.view().views;
+	var v, viewstore = jsv.view().views;
 	for (v in viewstore) {
 		delete viewstore[v];
 	}
@@ -748,7 +745,7 @@ QUnit.test("Template validation", function(assert) {
 		delete viewstore[v];
 	}
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.module("data-link scenarios");
@@ -760,15 +757,15 @@ QUnit.test("jQuery cleanData integration", function(assert) {
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
-	$.link("lastName", "#inner", person1);
+	jsv.link("lastName", "#inner", person1);
 	$("#inner").on("click", function() {});
 
 	// ................................ Act ..................................
 	res = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "last2");
+	jsv.observable(person1).setProperty("lastName", "last2");
 	res += "|" + $("#inner").html();
 	$("#inner").off("click");
-	$.observable(person1).setProperty("lastName", "last3");
+	jsv.observable(person1).setProperty("lastName", "last3");
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
@@ -782,14 +779,14 @@ QUnit.test("jQuery cleanData integration", function(assert) {
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
-	$.link("lastName", "#inner", person1);
+	jsv.link("lastName", "#inner", person1);
 
 	// ................................ Act ..................................
 	res = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "last2");
+	jsv.observable(person1).setProperty("lastName", "last2");
 	res += "|" + $("#inner").html();
 	$("#inner").data('foo', 'bar').removeData('foo');
-	$.observable(person1).setProperty("lastName", "last3");
+	jsv.observable(person1).setProperty("lastName", "last3");
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
@@ -803,13 +800,13 @@ QUnit.test("jQuery cleanData integration", function(assert) {
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
-	$.link("lastName", "#inner", person1);
+	jsv.link("lastName", "#inner", person1);
 
 	// ................................ Act ..................................
 	res = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "last2");
+	jsv.observable(person1).setProperty("lastName", "last2");
 	res += "|" + $("#inner").html();
-	$.observable(person1).setProperty("lastName", "last3");
+	jsv.observable(person1).setProperty("lastName", "last3");
 	res += "|" + $("#inner").html();
 
 	// ............................... Assert .................................
@@ -818,16 +815,16 @@ QUnit.test("jQuery cleanData integration", function(assert) {
 	'Calling dequeue does not remove views. (Issue https://github.com/BorisMoore/jsviews/issues/249)');
 
 	// =============================== Arrange ===============================
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
-var tmpl1 = $.templates(
+var tmpl1 = jsv.templates(
 	'<button data-link="{on ~clicked} {:name}">click me</button>'
 	+ '<ul><li class="clickLi" data-link="{on ~clicked} {:name}">click me</li></ul>'
 	+ '<input data-link="name" />'
 	+ '<div><ul>{^{for things}}<li>inserted</li>{{/for}}</ul></div>'
 );
 
-var tmpl2 = $.templates(
+var tmpl2 = jsv.templates(
 	'<li><button data-link="{on ~clicked 1} {:name}">click me</button></li>'
 	+ '<li class="clickLi" data-link="{on ~clicked 1} {:name}">click me</li>'
 	+ '<li><input data-link="name" /></li>'
@@ -854,7 +851,7 @@ $("#result").html(
 + '</div>'
 );
 
-$.link(true, "#toclone .toplevel", data, helpers);
+jsv.link(true, "#toclone .toplevel", data, helpers);
 
 tmpl1.link("#toclone .result", data, helpers);
 tmpl2.link("#toclone .result2", data, helpers);
@@ -869,11 +866,11 @@ cloned.empty();
 
 var res = $("#result").text();
 
-$.observable(data.things).insert(1);
+jsv.observable(data.things).insert(1);
 
 res += "|" + $("#result").text();
 
-$.observable(data).setProperty("name", "Bob");
+jsv.observable(data).setProperty("name", "Bob");
 
 res += "|" + $("#result").text();
 
@@ -917,35 +914,35 @@ res += "|" + clicked;
 	'0|6',
 	'Cloning data-linked content then emptying clone does not remove click handlers. (Issue https://github.com/BorisMoore/jsviews/issues/369)');
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	$.unlink();
+	jsv.unlink();
 });
 
 QUnit.module("API - data-link");
 
-QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container, data)", function(assert) {
+QUnit.test("Basic jsv.link(expression, container, data) and jsv.link(tmpl, container, data)", function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	home1.address = address1; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 	$("#result").html('<span id="inner"></span>');
-	$.link("lastName 44 a=3", "#inner", person1);
+	jsv.link("lastName 44 a=3", "#inner", person1);
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	'One|newLast',
-	'$.link("fieldName", "#target", data) links field to content of target element (equivalent to data-link="fieldName")');
+	'jsv.link("fieldName", "#target", data) links field to content of target element (equivalent to data-link="fieldName")');
 
 	// =============================== Arrange ===============================
 
@@ -954,7 +951,7 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -963,18 +960,18 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 	// =============================== Arrange ===============================
 
 	$("#result").html('<span id="inner"></span>');
-	$.link("person1.lastName + ' ' + person1.home.address^street", "#inner", model);
+	jsv.link("person1.lastName + ' ' + person1.home.address^street", "#inner", model);
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "newLast");
-	$.observable(person1.home).setProperty("address", address2); // Using deep observability
+	jsv.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1.home).setProperty("address", address2); // Using deep observability
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	'One StreetOne|newLast StreetTwo',
-	'$.link(expression, "#target", data) links expression to target element (equivalent to data-link="expression")');
+	'jsv.link(expression, "#target", data) links expression to target element (equivalent to data-link="expression")');
 
 	// =============================== Arrange ===============================
 
@@ -983,7 +980,7 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events && !$._data(person1.home).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -992,18 +989,18 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{:lastName}}");
-	$.link(tmpl, "#result", person1);
+	var tmpl = jsv.templates("{^{:lastName}}");
+	jsv.link(tmpl, "#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	'One|newLast',
-	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data)');
+	'jsv.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data)');
 
 	// ................................ Reset ................................
 	$("#result").empty();
@@ -1011,18 +1008,18 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 	// =============================== Arrange ===============================
 
-	tmpl = $.templates("{^{for #data}}{^{:lastName}}{{/for}}");
-	$.link(tmpl, "#result", person1);
+	tmpl = jsv.templates("{^{for #data}}{^{:lastName}}{{/for}}");
+	jsv.link(tmpl, "#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	'One|newLast',
-	'$.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data). Example 2.');
+	'jsv.link(template, "#container", data) links template to content of container (equivalent to template.link(container, data). Example 2.');
 
 	// =============================== Arrange ===============================
 
@@ -1031,35 +1028,35 @@ QUnit.test("Basic $.link(expression, container, data) and $.link(tmpl, container
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	$.unlink();
+	jsv.unlink();
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("Top-level linking", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
-	$.view().ctx.root = $.view().data = undefined; // In some scenarios with nested templates, tmpl.render()
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.view().ctx.root = jsv.view().data = undefined; // In some scenarios with nested templates, tmpl.render()
 	// can leave topView.data and topView.ctx.root referencing data, causing tests below such as
 	// tmpl.link(expression, container1, data1) works without setting data or root on top view to fail. So we 'start clean' here...
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers("a", " A");
+	jsv.views.helpers("a", " A");
 	$("#result").html("<div data-link='name + ~a + ~b'></div>");
 
 	// ............................... Act .................................
-	$.link(true, "#result", {name: "Jo"}, {b: " B"});
+	jsv.link(true, "#result", {name: "Jo"}, {b: " B"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "Jo A B", 'Passing in data to top-level linking');
 
 	// ............................... Act .................................
-	$.link(true, "#result div", {name: "Jo2"}, {b: " newB"});
+	jsv.link(true, "#result div", {name: "Jo2"}, {b: " newB"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "Jo2 A newB", 'Top-level linking directly to the linked element');
@@ -1073,32 +1070,32 @@ QUnit.test("Top-level linking", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers("a", " A");
-	$.templates("inner", "{^{:name + ~a + ~b}}");
+	jsv.views.helpers("a", " A");
+	jsv.templates("inner", "{^{:name + ~a + ~b}}");
 	$("#result").html("<div data-link='{include tmpl=\"inner\"}'></div>");
 
 	// ............................... Act .................................
 	var data = {name: "Jo"};
-	$.link(true, "#result", data, {b: " B"});
+	jsv.link(true, "#result", data, {b: " B"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "Jo A B", 'Top-level data-link="{include tmpl=...}" passes in model and context');
 
 	// ............................... Act .................................
-	$.observable(data).setProperty("name", "JoChanged");
+	jsv.observable(data).setProperty("name", "JoChanged");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "JoChanged A B", 'Top-level data-link="{include tmpl=...}" binds correctly within {{include}} template');
 
 	// ............................... Act .................................
 	data = {name: "Jo2"};
-	$.link(true, "#result", data, {b: " newB"});
+	jsv.link(true, "#result", data, {b: " newB"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result div").text(), "Jo2 A newB", 'Top-level linking directly to the linked element with data-link="{include... ');
 
 	// ............................... Act .................................
-	$.observable(data).setProperty("name", "Jo2Changed");
+	jsv.observable(data).setProperty("name", "Jo2Changed");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "Jo2Changed A newB", 'Top-level linking directly to the linked element with data-link="{include... binds correctly within {{include}} template');
@@ -1112,8 +1109,8 @@ QUnit.test("Top-level linking", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers("a", " A");
-	$.templates({
+	jsv.views.helpers("a", " A");
+	jsv.templates({
 		selectTmpl: "<option>{{>name}}</option>",
 		listTmpl: "<li>{{>name}}</li>"
 	});
@@ -1137,11 +1134,11 @@ QUnit.test("Top-level linking", function(assert) {
 
 	var newName = "new" + count++;
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += "|" + $("#result select option:selected").text() + "-" + $("#result ul").text();
 
@@ -1159,7 +1156,7 @@ QUnit.test("Top-level linking", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates({
+	jsv.templates({
 		myTmpl: "{{>name}} lead:{^{>~team.lead}} - "
 	});
 
@@ -1178,11 +1175,11 @@ QUnit.test("Top-level linking", function(assert) {
 
 	res = $("#result").text();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: "newName"
 	});
 
-	$.observable(model).setProperty("lead", "newName");
+	jsv.observable(model).setProperty("lead", "newName");
 
 	res += "|" + $("#result").text();
 
@@ -1200,7 +1197,7 @@ QUnit.test("Top-level linking", function(assert) {
 	// =============================== Arrange ===============================
 	$("#result").html('<div id="container1"></div><div id="container2"></div><div id="container3" data-link="name + \' \' + ~root.name + \' \' + #parent.type"></div>');
 
-	var tmpl = $.templates("<span></span>{^{:name}} {{:~root.name}} {{:#parent && #parent.type}}"),
+	var tmpl = jsv.templates("<span></span>{^{:name}} {{:~root.name}} {{:#parent && #parent.type}}"),
 		person1 = {name: "Jo"},
 		person2 = {name: "Bob"};
 
@@ -1208,38 +1205,38 @@ QUnit.test("Top-level linking", function(assert) {
 	var html = tmpl.render(person1);
 
 	// ............................... Assert .................................
-	assert.equal(html + JSON.stringify($.view().views), "<span></span>Jo Jo {}",
+	assert.equal(html + JSON.stringify(jsv.view().views), "<span></span>Jo Jo {}",
 		"Render does not persist any view hierarchy");
 
 	// =============================== Arrange ===============================
-		$.link("name + ' ' + ~root.name + ' ' + #parent.type", "#container1", person1);
+		jsv.link("name + ' ' + ~root.name + ' ' + #parent.type", "#container1", person1);
 
 	// ............................... Assert .................................
 	assert.ok(
 		$("#container1").text() === "Jo Jo top" &&
-		$.view().get(true, "link").ctxPrm("root").name === "Jo" &&
-		$.view().get(true, "link").root === $.view().get(true, "link") &&
-		$.view().data === undefined &&
-		$.view().ctx.root === undefined,
+		jsv.view().get(true, "link").ctxPrm("root").name === "Jo" &&
+		jsv.view().get(true, "link").root === jsv.view().get(true, "link") &&
+		jsv.view().data === undefined &&
+		jsv.view().ctx.root === undefined,
 	"tmpl.link(expression, container1, data1) works without setting data or root on top view");
 
 	// ................................ Reset ................................
-	$.unlink("#container1");
+	jsv.unlink("#container1");
 
 	// =============================== Arrange ===============================
-	$.link(true, "#container3", person1);
+	jsv.link(true, "#container3", person1);
 
 	// ............................... Assert .................................
 	assert.ok(
 		$("#container3").text() === "Jo Jo top" &&
-		$.view().get(true, "link").ctxPrm("root").name === "Jo" &&
-		$.view().get(true, "link").root === $.view().get(true, "link") &&
-		$.view().data === undefined &&
-		$.view().ctx.root === undefined,
+		jsv.view().get(true, "link").ctxPrm("root").name === "Jo" &&
+		jsv.view().get(true, "link").root === jsv.view().get(true, "link") &&
+		jsv.view().data === undefined &&
+		jsv.view().ctx.root === undefined,
 	"tmpl.link(true, container1, data1) works without setting data or root on top view");
 
 	// ................................ Reset ................................
-	$.unlink("#container3");
+	jsv.unlink("#container3");
 
 	// =============================== Arrange ===============================
 	tmpl.link("#container1", person1);
@@ -1251,12 +1248,12 @@ QUnit.test("Top-level linking", function(assert) {
 	assert.ok(
 		$("#container1").text() === "Jo Jo top" &&
 		$("#container2").text() === "Bob Bob top" &&
-		$.view(spans[0]).ctxPrm("root").name === "Jo" &&
-		$.view(spans[0]).root === $.view(spans[0]) &&
-		$.view(spans[1]).ctxPrm("root").name === "Bob" &&
-		$.view(spans[1]).root === $.view(spans[1]) &&
-		$.view().data === undefined &&
-		$.view().ctx.root === undefined,
+		jsv.view(spans[0]).ctxPrm("root").name === "Jo" &&
+		jsv.view(spans[0]).root === jsv.view(spans[0]) &&
+		jsv.view(spans[1]).ctxPrm("root").name === "Bob" &&
+		jsv.view(spans[1]).root === jsv.view(spans[1]) &&
+		jsv.view().data === undefined &&
+		jsv.view().ctx.root === undefined,
 	"tmpl.link(container1, data1) tmpl.link(container2, data2) - to different containers, works without setting data or root on top view");
 
 	// ............................... Act .................................
@@ -1267,11 +1264,11 @@ QUnit.test("Top-level linking", function(assert) {
 	assert.ok(
 		$("#container1").text() === "Jo Jo top" &&
 		$("#container2").text() === "" &&
-		$.view(spans[0]).ctxPrm("root").name === "Jo" &&
-		$.view(spans[0]).root === $.view(spans[0]) &&
+		jsv.view(spans[0]).ctxPrm("root").name === "Jo" &&
+		jsv.view(spans[0]).root === jsv.view(spans[0]) &&
 		spans[1] === undefined &&
-		$.view().data === undefined &&
-		$.view().ctx.root === undefined,
+		jsv.view().data === undefined &&
+		jsv.view().ctx.root === undefined,
 	"$(container2).empty() removes view hierarchy for that container, and leaves other container hierarchy intact");
 
 	// ............................... Act .................................
@@ -1284,23 +1281,23 @@ QUnit.test("Top-level linking", function(assert) {
 		$("#container2").text() === "" &&
 		spans[0] === undefined &&
 		spans[0] === undefined &&
-		$.view().data === undefined &&
-		$.view().ctx.root === undefined,
+		jsv.view().data === undefined &&
+		jsv.view().ctx.root === undefined,
 	"$(container1).empty() removes other view hierarchy too");
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
-QUnit.test("$.link() and $().link() variants", function(assert) {
+QUnit.test("jsv.link() and $().link() variants", function(assert) {
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	home1.address = address1; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
@@ -1309,19 +1306,19 @@ if (assert.async) { done = assert.async() } else { stop() }
 		options: {bar: "BarA"}
 	};
 
-	$.link("~root.person1.lastName + ' ' + person1.home.address^street + ' ' + ~options.bar", "#inner", model, help);
+	jsv.link("~root.person1.lastName + ' ' + person1.home.address^street + ' ' + ~options.bar", "#inner", model, help);
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "newLast");
-	$.observable(person1.home).setProperty("address", address2); // Using deep observability
-	$.observable(help.options).setProperty("bar", "BarB"); // Modify helper
+	jsv.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1.home).setProperty("address", address2); // Using deep observability
+	jsv.observable(help.options).setProperty("bar", "BarB"); // Modify helper
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	'One StreetOne BarA|newLast StreetTwo BarB',
-	'$.link(expression, "#target", data, helpers) links expression to target element (equivalent to data-link="expression")');
+	'jsv.link(expression, "#target", data, helpers) links expression to target element (equivalent to data-link="expression")');
 
 	// =============================== Arrange ===============================
 
@@ -1329,7 +1326,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events && !$._data(person1.home).events && !$._data(help.options).events,
 	"$(container).empty removes current listeners from that content");
 
 	// ................................ Reset ................................
@@ -1345,9 +1342,9 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	// ................................ Act ..................................
 	before = $("#inner").html();
-	$.observable(person1).setProperty("lastName", "newLast");
-	$.observable(person1.home).setProperty("address", address2); // Using deep observability
-	$.observable(help.options).setProperty("bar", "BarB"); // Modify helper
+	jsv.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1.home).setProperty("address", address2); // Using deep observability
+	jsv.observable(help.options).setProperty("bar", "BarB"); // Modify helper
 	after = $("#inner").html();
 
 	// ............................... Assert .................................
@@ -1365,11 +1362,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	$("#result").html('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>'); // multiple targets, same class
 
-	$.link("person1.lastName", ".inner", model, help);
+	jsv.link("person1.lastName", ".inner", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val();
 	keydown($("#result input").val("modLast"));
 
@@ -1378,14 +1375,14 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after, 'One One One|newLast newLast newLast|modLast modLast modLast',
-	'$.link(expression, ".target", data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
+	'jsv.link(expression, ".target", data, helpers) links expression to multiple target elements, including two-way bindings (equivalent to data-link="expression" on each element)');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1399,7 +1396,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val();
 	keydown($("#result input").val("modLast"));
 
@@ -1415,7 +1412,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1425,9 +1422,9 @@ setTimeout(function() {
 
 	$("#result").html('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>'); // multiple targets, same class
 
-	help.options.tmpl = $.templates(" NAME: {^{:lastName}}");
-	$.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
-	$.link("{:person1.lastName:} title{:person1.lastName}", "input.inner", model, help);
+	help.options.tmpl = jsv.templates(" NAME: {^{:lastName}}");
+	jsv.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
+	jsv.link("{:person1.lastName:} title{:person1.lastName}", "input.inner", model, help);
 
 	// ................................ Act ..................................
 	function getTitles(selector) {
@@ -1439,7 +1436,7 @@ setTimeout(function() {
 	}
 
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	keydown($("#result input").val("modLast"));
 
@@ -1451,14 +1448,14 @@ setTimeout(function() {
 	' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
-	'$.link(expression, selector, data, helpers) links expression to multiple targets on multiple target elements, including two-way bindings');
+	'jsv.link(expression, selector, data, helpers) links expression to multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1473,13 +1470,13 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	keydown($("#result input").val("modLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(help.options).setProperty("tmpl", $.templates(" NEWTMPLNAME: {^{:lastName}}")); // We dynamically change the template of {include ^tmpl=~tmpl} too
+	jsv.observable(help.options).setProperty("tmpl", jsv.templates(" NEWTMPLNAME: {^{:lastName}}")); // We dynamically change the template of {include ^tmpl=~tmpl} too
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles(".inner");
 
 	// ............................... Assert .................................
@@ -1495,12 +1492,12 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	help.options.tmpl = $.templates(" NAME: {^{:lastName}}");
+	help.options.tmpl = jsv.templates(" NAME: {^{:lastName}}");
 
 	// =============================== Arrange ===============================
 
@@ -1508,11 +1505,11 @@ setTimeout(function() {
 		+ ' <div class="inner" data-link="title{:person1.lastName} {include person1 tmpl=~options.tmpl}"></div>'
 		+ ' <input class="inner" data-link="title{:person1.lastName} {:person1.lastName:}" />'); // multiple targets, same class
 
-	$.link(true, ".inner", model, help);
+	jsv.link(true, ".inner", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	keydown($("#result input").val("modLast"));
 
@@ -1524,14 +1521,14 @@ setTimeout(function() {
 	' NAME: One  NAME: One One One One One|'
 		+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
-	'$.link(true, ".inner", data, helpers) links multiple targets on multiple target elements, including two-way bindings');
+	'jsv.link(true, ".inner", data, helpers) links multiple targets on multiple target elements, including two-way bindings');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1547,7 +1544,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	keydown($("#result input").val("modLast"));
 
@@ -1566,7 +1563,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1578,11 +1575,11 @@ setTimeout(function() {
 		+ ' <div data-link="title{:person1.lastName} {include person1 tmpl=~options.tmpl}"></div>'
 		+ ' <input data-link="title{:person1.lastName} {:person1.lastName:}" />'); // multiple targets, same class
 
-	$.link(true, "#result", model, help);
+	jsv.link(true, "#result", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	keydown($("#result input").val("modLast"));
 
@@ -1601,7 +1598,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1617,7 +1614,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	keydown($("#result input").val("modLast"));
 
@@ -1636,7 +1633,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1644,15 +1641,15 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>').link("#result");
+	jsv.templates('<span class="inner"> </span> <div class="inner"></div> <input class="inner"/>').link("#result");
 	// Rendered by template: multiple targets, same class
 
-	$.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
-	$.link("title{:person1.lastName} {:person1.lastName:}", "input.inner", model, help);
+	jsv.link("title{:person1.lastName} {include person1 tmpl=~options.tmpl}", "div.inner, span.inner", model, help);
+	jsv.link("title{:person1.lastName} {:person1.lastName:}", "input.inner", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles(".inner");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles(".inner");
 	keydown($("#result input").val("modLast"));
 
@@ -1664,14 +1661,14 @@ setTimeout(function() {
 	' NAME: One  NAME: One One One One One|'
 	+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 	+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast',
-	'$.link(expression, selector, data, helpers) links correctly to multiple targets on multiple target elements within a linked rendered template');
+	'jsv.link(expression, selector, data, helpers) links correctly to multiple targets on multiple target elements within a linked rendered template');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1682,21 +1679,21 @@ setTimeout(function() {
 		outerHelp = {
 			ob: {
 				val: "outerVal",
-				tmpl: $.templates("Inside {^{:~root.color}} {^{:~ob.val}} {^{:~foo}} NAME: {^{:lastName}}")
+				tmpl: jsv.templates("Inside {^{:~root.color}} {^{:~ob.val}} {^{:~foo}} NAME: {^{:lastName}}")
 			}
 		};
 	help.foo = "Foo";
 
-	$.templates('{^{:~root.color}} {^{:~ob.val}} <span class="inner"></span>').link("#result", data, outerHelp);
+	jsv.templates('{^{:~root.color}} {^{:~ob.val}} <span class="inner"></span>').link("#result", data, outerHelp);
 	before = $("#result").text();
 
-	$.link("{include person1 tmpl=~ob.tmpl}", "span.inner", model, help);
+	jsv.link("{include person1 tmpl=~ob.tmpl}", "span.inner", model, help);
 
 	// ................................ Act ..................................
 	before += "|" + $("#result").text();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text();
-	$.observable(data).setProperty("color", "red");
+	jsv.observable(data).setProperty("color", "red");
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -1705,14 +1702,14 @@ setTimeout(function() {
 		+ 'green outerVal Inside green outerVal Foo NAME: One|'
 		+ 'green outerVal Inside green outerVal Foo NAME: newLast|'
 		+ 'red outerVal Inside red outerVal Foo NAME: newLast',
-	'$.link(expression, selector, data, helpers) links correctly to target elements within a linked rendered template - and extends the context of the target view');
+	'jsv.link(expression, selector, data, helpers) links correctly to target elements within a linked rendered template - and extends the context of the target view');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
@@ -1720,7 +1717,7 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="title{:person1.lastName} {include person1 tmpl=~options.tmpl}"></span>'
+	jsv.templates('<span data-link="title{:person1.lastName} {include person1 tmpl=~options.tmpl}"></span>'
 		+ ' <div data-link="title{:person1.lastName} {include person1 ^tmpl=~options.tmpl}"></div>'
 		+ ' <input data-link="title{:person1.lastName} {:person1.lastName:}" />').link("#result", model, help);
 	// Rendered and linked by template: multiple targets
@@ -1732,15 +1729,15 @@ setTimeout(function() {
 		},
 		help2 = {
 			options: {
-				tmpl: $.templates(" NAMEModel2: {^{:lastName}}")
+				tmpl: jsv.templates(" NAMEModel2: {^{:lastName}}")
 			}
 		};
 
-	$.link(true, "#result", model2, help2);
+	jsv.link(true, "#result", model2, help2);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 	keydown($("#result input").val("modLast"));
 
@@ -1753,14 +1750,14 @@ setTimeout(function() {
 		+ ' NAME: newLast  NAME: newLast newLast newLast newLast newLast|'
 		+ ' NAME: modLast  NAME: modLast modLast modLast modLast modLast'
 		+ ' - Model1: modLast- Model2: lastModel2Name',
-	'$.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
+	'jsv.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
-	$.observable(model2.person1).setProperty("lastName", "newModel2Last");
+	jsv.observable(model2.person1).setProperty("lastName", "newModel2Last");
 	before = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$.observable(model.person1).setProperty("lastName", "new_ORIGMOD_Last");
+	jsv.observable(model.person1).setProperty("lastName", "new_ORIGMOD_Last");
 	after = $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
-	$.observable(help.options).setProperty("tmpl", $.templates(" NAME_ORIGMOD_NewTmpl: {^{:lastName}}"));
+	jsv.observable(help.options).setProperty("tmpl", jsv.templates(" NAME_ORIGMOD_NewTmpl: {^{:lastName}}"));
 	after += "|" + $("#result").text() + $("#result input").val() + getTitles("#result div, #result span, #result input");
 
 	// ............................... Assert .................................
@@ -1768,30 +1765,30 @@ setTimeout(function() {
 ' NAME: modLast  NAME: modLast modLast modLast modLast modLast|'
 		+ ' NAME: new_ORIGMOD_Last  NAME: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last|'
 		+ ' NAME: new_ORIGMOD_Last  NAME_ORIGMOD_NewTmpl: new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last new_ORIGMOD_Last',
-	'Continue: $.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
+	'Continue: jsv.link(true, selector, data, helpers) is a no-op when targeting  within a previously linked rendered template');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	model2.person1.lastName = "lastModel2Name"; // reset Prop
-	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
+	help2.options.tmpl = jsv.templates("Model2Tmpl: {^{:lastName}}");
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+	jsv.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.link(true, "#inner", model2, help2); //NO-OP
+	jsv.link(true, "#inner", model2, help2); //NO-OP
 	after = $("#result").text();
-	$.observable(model2.person1).setProperty("lastName", "newLast2");
+	jsv.observable(model2.person1).setProperty("lastName", "newLast2");
 	after += "|" + $("#result").text();
 	keydown($("#result input").val("modLast"));
 
@@ -1801,21 +1798,21 @@ setTimeout(function() {
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after + getTitles("#inner") + " - Model1: " + model.person1.lastName + "- Model2: " + model2.person1.lastName,
 	"One|One|One|modLast title:modLast - Model1: modLast- Model2: newLast2",
-	'$.link(true, selector, data, helpers) is a no-op when targeting within a previously linked rendered template');
+	'jsv.link(true, selector, data, helpers) is a no-op when targeting within a previously linked rendered template');
 
 	// ................................ Act ..................................
 	before = $("#result").text() + getTitles("#inner");
-	$.link("{include person1 ^tmpl=~options.tmpl} title{:\'title2:\' + person1.lastName}", "#inner", model2, help2);
+	jsv.link("{include person1 ^tmpl=~options.tmpl} title{:\'title2:\' + person1.lastName}", "#inner", model2, help2);
 	after = $("#result").text() + getTitles("#inner");
-	$.observable(model2.person1).setProperty("lastName", "last2B");
+	jsv.observable(model2.person1).setProperty("lastName", "last2B");
 	after += "|" + $("#result").text() + getTitles("#inner");
-	$.observable(model.person1).setProperty("lastName", "last1A");
+	jsv.observable(model.person1).setProperty("lastName", "last1A");
 	after += "|" + $("#result").text() + getTitles("#inner");
 	keydown($("#result input").val("modMoreLast"));
 
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner");
-	$.observable(help2.options).setProperty("tmpl", $.templates("Model2NEWTmpl: {^{:lastName}}"));
+	jsv.observable(help2.options).setProperty("tmpl", jsv.templates("Model2NEWTmpl: {^{:lastName}}"));
 	after += "|" + $("#result").text() + getTitles("#inner");
 
 	// ............................... Assert .................................
@@ -1827,29 +1824,29 @@ setTimeout(function() {
 		+ "modMoreLast title:modMoreLast|"
 		+ "Model2NEWTmpl: last2B title:modMoreLast"
 		+ " - Model1: modMoreLast- Model2: last2B",
-	'$.link(expression, selector, data, helpers) links content correctly, including within a previously linked rendered template - leading to dual two-way binding to both models and contexts');
+	'jsv.link(expression, selector, data, helpers) links content correctly, including within a previously linked rendered template - leading to dual two-way binding to both models and contexts');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	model2.person1.lastName = "lastModel2Name"; // reset Prop
-	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
+	help2.options.tmpl = jsv.templates("Model2Tmpl: {^{:lastName}}");
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+	jsv.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$.observable(model.person1).setProperty("lastName", "newLast3");
+	jsv.observable(model.person1).setProperty("lastName", "newLast3");
 
 	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1860,7 +1857,7 @@ setTimeout(function() {
 
 	$("#inner").unlink();
 
-	$.observable(model.person1).setProperty("lastName", "newLast5");
+	jsv.observable(model.person1).setProperty("lastName", "newLast5");
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1871,7 +1868,7 @@ setTimeout(function() {
 
 	$("#result input").unlink();
 
-	$.observable(model.person1).setProperty("lastName", "newLast7");
+	jsv.observable(model.person1).setProperty("lastName", "newLast7");
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1892,7 +1889,7 @@ setTimeout(function() {
 	'$(selector).unlink() removes data binding on target element, including both directions of binding on two-way data-linking');
 
 	// ............................... Assert .................................
-	assert.ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
+	assert.ok(viewsAndBindings($).split(" ").length === 7 && !$._data(model.person1).events,
 	'$(selector).unlink() removes data binding, and the "link" views, for target elements');
 
 	// ................................ Act ..................................
@@ -1900,22 +1897,22 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
 	model2.person1.lastName = "lastModel2Name"; // reset Prop
-	help2.options.tmpl = $.templates("Model2Tmpl: {^{:lastName}}");
+	help2.options.tmpl = jsv.templates("Model2Tmpl: {^{:lastName}}");
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
+	jsv.templates('<div id="inner" data-link="{:person1.lastName} title{:\'title:\' + person1.lastName}"></div><input data-link="person1.lastName"/>').link("#result", model, help);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
-	$.observable(model.person1).setProperty("lastName", "newLast3");
+	jsv.observable(model.person1).setProperty("lastName", "newLast3");
 
 	after = $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1924,9 +1921,9 @@ setTimeout(function() {
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
 
-	$.unlink("#inner");
+	jsv.unlink("#inner");
 
-	$.observable(model.person1).setProperty("lastName", "newLast5");
+	jsv.observable(model.person1).setProperty("lastName", "newLast5");
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1935,9 +1932,9 @@ setTimeout(function() {
 setTimeout(function() {
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val() + " data:" + model.person1.lastName;
 
-	$.unlink("#result input");
+	jsv.unlink("#result input");
 
-	$.observable(model.person1).setProperty("lastName", "newLast7");
+	jsv.observable(model.person1).setProperty("lastName", "newLast7");
 
 	after += "|" + $("#result").text() + getTitles("#inner") + " val:" + $("#result input").val();
 
@@ -1955,22 +1952,22 @@ setTimeout(function() {
 	+ "modLast4 title:modLast4 val:modLast6 data:modLast6|"
 	+ "modLast4 title:modLast4 val:modLast6|"
 	+ "modLast4 title:modLast4 val:modLast8 data:newLast7",
-	'$.unlink(selector) removes data binding on target element, including both directions of binding on two-way data-linking');
+	'jsv.unlink(selector) removes data binding on target element, including both directions of binding on two-way data-linking');
 
 	// ............................... Assert .................................
-	assert.ok(viewsAndBindings().split(" ").length === 7 && !$._data(model.person1).events,
-	'$.unlink(selector) removes data binding, and the "link" views, for target elements');
+	assert.ok(viewsAndBindings($).split(" ").length === 7 && !$._data(model.person1).events,
+	'jsv.unlink(selector) removes data binding, and the "link" views, for target elements');
 
 	// ................................ Act ..................................
 	$("#result").empty();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes current listeners and two-way bindings from that content");
 
 	// ................................ Reset ................................
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 
 	if (assert.async) { done() } else { start() }
 
@@ -2007,9 +2004,9 @@ if (assert.async) { done = assert.async() } else { stop() }
 	settings.title = "Mr"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views.helpers("a", "globalHelper");
+	jsv.views.helpers("a", "globalHelper");
 
-	var tmpl = $.templates({
+	var tmpl = jsv.templates({
 		markup: "{{:~a}} {{:~b}} {{:~c}}",
 		helpers: {
 			b: "templateHelper"
@@ -2017,13 +2014,13 @@ if (assert.async) { done = assert.async() } else { stop() }
 	});
 
 	tmpl.link("#result", {}, {c: "optionHelper"});
-	$.views.helpers("a", null);
+	jsv.views.helpers("a", null);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "globalHelper templateHelper optionHelper", 'Passing in helpers - global, template or option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: "{{:~a}}",
 		helpers: {
 			a: "templateHelper"
@@ -2036,7 +2033,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	assert.equal($("#result").text(), "templateHelper", 'template helper overrides global helper');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: "{{:~a}}"
 	});
 
@@ -2046,7 +2043,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	assert.equal($("#result").text(), "optionHelper", 'option helper overrides global helper');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: "{{:~b}}",
 		helpers: {
 			b: "templateHelper"
@@ -2059,29 +2056,29 @@ if (assert.async) { done = assert.async() } else { stop() }
 	assert.equal($("#result").text(), "templateHelper", 'template helper overrides option helper');
 
 	// =============================== Arrange ===============================
-	$.views.helpers("a", "globalHelper");
+	jsv.views.helpers("a", "globalHelper");
 
 	$("#result").html("<div data-link='~a + ~b'></div>");
 
-	$.link(true, "#result", {}, {b: "optionHelper"});
-	$.views.helpers("a", null);
+	jsv.link(true, "#result", {}, {b: "optionHelper"});
+	jsv.views.helpers("a", null);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "globalHelperoptionHelper", 'Passing in helpers to top-level linking - global or option');
 
 	// =============================== Arrange ===============================
-	$.views.helpers("a", "globalHelper");
+	jsv.views.helpers("a", "globalHelper");
 
 	$("#result").html("<div data-link='~a'></div>");
 
-	$.link(true, "#result", {}, {a: "optionHelper"});
-	$.views.helpers("a", null);
+	jsv.link(true, "#result", {}, {a: "optionHelper"});
+	jsv.views.helpers("a", null);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "optionHelper", 'Passing in helpers to top-level linking - option overrides global');
 
 	// =============================== Arrange ===============================
-	$.views.helpers({
+	jsv.views.helpers({
 		onBeforeChange: function(ev, eventArgs) {
 			res += "globalBeforeChange|" + eventArgs.change + "|" + (this.tagName || this.elem.tagName) + " ";
 		},
@@ -2096,13 +2093,13 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	var pson = {name: "Jo"};
 
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: "<input data-link='name'/> {^{:name}}"
 	});
 
 	tmpl.link("#result", pson);
 
-	$.observable(pson).setProperty("name", "name3");
+	jsv.observable(pson).setProperty("name", "name3");
 
 	// ............................... Assert .................................
 	assert.equal(res, "globalAfterCreate globalBeforeChange|set|INPUT globalAfterChange|set|INPUT globalBeforeChange|set|: globalAfterChange|set|: ",
@@ -2132,7 +2129,7 @@ setTimeout(function() {
 		}
 	});
 
-	$.observable(pson).setProperty("name", "name2");
+	jsv.observable(pson).setProperty("name", "name2");
 
 	// ............................... Assert .................................
 	assert.equal(res, "optionsAfterCreate optionsBeforeChange|set|INPUT optionsAfterChange|set|INPUT optionsBeforeChange|set|: optionsAfterChange|set|: ",
@@ -2150,7 +2147,7 @@ setTimeout(function() {
 	res = '';
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: "<input data-link='name'/> {^{:name}}",
 		helpers: {
 			onBeforeChange: function(ev, eventArgs) {
@@ -2177,7 +2174,7 @@ setTimeout(function() {
 		}
 	});
 
-	$.observable(pson).setProperty("name", "name4");
+	jsv.observable(pson).setProperty("name", "name4");
 
 	// ............................... Assert .................................
 	assert.equal(res, "templateAfterCreate templateBeforeChange|set|INPUT templateAfterChange|set|INPUT templateBeforeChange|set|: templateAfterChange|set|: ",
@@ -2195,7 +2192,7 @@ setTimeout(function() {
 
 	res = '';
 
-	$.views.helpers({
+	jsv.views.helpers({
 		onBeforeChange: null,
 		onAfterChange: null,
 		onAfterCreate: null
@@ -2218,16 +2215,16 @@ if (assert.async) { done = assert.async() } else { stop() }
 	person1._firstName = "Jo"; // reset Prop
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="lastName"></span>')
+	jsv.templates('prop: <span data-link="lastName"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2241,12 +2238,12 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="last" data-link="lastName"/>')
+	jsv.templates('prop: <input id="last" data-link="lastName"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#last").val();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#last").val();
 
 	// ............................... Assert .................................
@@ -2270,13 +2267,13 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="person1.lastName + \' \' + person1.home^address.street"></span>')
+	jsv.templates('prop: <span data-link="person1.lastName + \' \' + person1.home^address.street"></span>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty("lastName", "newLast");
-	$.observable(person1.home).setProperty("address", address2); // Using deep observability
+	jsv.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1.home).setProperty("address", address2); // Using deep observability
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2289,7 +2286,7 @@ setTimeout(function() {
 	before = $("#result").html();
 
 	// ............................... Assert .................................
-	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(home1).events && !$._data(address2).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events && !$._data(home1).events && !$._data(address2).events,
 	"$(container).empty removes both views and current listeners from that content - including after swapping data on deep paths");
 
 	person1.lastName = "One"; // reset Prop
@@ -2297,13 +2294,13 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="fullName()"></span>')
+	jsv.templates('<span data-link="fullName()"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty("title", "Sir");
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty("title", "Sir");
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2318,7 +2315,7 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="foo(\'x\\x\').b"></span>')
+	jsv.templates('<span data-link="foo(\'x\\x\').b"></span>')
 		.link("#result", {
 			foo: function(val) {
 				return {b: val};
@@ -2338,14 +2335,14 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="person1.home.address.street"></span><span data-link="person1.home^address.street"></span>')
+	jsv.templates('<span data-link="person1.home.address.street"></span><span data-link="person1.home^address.street"></span>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	elems = $("#result span");
 	before = elems[0].innerHTML + elems[1].innerHTML;
-	$.observable(address1).setProperty("street", "newStreetOne");
-	$.observable(person1).setProperty("home", home2);
+	jsv.observable(address1).setProperty("street", "newStreetOne");
+	jsv.observable(person1).setProperty("home", home2);
 	elems = $("#result span");
 	after = elems[0].innerHTML + elems[1].innerHTML;
 
@@ -2361,14 +2358,14 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="~model.person1.home^address.street"></span>')
+	jsv.templates('<span data-link="~model.person1.home^address.street"></span>')
 		.link("#result", 1, {model: model});
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(address1).setProperty("street", "newStreetOne");
-	$.observable(person1).setProperty("home", home2);
-	$.observable(address2).setProperty("street", address2.street + "+");
+	jsv.observable(address1).setProperty("street", "newStreetOne");
+	jsv.observable(person1).setProperty("home", home2);
+	jsv.observable(address2).setProperty("street", address2.street + "+");
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2388,14 +2385,14 @@ setTimeout(function() {
 	var util2 = {getVal: function(val) { return "getVal2 = " + val; }};
 	var appHelpers = {util: util1};
 
-	$.templates('<span data-link="~app.util^getVal(#data)"></span>')
+	jsv.templates('<span data-link="~app.util^getVal(#data)"></span>')
 		.link("#result", 22, {app: appHelpers});
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(appHelpers).setProperty("util", util2);
+	jsv.observable(appHelpers).setProperty("util", util2);
 	after = $("#result span").html();
-	$.observable(util2).setProperty("getVal", function(val) { return "getNewVal = " + val; });
+	jsv.observable(util2).setProperty("getVal", function(val) { return "getNewVal = " + val; });
 	after += "|" + $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2413,13 +2410,13 @@ setTimeout(function() {
 		}
 	};
 
-	$.views.converters({
+	jsv.views.converters({
 		noop: function(val) {
 			return val;
 		}
 	});
 
-	$.templates('1 {^{:foo^bar}} 2 {^{:foo^bar}} 3 <span data-link="{:foo^bar}"></span>'
+	jsv.templates('1 {^{:foo^bar}} 2 {^{:foo^bar}} 3 <span data-link="{:foo^bar}"></span>'
 		+ ' 4 <span data-link="{:foo^bar}"></span> 5 <span data-link="{noop:foo^bar}"></span> 6 <span data-link="{noop:foo^bar}"></span>'
 		+ ' INPUTS <input class="linked" data-link="{noop:foo^bar}" /><input class="linked" data-link="{noop:foo^bar}" /><input class="linked" data-link="foo^bar" />'
 		+ '<input class="linked" data-link="foo^bar" /><input class="linked" data-link="{:foo^bar:noop}" /><input class="linked" data-link="{:foo^bar:noop}" />'
@@ -2427,7 +2424,7 @@ setTimeout(function() {
 		.link("#result", foobar);
 
 	// ................................ Act ..................................
-	$.observable(foobar).setProperty("foo", {bar: "new "});
+	jsv.observable(foobar).setProperty("foo", {bar: "new "});
 	res = $("#result").text();
 	$("input.linked").each(function(i, el) { res += el.value; });
 
@@ -2445,7 +2442,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	res =
-		$.templates('{{:#data}}')
+		jsv.templates('{{:#data}}')
 		.render(["aa", 22, 0, false, "", true]);
 
 	// ............................... Assert .................................
@@ -2455,7 +2452,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	res =
-		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
+		jsv.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
 		.render({items: ["aa", 22, 0, false, "", true]});
 
 	// ............................... Assert .................................
@@ -2466,7 +2463,7 @@ setTimeout(function() {
 	// ................................ Act ..................................
 
 	res =
-		$.templates('{{:#data}}')
+		jsv.templates('{{:#data}}')
 		.link("#result", ["aa", 22, 0, false, "", true]).text();
 
 	// ............................... Assert .................................
@@ -2476,7 +2473,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	res =
-		$.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
+		jsv.templates('{{for items}}{{:#index}} {{:#data}} {{/for}}')
 		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
 
 	// ............................... Assert .................................
@@ -2486,7 +2483,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	res =
-		$.templates('{^{:#data}}')
+		jsv.templates('{^{:#data}}')
 		.link("#result", ["aa", 22, 0, false, "", true]).text();
 
 	// ............................... Assert .................................
@@ -2496,7 +2493,7 @@ setTimeout(function() {
 
 	// ................................ Act ..................................
 	res =
-		$.templates('{^{for items}}{{:#index}} {^{:#data}} {{/for}}')
+		jsv.templates('{^{for items}}{{:#index}} {^{:#data}} {{/for}}')
 		.link("#result", {items: ["aa", 22, 0, false, "", true]}).text();
 
 	// ............................... Assert .................................
@@ -2508,7 +2505,7 @@ setTimeout(function() {
 	data = {name: "Jo"};
 	res = "";
 
-	$.templates(
+	jsv.templates(
 	'{{for "some string" ~item=#data}}'
 		+ '<input data-link="~item.name + #data"/>'
 	+ '{{/for}}'
@@ -2534,7 +2531,7 @@ setTimeout(function() {
 		res += el.value + " | ";
 	});
 
-	$.observable(data).setProperty("name", "new");
+	jsv.observable(data).setProperty("name", "new");
 
 	$("#result input").each(function(i, el) {
 		res += el.value + " | ";
@@ -2552,7 +2549,7 @@ setTimeout(function() {
 	data = {name: "Jo"};
 	res = "";
 
-	$.templates(
+	jsv.templates(
 	'{^{for "some string" ~item=#data}}'
 		+ '<input data-link="~item.name + #data"/>'
 	+ '{{/for}}'
@@ -2578,7 +2575,7 @@ setTimeout(function() {
 		res += el.value + " | ";
 	});
 
-	$.observable(data).setProperty("name", "new");
+	jsv.observable(data).setProperty("name", "new");
 
 	$("#result input").each(function(i, el) {
 		res += el.value + " | ";
@@ -2593,7 +2590,7 @@ setTimeout(function() {
 	$("#result").empty();
 	res = "";
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 
 	if (assert.async) { done() } else { start() }
 
@@ -2607,12 +2604,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="class{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="class{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].className;
-	$.observable(person1).setProperty("lastName", "xxx");
+	jsv.observable(person1).setProperty("lastName", "xxx");
 	after = $("#result span")[0].className;
 
 	// ............................... Assert .................................
@@ -2626,12 +2623,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").attr("title");
-	$.observable(person1).setProperty("lastName", "xxx");
+	jsv.observable(person1).setProperty("lastName", "xxx");
 	after = $("#result span").attr("title");
 
 	// ............................... Assert .................................
@@ -2645,12 +2642,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
@@ -2663,12 +2660,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", null);
+	jsv.observable(person1).setProperty("lastName", null);
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
 
@@ -2682,12 +2679,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", undefined);
+	jsv.observable(person1).setProperty("lastName", undefined);
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
 
@@ -2701,12 +2698,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty("lastName", null);
+	jsv.observable(person1).setProperty("lastName", null);
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2719,12 +2716,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
+	jsv.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty("lastName", null);
+	jsv.observable(person1).setProperty("lastName", null);
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2737,12 +2734,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).removeProperty("lastName");
+	jsv.observable(person1).removeProperty("lastName");
 	after = $("#result span")[0].getAttribute("title");
 	var html = $("#result span")[0].outerHTML;
 
@@ -2756,12 +2753,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).removeProperty("lastName");
+	jsv.observable(person1).removeProperty("lastName");
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2774,12 +2771,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
+	jsv.templates("prop: <span data-link=\"html{:lastName||''}\"></span>")
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).removeProperty("lastName");
+	jsv.observable(person1).removeProperty("lastName");
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -2794,7 +2791,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	person1.lastName = ""; // initialize
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -2812,7 +2809,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	person1.lastName = undefined; // initialize
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -2830,7 +2827,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	person1.lastName = null; // initialize
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -2846,12 +2843,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="title{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="title{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("title");
-	$.observable(person1).setProperty("lastName", false);
+	jsv.observable(person1).setProperty("lastName", false);
 	after = $("#result span")[0].getAttribute("title");
 
 	// ............................... Assert .................................
@@ -2864,13 +2861,13 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="data-foo{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="data-foo{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("data-foo");
 	var beforeVal = $("#result span").data("foo");
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 	after = $("#result span")[0].getAttribute("data-foo");
 	var afterVal = $("#result span").data("foo");
 
@@ -2885,14 +2882,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	// =============================== Arrange ===============================
 
 	var originalAddress = person1.home.address;
-	$.templates('prop: <span data-link="data-foo{:home.address}"></span>')
+	jsv.templates('prop: <span data-link="data-foo{:home.address}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("data-foo");
 	beforeVal = $("#result span").data("foo");
 	var crazyAddress = [1,2];
-	$.observable(person1.home).setProperty("address", crazyAddress);
+	jsv.observable(person1.home).setProperty("address", crazyAddress);
 	after = $("#result span")[0].getAttribute("data-foo");
 	afterVal = $("#result span").data("foo");
 
@@ -2907,13 +2904,13 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="data-foo{:lastName} data-foo-bar{:lastName} a-b-c{:lastName} a_b_c-d-e{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="data-foo{:lastName} data-foo-bar{:lastName} a-b-c{:lastName} a_b_c-d-e{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	var el = $("#result span")[0];
 	before = el.getAttribute("data-foo") + el.getAttribute("data-foo-bar") + el.getAttribute("a-b-c") + el.getAttribute("a_b_c-d-e");
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 	after = el.getAttribute("data-foo") + el.getAttribute("data-foo-bar") + el.getAttribute("a-b-c") + el.getAttribute("a_b_c-d-e");
 
 	// ............................... Assert .................................
@@ -2926,12 +2923,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="a-b_foo{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="a-b_foo{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].getAttribute("a-b_foo");
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 	after = $("#result span")[0].getAttribute("a-b_foo");
 
 	// ............................... Assert .................................
@@ -2944,12 +2941,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -2962,12 +2959,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", null);
+	jsv.observable(person1).setProperty("lastName", null);
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -2980,12 +2977,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", undefined);
+	jsv.observable(person1).setProperty("lastName", undefined);
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -2998,12 +2995,12 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", false);
+	jsv.observable(person1).setProperty("lastName", false);
 	after = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3016,14 +3013,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "One");
+	jsv.observable(person1).setProperty("lastName", "One");
 	var reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3032,14 +3029,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span style="display:inline-block" data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span style="display:inline-block" data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "One");
+	jsv.observable(person1).setProperty("lastName", "One");
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3048,14 +3045,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span style="display:none" data-link="visible{:lastName}"></span>')
+	jsv.templates('prop: <span style="display:none" data-link="visible{:lastName}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "One");
+	jsv.observable(person1).setProperty("lastName", "One");
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3064,14 +3061,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <div style="display:none" data-link="visible{:missing}"></div>')
+	jsv.templates('prop: <div style="display:none" data-link="visible{:missing}"></div>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result div")[0].style.display;
-	$.observable(person1).setProperty("missing", "foo");
+	jsv.observable(person1).setProperty("missing", "foo");
 	after = $("#result div")[0].style.display;
-	$.observable(person1).setProperty("missing", "");
+	jsv.observable(person1).setProperty("missing", "");
 	reset = $("#result div")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3083,14 +3080,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <div style="display:none" data-link="visible{:lastName}"></div>')
+	jsv.templates('prop: <div style="display:none" data-link="visible{:lastName}"></div>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result div")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result div")[0].style.display;
-	$.observable(person1).setProperty("lastName", "One");
+	jsv.observable(person1).setProperty("lastName", "One");
 	reset = $("#result div")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3100,14 +3097,14 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <para style="display:block" data-link="visible{:missing}"></para>')
+	jsv.templates('prop: <para style="display:block" data-link="visible{:missing}"></para>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result [style]")[0].style.display;
-	$.observable(person1).setProperty("missing", "foo");
+	jsv.observable(person1).setProperty("missing", "foo");
 	after = $("#result [style]")[0].style.display;
-	$.observable(person1).setProperty("missing", "");
+	jsv.observable(person1).setProperty("missing", "");
 	reset = $("#result [style]")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3120,20 +3117,20 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.views.converters({
+	jsv.views.converters({
 		not: function(val) {
 			return !val;
 		}
 	});
 
-	$.templates('prop: <span data-link="visible{not:lastName}">No name</span>')
+	jsv.templates('prop: <span data-link="visible{not:lastName}">No name</span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "");
+	jsv.observable(person1).setProperty("lastName", "");
 	after = $("#result span")[0].style.display;
-	$.observable(person1).setProperty("lastName", "One");
+	jsv.observable(person1).setProperty("lastName", "One");
 	reset = $("#result span")[0].style.display;
 
 	// ............................... Assert .................................
@@ -3146,7 +3143,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.views.tags({
+	jsv.views.tags({
 		chooseAttr: {
 			init: function(tagCtx, linkCtx, ctx) {
 				if (this.tagCtx.props.tagAttr) {
@@ -3172,7 +3169,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 	}
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="{chooseAttr}">xx</div>')
+	jsv.templates('<div data-link="{chooseAttr}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3180,7 +3177,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"{chooseAttr} has target 'text'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="{chooseAttr tagAttr=\'title\'}">xx</div>')
+	jsv.templates('<div data-link="{chooseAttr tagAttr=\'title\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3188,7 +3185,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"{chooseAttr tagAttr=\'title\'} overrides tag.attr, and has target 'title'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="{chooseAttr tagAttr=\'html\'}">xx</div>')
+	jsv.templates('<div data-link="{chooseAttr tagAttr=\'html\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3196,7 +3193,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"{chooseAttr tagAttr=\'html\'} overrides tag.attr, and has target 'html'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'}">xx</div>')
+	jsv.templates('<div data-link="{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3204,7 +3201,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"{chooseAttr linkCtxAttr=\'title\' tagAttr=\'html\'} overrides linkCtx.attr, and has target 'title'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="html{chooseAttr}">xx</div>')
+	jsv.templates('<div data-link="html{chooseAttr}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3212,7 +3209,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"html{chooseAttr} has target 'html'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="html{chooseAttr tagAttr=\'title\'}">xx</div>')
+	jsv.templates('<div data-link="html{chooseAttr tagAttr=\'title\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3220,7 +3217,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"html{chooseAttr tagAttr =\'title\'} overrides tag.attr, but still has target 'html'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="html{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
+	jsv.templates('<div data-link="html{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3228,7 +3225,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"html{chooseAttr tagAttr =\'html\' linkCtxAttr=\'title\'} overrides tag.attr and linkCtx.attr, and has target 'title'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="visible{chooseAttr}">xx</div>')
+	jsv.templates('<div data-link="visible{chooseAttr}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3236,7 +3233,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"visible{chooseAttr} has display 'block'");
 
 	// ................................ Act ..................................
-	$.observable(thing).removeProperty("name");
+	jsv.observable(thing).removeProperty("name");
 
 	// ............................... Assert .................................
 	assert.equal(divProps(), "title:  - innerHTML: xx - display: none",
@@ -3244,7 +3241,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 
 	// ................................ Act ..................................
 	thing.name = "box";
-	$.templates('<div data-link="visible{chooseAttr tagAttr=\'title\'}">xx</div>')
+	jsv.templates('<div data-link="visible{chooseAttr tagAttr=\'title\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3252,7 +3249,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"visible{chooseAttr tagAttr=\'title\'} overrides tag.attr, but still has target 'visible' and has display 'block'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'}">xx</div>')
+	jsv.templates('<div data-link="visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3260,7 +3257,7 @@ QUnit.test('data-link="attr{:expression}"', function(assert) {
 		"visible{chooseAttr tagAttr=\'title\' linkCtxAttr=\'html\'} overrides tag.attr and linkCtx.attr, and has target 'html'");
 
 	// ................................ Act ..................................
-	$.templates('<div data-link="visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
+	jsv.templates('<div data-link="visible{chooseAttr tagAttr=\'html\' linkCtxAttr=\'title\'}">xx</div>')
 		.link("#result", thing);
 
 	// ............................... Assert .................................
@@ -3287,14 +3284,14 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <span data-link="{upper_:lastName true added=firstName()}"></span>')
+	jsv.templates('prop: <span data-link="{upper_:lastName true added=firstName()}"></span>')
 		.link("#result", person2);
 
 	// ................................ Act ..................................
 	before = $("#result span").html();
-	$.observable(person1).setProperty({firstName: "newOneFirst", lastName: "newOneLast"});
-	$.observable(person2).setProperty({firstName: "newTwoFirst", lastName: "newTwoLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({firstName: "newOneFirst", lastName: "newOneLast"});
+	jsv.observable(person2).setProperty({firstName: "newTwoFirst", lastName: "newTwoLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
 	after = $("#result span").html();
 
 	// ............................... Assert .................................
@@ -3312,7 +3309,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	settings.width = 30; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views
+	jsv.views
 		.converters({
 			from: function(val) {
 				return val + "from" + this.tagCtx.props.frst;
@@ -3324,7 +3321,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="twoWay" data-link="{:lastName frst=firstName():to}"/>')
+	jsv.templates('prop: <input id="twoWay" data-link="{:lastName frst=firstName():to}"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -3343,7 +3340,7 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="twoWay" data-link="{:lastName:} data-foo{>23}"/>')
+	jsv.templates('prop: <input id="twoWay" data-link="{:lastName:} data-foo{>23}"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -3362,7 +3359,7 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>')
+	jsv.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -3381,10 +3378,10 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>'
+	var tmpl = jsv.templates('prop: <input id="twoWay" data-link="{from:lastName frst=firstName():to}"/>'
 								+ '{{for true}}prop: <input id="twoWayInner" data-link="{from:~root.lastName frst=~root.firstName():to}"/>{{/for}}');
 
-	$.views
+	jsv.views
 		.converters({
 			from: function(val) {
 				return val + "from" + this.tagCtx.props.frst;
@@ -3436,7 +3433,7 @@ QUnit.test('Two-way binding', function(assert) {
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 	// =============================== Arrange ===============================
-	var tmpl = $.templates('<input data-link="address.street"/><div data-link="address.street"></div>');
+	var tmpl = jsv.templates('<input data-link="address.street"/><div data-link="address.street"></div>');
 
 	var model = {
 			address: {street: "First St"}
@@ -3464,7 +3461,7 @@ setTimeout(function() {
 		return model.selected + ":" + ($("#result select option:selected").text()||"-") + "(" + $("#result select")[0].selectedIndex + ")|";
 	}
 
-	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="name"></option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for people}}<option data-link="name"></option>{{/for}}</select>');
 
 	model = {
 			selected: "Jim",
@@ -3480,15 +3477,15 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
@@ -3504,7 +3501,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for people}}<option value="{{:name}}">{{:name.toUpperCase()}}</option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for people}}<option value="{{:name}}">{{:name.toUpperCase()}}</option>{{/for}}</select>');
 
 	model = {
 		selected: "Jim",
@@ -3519,15 +3516,15 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
@@ -3543,7 +3540,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for people}}<option>{{:name}}</option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for people}}<option>{{:name}}</option>{{/for}}</select>');
 
 	model = {
 		selected: "Jim",
@@ -3558,15 +3555,15 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
@@ -3582,7 +3579,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="value{:name} {:name.toUpperCase()}"></option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for people}}<option data-link="value{:name} {:name.toUpperCase()}"></option>{{/for}}</select>');
 
 	model = {
 		selected: "Jim",
@@ -3597,15 +3594,15 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
@@ -3621,7 +3618,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
 
 	model = {
 		selected: "Jim",
@@ -3636,15 +3633,15 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
@@ -3660,7 +3657,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>');
 
 	model = {
 			selected: 4,
@@ -3672,7 +3669,7 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.items).insert(0, [4,5,6]);
+	jsv.observable(model.items).insert(0, [4,5,6]);
 
 	res += getSelection();
 
@@ -3681,7 +3678,7 @@ setTimeout(function() {
 		'<select data-link="{selected}">{^{for items}}... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="{cvt:selected:cvt}">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		converters: {
 			cvt: function (value) {
@@ -3700,7 +3697,7 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.items).insert(0, [4,5,6]);
+	jsv.observable(model.items).insert(0, [4,5,6]);
 
 	res += getSelection();
 
@@ -3709,7 +3706,7 @@ setTimeout(function() {
 		'<select data-link="{cvt:selected:cvt}">{^{for items}}... Dynamic subsequent insertion of selected option, with converters');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="{:selected:cvt}">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		converters: {
 			cvt: function (value) {
@@ -3728,7 +3725,7 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.items).insert(0, [4,5,6]);
+	jsv.observable(model.items).insert(0, [4,5,6]);
 
 	res += getSelection();
 
@@ -3740,7 +3737,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="{cvt:selected:}">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		converters: {
 			cvt: function (value) {
@@ -3759,7 +3756,7 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model.items).insert(0, [4,5,6]);
+	jsv.observable(model.items).insert(0, [4,5,6]);
 
 	res += getSelection();
 
@@ -3771,7 +3768,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>');
 
 	model = {
 		selected: 4,
@@ -3784,7 +3781,7 @@ setTimeout(function() {
 
 	res = getSelection();
 
-	$.observable(model).setProperty('items', model.items2);
+	jsv.observable(model).setProperty('items', model.items2);
 
 	res += getSelection();
 
@@ -3799,16 +3796,16 @@ setTimeout(function() {
 	function testSelect(model, chg) {
 		var res = getSelection();
 
-		$.observable(model.items).insert(0, ["a", "b", "c"]);
+		jsv.observable(model.items).insert(0, ["a", "b", "c"]);
 		res += getSelection();
 
-		$.observable(model.items).refresh(["z", "x", "y"]);
+		jsv.observable(model.items).refresh(["z", "x", "y"]);
 		res += getSelection();
 
-		$.observable(model.items).refresh(["c", "x", "b"]);
+		jsv.observable(model.items).refresh(["c", "x", "b"]);
 		res += getSelection();
 
-		$.observable(model).setProperty("selected", "x");
+		jsv.observable(model).setProperty("selected", "x");
 		res += getSelection();
 
 		$("#result select").val('c').change();
@@ -3818,7 +3815,7 @@ setTimeout(function() {
 	}
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="{lower:selected:upper}">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		converters: {
 			lower: function(val) {
@@ -3843,7 +3840,7 @@ setTimeout(function() {
 		'<select data-link="{lower:selected:upper}">{^{for items}}... Dynamic subsequent insertion of selected option, with converters');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="selected convert=\'lower\' convertBack=\'upper\'">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		converters: {
 			lower: function(val) {
@@ -3869,7 +3866,7 @@ setTimeout(function() {
 
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '<select data-link="selected convert=~lower convertBack=~upper">{^{for items}}<option>{^{>#data}}</option>{{/for}}</select>',
 		helpers: {
 			lower: function(val) {
@@ -3894,7 +3891,7 @@ setTimeout(function() {
 		'<select data-link="selected convert=~lower convertBack=~upper">{^{for items}}... Dynamic subsequent insertion of selected option, with helpers as converters');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag selected items}}{{else selected2}}{{/selTag}}',
 		tags: {
 			selTag: {
@@ -3918,7 +3915,7 @@ setTimeout(function() {
 		'Custom selTag with linkedElement:"select"... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
 		tags: {
 			selTag: {
@@ -3949,7 +3946,7 @@ setTimeout(function() {
 		'Custom selTag with linkedElement:[undefined, "select"] and converters... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
 		converters: {
 			lower: function(foo, val) {
@@ -3984,7 +3981,7 @@ setTimeout(function() {
 		'Custom selTag with linkedElement:[undefined, "select"] and registered converters... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag 1 selected options=items convert=~lower convertBack=\'upper\'}}{{else 1 selected2 options=items}}{{/selTag}}',
 		converters: {
 			upper: function(foo, val) {
@@ -4019,7 +4016,7 @@ setTimeout(function() {
 		'Custom selTag with linkedElement:[undefined, "select"] and external converters... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag selected options=items convert=~lower convertBack=\'upper\'}}{{else selected2 options=items}}{{/selTag}}',
 		converters: {
 			upper: function(val) {
@@ -4053,7 +4050,7 @@ setTimeout(function() {
 		'Custom selTag with linkedCtxParam:"sel" and external converters... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 
 		markup: '{^{selTag 1 selected options=items}}{{else 1 selected2 options=items}}{{/selTag}}',
 		converters: {
@@ -4088,7 +4085,7 @@ setTimeout(function() {
 		'Custom selTag with linkedCtxParam:[undefined, "sel"] and converters... Dynamic subsequent insertion of selected option');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: '{^{selTag 1 selected options=items convert=~lower convertBack=\'upper\'}}{{else 1 selected2 options=items}}{{/selTag}}',
 		converters: {
 			upper: function(foo, val) {
@@ -4126,7 +4123,7 @@ setTimeout(function() {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name.toUpperCase()} value{:name}"></option>{{/for}}</select>');
 
 	model = {
 		selected: ["Jim","Bob"],
@@ -4141,19 +4138,19 @@ setTimeout(function() {
 
 	res = $("#result select")[0].multiple + getSelection();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName, "Bob"]);
+	jsv.observable(model).setProperty("selected", [newName, "Bob"]);
 
 	res += getSelection();
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += getSelection();
 
-	$.observable(model.people).insert([
+	jsv.observable(model.people).insert([
 		{
 			name: "Pete"
 		},
@@ -4174,7 +4171,7 @@ setTimeout(function() {
 
 	res += getSelection();
 
-	$.observable(model).setProperty("selected", "Bob");
+	jsv.observable(model).setProperty("selected", "Bob");
 
 	res += getSelection();
 
@@ -4183,7 +4180,7 @@ setTimeout(function() {
 		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name} value{:id}"></option>{{/for}}</select>');
+	tmpl = jsv.templates('<select data-link="selected" multiple="multiple">{^{for people}}<option data-link="{:name} value{:id}"></option>{{/for}}</select>');
 
 	model = {
 		selected: "J",
@@ -4199,27 +4196,27 @@ setTimeout(function() {
 
 	res = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", ["", "J"]);
+	jsv.observable(model).setProperty("selected", ["", "J"]);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", "B");
+	jsv.observable(model).setProperty("selected", "B");
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", []);
+	jsv.observable(model).setProperty("selected", []);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", "");
+	jsv.observable(model).setProperty("selected", "");
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", ["J"]);
+	jsv.observable(model).setProperty("selected", ["J"]);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", null);
+	jsv.observable(model).setProperty("selected", null);
 
 	res += $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
@@ -4227,27 +4224,27 @@ setTimeout(function() {
 	assert.equal(res, "trueJim:2|NooneJim:1|Bob:0|:-1|Noone:1|Jim:2|trueNoone:1|",
 		'Multiselect with <select data-link="selected">...<option data-link="{:name.toUpperCase()} value{:name}">');
 
-	$.observable(model).setProperty("selected", ["J"]);
+	jsv.observable(model).setProperty("selected", ["J"]);
 
 	res = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model.selected).insert("B");
+	jsv.observable(model.selected).insert("B");
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model.selected).refresh(["J", ""]);
+	jsv.observable(model.selected).refresh(["J", ""]);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model.people).insert({name: "Fred",  id: "F"});
+	jsv.observable(model.people).insert({name: "Fred",  id: "F"});
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model.selected).refresh(["F", "B"]);
+	jsv.observable(model.selected).refresh(["F", "B"]);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", "J");
+	jsv.observable(model).setProperty("selected", "J");
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
@@ -4259,15 +4256,15 @@ setTimeout(function() {
 
 	res = $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", "F");
+	jsv.observable(model).setProperty("selected", "F");
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model).setProperty("selected", ["F"]);
+	jsv.observable(model).setProperty("selected", ["F"]);
 
 	res += $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
-	$.observable(model.selected).insert(0, "B");
+	jsv.observable(model.selected).insert(0, "B");
 
 	res += $("#result select")[0].multiple + $("#result select option:selected").text() + ":" + $("#result select")[0].selectedIndex + "|";
 
@@ -4286,7 +4283,7 @@ setTimeout(function() {
 		res += $("#result").text() + "|";
 	}
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 '<input data-link="foo"/>\
 <input data-link="#data.foo"/>\
 <input data-link="#view.data.foo"/>\
@@ -4344,11 +4341,11 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 			selected: "Jim"
 		};
 
-	$.link(true, "#result", model);
+	jsv.link(true, "#result", model);
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", "Bob");
+	jsv.observable(model).setProperty("selected", "Bob");
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4369,7 +4366,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>'
 	+ '<div data-link="{for people tmpl=~itemTmpl} {radiogroup selected}"></div>';
 
-	var tmpl = $.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
+	var tmpl = jsv.templates('<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'),
 
 	model = {
 			selected: "Jim",
@@ -4384,19 +4381,19 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").html(topLevel);
 
 	// ............................... Act .................................
-	$.link(true, "#result", model, {itemTmpl: tmpl});
+	jsv.link(true, "#result", model, {itemTmpl: tmpl});
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4409,7 +4406,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'data-link="{radiogroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected}">'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'
@@ -4431,15 +4428,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4455,7 +4452,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected}">'
 		+ '<label><input type="radio" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -4477,15 +4474,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4498,7 +4495,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'data-link="{radiogroup selected}" ... <input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -4513,7 +4510,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({markup:
+	tmpl = jsv.templates({markup:
 		'<div data-link="{radiogroup selected convert=~lower convertBack=\'upper\' linkTo=selectedOut}">'
 		+ '<label><input type="radio" value="none"/>:none</label>'
 		+ '{^{for people}}'
@@ -4544,15 +4541,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4565,7 +4562,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'data-link="{radiogroup selected convert=... convertBack=... linkTo=...}"');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -4580,7 +4577,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected}">'
 		+ '<input type="radio" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
 		+ '{^{for people}}'
@@ -4602,15 +4599,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -4623,7 +4620,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'data-link="{radiogroup selected}" with labels by for/id');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -4638,7 +4635,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected}">'
 		+ '<label><input type="radio" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -4666,15 +4663,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4687,7 +4684,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 		'data-link="{radiogroup selected}" - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -4702,7 +4699,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected}">'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -4726,15 +4723,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4750,7 +4747,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{radiogroup selected name=\'rad1\'}">'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -4774,15 +4771,15 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4798,7 +4795,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 '{^{if rg1}}'
 	+ '<div data-link="{radiogroup selected}">'
 		+ '{^{for people}}'
@@ -4829,11 +4826,11 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4841,17 +4838,17 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - starting out with no items');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("rg1", false);
+	jsv.observable(model).setProperty("rg1", false);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4859,19 +4856,19 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'data-link="{radiogroup selected}" - two radiogroups wrapped in {{if}} blocks - one set to false');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("selected", "Jim");
+	jsv.observable(model).setProperty("selected", "Jim");
 
-	$.observable(model).setProperty("rg1", true);
+	jsv.observable(model).setProperty("rg1", true);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4886,7 +4883,7 @@ QUnit.test('data-link="{radiogroup}"', function(assert) {
 
 QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
@@ -4908,11 +4905,11 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 			selected: ["Jim"]
 		};
 
-	$.link(true, "#result", model);
+	jsv.link(true, "#result", model);
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", ["Bob"]);
+	jsv.observable(model).setProperty("selected", ["Bob"]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4933,7 +4930,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 		'<div data-link="{for people tmpl=~itemTmpl} {checkboxgroup selected}"></div>'
 	+ '<div data-link="{for people tmpl=~itemTmpl} {checkboxgroup selected}"></div>';
 
-	var tmpl = $.templates('<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'),
+	var tmpl = jsv.templates('<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'),
 
 	model = {
 			selected: ["Jim"],
@@ -4948,19 +4945,19 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").html(topLevel);
 
 	// ............................... Act .................................
-	$.link(true, "#result", model, {itemTmpl: tmpl});
+	jsv.link(true, "#result", model, {itemTmpl: tmpl});
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -4973,7 +4970,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 		'data-link="{checkboxgroup selected}" ... {^{for ...}}...<input ... value="{{:name}}">');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected}">'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'
@@ -4995,15 +4992,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5019,7 +5016,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected}">'
 		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -5041,15 +5038,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5062,7 +5059,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 		'data-link="{checkboxgroup selected}" ... <input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -5077,7 +5074,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({markup:
+	tmpl = jsv.templates({markup:
 		'<div data-link="{checkboxgroup selected convert=~lower convertBack=\'upper\' linkTo=selectedOut}">'
 		+ '<label><input type="checkbox" value="none"/>:none</label>'
 		+ '{^{for people}}'
@@ -5108,15 +5105,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5125,11 +5122,11 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, ":jim|:new||new-NEW,NONE-:none|",
+	assert.equal(res, ":jim|:new||new-NONE-:none|",
 		'data-link="{checkboxgroup selected convert=... convertBack=... linkTo=...}"');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -5137,14 +5134,14 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res += model.selected + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
-	assert.equal(res, ":none:bob:jimUpdated|new-NEW,JIMUPDATED-:none:jimUpdated|",
+	assert.equal(res, ":none:bob:jimUpdated|new-NONE,JIMUPDATED-:none:jimUpdated|",
 		'data-link="{checkboxgroup selected convert=... convertBack=... linkTo=...}" - updated label and value');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected}">'
 		+ '<input type="checkbox" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
 		+ '{^{for people}}'
@@ -5166,15 +5163,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -5187,7 +5184,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 		'data-link="{checkboxgroup selected}" with labels by for/id');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -5202,7 +5199,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected}">'
 		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -5230,15 +5227,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5251,7 +5248,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 		'data-link="{checkboxgroup selected}" - two checkboxgroups with same selected bindings');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -5266,7 +5263,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected}">'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -5290,15 +5287,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5314,7 +5311,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<div data-link="{checkboxgroup selected name=\'rad1\'}">'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" value="{{:name}}" data-link="value^{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -5338,15 +5335,15 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5362,7 +5359,7 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 '{^{if rg1}}'
 	+ '<div data-link="{checkboxgroup selected}">'
 		+ '{^{for people}}'
@@ -5393,11 +5390,11 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5405,17 +5402,17 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("rg1", false);
+	jsv.observable(model).setProperty("rg1", false);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5423,19 +5420,19 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'data-link="{checkboxgroup selected}" - two checkboxgroups wrapped in {{if}} blocks - one set to false');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("selected", ["Jim"]);
+	jsv.observable(model).setProperty("selected", ["Jim"]);
 
-	$.observable(model).setProperty("rg1", true);
+	jsv.observable(model).setProperty("rg1", true);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", [newName]);
+	jsv.observable(model).setProperty("selected", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -5447,9 +5444,9 @@ QUnit.test('data-link="{checkboxgroup}"', function(assert) {
 	$("#result").empty();
 
 	// ............................... Assert .................................
-	assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}" && !$._data(model).events,
+	assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}" && !$._data(model).events,
 	 "$(container).empty removes current listeners and two-way bindings");
-	$.views.settings.advanced({_jsv: false}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: false}); // For using viewsAndBindings($)
 });
 
 QUnit.test('data-link="{tag...}"', function(assert) {
@@ -5462,7 +5459,7 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 	settings.width = 30; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		norendernotemplate: {},
 		voidrender: function() {},
 		emptyrender: function() { return ""; },
@@ -5475,36 +5472,36 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 	});
 
 	// ............................... Assert .................................
-	$.templates('a<span date-link="{norendernotemplate}"></span>b').link("#result", 1);
+	jsv.templates('a<span date-link="{norendernotemplate}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, no render function) renders empty string");
 
-	$.templates('a<span date-link="{voidrender}"></span>b').link("#result", 1);
+	jsv.templates('a<span date-link="{voidrender}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
-	$.templates('a<span date-link="{emptyrender}"></span>b').link("#result", 1);
+	jsv.templates('a<span date-link="{emptyrender}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
-	$.templates('a<span date-link="{emptytemplate}"></span>b').link("#result", 1);
+	jsv.templates('a<span date-link="{emptytemplate}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
-	$.templates('a<span date-link="{templatereturnsempty}"></span>b').link("#result", 1);
+	jsv.templates('a<span date-link="{templatereturnsempty}"></span>b').link("#result", 1);
 	assert.equal($("#result").text(), "ab",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="{tmplTag}"></span>')
+	jsv.templates('<span data-link="{tmplTag}"></span>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -5521,14 +5518,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="{fnTag}"></span>')
+	jsv.templates('<span data-link="{fnTag}"></span>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -5545,14 +5542,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{fnTagEl}"></div>')
+	jsv.templates('<div data-link="{fnTagEl}"></div>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result div").html();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result div").html();
 
 	// ............................... Assert .................................
@@ -5569,14 +5566,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<ul data-link="{fnTagElCnt}"></ul>')
+	jsv.templates('<ul data-link="{fnTagElCnt}"></ul>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be "<li data-jsv=\"#25_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -5593,14 +5590,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<ul data-link="{fnTagElCntNoInit firstName ~settings.width}"></ul>')
+	jsv.templates('<ul data-link="{fnTagElCntNoInit firstName ~settings.width}"></ul>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be "<li data-jsv=\"#25_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -5617,14 +5614,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
+	jsv.templates('<span data-link="{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -5644,14 +5641,14 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<span data-link="{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
+	jsv.templates('<span data-link="{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street}"></span>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result span").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result span").text();
 
 	// ............................... Assert .................................
@@ -5672,7 +5669,7 @@ QUnit.test('data-link="{tag...}"', function(assert) {
 });
 
 QUnit.test("Computed observables in paths", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var app = {
@@ -5696,7 +5693,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 	};
 
 	function testTemplate(message, template) {
-		$.templates(template)
+		jsv.templates(template)
 		.link("#result", app, {
 			getItems: function(exp) {
 				return exp ? ["a", "b"] : [];
@@ -5705,27 +5702,27 @@ QUnit.test("Computed observables in paths", function(assert) {
 
 		// ................................ Act ..................................
 		var ret = $("#result").text() + "|";
-		$.view("#result .groupdata").refresh();
+		jsv.view("#result .groupdata").refresh();
 
-		$.observable(app.items[0]).setProperty("expanded", true);
+		jsv.observable(app.items[0]).setProperty("expanded", true);
 		ret += $("#result").text() + "|";
 
-		$.observable(app.items[0]).setProperty("expanded", false);
+		jsv.observable(app.items[0]).setProperty("expanded", false);
 		ret += $("#result").text() + "|";
 
-		$.observable(app.items[1]).setProperty("expanded", true);
+		jsv.observable(app.items[1]).setProperty("expanded", true);
 		ret += $("#result").text() + "|";
 
-		$.observable(app.items[1]).setProperty("expanded", false);
+		jsv.observable(app.items[1]).setProperty("expanded", false);
 		ret += $("#result").text() + "|";
 
-		$.observable(app.items).insert(0, {
+		jsv.observable(app.items).insert(0, {
 			name: "added",
 			row: "+",
 			expanded: false
 		});
 		ret += $("#result").text() + "|";
-		$.observable(app.items).remove(0);
+		jsv.observable(app.items).remove(0);
 		ret += $("#result").text() + "|";
 		$("#result").empty();
 
@@ -5842,36 +5839,36 @@ QUnit.test("Computed observables in paths", function(assert) {
 	};
 
 	// ................................ Act ..................................
-	$.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
+	jsv.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
 
 	ret = "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("index", 0);
+	jsv.observable(app).setProperty("index", 0);
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(people1[0].address).setProperty("street", "1 first streetB");
+	jsv.observable(people1[0].address).setProperty("street", "1 first streetB");
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
+	jsv.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
+	jsv.observable(app).setProperty("alt", true);
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("index", 1);
+	jsv.observable(app).setProperty("index", 1);
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	jsv.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	jsv.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
 	ret += "|" + $("#result").text();
 
 	// ................................ Assert ..................................
@@ -5887,34 +5884,34 @@ QUnit.test("Computed observables in paths", function(assert) {
 	data2 = {value: "data2", people: people2};
 
 	// ................................ Act ..................................
-	$.templates("{^{:(getData()^people[index]).address^street}}").link("#result", app);
+	jsv.templates("{^{:(getData()^people[index]).address^street}}").link("#result", app);
 
 	ret = $("#result").text();
 
-	$.observable(app).setProperty("index", 1);
+	jsv.observable(app).setProperty("index", 1);
 	ret += "|" + $("#result").text();
 
-	$.observable(app).setProperty("index", 0);
+	jsv.observable(app).setProperty("index", 0);
 	ret += "|" + $("#result").text();
 
-	$.observable(people1[0].address).setProperty("street", "1 first streetB");
-	ret += "|" + $("#result").text();
-
-	// ................................ Act ..................................
-	$.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
+	jsv.observable(people1[0].address).setProperty("street", "1 first streetB");
 	ret += "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
+	jsv.observable(people1[0]).setProperty("address", {street: "1 first swappedstreet"});
 	ret += "|" + $("#result").text();
 
-	$.observable(app).setProperty("index", 1);
+	// ................................ Act ..................................
+	jsv.observable(app).setProperty("alt", true);
 	ret += "|" + $("#result").text();
 
-	$.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	jsv.observable(app).setProperty("index", 1);
 	ret += "|" + $("#result").text();
 
-	$.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
+	jsv.observable(people2[1]).setProperty("address", {street: "2 second swappedstreet"});
+	ret += "|" + $("#result").text();
+
+	jsv.observable(people2[1].address).setProperty("street", "2 second swappedstreetB");
 	ret += "|" + $("#result").text();
 
 	// ................................ Assert ..................................
@@ -5925,7 +5922,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 	$("#result").empty();
 
 	//TODO allow the following to work by declaring getPeople as depending on collection change of app.alt ? people2 : people;
-	//$.observable(people2).insert(1, {address:{street: "99 new street"}})
+	//jsv.observable(people2).insert(1, {address:{street: "99 new street"}})
 	//ret += "|" + $("#result").text();
 
 	// =============================== Arrange ===============================
@@ -5933,7 +5930,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 		return this.value + "_" + a;
 	}
 	function switchAlt() {
-		$.observable(app).setProperty("alt", !app.alt);
+		jsv.observable(app).setProperty("alt", !app.alt);
 	}
 
 	app.alt = false;
@@ -5944,73 +5941,73 @@ QUnit.test("Computed observables in paths", function(assert) {
 	data2 = {value: "val2", people: people2, getValue: getValue};
 
 	// ................................ Act ..................................
-	$.templates("{^{:getData()^getValue(22)}}").link("#result", app);
+	jsv.templates("{^{:getData()^getValue(22)}}").link("#result", app);
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("alt", true);
+	jsv.observable(app).setProperty("alt", true);
 	ret = "|A: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |A: val2_22--val1_22
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
+	jsv.templates("{^{for (getPeople())}}{^{:address.street}}{{/for}}").link("#result", app);
 	ret += "|B: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |B: 1 first street--1 second street2 second street
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
+	jsv.templates("{^{for getPeople()}}{^{:address.street}}{{/for}}").link("#result", app);
 	ret += "|C: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |C: 1 second street2 second street--1 first street
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:(getData()^getValue(22))}}").link("#result", app);
+	jsv.templates("{^{:(getData()^getValue(22))}}").link("#result", app);
 	ret += "|D: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |D: val1_22--val2_22
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
+	jsv.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
 	ret += "|E: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // E: val2_val2_33--val1_val1_33
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:getData(getPeople(getData(alt || 2)^getValue())^length)^value}}").link("#result", app);
+	jsv.templates("{^{:getData(getPeople(getData(alt || 2)^getValue())^length)^value}}").link("#result", app);
 	ret += "|F: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |F: val1--val2
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
+	jsv.templates("{^{for (getPeople()[index]||{})^address}}{^{:street}}{{/for}}").link("#result", app);
 	ret += "|G: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |G: 1 second street--1 first street
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:(((getData())^people[0])^address.street)}}").link("#result", app);
+	jsv.templates("{^{:(((getData())^people[0])^address.street)}}").link("#result", app);
 	ret += "|H: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |H: 1 first street--1 second street
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:'b'+((getData()^value) + ('a'+getData()^value)) + getData()^getValue(55)}}").link("#result", app);
+	jsv.templates("{^{:'b'+((getData()^value) + ('a'+getData()^value)) + getData()^getValue(55)}}").link("#result", app);
 	ret += "|I: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |I: bval2aval2val2_55--bval1aval1val1_55
 	$("#result").empty();
 
 	// ................................ Act ..................................
-	$.templates("{^{:'a' + getData()^value}}").link("#result", app);
+	jsv.templates("{^{:'a' + getData()^value}}").link("#result", app);
 	ret += "|J: " + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text(); // |J: aval1--aval2
@@ -6020,13 +6017,13 @@ QUnit.test("Computed observables in paths", function(assert) {
 	getValue.depends = "value";
 
 	// ................................ Act ..................................
-	$.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
+	jsv.templates("{^{:getData()^getValue((getData()^getValue(33)))}}").link("#result", app);
 	ret += "|K: " + $("#result").text();
-	$.observable(data2).setProperty("value", "newVal1");
+	jsv.observable(data2).setProperty("value", "newVal1");
 	ret += "--" + $("#result").text();
 	switchAlt();
 	ret += "--" + $("#result").text();
-	$.observable(data1).setProperty("value", "newVal2");
+	jsv.observable(data1).setProperty("value", "newVal2");
 	ret += "--" + $("#result").text();  // |K: val2_val2_33--newVal1_newVal1_33--val1_val1_33--newVal2_newVal2_33
 
 	// ................................ Act ..................................
@@ -6080,13 +6077,13 @@ QUnit.test("Computed observables in paths", function(assert) {
 
 	model.enabled.depends = [,"selected"];
 
-	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+	jsv.templates('<div data-link="enabled()"></div>').link("#result", model);
 
 	// ................................ Act ..................................
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("selected", "s2");
+	jsv.observable(model).setProperty("selected", "s2");
 
 	ret += $("#result").text();
 
@@ -6100,17 +6097,17 @@ QUnit.test("Computed observables in paths", function(assert) {
 
 	model.enabled.depends = [,"selected", model, "colored"];
 
-	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+	jsv.templates('<div data-link="enabled()"></div>').link("#result", model);
 
 	// ................................ Act ..................................
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("selected", "s2");
+	jsv.observable(model).setProperty("selected", "s2");
 
 	ret += $("#result").text() + "_";
 
-	$.observable(model).setProperty("colored", "c3");
+	jsv.observable(model).setProperty("colored", "c3");
 
 	ret += $("#result").text();
 
@@ -6125,13 +6122,13 @@ QUnit.test("Computed observables in paths", function(assert) {
 
 	model.enabled.depends = ["enabled"];
 
-	$.templates('<div data-link="enabled()"></div>').link("#result", model);
+	jsv.templates('<div data-link="enabled()"></div>').link("#result", model);
 
 	// ................................ Act ..................................
 
 	ret = $._data(model).events.propertyChange.length + "_";
 
-	$.observable(model).setProperty("enabled", "e2");
+	jsv.observable(model).setProperty("enabled", "e2");
 
 	ret += $("#result").text();
 
@@ -6165,7 +6162,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 		}
 	};
 
-	var tmpl = $.templates('<input data-link="name()" /><input data-link="a().name()" /><input data-link="~util.myFn()" /><input data-link="~util.myname()" /><input data-link="~util.myname()" />');
+	var tmpl = jsv.templates('<input data-link="name()" /><input data-link="a().name()" /><input data-link="~util.myFn()" /><input data-link="~util.myname()" /><input data-link="~util.myname()" />');
 	tmpl.link("#result", data, hlprs);
 
 	var inputs = $("#result input"),
@@ -6230,7 +6227,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 		_name: "Bob"
 	};
 
-	$.views.tags({
+	jsv.views.tags({
 		tag1: {
 			template: '<div>{^{:~arg1}}</div><input data-link="~arg1"/>',
 			bindTo: [0],
@@ -6244,7 +6241,7 @@ QUnit.test("Computed observables in paths", function(assert) {
 			onUpdate: true
 		}
 	});
-	tmpl = $.templates("{^{tag1 name()/}}");
+	tmpl = jsv.templates("{^{tag1 name()/}}");
 	tmpl.link("#result", data);
 
 	// ................................ Act ..................................
@@ -6278,10 +6275,10 @@ QUnit.test("Computed observables in paths", function(assert) {
 	$("#result").empty();
 
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
-QUnit.test("Computed observables in $.link() expressions", function(assert) {
+QUnit.test("Computed observables in jsv.link() expressions", function(assert) {
 
 	(function() {
 		// =============================== Arrange ===============================
@@ -6335,7 +6332,7 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		};
 
 		function changeHome(label) {
-			$.observable(person.ob()).setProperty("home", {
+			jsv.observable(person.ob()).setProperty("home", {
 				_address: {
 					street: person.ob().home.address().street + "$"
 				},
@@ -6344,26 +6341,26 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		}
 
 		function changeAlt(label) {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeObtype(label) {
-			$.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
+			jsv.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeAddress(label) {
-			$.observable(person.ob().home).setProperty("address", {street: person.ob().home.address().street + "+"});
+			jsv.observable(person.ob().home).setProperty("address", {street: person.ob().home.address().street + "+"});
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeStreet(label) {
-			$.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
+			jsv.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
-		$.link("ob()^obtype", "#inner", person, {helpers: helpers});
+		jsv.link("ob()^obtype", "#inner", person, {helpers: helpers});
 
 		// ................................ Act ..................................
 
@@ -6430,7 +6427,7 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		};
 
 		function changeHome(label) {
-			$.observable(person.ob(helpers.alt)).setProperty("home", {
+			jsv.observable(person.ob(helpers.alt)).setProperty("home", {
 				_address: {
 					street: person.ob(helpers.alt).home.address().street + "$"
 				},
@@ -6439,26 +6436,26 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		}
 
 		function changeAlt(label) {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeObtype(label) {
-			$.observable(person.ob(helpers.alt)).setProperty("obtype", person.ob(helpers.alt).obtype + "@");
+			jsv.observable(person.ob(helpers.alt)).setProperty("obtype", person.ob(helpers.alt).obtype + "@");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeAddress(label) {
-			$.observable(person.ob(helpers.alt).home).setProperty("address", {street: person.ob(helpers.alt).home.address().street + "+"});
+			jsv.observable(person.ob(helpers.alt).home).setProperty("address", {street: person.ob(helpers.alt).home.address().street + "+"});
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeStreet(label) {
-			$.observable(person.ob(helpers.alt).home.address()).setProperty("street", person.ob(helpers.alt).home.address().street + ">");
+			jsv.observable(person.ob(helpers.alt).home.address()).setProperty("street", person.ob(helpers.alt).home.address().street + ">");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
-		$.link("ob(~helpers.alt)^home.address().street", "#inner", person, {helpers: helpers});
+		jsv.link("ob(~helpers.alt)^home.address().street", "#inner", person, {helpers: helpers});
 
 		// ................................ Act ..................................
 
@@ -6546,7 +6543,7 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		};
 
 		function changeHome(label) {
-			$.observable(person.ob()).setProperty("home", {
+			jsv.observable(person.ob()).setProperty("home", {
 				_address: {
 					street: person.ob().home.address().street + "$"
 				},
@@ -6555,26 +6552,26 @@ QUnit.test("Computed observables in $.link() expressions", function(assert) {
 		}
 
 		function changeAlt(label) {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeObtype(label) {
-			$.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
+			jsv.observable(person.ob()).setProperty("obtype", person.ob().obtype + "@");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeAddress(label) {
-			$.observable(person.ob().home).setProperty("address", {street: person.ob().home.address().street + "+"});
+			jsv.observable(person.ob().home).setProperty("address", {street: person.ob().home.address().street + "+"});
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
 		function changeStreet(label) {
-			$.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
+			jsv.observable(person.ob().home.address()).setProperty("street", person.ob().home.address().street + ">");
 			res += " |" + label + ": " + $("#inner").text();
 		}
 
-		$.link("ob()^home.address().street", "#inner", person, {helpers: helpers});
+		jsv.link("ob()^home.address().street", "#inner", person, {helpers: helpers});
 
 		// ................................ Act ..................................
 
@@ -6624,23 +6621,23 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	fullName.set = function(val) {
 		val = val.split(" ");
-		$.observable(this).setProperty({
+		jsv.observable(this).setProperty({
 			lastName: val.pop(),
 			firstName: val.join(" ")
 		});
 	};
 
-	$.templates('{^{:firstName}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+	jsv.templates('{^{:firstName}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
 		.link("#result", person);
 
 	// ................................ Act ..................................
 	var res = $("#result").text() + $("#full").val();
 
-	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	res += "|" + $("#result").text() + $("#full").val();
 
-	$.observable(person).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person).setProperty({fullName: "compFirst compLast"});
 
 	res += "|" + $("#result").text() + $("#full").val();
 
@@ -6669,7 +6666,7 @@ setTimeout(function() {
 
 	fullName.set = function(val) {
 		val = val.split(" ");
-		$.observable(this).setProperty({
+		jsv.observable(this).setProperty({
 			lastName: val.pop(),
 			firstName: val.join(" ")
 		});
@@ -6699,17 +6696,17 @@ setTimeout(function() {
 
 	var person = new Person("Jeff", "Smith");
 
-	$.templates('{^{:firstName()}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
+	jsv.templates('{^{:firstName()}} {^{:lastName}} {^{:fullName()}} {^{:fullName(true)}} <input id="full" data-link="fullName()"/>')
 		.link("#result", person);
 
 	// ................................ Act ..................................
 	res = $("#result").text() + $("#full").val();
 
-	$.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(person).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	res += "|" + $("#result").text() + $("#full").val();
 
-	$.observable(person).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person).setProperty({fullName: "compFirst compLast"});
 
 	res += "|" + $("#result").text() + $("#full").val();
 
@@ -6742,7 +6739,7 @@ setTimeout(function() {
 	fullName.set = function(val) {
 		val = val.split(" ");
 		var person = this.data; // this pointer is the view
-		$.observable(person).setProperty({
+		jsv.observable(person).setProperty({
 			lastName: val.pop(),
 			firstName: val.join(" ")
 		});
@@ -6759,13 +6756,13 @@ setTimeout(function() {
 	}
 	];
 
-	$.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full{{:#index}}" data-link="~fullName()"/>')
+	jsv.templates('{^{:firstName}} {^{:lastName}} {^{:~fullName()}} {^{:~fullName(true)}} <input id="full{{:#index}}" data-link="~fullName()"/>')
 		.link("#result", people, {fullName: fullName});
 
 	// ................................ Act ..................................
 	res = $("#result").text() + ":" + $("#full0").val();
 
-	$.observable(people[0]).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(people[0]).setProperty({firstName: "newFirst", lastName: "newLast"});
 
 	res += "|" + $("#result").text() + ":" + $("#full0").val();
 
@@ -6817,7 +6814,7 @@ setTimeout(function() {
 	var o1 = new Root(new A('one')),
 		o2 = new Root(new A('two')),
 
-		tmpl = $.templates('<input data-link="a().b()"><span data-link="a().b()"></span>');
+		tmpl = jsv.templates('<input data-link="a().b()"><span data-link="a().b()"></span>');
 
 	$("#result").html("<div id='one'></div><div id='two'><div>");
 
@@ -6847,11 +6844,11 @@ setTimeout(function() {
 setTimeout(function() {
 	getResult();
 
-	$.observable(o1.a()).setProperty('b', 'oneupdate');
+	jsv.observable(o1.a()).setProperty('b', 'oneupdate');
 
 	getResult();
 
-	$.observable(o2.a()).setProperty('b', 'twoupdate');
+	jsv.observable(o2.a()).setProperty('b', 'twoupdate');
 
 	getResult();
 
@@ -6891,7 +6888,7 @@ setTimeout(function() {
 		}
 	];
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		"<div class='person{{:#index}}'>"
 			+ "<input class='name' data-link='ob().name' /> <span class='name'>{^{:ob().name}}</span>"
 			+ "<input class='street' data-link='ob().address().street'/> <span class='street'>{^{:ob().address().street}}</span>"
@@ -6936,25 +6933,25 @@ setTimeout(function() {
 setTimeout(function() {
 	getResult();
 
-	$.observable(people[0]).setProperty('name', 'n0update');
+	jsv.observable(people[0]).setProperty('name', 'n0update');
 
 	getResult();
 
-	$.observable(people[0].address()).setProperty('street', 's0update');
+	jsv.observable(people[0].address()).setProperty('street', 's0update');
 
 	getResult();
 
-	$.observable(people[1]).setProperty('name', 'n1update');
+	jsv.observable(people[1]).setProperty('name', 'n1update');
 
 	getResult();
 
-	$.observable(people[1].address()).setProperty('street', 's1update');
+	jsv.observable(people[1].address()).setProperty('street', 's1update');
 
 	getResult();
 
-	$.observable(people).remove(1);
+	jsv.observable(people).remove(1);
 
-	$.observable(people).insert({
+	jsv.observable(people).insert({
 		name: "n1inserted",
 		_address: {
 			street: "s1inserted",
@@ -7016,7 +7013,7 @@ setTimeout(function() {
 		}
 	];
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		"{^{for people}}<div class='person{{:#index}}'>"
 			+ "<input class='name' data-link='ob().name' /> <span class='name'>{^{:ob().name}}</span>"
 			+ "<input class='street' data-link='ob().address().street'/> <span class='street'>{^{:ob().address().street}}</span>"
@@ -7061,25 +7058,25 @@ setTimeout(function() {
 setTimeout(function() {
 	getResult();
 
-	$.observable(people[0]).setProperty('name', 'n0update');
+	jsv.observable(people[0]).setProperty('name', 'n0update');
 
 	getResult();
 
-	$.observable(people[0].address()).setProperty('street', 's0update');
+	jsv.observable(people[0].address()).setProperty('street', 's0update');
 
 	getResult();
 
-	$.observable(people[1]).setProperty('name', 'n1update');
+	jsv.observable(people[1]).setProperty('name', 'n1update');
 
 	getResult();
 
-	$.observable(people[1].address()).setProperty('street', 's1update');
+	jsv.observable(people[1].address()).setProperty('street', 's1update');
 
 	getResult();
 
-	$.observable(people).remove(1);
+	jsv.observable(people).remove(1);
 
-	$.observable(people).insert({
+	jsv.observable(people).insert({
 		name: "n1inserted",
 		_address: {
 			street: "s1inserted"
@@ -7138,7 +7135,7 @@ setTimeout(function() {
 		}
 	];
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		"<div class='person{{:#index}}'>"
 			+ "<input class='name' data-link='ob().name linkTo=ob().address().street' /> <span class='name'>{^{:ob().name}}</span>"
 			+ "<input class='street' data-link='ob().address().street linkTo=ob().name'/> <span class='street'>{^{:ob().address().street}}</span>"
@@ -7202,11 +7199,11 @@ setTimeout(function() {
 	ob.depends = "alt";
 
 	function change() {
-		$.observable(this._address).setProperty("street", this._address.street + "+");
+		jsv.observable(this._address).setProperty("street", this._address.street + "+");
 	}
 
 	function switchAlt() {
-		$.observable(this).setProperty("alt", !this.alt);
+		jsv.observable(this).setProperty("alt", !this.alt);
 	}
 
 	people = [
@@ -7258,7 +7255,7 @@ setTimeout(function() {
 		}
 	];
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		"<div class='person{{:#index}}'>"
 		+ "<input class='toStreet1' data-link='\"\" linkTo=ob()^address().street'/>"
 		+ "<input class='toStreet2' data-link='\"\" linkTo=ob()^address().street'/>"
@@ -7511,15 +7508,15 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function swapPerson() {
-			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+			jsv.observable(data).setProperty("person", data.person === person ? person2 : person);
 		}
 
 		function changeAlt() {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 		}
 
 		function changeOb() {
-			$.observable(data.person).setProperty("ob", {
+			jsv.observable(data.person).setProperty("ob", {
 				home: {
 					_address: {
 						street: data.person.ob().home._address.street + ch++
@@ -7533,7 +7530,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeHome() {
-			$.observable(data.person.ob()).setProperty("home", {
+			jsv.observable(data.person.ob()).setProperty("home", {
 				_address: {
 					street: data.person.ob().home._address.street + "$"
 				},
@@ -7545,18 +7542,18 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeAddress() {
-			$.observable(data.person.ob().home).setProperty("address", {street: data.person.ob().home.address().street + "+"});
+			jsv.observable(data.person.ob().home).setProperty("address", {street: data.person.ob().home.address().street + "+"});
 		}
 
 		function changeStreet() {
-			$.observable(data.person.ob().home.address()).setProperty("street", data.person.ob().home.address().street + ">");
+			jsv.observable(data.person.ob().home.address()).setProperty("street", data.person.ob().home.address().street + ">");
 		}
 
 		function getResult(name) {
 			res += (name||resCount++) + ": " + $("#result").text() + " |";
 		}
 
-		var tmpl = $.templates("<span data-link='person^ob().home.address().street'></span>");
+		var tmpl = jsv.templates("<span data-link='person^ob().home.address().street'></span>");
 
 		setData();
 
@@ -7623,7 +7620,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		setData();
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates("<span data-link='person.ob()^home.address().street'></span>");
+		tmpl = jsv.templates("<span data-link='person.ob()^home.address().street'></span>");
 
 		tmpl.link("#result", data, {helpers: helpers});
 
@@ -7682,7 +7679,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		setData();
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates("<span data-link='person.ob().home^address().street'></span>");
+		tmpl = jsv.templates("<span data-link='person.ob().home^address().street'></span>");
 
 		tmpl.link("#result", data, {helpers: helpers});
 
@@ -7723,7 +7720,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		setData();
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates("<span data-link='person.ob().home.address()^street'></span>");
+		tmpl = jsv.templates("<span data-link='person.ob().home.address()^street'></span>");
 
 		tmpl.link("#result", data, {helpers: helpers});
 
@@ -7758,7 +7755,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		setData();
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates("<span data-link='person.ob().home.address().street'></span>");
+		tmpl = jsv.templates("<span data-link='person.ob().home.address().street'></span>");
 
 		tmpl.link("#result", data, {helpers: helpers});
 
@@ -7817,22 +7814,22 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function swapPerson() {
-			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+			jsv.observable(data).setProperty("person", data.person === person ? person2 : person);
 		}
 
 		function changeStreet() {
-			$.observable(data.person.ob).setProperty("street", data.person.ob.street + ">");
+			jsv.observable(data.person.ob).setProperty("street", data.person.ob.street + ">");
 		}
 
 		function changeType() {
-			$.observable(data.person.ob).setProperty("type", data.person.ob.type + "$");
+			jsv.observable(data.person.ob).setProperty("type", data.person.ob.type + "$");
 		}
 
 		function getResult(name) {
 			res += (name||resCount++) + ": " + $("#result").text() + " |";
 		}
 
-		var tmpl = $.templates("<span data-link='person^ob.type + person^ob.street'></span>");
+		var tmpl = jsv.templates("<span data-link='person^ob.type + person^ob.street'></span>");
 
 		setData();
 
@@ -7891,25 +7888,25 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeOb() {
-			$.observable(data.person).setProperty("ob", {
+			jsv.observable(data.person).setProperty("ob", {
 				street: data.person._ob.street + "+",
 				type: data.person._ob.type + "+"
 			});
 		}
 
 		function changeStreet() {
-			$.observable(data.person.ob()).setProperty("street", data.person.ob().street + ">");
+			jsv.observable(data.person.ob()).setProperty("street", data.person.ob().street + ">");
 		}
 
 		function changeType() {
-			$.observable(data.person.ob()).setProperty("type", data.person.ob().type + "$");
+			jsv.observable(data.person.ob()).setProperty("type", data.person.ob().type + "$");
 		}
 
 		function getResult(name) {
 			res += name + ": " + $("#result").text() + " |";
 		}
 
-		var tmpl = $.templates("<span data-link='person^ob().street + person^ob().type'></span>");
+		var tmpl = jsv.templates("<span data-link='person^ob().street + person^ob().type'></span>");
 
 		setData();
 
@@ -8043,27 +8040,27 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function swapPerson() {
-			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+			jsv.observable(data).setProperty("person", data.person === person ? person2 : person);
 		}
 
 		function changeAlt() {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 		}
 
 		function changeA() {
-			$.observable(helpers).setProperty("a", helpers.a + 1);
+			jsv.observable(helpers).setProperty("a", helpers.a + 1);
 		}
 
 		function changeD() {
-			$.observable(helpers).setProperty("d", helpers.d + 1);
+			jsv.observable(helpers).setProperty("d", helpers.d + 1);
 		}
 
 		function changeIndex(val) {
-			$.observable(helpers).setProperty("index", val);
+			jsv.observable(helpers).setProperty("index", val);
 		}
 
 		function changeOb() {
-			$.observable(data.person).setProperty("ob", {
+			jsv.observable(data.person).setProperty("ob", {
 				home: {
 					_address: {
 						street: data.person.ob(helpers.alt).home._address.street + ch++
@@ -8077,7 +8074,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeHome() {
-			$.observable(data.person.ob(helpers.alt)).setProperty("home", {
+			jsv.observable(data.person.ob(helpers.alt)).setProperty("home", {
 				_address: {
 					street: data.person.ob(helpers.alt).home._address.street + "$"
 				},
@@ -8089,18 +8086,18 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeAddress() {
-			$.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
+			jsv.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
 		}
 
 		function changeStreet() {
-			$.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
+			jsv.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
 		}
 
 		function getResult(name) {
 			res += (name||resCount++) + ": " + $("#result").text() + " |";
 		}
 
-		var tmpl = $.templates("<span data-link='((person^ob(~helpers.alt).home.address(~helpers.c, ~helpers.d).t*3) + person^ob(~helpers.alt, ~helpers.a, ~helpers.b).t[(~helpers.index + 1) - 2])*2 + person^ob(~helpers.alt).home.address().street'></span>");
+		var tmpl = jsv.templates("<span data-link='((person^ob(~helpers.alt).home.address(~helpers.c, ~helpers.d).t*3) + person^ob(~helpers.alt, ~helpers.a, ~helpers.b).t[(~helpers.index + 1) - 2])*2 + person^ob(~helpers.alt).home.address().street'></span>");
 
 		setData();
 
@@ -8209,7 +8206,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 			helpers = {
 				mode: "m"
 			},
-			tmpl = $.templates({
+			tmpl = jsv.templates({
 				markup: "{^{section 'A' ~mode ~sectionTypes=~root.sectionTypes[type].types/}}",
 				tags: {
 					section: function(setting, mode) {
@@ -8223,7 +8220,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("None");
 
-		$.observable(data).setProperty("type", "n");
+		jsv.observable(data).setProperty("type", "n");
 
 		getResult("type");
 
@@ -8259,7 +8256,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 				mode: "m"
 			},
 
-			tmpl = $.templates({
+			tmpl = jsv.templates({
 				markup: "{^{section 'A' ~mode ^~sectionTypes=~root.sectionTypes[type].types/}}",
 				tags: {
 					section: function(setting, mode) {
@@ -8273,7 +8270,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("None");
 
-		$.observable(data).setProperty("type", "n");
+		jsv.observable(data).setProperty("type", "n");
 
 		getResult("type");
 
@@ -8387,27 +8384,27 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function swapPerson() {
-			$.observable(data).setProperty("person", data.person === person ? person2 : person);
+			jsv.observable(data).setProperty("person", data.person === person ? person2 : person);
 		}
 
 		function changeAlt() {
-			$.observable(helpers).setProperty("alt", !helpers.alt);
+			jsv.observable(helpers).setProperty("alt", !helpers.alt);
 		}
 
 		function changeA() {
-			$.observable(helpers).setProperty("a", helpers.a + 1);
+			jsv.observable(helpers).setProperty("a", helpers.a + 1);
 		}
 
 		function changeD() {
-			$.observable(helpers).setProperty("d", helpers.d + 1);
+			jsv.observable(helpers).setProperty("d", helpers.d + 1);
 		}
 
 		function changeIndex(val) {
-			$.observable(helpers).setProperty("index", val);
+			jsv.observable(helpers).setProperty("index", val);
 		}
 
 		function changeOb() {
-			$.observable(data.person).setProperty("ob", {
+			jsv.observable(data.person).setProperty("ob", {
 				home: {
 					_address: {
 						street: data.person.ob(helpers.alt).home._address.street + ch++
@@ -8421,7 +8418,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeHome() {
-			$.observable(data.person.ob(helpers.alt)).setProperty("home", {
+			jsv.observable(data.person.ob(helpers.alt)).setProperty("home", {
 				_address: {
 					street: data.person.ob(helpers.alt).home._address.street + "$"
 				},
@@ -8433,18 +8430,18 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		}
 
 		function changeAddress() {
-			$.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
+			jsv.observable(data.person.ob(helpers.alt).home).setProperty("address", {street: data.person.ob(helpers.alt).home.address().street + "+"});
 		}
 
 		function changeStreet() {
-			$.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
+			jsv.observable(data.person.ob(helpers.alt).home.address()).setProperty("street", data.person.ob(helpers.alt).home.address().street + ">");
 		}
 
 		function getResult(name) {
 			res += (name||resCount++) + ": " + $("#result").text() + " |";
 		}
 
-		var tmpl = $.templates({
+		var tmpl = jsv.templates({
 				markup: "{^{mytag ^myprop=((person^ob(~helpers.alt).home.address(~helpers.c, ~helpers.d).t*3) + person^ob(~helpers.alt, ~helpers.a, ~helpers.b).t[(~helpers.index + 1) - 2])*2 + person^ob(~helpers.alt).home.address().street}}{{/mytag}}",
 				tags: {
 					mytag: function() {
@@ -8606,7 +8603,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		var theB, theC, theD, theE, theF, data, res,
 			resCount = 1,
-			tmpl = $.templates('{^{:f.e().d().c().b().a}} {^{:f.e().d().c().b()^a}} {^{:f.e().d().c()^b().a}} {^{:f.e().d()^c().b().a}} {^{:f.e()^d().c().b().a}} {^{:f^e().d().c().b().a}}');
+			tmpl = jsv.templates('{^{:f.e().d().c().b().a}} {^{:f.e().d().c().b()^a}} {^{:f.e().d().c()^b().a}} {^{:f.e().d()^c().b().a}} {^{:f.e()^d().c().b().a}} {^{:f^e().d().c().b().a}}');
 
 		setData();
 
@@ -8615,15 +8612,15 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		getResult("None");
 
 		// ................................ Act ..................................
-		$.observable(theB).setProperty("a", "A");
+		jsv.observable(theB).setProperty("a", "A");
 
 		getResult("Change a");
 
-		$.observable(theC).setProperty("b", {a: "B"});
+		jsv.observable(theC).setProperty("b", {a: "B"});
 
 		getResult("Change b");
 
-		$.observable(theD).setProperty("c", {
+		jsv.observable(theD).setProperty("c", {
 			_b: {a: "C"},
 			b: function() {
 				return this._b;
@@ -8632,7 +8629,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change c");
 
-		$.observable(theE).setProperty("d", {
+		jsv.observable(theE).setProperty("d", {
 			_c: {
 				_b: {a: "D"},
 				b: function() {
@@ -8646,7 +8643,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change d");
 
-		$.observable(theF).setProperty("e", {
+		jsv.observable(theF).setProperty("e", {
 			_d: {
 				_c: {
 					_b: {a: "E"},
@@ -8732,7 +8729,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 			};
 		}
 
-		tmpl = $.templates('{^{:e1.e().d1.d().c1.c().b1.b().a1.a}} {^{:e1.e().d1.d().c1.c().b1.b().a1^a}} {^{:e1.e().d1.d().c1.c().b1.b()^a1.a}} {^{:e1.e().d1.d().c1.c().b1^b().a1.a}} {^{:e1.e().d1.d().c1.c()^b1.b().a1.a}} {^{:e1.e().d1.d().c1^c().b1.b().a1.a}} {^{:e1.e().d1.d()^c1.c().b1.b().a1.a}} {^{:e1.e().d1^d().c1.c().b1.b().a1.a}} {^{:e1.e()^d1.d().c1.c().b1.b().a1.a}} {^{:e1^e().d1.d().c1.c().b1.b().a1.a}}');
+		tmpl = jsv.templates('{^{:e1.e().d1.d().c1.c().b1.b().a1.a}} {^{:e1.e().d1.d().c1.c().b1.b().a1^a}} {^{:e1.e().d1.d().c1.c().b1.b()^a1.a}} {^{:e1.e().d1.d().c1.c().b1^b().a1.a}} {^{:e1.e().d1.d().c1.c()^b1.b().a1.a}} {^{:e1.e().d1.d().c1^c().b1.b().a1.a}} {^{:e1.e().d1.d()^c1.c().b1.b().a1.a}} {^{:e1.e().d1^d().c1.c().b1.b().a1.a}} {^{:e1.e()^d1.d().c1.c().b1.b().a1.a}} {^{:e1^e().d1.d().c1.c().b1.b().a1.a}}');
 
 		setData2();
 
@@ -8742,17 +8739,17 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		// ................................ Act ..................................
 
-		$.observable(theB.a1).setProperty("a", "A");
+		jsv.observable(theB.a1).setProperty("a", "A");
 
 		getResult("Change a");
 
-		$.observable(theB).setProperty("a1", {
+		jsv.observable(theB).setProperty("a1", {
 			a: "A1"
 		});
 
 		getResult("Change a1");
 
-		$.observable(theC.b1).setProperty("b", {
+		jsv.observable(theC.b1).setProperty("b", {
 			a1: {
 				a: "B"
 			}
@@ -8760,7 +8757,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change b");
 
-		$.observable(theC).setProperty("b1", {
+		jsv.observable(theC).setProperty("b1", {
 			_b: {
 				a1: {
 					a: "B1"
@@ -8773,7 +8770,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change b1");
 
-		$.observable(theD.c1).setProperty("c", {
+		jsv.observable(theD.c1).setProperty("c", {
 			b1: {
 				_b: {
 					a1: {
@@ -8788,7 +8785,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change c");
 
-		$.observable(theD).setProperty("c1", {
+		jsv.observable(theD).setProperty("c1", {
 			_c: {
 				b1: {
 					_b: {
@@ -8808,7 +8805,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change c1");
 
-		$.observable(theE.d1).setProperty("d", {
+		jsv.observable(theE.d1).setProperty("d", {
 			c1: {
 				_c: {
 					b1: {
@@ -8830,7 +8827,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change d");
 
-		$.observable(theE).setProperty("d1", {
+		jsv.observable(theE).setProperty("d1", {
 			_d: {
 				c1: {
 					_c: {
@@ -8857,7 +8854,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change d1");
 
-		$.observable(theF.e1).setProperty("e", {
+		jsv.observable(theF.e1).setProperty("e", {
 			d1: {
 				_d: {
 					c1: {
@@ -8886,7 +8883,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change e");
 
-		$.observable(theF).setProperty("e1", {
+		jsv.observable(theF).setProperty("e1", {
 			_e: {
 				d1: {
 					_d: {
@@ -8925,7 +8922,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		"{{: ...}} expressions with deeply chained computed observables (variant)");
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates('{^{for f.e().d().c().b()}}{^{:a}}{{/for}} {^{for f.e().d().c()^b()}}{^{:a}}{{/for}} {^{for f.e().d()^c().b()}}{^{:a}}{{/for}} {^{for f.e()^d().c().b()}}{^{:a}}{{/for}} {^{for f^e().d().c().b()}}{^{:a}}{{/for}}');
+		tmpl = jsv.templates('{^{for f.e().d().c().b()}}{^{:a}}{{/for}} {^{for f.e().d().c()^b()}}{^{:a}}{{/for}} {^{for f.e().d()^c().b()}}{^{:a}}{{/for}} {^{for f.e()^d().c().b()}}{^{:a}}{{/for}} {^{for f^e().d().c().b()}}{^{:a}}{{/for}}');
 
 		setData();
 
@@ -8935,15 +8932,15 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		// ................................ Act ..................................
 
-		$.observable(theB).setProperty("a", "A");
+		jsv.observable(theB).setProperty("a", "A");
 
 		getResult("Change a");
 
-		$.observable(theC).setProperty("b", {a: "B"});
+		jsv.observable(theC).setProperty("b", {a: "B"});
 
 		getResult("Change b");
 
-		$.observable(theD).setProperty("c", {
+		jsv.observable(theD).setProperty("c", {
 			_b: {a: "C"},
 			b: function() {
 				return this._b;
@@ -8952,7 +8949,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change c");
 
-		$.observable(theE).setProperty("d", {
+		jsv.observable(theE).setProperty("d", {
 			_c: {
 				_b: {a: "D"},
 				b: function() {
@@ -8966,7 +8963,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change d");
 
-		$.observable(theF).setProperty("e", {
+		jsv.observable(theF).setProperty("e", {
 			_d: {
 				_c: {
 					_b: {a: "E"},
@@ -8990,7 +8987,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		"{{for ...}} expressions with deeply chained computed observables");
 
 		// =============================== Arrange ===============================
-		tmpl = $.templates('{^{:f.e().d().c().b().a + " " + e.d().c().b().a + " " + d.c().b().a + " " + c.b().a + " " + b.a}} | {^{:f.e()^d().c().b().a + " " + e.d()^c().b().a + " " + d.c()^b().a + " " + c.b()^a + " " + b.a}}');
+		tmpl = jsv.templates('{^{:f.e().d().c().b().a + " " + e.d().c().b().a + " " + d.c().b().a + " " + c.b().a + " " + b.a}} | {^{:f.e()^d().c().b().a + " " + e.d()^c().b().a + " " + d.c()^b().a + " " + c.b()^a + " " + b.a}}');
 
 		setData();
 
@@ -9000,15 +8997,15 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		// ................................ Act ..................................
 
-		$.observable(theB).setProperty("a", "A");
+		jsv.observable(theB).setProperty("a", "A");
 
 		getResult("Change a");
 
-		$.observable(theC).setProperty("b", {a: "B"});
+		jsv.observable(theC).setProperty("b", {a: "B"});
 
 		getResult("Change b");
 
-		$.observable(theD).setProperty("c", {
+		jsv.observable(theD).setProperty("c", {
 			_b: {a: "C"},
 			b: function() {
 				return this._b;
@@ -9017,7 +9014,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change c");
 
-		$.observable(theE).setProperty("d", {
+		jsv.observable(theE).setProperty("d", {
 			_c: {
 				_b: {a: "D"},
 				b: function() {
@@ -9031,7 +9028,7 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 
 		getResult("Change d");
 
-		$.observable(theF).setProperty("e", {
+		jsv.observable(theF).setProperty("e", {
 			_d: {
 				_c: {
 					_b: {a: "E"},
@@ -9054,6 +9051,26 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 		assert.equal(res, "None: a a a a a | a a a a a |Change a: A A A A A | A A A A A |Change b: A A A A A | B B B B A |Change c: A A A A A | C C C B A |Change d: A A A A A | D D C B A |Change e: A A A A A | E D C B A |",
 		"Sibling {{: ...}} expressions with deeply chained computed observables");
 
+		// =============================== Arrange ===============================
+		var VM = {Places: ["dd", "ee"]},
+			vmCollection = jsv.views.viewModels;
+		jsv.views.viewModels({Invitation: {getters: [{ getter: "Places", defaultVal: []}]}});
+
+		data = vmCollection.Invitation.map(VM);
+		tmpl = jsv.templates('{^{include ~rowsLength=Places().length}}<span data-link="Places() && (1==~rowsLength)"></span>{{/include}}{^{:Places()^length}}');
+
+		tmpl.link("#result", data);
+		res = "";
+		try {
+			let newList = data.Places()[0] == "aa" ? ["bb", "cc"] : ["aa"];
+			jsv.observable(data).setProperty("Places", newList);
+		} catch(e) {
+			res = e.message;
+		}
+
+		// ............................... Assert .................................
+		assert.equal(res, "", "Complex nested parens with data-link expressions"); //https://github.com/BorisMoore/jsviews/issues/463#issuecomment-2651496030
+
 		// ................................ Reset ................................
 		$("#result").empty();
 
@@ -9063,12 +9080,12 @@ QUnit.test("Chained computed observables in template expressions", function(asse
 QUnit.test("replace mode and link=false mode", function(assert) {
 
 	(function() {
-		$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+		jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 		// =============================== Arrange ===============================
 		$("#result").html("<div class='content'></div>");
 
-		var tmpl = $.templates('{^{include}}{^{for people}}{^{:name}}{{/for}}{{/include}}'),
+		var tmpl = jsv.templates('{^{include}}{^{for people}}{^{:name}}{{/for}}{{/include}}'),
 			data = {people: [
 				{name: "Jo"},
 				{name: "Pete"}
@@ -9081,8 +9098,8 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 
 		res = $("#result").text() + "(" + $("#result .content script").length + ") ";
 
-		$.observable(data.people[0]).setProperty("name", "Bob");
-		$.observable(data.people).insert({name: "Jane"});
+		jsv.observable(data.people[0]).setProperty("name", "Bob");
+		jsv.observable(data.people).insert({name: "Jane"});
 
 		res += $("#result").text();
 
@@ -9094,7 +9111,7 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// ................................ Act ..................................
@@ -9107,8 +9124,8 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 
 		res = $("#result").text() + "(" + $("#result .content script").length + ") ";
 
-		$.observable(data.people[0]).setProperty("name", "Bob");
-		$.observable(data.people).insert({name: "Jane"});
+		jsv.observable(data.people[0]).setProperty("name", "Bob");
+		jsv.observable(data.people).insert({name: "Jane"});
 
 		res += $("#result").text();
 
@@ -9120,7 +9137,7 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// ................................ Act ..................................
@@ -9133,8 +9150,8 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 
 		res = $("#result .content").length + " - " + $("#result").text() + "(" + $("#result script").length + ") ";
 
-		$.observable(data.people[0]).setProperty("name", "Bob");
-		$.observable(data.people).insert({name: "Jane"});
+		jsv.observable(data.people[0]).setProperty("name", "Bob");
+		jsv.observable(data.people).insert({name: "Jane"});
 
 		res += $("#result").text();
 
@@ -9146,7 +9163,7 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// =============================== Arrange ===============================
@@ -9162,8 +9179,8 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 
 		res = $("#result .content").length + " - " + $("#result").text() + "(" + $("#result script").length + ") ";
 
-		$.observable(data.people[0]).setProperty("name", "Bob");
-		$.observable(data.people).insert({name: "Jane"});
+		jsv.observable(data.people[0]).setProperty("name", "Bob");
+		jsv.observable(data.people).insert({name: "Jane"});
 
 		res += $("#result").text();
 
@@ -9175,13 +9192,13 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 		$("#result").empty();
 
 		// ............................... Assert .................................
-		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
 		// =============================== Arrange ===============================
 		$("#result").html("<div class='content'></div>");
 
-		tmpl = $.templates('{^{include link=false}}{^{for people}}{^{:name}}{{/for}}{{/include}}');
+		tmpl = jsv.templates('{^{include link=false}}{^{for people}}{^{:name}}{{/for}}{{/include}}');
 
 		// ................................ Act ..................................
 		data = {people: [
@@ -9193,8 +9210,8 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 
 		res = $("#result").text() + "(" + $("#result .content script").length + ") ";
 
-		$.observable(data.people[0]).setProperty("name", "Bob");
-		$.observable(data.people).insert({name: "Jane"});
+		jsv.observable(data.people[0]).setProperty("name", "Bob");
+		jsv.observable(data.people).insert({name: "Jane"});
 
 		res += $("#result").text();
 
@@ -9206,10 +9223,10 @@ QUnit.test("replace mode and link=false mode", function(assert) {
 		$("#result .content").empty();
 
 		// ............................... Assert .................................
-		assert.ok(!viewsAndBindings() && JSON.stringify(_jsv.cbBindings) === "{}",
+		assert.ok(!viewsAndBindings($) && JSON.stringify(_jsv.cbBindings) === "{}",
 		"$(container).empty removes both views and current listeners from that content");
 
-		$.views.settings.advanced({_jsv: false}); // For using viewsAndBindings()
+		jsv.views.settings.advanced({_jsv: false}); // For using viewsAndBindings($)
 	})();
 });
 
@@ -9220,11 +9237,11 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 	// ................................ Reset ................................
 	person1.lastName = "One"; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
-	$.templates("{^{:\"'\" + 1 + '\"' + 2 + '\\' + 3}}")
+	jsv.templates("{^{:\"'\" + 1 + '\"' + 2 + '\\' + 3}}")
 		.link("#result");
 
 	// ................................ Act ..................................
@@ -9237,12 +9254,12 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}')
+	jsv.templates('prop:{^{:lastName}}')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9258,7 +9275,7 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -9266,12 +9283,12 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:wasUndefined}}')
+	jsv.templates('prop:{^{:wasUndefined}}')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty("wasUndefined", "newLast");
+	jsv.observable(person1).setProperty("wasUndefined", "newLast");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9285,13 +9302,13 @@ QUnit.test("{^{:expression}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{:#data.person1.home.address.street}}{^{:person1.home^address.street}}");
-	$.link(tmpl, "#result", model);
+	var tmpl = jsv.templates("{^{:#data.person1.home.address.street}}{^{:person1.home^address.street}}");
+	jsv.link(tmpl, "#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(address1).setProperty("street", "newStreetOne");
-	$.observable(person1).setProperty("home", home2); // Deep change
+	jsv.observable(address1).setProperty("street", "newStreetOne");
+	jsv.observable(person1).setProperty("home", home2); // Deep change
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9313,7 +9330,7 @@ QUnit.test("{^{:expression}}", function(assert) {
 			a: function() { return this; }
 		};
 
-	$.views.tags({
+	jsv.views.tags({
 		textbox: {
 			onAfterLink: function() {
 				// Find input in contents, if not already found
@@ -9324,7 +9341,7 @@ QUnit.test("{^{:expression}}", function(assert) {
 		}
 	});
 
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 	'<input data-link="a().other last convert=~upper convertBack=~lower" />'
 	+ '<input data-link=" convert=~upper convertBack=~lower last a().other" />'
 
@@ -9337,8 +9354,8 @@ QUnit.test("{^{:expression}}", function(assert) {
 	+ '{^{textbox a().other last convert=~upper convertBack=~lower/}}'
 	+ '{^{textbox convert=~upper convertBack=~lower last a().other/}}');
 
-$.views.settings.trigger(false);
-	$.link(tmpl, "#result", data, {
+jsv.views.settings.trigger(false);
+	jsv.link(tmpl, "#result", data, {
 		upper: function(val) {
 			return val.toUpperCase();
 		},
@@ -9352,8 +9369,8 @@ $.views.settings.trigger(false);
 	$("#result input").each(function() {
 		before += this.value;
 	});
-	$.observable(data).setProperty("last", "newLast");
-	$.observable(data).setProperty("other", "newOther");
+	jsv.observable(data).setProperty("last", "newLast");
+	jsv.observable(data).setProperty("other", "newOther");
 	$("#result input").each(function() {
 		var last = data.last;
 		this.value += count++;
@@ -9364,7 +9381,7 @@ $.views.settings.trigger(false);
 		after += this.value;
 	});
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
@@ -9377,7 +9394,7 @@ $.views.settings.trigger(true);
 	// =============================== Arrange ===============================
 
 	var ob = {text: "aBc"};
-	$.link("~upper(~ob.text) + ~lower(~ob.text)", "#result", undefined, {
+	jsv.link("~upper(~ob.text) + ~lower(~ob.text)", "#result", undefined, {
 		upper: function(val) { return val.toUpperCase(); },
 		lower: function(val) { return val.toLowerCase(); },
 		ob: ob
@@ -9385,69 +9402,69 @@ $.views.settings.trigger(true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
-	'$.link(expression, selector, undefined, helpers) - without passing data, data-links correctly to helpers');
+	'jsv.link(expression, selector, undefined, helpers) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// =============================== Arrange ===============================
 
 	ob = {text: "aBc"};
-	$.views.helpers({
+	jsv.views.helpers({
 		upper: function(val) { return val.toUpperCase(); },
 		lower: function(val) { return val.toLowerCase(); },
 		ob: ob
 	});
-	$.link("~upper(~ob.text) + ~lower(~ob.text)", "#result");
+	jsv.link("~upper(~ob.text) + ~lower(~ob.text)", "#result");
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
-	'$.link(expression, selector) - without passing data, data-links correctly to helpers');
+	'jsv.link(expression, selector) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
 
-	tmpl = $.templates("{^{:~upper(~ob.text)}}{^{:~lower(~ob.text)}}");
-	$.views.helpers.ob = ob = {text: "aBc"};
-	$.link(tmpl, "#result");
+	tmpl = jsv.templates("{^{:~upper(~ob.text)}}{^{:~lower(~ob.text)}}");
+	jsv.views.helpers.ob = ob = {text: "aBc"};
+	jsv.link(tmpl, "#result");
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
 	"ABCabc|DEFdef",
-	'$.link(template, selector) - without passing data, data-links correctly to helpers');
+	'jsv.link(template, selector) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers.ob = ob = {text: "aBc"};
+	jsv.views.helpers.ob = ob = {text: "aBc"};
 	tmpl.link("#result");
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9460,12 +9477,12 @@ $.views.settings.trigger(true);
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers.ob = ob = {text: "aBc"};
+	jsv.views.helpers.ob = ob = {text: "aBc"};
 	$("#result").link(tmpl);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9478,12 +9495,12 @@ $.views.settings.trigger(true);
 
 	// =============================== Arrange ===============================
 
-	$.views.helpers.ob = ob = {text: "aBc"};
+	jsv.views.helpers.ob = ob = {text: "aBc"};
 	$("#result").link("~upper(~ob.text) + ~lower(~ob.text)");
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(ob).setProperty("text", "DeF");
+	jsv.observable(ob).setProperty("text", "DeF");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9492,24 +9509,24 @@ $.views.settings.trigger(true);
 	'$(selector).link(expression) - without passing data, data-links correctly to helpers');
 
 	// ................................ Reset ................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 	$("#result").empty();
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{>expression}}", function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{>lastName + "<br/>"}}')
+	jsv.templates('prop:{^{>lastName + "<br/>"}}')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty("lastName", "newLast");
+	jsv.observable(person1).setProperty("lastName", "newLast");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9525,7 +9542,7 @@ QUnit.test("{^{>expression}}", function(assert) {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events,
 	"$(container).empty removes both views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -9533,13 +9550,13 @@ QUnit.test("{^{>expression}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{>#data.person1.home.address.street}}{^{>person1.home^address.street}}");
-	$.link(tmpl, "#result", model);
+	var tmpl = jsv.templates("{^{>#data.person1.home.address.street}}{^{>person1.home^address.street}}");
+	jsv.link(tmpl, "#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(address1).setProperty("street", "newStreetOne");
-	$.observable(person1).setProperty("home", home2); // Deep change
+	jsv.observable(address1).setProperty("street", "newStreetOne");
+	jsv.observable(person1).setProperty("home", home2); // Deep change
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9552,7 +9569,7 @@ QUnit.test("{^{>expression}}", function(assert) {
 	address1.street = "StreetOne";
 	person1.home = home1;
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{tag}}", function(assert) {
@@ -9564,7 +9581,7 @@ QUnit.test("{^{tag}}", function(assert) {
 	settings.width = 30; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		norendernotemplate: {},
 		voidrender: function() {},
 		emptyrender: function() { return ""; },
@@ -9577,36 +9594,36 @@ QUnit.test("{^{tag}}", function(assert) {
 	});
 
 	// ............................... Assert .................................
-	$.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").link("#result", 1);
+	jsv.templates("a{{norendernotemplate/}}b{^{norendernotemplate/}}c{{norendernotemplate}}{{/norendernotemplate}}d{^{norendernotemplate}}{{/norendernotemplate}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, no render function) renders empty string");
 
-	$.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").link("#result", 1);
+	jsv.templates("a{{voidrender/}}b{^{voidrender/}}c{{voidrender}}{{/voidrender}}d{^{voidrender}}{{/voidrender}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, no return from render function) renders empty string");
 
-	$.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").link("#result", 1);
+	jsv.templates("a{{emptyrender/}}b{^{emptyrender/}}c{{emptyrender}}{{/emptyrender}}d{^{emptyrender}}{{/emptyrender}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (no template, empty string returned from render function) renders empty string");
 
-	$.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").link("#result", 1);
+	jsv.templates("a{{emptytemplate/}}b{^{emptytemplate/}}c{{emptytemplate}}{{/emptytemplate}}d{^{emptytemplate}}{{/emptytemplate}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (template has no content, no render function) renders empty string");
 
-	$.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").link("#result", 1);
+	jsv.templates("a{{templatereturnsempty/}}b{^{templatereturnsempty/}}c{{templatereturnsempty}}{{/templatereturnsempty}}d{^{templatereturnsempty}}{{/templatereturnsempty}}e").link("#result", 1);
 	assert.equal($("#result").text(), "abcde",
 	"non-rendering tag (template returns empty string, no render function) renders empty string");
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{tmplTag/}}')
+	jsv.templates('{^{tmplTag/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9622,14 +9639,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{{tmplTag/}}')
+	jsv.templates('{{tmplTag/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9645,14 +9662,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{fnTag/}}')
+	jsv.templates('{^{fnTag/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9668,14 +9685,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{{fnTag/}}')
+	jsv.templates('{{fnTag/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9691,14 +9708,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div>{^{fnTagEl/}}</div>')
+	jsv.templates('<div>{^{fnTagEl/}}</div>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result div span")[0].outerHTML; // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result div span")[0].outerHTML;
 	// ............................... Assert .................................
 	assert.equal(before + "|" + after,
@@ -9713,14 +9730,14 @@ QUnit.test("{^{tag}}", function(assert) {
 	settings.width = 30; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.templates('<div>{^{fnTagElNoInit firstName ~settings.width/}}</div>')
+	jsv.templates('<div>{^{fnTagElNoInit firstName ~settings.width/}}</div>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result div span").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result div span").html();
 
 	// ............................... Assert .................................
@@ -9737,14 +9754,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<ul>{^{fnTagElCnt/}}</ul>')
+	jsv.templates('<ul>{^{fnTagElCnt/}}</ul>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -9761,14 +9778,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<ul>{^{fnTagElCntNoInit firstName ~settings.width/}}</ul>')
+	jsv.templates('<ul>{^{fnTagElCntNoInit firstName ~settings.width/}}</ul>')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result ul li").html(); // The innerHTML will be ""<li data-jsv=\"#37_\">Name: Mr Jo. Width: 30</li>"
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -9785,14 +9802,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
+	jsv.templates('{^{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9810,14 +9827,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
+	jsv.templates('{{tmplTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9835,14 +9852,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
+	jsv.templates('{^{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9860,14 +9877,14 @@ QUnit.test("{^{tag}}", function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
+	jsv.templates('{{fnTagWithProps #data ~settings.reverse theTitle=~settings.title ~street=home.address.street/}}')
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
-	$.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast", "home.address.street": "newStreet"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40, reverse: false});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9884,14 +9901,14 @@ QUnit.test("{^{tag}}", function(assert) {
 	address1.street = "StreetOne"; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		mytag: {
 			template: "<span>{{:~tagCtx.args[0]}}</span>",
 			attr: "html"
 		}
 	});
 
-	$.templates("{^{mytag foo(\"w\\x\'y\").b/}} <div data-link=\"{mytag foo('w\\x').b}\" ></div>")
+	jsv.templates("{^{mytag foo(\"w\\x\'y\").b/}} <div data-link=\"{mytag foo('w\\x').b}\" ></div>")
 		.link("#result", {
 			foo: function(val) {
 				return { b: val};
@@ -9917,17 +9934,17 @@ QUnit.test("{^{for}}", function(assert) {
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
 	model.things = []; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
 	model.things = [{thing: "box"}]; // reset Prop
-	$.templates('{^{for things}}{{:thing}}{{/for}}')
+	jsv.templates('{^{for things}}{{:thing}}{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9935,7 +9952,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
+	jsv.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9943,7 +9960,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: {thing: "square"}});
+	jsv.observable(model).setProperty({things: {thing: "square"}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9951,7 +9968,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{thing: "triangle2"}, {thing: "circle2"}]});
+	jsv.observable(model).setProperty({things: [{thing: "triangle2"}, {thing: "circle2"}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9959,7 +9976,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from singleton back to array');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert([{thing: "oblong"}, {thing: "pentagon"}]);
+	jsv.observable(model.things).insert([{thing: "oblong"}, {thing: "pentagon"}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9981,12 +9998,12 @@ QUnit.test("{^{for}}", function(assert) {
 
 	model.things = things1; // reset Prop
 
-	$.templates('{^{for things}}{{:thing}}{{/for}}')
+	jsv.templates('{^{for things}}{{:thing}}{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things1).insert(0, {thing: "tree"});
+	jsv.observable(things1).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -9994,7 +10011,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to array changes on leaf array');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: things2});
+	jsv.observable(model).setProperty({things: things2});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10002,7 +10019,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: square});
+	jsv.observable(model).setProperty({things: square});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10010,7 +10027,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: things2});
+	jsv.observable(model).setProperty({things: things2});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10018,7 +10035,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from singleton back to previous array');
 
 	// ................................ Act ..................................
-	$.observable(things2).insert([{thing: "oblong"}, {thing: "pentagon"}]);
+	jsv.observable(things2).insert([{thing: "oblong"}, {thing: "pentagon"}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10037,12 +10054,12 @@ QUnit.test("{^{for}}", function(assert) {
 
 	model.things = things1; // reset Prop
 
-	$.templates('<ul>{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
+	jsv.templates('<ul>{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things1).insert(0, {thing: "tree"});
+	jsv.observable(things1).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10050,7 +10067,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} in element content binds to array changes on leaf array');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: things2});
+	jsv.observable(model).setProperty({things: things2});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10058,7 +10075,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: square});
+	jsv.observable(model).setProperty({things: square});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10066,7 +10083,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: things2});
+	jsv.observable(model).setProperty({things: things2});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10074,7 +10091,7 @@ QUnit.test("{^{for}}", function(assert) {
 	'{^{for things}} binds to property change on path - swapping from singleton back to previous array');
 
 	// ................................ Act ..................................
-	$.observable(things2).insert([{thing: "oblong"}, {thing: "pentagon"}]);
+	jsv.observable(things2).insert([{thing: "oblong"}, {thing: "pentagon"}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10089,12 +10106,12 @@ QUnit.test("{^{for}}", function(assert) {
 
 	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
 
-	$.templates('{^{:length}} {^{for #data}}{{:thing}}{{/for}}')
+	jsv.templates('{^{:length}} {^{for #data}}{{:thing}}{{/for}}')
 		.link("#result", model.things, null, true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10109,12 +10126,12 @@ QUnit.test("{^{for}}", function(assert) {
 
 	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
 
-	$.templates('{^{:length}} {^{for}}{{:thing}}{{/for}}')
+	jsv.templates('{^{:length}} {^{for}}{{:thing}}{{/for}}')
 		.link("#result", model.things, null, true);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10134,7 +10151,7 @@ var ret = "";
 
 var listData = {nodes: {list: ["A "]}};
 
-$.templates('Plain: {^{for nodes^list}}{{:}}{{/for}}\
+jsv.templates('Plain: {^{for nodes^list}}{{:}}{{/for}}\
 |SpanWithNext: {^{for nodes^list}}<span>{{:}}</span>{{/for}}<span>nextElem</span>\
 |UlWithNext: <ul>{^{for nodes^list}}<li>{{:}}</li>{{/for}}<li>nextElem</li></ul>\
 |Ul: <ul>{^{for nodes^list}}<li>{{:}}</li>{{/for}}</ul>')
@@ -10143,18 +10160,18 @@ $.templates('Plain: {^{for nodes^list}}{{:}}{{/for}}\
 	// ................................ Act ..................................
 ret += "|1 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
-$.observable(listData).setProperty("nodes", {list: []});
+jsv.observable(listData).setProperty("nodes", {list: []});
 
 ret += "|2 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
-$.observable(listData.nodes.list).insert("C ");
+jsv.observable(listData.nodes.list).insert("C ");
 
 ret += "|3 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
-$.observable(listData.nodes).setProperty("list", []);
+jsv.observable(listData.nodes).setProperty("list", []);
 ret += "|4 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
-$.observable(listData.nodes.list).insert("C2 ");
+jsv.observable(listData.nodes.list).insert("C2 ");
 
 ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.arrayChange.length;
 
@@ -10169,28 +10186,28 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	model.things = []; // reset Prop
 
-	$.templates('{^{if things.length}}X {^{for things}}{{:thing}}{{/for}}{{/if}}')
+	jsv.templates('{^{if things.length}}X {^{for things}}{{:thing}}{{/for}}{{/if}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	after = $("#result").text();
-	$.observable(model.things).insert({thing: "box "});
+	jsv.observable(model.things).insert({thing: "box "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert({thing: "table "});
+	jsv.observable(model.things).insert({thing: "table "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree "});
+	jsv.observable(model.things).insert(0, {thing: "tree "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove(0);
+	jsv.observable(model.things).remove(0);
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
+	jsv.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
 	after += "|" + $("#result").text();
-	$.observable(model.things).move(0, 1);
+	jsv.observable(model.things).move(0, 1);
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([]);
+	jsv.observable(model.things).refresh([]);
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10205,28 +10222,28 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	model.things = []; // reset Prop
 
-	$.templates('{^{for things.length && things}}{{:thing}}{{/for}}')
+	jsv.templates('{^{for things.length && things}}{{:thing}}{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	after = $("#result").text();
-	$.observable(model.things).insert({thing: "box "});
+	jsv.observable(model.things).insert({thing: "box "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert({thing: "table "});
+	jsv.observable(model.things).insert({thing: "table "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree "});
+	jsv.observable(model.things).insert(0, {thing: "tree "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove(0);
+	jsv.observable(model.things).remove(0);
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
+	jsv.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
 	after += "|" + $("#result").text();
-	$.observable(model.things).move(0, 1);
+	jsv.observable(model.things).move(0, 1);
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([]);
+	jsv.observable(model.things).refresh([]);
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10241,28 +10258,28 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	model.things = []; // reset Prop
 
-	$.templates('{^{for things.length}}{^{for ~root.things}}{{:thing}}{{/for}}{{/for}}')
+	jsv.templates('{^{for things.length}}{^{for ~root.things}}{{:thing}}{{/for}}{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	after = $("#result").text();
-	$.observable(model.things).insert({thing: "box "});
+	jsv.observable(model.things).insert({thing: "box "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert({thing: "table "});
+	jsv.observable(model.things).insert({thing: "table "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree "});
+	jsv.observable(model.things).insert(0, {thing: "tree "});
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove(0);
+	jsv.observable(model.things).remove(0);
 	after += "|" + $("#result").text();
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
+	jsv.observable(model.things).refresh([{thing: "pen "},{thing: "lamp "}]);
 	after += "|" + $("#result").text();
-	$.observable(model.things).move(0, 1);
+	jsv.observable(model.things).move(0, 1);
 	after += "|" + $("#result").text();
-	$.observable(model.things).refresh([]);
+	jsv.observable(model.things).refresh([]);
 	after += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10277,12 +10294,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	model.things = [{thing: "box"}, {thing: "table"}]; // reset Prop
 
-	$.templates('{{include things}}{^{:length}} {^{for}}{{:thing}}{{/for}}{{/include}}')
+	jsv.templates('{{include things}}{^{:length}} {^{for}}{{:thing}}{{/for}}{{/include}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10296,12 +10313,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	model.things = [{thing: "box"}];
-	$.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}')
+	jsv.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10310,7 +10327,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).remove(0, 2);
+	jsv.observable(model.things).remove(0, 2);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10318,7 +10335,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10326,7 +10343,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
+	jsv.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10334,7 +10351,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: {thing: "square"}});
+	jsv.observable(model).setProperty({things: {thing: "square"}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10342,7 +10359,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).removeProperty("things");
+	jsv.observable(model).removeProperty("things");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10356,12 +10373,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	model.things = [{thing: "box"}];
-	$.templates('<ul>{^{for things}}<li>{{:thing}}</li>{{else}}<li>None</li>{{/for}}</ul>')
+	jsv.templates('<ul>{^{for things}}<li>{{:thing}}</li>{{else}}<li>None</li>{{/for}}</ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10370,7 +10387,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).remove(0, 2);
+	jsv.observable(model.things).remove(0, 2);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10378,7 +10395,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10386,7 +10403,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
+	jsv.observable(model).setProperty({things: [{thing: "triangle"}, {thing: "circle"}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10394,7 +10411,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: {thing: "square"}});
+	jsv.observable(model).setProperty({things: {thing: "square"}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10402,7 +10419,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'{^{for things}}{{else}}{{/for}} binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).removeProperty("things");
+	jsv.observable(model).removeProperty("things");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10415,13 +10432,13 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}{^{if true}}_yes{{/if}}')
+	jsv.templates('{^{for things}}{{:thing}}{{else}}None{{/for}}{^{if true}}_yes{{/if}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
-	$.observable(model.things).insert(0, {thing: "box"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "box"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10436,12 +10453,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}');
-	$.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
+	jsv.templates("testTmpl", '{{if ~things.length}}<tbody>{{for ~things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody>{{/if}}');
+	jsv.templates('<table><thead><tr><td>top</td></tr></thead>{^{for things ~things=things tmpl="testTmpl"/}}</table>')
 		.link("#result", model);
 
 	before = $("#result td").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10449,17 +10466,17 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'Complex template, with empty placeholder for tbody after thead, and subsequent data-linked insertion of tbody');
 
 	// ................................ Act ..................................
-	$.view("#result", true).refresh();
+	jsv.view("#result", true).refresh();
 	res = "" + (after === $("#result").text());
-	$.view("#result", true).views._2.refresh();
+	jsv.view("#result", true).views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].refresh();
+	jsv.view("#result", true).views._2.views[0].refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.views._2.refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.views._2.views[0].refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.views._2.views[0].refresh();
 	res += " " + (after === $("#result").text());
 
 	// ............................... Assert .................................
@@ -10476,12 +10493,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates("testTmpl", '{{if ~things.length}}<div>{{for ~things}}<span>{{:thing}}</span>{{/for}}</div>{{/if}}');
-	$.templates('<div><span>top</span>{^{for things ~things=things tmpl="testTmpl"/}}</div>')
+	jsv.templates("testTmpl", '{{if ~things.length}}<div>{{for ~things}}<span>{{:thing}}</span>{{/for}}</div>{{/if}}');
+	jsv.templates('<div><span>top</span>{^{for things ~things=things tmpl="testTmpl"/}}</div>')
 		.link("#result", model);
 
 	before = $("#result div").text();
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10489,17 +10506,17 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'Complex template, with empty placeholder for span, and subsequent data-linked insertion of in div');
 
 	// ................................ Act ..................................
-	$.view("#result", true).refresh();
+	jsv.view("#result", true).refresh();
 	res = "" + (after === $("#result").text());
-	$.view("#result", true).views._2.refresh();
+	jsv.view("#result", true).views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].refresh();
+	jsv.view("#result", true).views._2.views[0].refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.views._2.refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.views._2.refresh();
 	res += " " + (after === $("#result").text());
-	$.view("#result", true).views._2.views[0].views._2.views._2.views[0].refresh();
+	jsv.view("#result", true).views._2.views[0].views._2.views._2.views[0].refresh();
 	res += " " + (after === $("#result").text());
 
 	// ............................... Assert .................................
@@ -10515,12 +10532,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// =============================== Arrange ===============================
 	// ................................ Act ..................................
-	$.templates('<table><tbody>{^{for things}}{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}{{/for}}</tbody></table>')
+	jsv.templates('<table><tbody>{^{for things}}{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}{{/for}}</tbody></table>')
 		.link("#result", model);
 
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	jsv.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
 	res = $._data(model.things[0]).events.propertyChange.length;
-	$.view("#result", true).views._1.views[0].refresh();
+	jsv.view("#result", true).views._1.views[0].refresh();
 	res += "|" + $._data(model.things[0]).events.propertyChange.length;
 	$("#result").empty();
 	res += "|" + $._data(model.things[0]).events;
@@ -10539,12 +10556,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates('<div>{^{for things}}{^{if expanded}}{{:thing}}{{/if}}{{/for}}</div>')
+	jsv.templates('<div>{^{for things}}{^{if expanded}}{{:thing}}{{/if}}{{/for}}</div>')
 		.link("#result", model);
 
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
+	jsv.observable(model.things).insert(0, [{thing: "tree", expanded: false}]);
 	res = $._data(model.things[0]).events.propertyChange.length;
-	$.view("#result", true).views._1.views[0].refresh();
+	jsv.view("#result", true).views._1.views[0].refresh();
 	res += "|" + $._data(model.things[0]).events.propertyChange.length;
 	$("#result").empty();
 	res += "|" + $._data(model.things[0]).events;
@@ -10563,11 +10580,11 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates('<div>{{if true}}{^{:things.length||""}}{{/if}}</div>')
+	jsv.templates('<div>{{if true}}{^{:things.length||""}}{{/if}}</div>')
 		.link("#result", model);
 
 	before = $("#result div *").length;
-	$.view("#result div", true).refresh();
+	jsv.view("#result div", true).refresh();
 	after = $("#result div *").length;
 	// ............................... Assert .................................
 	assert.equal(after, before,
@@ -10583,15 +10600,15 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates("testTmpl", '{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}');
-	$.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
+	jsv.templates("testTmpl", '{^{if expanded}}<tr><td>{{:thing}}</td></tr>{{/if}}');
+	jsv.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
 		.link("#result", model);
 
 	res = $("#result td").text();
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	jsv.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
 	res += "|" + $("#result td").text();
-	$.observable(model.things[0]).setProperty("expanded", true);
-	$.observable(model.things[1]).setProperty("expanded", false);
+	jsv.observable(model.things[0]).setProperty("expanded", true);
+	jsv.observable(model.things[1]).setProperty("expanded", false);
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
@@ -10599,9 +10616,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Act ..................................
-	$.view("#result tr").parent.refresh();
+	jsv.view("#result tr").parent.refresh();
 	res = $("#result td").text();
-	$.view("#result tr").parent.parent.views[1].refresh();
+	jsv.view("#result tr").parent.parent.views[1].refresh();
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
@@ -10609,10 +10626,10 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'view refresh with deferred correctly refreshes content');
 
 	// ................................ Act ..................................
-	$.observable(model.things[1]).setProperty("expanded", true);
+	jsv.observable(model.things[1]).setProperty("expanded", true);
 	res = $("#result td").text();
 
-	$.observable(model.things[0]).setProperty("expanded", false);
+	jsv.observable(model.things[0]).setProperty("expanded", false);
 	res += "|" + $("#result td").text();
 
 	// ............................... Assert .................................
@@ -10629,15 +10646,15 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates("testTmpl", '<tr>{^{if expanded}}<td>{{:thing}}</td>{{/if}}</tr>');
-	$.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
+	jsv.templates("testTmpl", '<tr>{^{if expanded}}<td>{{:thing}}</td>{{/if}}</tr>');
+	jsv.templates('<table><tbody>{^{for things tmpl="testTmpl"/}}</tbody></table>')
 		.link("#result", model);
 
 	res = $("#result td").text();
-	$.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
+	jsv.observable(model.things).insert(0, [{thing: "tree", expanded: false}, {thing: "bush", expanded: true}]);
 	res += "|" + $("#result").text();
-	$.observable(model.things[0]).setProperty("expanded", true);
-	$.observable(model.things[1]).setProperty("expanded", false);
+	jsv.observable(model.things[0]).setProperty("expanded", true);
+	jsv.observable(model.things[1]).setProperty("expanded", false);
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10645,9 +10662,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'Changing dependant data on bindings with deferred correctly triggers refreshTag and refreshes content with updated data binding');
 
 	// ................................ Act ..................................
-	$.view("#result tr").refresh();
+	jsv.view("#result tr").refresh();
 	res = $("#result").text();
-	$.view("#result tr").parent.views[1].refresh();
+	jsv.view("#result tr").parent.views[1].refresh();
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10655,9 +10672,9 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	'view refresh with deferred correctly refreshes content');
 
 	// ................................ Act ..................................
-	$.observable(model.things[1]).setProperty("expanded", true);
+	jsv.observable(model.things[1]).setProperty("expanded", true);
 	res = $("#result").text();
-	$.observable(model.things[0]).setProperty("expanded", false);
+	jsv.observable(model.things[0]).setProperty("expanded", false);
 	res += "|" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -10673,7 +10690,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// =============================== Arrange ===============================
 
-	$.templates("<ul>{{for}}<li>Name: {{:firstName()}}. Width: {{:~settings.width}}</li>{{/for}}</ul>")
+	jsv.templates("<ul>{{for}}<li>Name: {{:firstName()}}. Width: {{:~settings.width}}</li>{{/for}}</ul>")
 		.link("#result", person1, {settings: settings});
 
 	// ................................ Act ..................................
@@ -10681,7 +10698,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	person1.fullName.set.call(person1, "compFirst compLast");
 	settings.title = "Sir";
 	settings.width = 40;
-	$.view("li").refresh();
+	jsv.view("li").refresh();
 	after = $("#result ul li").html();
 
 	// ............................... Assert .................................
@@ -10700,14 +10717,14 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	var data = {};
 
-	$.templates("<ul>{^{for items}}<li>insertBefore</li>{{/for}}<li> next</li></ul>")
+	jsv.templates("<ul>{^{for items}}<li>insertBefore</li>{{/for}}<li> next</li></ul>")
 		.link("#result", data);
 
 	// ................................ Act ..................................
 	before = $("#result ul").text(); // The innerHTML will be <script type="jsv#^6_"></script>Name: Sir compFirst. Width: 40<script type="jsv/^6_"></script>
-	$.observable(data).setProperty("items", []);
+	jsv.observable(data).setProperty("items", []);
 	var deferredString = $("#result ul li")[0]._df || "";
-	$.observable(data.items).insert("X");
+	jsv.observable(data.items).insert("X");
 	after = $("#result ul").text();
 
 	// ............................... Assert .................................
@@ -10720,12 +10737,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{for things}}<div>#index:<b data-link="#index"></b> #view.index:<b data-link="#view.index"></b> {{:thing}} Nested:{{for true}}{{for true}} #get(\'item\').index:<em data-link="#get(\'item\').index"></em> #parent.parent.index:<em data-link="#parent.parent.index"></em>|{{/for}}{{/for}}</div>{{/for}}')
+	jsv.templates('{^{for things}}<div>#index:<b data-link="#index"></b> #view.index:<b data-link="#view.index"></b> {{:thing}} Nested:{{for true}}{{for true}} #get(\'item\').index:<em data-link="#get(\'item\').index"></em> #parent.parent.index:<em data-link="#parent.parent.index"></em>|{{/for}}{{/for}}</div>{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
-	$.observable(model.things).insert(0, {thing: "bush"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "bush"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "#index:0 #view.index:0 bush Nested: #get('item').index:0 #parent.parent.index:0|#index:1 #view.index:1 tree Nested: #get('item').index:1 #parent.parent.index:1|",
@@ -10737,12 +10754,12 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{for things}}<div>{{:thing}} Nested:{{for}}{{for}}<em data-link="#getIndex()"></em>{{/for}}{{/for}}</div>|{{/for}}')
+	jsv.templates('{^{for things}}<div>{{:thing}} Nested:{{for}}{{for}}<em data-link="#getIndex()"></em>{{/for}}{{/for}}</div>|{{/for}}')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
-	$.observable(model.things).insert(0, {thing: "bush"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "bush"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "bush Nested:0|tree Nested:1|",
@@ -10753,7 +10770,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.templates('<div><ul>{^{for things}}<li>xxx</li>{{/for}}</ul></div>')
+	jsv.templates('<div><ul>{^{for things}}<li>xxx</li>{{/for}}</ul></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
@@ -10761,7 +10778,7 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 
 	// ............................... Assert .................................
 
-	assert.ok(viewsAndBindings().split(" ").length === 7 // We removed view inside div, but still have the view for the outer template.
+	assert.ok(viewsAndBindings($).split(" ").length === 7 // We removed view inside div, but still have the view for the outer template.
 		&& !$._data(model.things).events,
 		'$(container).empty removes listeners for empty tags in element-only content (_df="#n_/n_")');
 
@@ -10771,16 +10788,16 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 		q: true
 	};
 
-	$.templates('<ul class="list">{^{if q}}{^{for list}}<li>{{:#data}}</li>{{/for}}{{/if}}</ul>')
+	jsv.templates('<ul class="list">{^{if q}}{^{for list}}<li>{{:#data}}</li>{{/for}}{{/if}}</ul>')
 		.link("#result", data);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("q", false);
-	$.observable(data).setProperty("q", true);
-	$.observable(data.list).insert("added");
+	jsv.observable(data).setProperty("q", false);
+	jsv.observable(data).setProperty("q", true);
+	jsv.observable(data.list).insert("added");
 
 	// ............................... Assert .................................
-	assert.ok(viewsAndBindings().split(" ").length === 13 // We removed view inside div, but still have the view for the outer template.
+	assert.ok(viewsAndBindings($).split(" ").length === 13 // We removed view inside div, but still have the view for the outer template.
 		&& $._data(data.list).events.arrayChange.length === 1
 		&& $("#result ul").text() === "added",
 		'In element-only content, updateContent calls disposeTokens on _df inner bindings');
@@ -10791,22 +10808,22 @@ ret += "|5 " + $("#result").text() + " " + $._data(listData.nodes.list).events.a
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 
 });
 
 QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
-	assert.equal($.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
-	assert.equal($.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
-	assert.equal($.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
-	assert.equal($.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array");
-	assert.equal($.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
-	assert.equal($.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
-	assert.equal($.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
-	assert.equal($.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
-	assert.equal($.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
+	assert.equal(jsv.templates("{{for start=0 end=10}}{{:}} {{/for}}").render(), "0 1 2 3 4 5 6 7 8 9 ", "{{for start=0 end=10}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=5 end=9 reverse=1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=5 end=9 reverse=1}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=8 end=4 step=-1}}{{:}} {{/for}}").render(), "8 7 6 5 ", "{{for start=8 end=4 step=-1}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=8 end=4  step=-1 reverse=true}}{{:}} {{/for}}").render(), "5 6 7 8 ", "{{for start=8 end=4 step=-1 reverse=true}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=20 end='10' step=-2}}{{:}} {{/for}}").render(), "20 18 16 14 12 ", "{{for start=20 end='10' step=-2}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=20 end='10' step=2}}{{:}} {{/for}}").render(), "", "{{for start=20 end='10' step=2}}: Auto-create array (outputs nothing)");
+	assert.equal(jsv.templates("{{for start=2 end=-1.5 step=-.5}}{{:}} {{/for}}").render(), "2 1.5 1 0.5 0 -0.5 -1 ", "{{for start=0 end='10' step=-1}}: Auto-create array");
+	assert.equal(jsv.templates("{{for start=2}}{{:}} {{/for}}").render(), "", "{{for start=2}}: (outputs nothing)");
+	assert.equal(jsv.templates("{{for end=4}}{{:}} {{/for}}").render(), "0 1 2 3 ", "{{for end=4}}: (start defaults to 0)");
 
 	var myarray = [1, 9, 2, 8, 3, 7, 4, 6, 5, -100, 20, 100, -1];
 	var mypeople = [
@@ -10823,36 +10840,36 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 		return item.details.age < 20;
 	};
 
-	assert.equal($.templates("{{for #data}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data}}");
-	assert.equal($.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for #data sort=true}}");
-	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
-	assert.equal($.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray start=1 end=-1}}");
-	assert.equal($.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray start=1}}");
-	assert.equal($.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray end=-1}}");
-	assert.equal($.templates("{{for myarray}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray}}");
-	assert.equal($.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
-	assert.equal($.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
-	assert.equal($.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
+	assert.equal(jsv.templates("{{for #data}}{{:}} {{/for}}").render(myarray, true), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for #data}}");
+	assert.equal(jsv.templates("{{for #data sort=true}}{{:}} {{/for}}").render(myarray, true), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for #data sort=true}}");
+	assert.equal(jsv.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
+	assert.equal(jsv.templates("{{for myarray start=1 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray start=1 end=-1}}");
+	assert.equal(jsv.templates("{{for myarray start=1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray start=1}}");
+	assert.equal(jsv.templates("{{for myarray end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "1 9 2 8 3 7 4 6 5 -100 20 100 ", "{{for myarray end=-1}}");
+	assert.equal(jsv.templates("{{for myarray}}{{:}} {{/for}}").render({myarray: myarray}), "1 9 2 8 3 7 4 6 5 -100 20 100 -1 ", "{{for myarray}}");
+	assert.equal(jsv.templates("{{for myarray reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "-1 100 20 -100 5 6 4 7 3 8 2 9 1 ", "{{for myarray reverse=true}}");
+	assert.equal(jsv.templates("{{for myarray sort=true}}{{:}} {{/for}}").render({myarray: myarray}), "-100 -1 1 2 3 4 5 6 7 8 9 20 100 ", "{{for myarray sort=true}}");
+	assert.equal(jsv.templates("{{for myarray sort=true reverse=true}}{{:}} {{/for}}").render({myarray: myarray}), "100 20 9 8 7 6 5 4 3 2 1 -1 -100 ", "{{for myarray sort=true reverse=true}}");
 
-	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
-	assert.equal($.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
-	assert.equal($.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}");
-	assert.equal($.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "-1 1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
-	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "-1 2 4 6 8 20 ", "{{for myarray sort=true filter=~oddIndex}}");
-	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
-	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "6 8 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
-	assert.equal($.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
+	assert.equal(jsv.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}!!!");
+	assert.equal(jsv.templates("{{for myarray filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "9 8 7 6 -100 100 ", "{{for myarray filter=~oddIndex}}");
+	assert.equal(jsv.templates("{{for myarray filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "1 9 3 7 5 -1 ", "{{for myarray filter=~oddValue}}");
+	assert.equal(jsv.templates("{{for myarray sort=true filter=~oddValue}}{{:}} {{/for}}").render({myarray: myarray}, {oddValue: oddValue}), "-1 1 3 5 7 9 ", "{{for myarray sort=true filter=~oddValue}}");
+	assert.equal(jsv.templates("{{for myarray sort=true filter=~oddIndex}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "-1 2 4 6 8 20 ", "{{for myarray sort=true filter=~oddIndex}}");
+	assert.equal(jsv.templates("{{for myarray sort=true filter=~oddIndex start=1 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "2 4 ", "{{for myarray sort=true filter=~oddIndex start=1 end=3}}");
+	assert.equal(jsv.templates("{{for myarray sort=true filter=~oddIndex start=-3 end=-1}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "6 8 ", "{{for myarray sort=true filter=~oddIndex start=-3 end=-1}} Negative start or end count from the end");
+	assert.equal(jsv.templates("{{for myarray sort=true filter=~oddIndex start=3 end=3}}{{:}} {{/for}}").render({myarray: myarray}, {oddIndex: oddIndex}), "", "{{for myarray sort=true filter=~oddIndex start=3 end=3}} (outputs nothing)");
 
-	assert.equal($.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='name'}}");
-	assert.equal($.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{for mypeople  sort='details.age'}}");
+	assert.equal(jsv.templates("{{for mypeople sort='name'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='name'}}");
+	assert.equal(jsv.templates("{{for mypeople sort='details.age'}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}), "Xavier: age 0 - Julia: age 0.6 - Bob: age 2 - Emma: age 12 - Jeff: age 13.5 - Jo: age 22 - ", "{{for mypeople  sort='details.age'}}");
 
-	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
-	assert.equal($.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
+	assert.equal(jsv.templates("{{for mypeople sort='details.age' reverse=true filter=~under20}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Jeff: age 13.5 - Emma: age 12 - Bob: age 2 - Julia: age 0.6 - Xavier: age 0 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20}}");
+	assert.equal(jsv.templates("{{for mypeople sort='details.age' reverse=true filter=~under20 start=1 end=-1}}{{:name}}: age {{:details.age}} - {{/for}}").render({mypeople: mypeople}, {under20: under20}), "Emma: age 12 - Bob: age 2 - Julia: age 0.6 - ", "{{for mypeople  sort='details.age' reverse=true filter=~under20 start=1 end=-1}}");
 
 	// =============================== Arrange ===============================
 	model.things = [{ob: {thing: "box"}}];
 	var ctx = {};
-	$.templates('|All: {^{for things}}{{:ob.thing}} {{else}}None{{/for}}<br/>\
+	jsv.templates('|All: {^{for things}}{{:ob.thing}} {{else}}None{{/for}}<br/>\
 |Sort: {^{for this=~ctx.sorted things sort="ob.thing"}}{{:ob.thing}} {{else}}None{{/for}}<br/>\
 |NotTreeReverse: {^{for things filter=~notTree reverse=true}}{{:ob.thing}} {{else}}None{{/for}}<br/>\
 |Start1: {^{for things start=1}}{{:ob.thing}} {{else}}None{{/for}}')
@@ -10870,8 +10887,8 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {ob: {thing: "tree"}});
-	$.observable(model.things).insert([{ob: {thing: "apple"}}, {ob: {thing: "tree"}}]);
+	jsv.observable(model.things).insert(0, {ob: {thing: "tree"}});
+	jsv.observable(model.things).insert([{ob: {thing: "apple"}}, {ob: {thing: "tree"}}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10879,7 +10896,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to array changes on leaf array');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(0, 3);
+	jsv.observable(model.things).remove(0, 3);
 	after = $("#result").text();
 
 	// ............................... Assert .................................6
@@ -10887,7 +10904,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering renders {{else}} block when array is emptied');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {ob: {thing: "tree"}});
+	jsv.observable(model.things).insert(0, {ob: {thing: "tree"}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10895,7 +10912,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering removes {{else}} block when item is added again');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{ob: {thing: "triangle"}}, {ob: {thing: "circle"}}]});
+	jsv.observable(model).setProperty({things: [{ob: {thing: "triangle"}}, {ob: {thing: "circle"}}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10903,7 +10920,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path');
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert([{ob: {thing: "square"}}, {ob: {thing: "tree"}}]);
+	jsv.observable(model.things).insert([{ob: {thing: "square"}}, {ob: {thing: "tree"}}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10911,7 +10928,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering inserts new items with sorting/filtering');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: {ob: {thing: "tree"}}});
+	jsv.observable(model).setProperty({things: {ob: {thing: "tree"}}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10919,7 +10936,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path - swapping from array to singleton object');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty({things: [{ob: {thing: "square"}}, {ob: {thing: "apple"}}, {ob: {thing: "tree"}}]});
+	jsv.observable(model).setProperty({things: [{ob: {thing: "square"}}, {ob: {thing: "apple"}}, {ob: {thing: "tree"}}]});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10927,7 +10944,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to property change on path - swapping from singleton object back to array');
 
 	// ................................ Act ..................................
-	$.observable(model).removeProperty("things");
+	jsv.observable(model).removeProperty("things");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10935,7 +10952,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{^{for things}}{{else}}{{/for}} plus sorting and filtering binds to removeProperty change on path - and renders {{else}} block');
 
 	// ................................ Act ..................................
-	$.observable(model).setProperty("things", [{ob: {thing: "circle"}}, {ob: {thing: "tree"}}, {ob: {thing: "square"}}]);
+	jsv.observable(model).setProperty("things", [{ob: {thing: "circle"}}, {ob: {thing: "tree"}}, {ob: {thing: "square"}}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10946,7 +10963,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	var tgt = ctx.sorted.tagCtx.map.tgt;
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert([{ob: {thing: "red"}}, {ob: {thing: "green"}}, {ob: {thing: "blue"}}]);
+	jsv.observable(tgt).insert([{ob: {thing: "red"}}, {ob: {thing: "green"}}, {ob: {thing: "blue"}}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -10965,7 +10982,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	ctx = {};
 	var cnt = 0;
 
-	$.templates(
+	jsv.templates(
 '|All:--- {^{for movies}}{{:title}} {{/for}}<br/>\
 |Sort:-- {^{for movies sort="title" reverse=true}}{{:title}} {{/for}}<br/>\
 |Filter: {^{for movies sort="title" reverse=true filter=~odd}}{{:title}} {{/for}}<br/>\
@@ -10987,7 +11004,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{{for}} with sorting, filtering, reverse, start and end settings');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert({title: "t" + cnt++}); // Append item to fourth {^{for}} tag instance above
+	jsv.observable(tgt).insert({title: "t" + cnt++}); // Append item to fourth {^{for}} tag instance above
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11004,7 +11021,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'To refresh sort etc with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(0, {title: "t" + cnt++});
+	jsv.observable(tgt).insert(0, {title: "t" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11012,7 +11029,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).insert(1, {title: "m" + cnt++});
+	jsv.observable(movies).insert(1, {title: "m" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11020,7 +11037,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
+	jsv.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11028,7 +11045,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).refresh([tgt[1], {title: "t" + cnt++}, tgt[0]]);
+	jsv.observable(tgt).refresh([tgt[1], {title: "t" + cnt++}, tgt[0]]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11036,7 +11053,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).remove();
+	jsv.observable(tgt).remove();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11044,7 +11061,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Removing item in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).remove(0);
+	jsv.observable(movies).remove(0);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11052,7 +11069,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Removal of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).move(0, 1);
+	jsv.observable(tgt).move(0, 1);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11060,7 +11077,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Moving items in target array (sorted, filtered etc) - items are moved in target but not in source, and this is without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).refresh([{title: "t" + cnt++}]);
+	jsv.observable(tgt).refresh([{title: "t" + cnt++}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11068,7 +11085,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).insert(1, {title: "m" + cnt++});
+	jsv.observable(movies).insert(1, {title: "m" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11076,7 +11093,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
+	jsv.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11084,7 +11101,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).move(1, 3, 2);
+	jsv.observable(movies).move(1, 3, 2);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11102,7 +11119,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	ctx = {};
 	cnt = 0;
 
-	$.templates(
+	jsv.templates(
 '|All:--- {^{for movies}}{{:title}} {{/for}}<br/>\
 |Slice:- {^{for movies start=1 end=-1 this=~ctx.target}}{{:title}} {{/for}}')
 		.link("#result", {movies: movies}, {
@@ -11122,7 +11139,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'{{for}} with start and end settings ("sliced")');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert({title: "t" + cnt++});
+	jsv.observable(tgt).insert({title: "t" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11137,7 +11154,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'To refresh correct start and end with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(0, {title: "t" + cnt++});
+	jsv.observable(tgt).insert(0, {title: "t" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11145,7 +11162,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of item at specific position in target array ("sliced") - item is rendered at insert location, but item is simply appended to source array');
 
 	// ................................ Act ..................................
-	$.observable(movies).insert(1, {title: "m" + cnt++});
+	jsv.observable(movies).insert(1, {title: "m" + cnt++});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11153,7 +11170,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of item in source array will also refresh "slicing"');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
+	jsv.observable(tgt).insert(1, [{title: "t" + cnt++}, {title: "t" + cnt++}]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11161,7 +11178,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Insertion of items at specific position in target array ("sliced") - items are rendered at insert location, but simply appended to source array');
 
 	// ................................ Act ..................................
-	$.observable(tgt).refresh([tgt[1], {title: "t" + cnt++}, tgt[0], tgt[2]]);
+	jsv.observable(tgt).refresh([tgt[1], {title: "t" + cnt++}, tgt[0], tgt[2]]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11169,7 +11186,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Calling refresh() on target array will append and remove items appropriately from source array and target array (and move items in target array)');
 
 	// ................................ Act ..................................
-	$.observable(tgt).remove();
+	jsv.observable(tgt).remove();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11177,7 +11194,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Removing item in target array ("sliced") - items are rendered without refreshing "slicing".');
 
 	// ................................ Act ..................................
-	$.observable(movies).remove(0);
+	jsv.observable(movies).remove(0);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11185,7 +11202,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Removal of item in source array will also refresh "slicing".');
 
 	// ................................ Act ..................................
-	$.observable(tgt).move(0, 1);
+	jsv.observable(tgt).move(0, 1);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11193,7 +11210,7 @@ QUnit.test("{^{for start end sort filter reverse}}", function(assert) {
 	'Moving items in target array ("slice") - items are moved in target but not in source, and this is without refreshing "slicing".');
 
 	// ................................ Act ..................................
-	$.observable(movies).move(1, 3, 2);
+	jsv.observable(movies).move(1, 3, 2);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11214,7 +11231,7 @@ var team = {
 	]
 };
 
-	$.templates(
+	jsv.templates(
 '<ul>{^{for start=0 members}}{^{for start=0 phones}}<li>|{{:}}</li>{{else}}<li>|NoPhones</li>{{/for}}<li>|{{:name}}</li>{{else}}<li>|NoMembers</li>{{/for}}</ul>')
 		.link("#result", team);
 
@@ -11222,52 +11239,52 @@ var firstLi = $("li")[0];
 
 	// ............................... Assert .................................
 	assert.equal(
-		$.view("ul").views._1._prv === firstLi
-		&& $.view("ul").views._1.tag._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
+		jsv.view("ul").views._1._prv === firstLi
+		&& jsv.view("ul").views._1.tag._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
 		&& $("#result").text(), "|NoPhones|one|21|22|two",
 		"First li is _prv for {{for}} tags");
 
 	// ................................ Act ..................................
-	$.observable(team.members).move(1, 0);
+	jsv.observable(team.members).move(1, 0);
 
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
 	assert.equal(
-		$.view("ul").views._1._prv === firstLi
-		&& $.view("ul").views._1.tag._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
+		jsv.view("ul").views._1._prv === firstLi
+		&& jsv.view("ul").views._1.tag._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
 		&& $("#result").text(), "|21|22|two|NoPhones|one",
 		"After observable move, first li is _prv for {{for}} tags");
 
 	// ................................ Act ..................................
-		$.observable(team.members).remove(0);
+		jsv.observable(team.members).remove(0);
 
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
 	assert.equal(
-		$.view("ul").views._1._prv === firstLi
-		&& $.view("ul").views._1.tag._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1._prv === firstLi
-		&& $.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
+		jsv.view("ul").views._1._prv === firstLi
+		&& jsv.view("ul").views._1.tag._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1._prv === firstLi
+		&& jsv.view("ul").views._1.views["0"].views._1.tag._prv === firstLi
 		&& $("#result").text(), "|NoPhones|one",
 		"After remove, first li is _prv for {{for}} tags");
 
 	// ................................ Act ..................................
-	$.observable(team.members).remove(0);
+	jsv.observable(team.members).remove(0);
 
 	// ............................... Assert .................................
 firstLi = $("li")[0];
 
 	assert.equal(
-		$.view("ul").views._2._prv === firstLi
-		&& $.view("ul").views._2.tag._prv === firstLi
-		&& $.view("ul").views._3._prv === firstLi
-		&& $.view("ul").views._3.tag._prv === firstLi
+		jsv.view("ul").views._2._prv === firstLi
+		&& jsv.view("ul").views._2.tag._prv === firstLi
+		&& jsv.view("ul").views._3._prv === firstLi
+		&& jsv.view("ul").views._3.tag._prv === firstLi
 		&& $("#result").text(), "|NoMembers",
 		"After removing all, first li is _prv for {{for}} tags");
 
@@ -11278,7 +11295,7 @@ firstLi = $("li")[0];
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"dataMap bindings all removed when tag disposed (content removed from DOM)");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering", function(assert) {
@@ -11310,7 +11327,7 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 	content = "",
 	people = data.people;
 
-	$.templates(
+	jsv.templates(
 		'{^{for skip}}{{:~rndr(#data)}}'
 	+ '{{else people ~foo="test" start=p_st end=p_en reverse=p_rev}}|{{:~rndr(#data)}}'
 	+ '{{else things sort=t_srt filter=t_flt start=t_st end=t_en step=t_stp mapDepends=t_mapdeps}}|{{:~rndr(is)}}'
@@ -11328,91 +11345,91 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("skip", "SkipTheList");
+	jsv.observable(data).setProperty("skip", "SkipTheList");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "SkipTheList::|SkipTheList", 'move to initial block (no mapped list');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("skip", undefined);
+	jsv.observable(data).setProperty("skip", undefined);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'move back to {{else people}} block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_st", 1);
+	jsv.observable(data).setProperty("p_st", 1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff::|Bob", 'incremental, on reducing start');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_en", 5);
+	jsv.observable(data).setProperty("p_en", 5);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May::|May", 'incremental, on increasing end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_en", 3);
+	jsv.observable(data).setProperty("p_en", 3);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane::", 'incremental, on reducing end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_st", 4);
+	jsv.observable(data).setProperty("p_st", 4);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, on increasing start, no items, moves to {{else}} block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_st", -1);
+	jsv.observable(data).setProperty("t_st", -1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat::", 'incremental, on changing start - integer from end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_en", -2);
+	jsv.observable(data).setProperty("t_en", -2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, on changing end - integer from end, no items, moves to final {{else}}');
 
 		// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({p_st: 1, p_en:40});
+	jsv.observable(data).setProperty({p_st: 1, p_en:40});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May|Alice::|Bob|Jane|Jeff|May|Alice", 'incremental, on changing start/end - moves to first block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_rev", true);
+	jsv.observable(data).setProperty("p_rev", true);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|May|Jeff|Jane|Bob|Jo::|Jo", 'incremental, set reverse=true');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
+	jsv.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, moves to second block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_srt", "is");
+	jsv.observable(data).setProperty("t_srt", "is");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|porcelain|table::", 'incremental, on changing start');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_flt", function(item, index, items) {
+	jsv.observable(data).setProperty("t_flt", function(item, index, items) {
 		return index%2 === 1; // Include only odd index items
 	});
 
@@ -11421,7 +11438,7 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
+	jsv.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
 		return a.is.length> b.is.length? 1 : a.is.length< b.is.length? -1 : 0; // Sort by string length of items
 	}});
 
@@ -11430,7 +11447,7 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_flt", function(item, index, items) {
+	jsv.observable(data).setProperty("t_flt", function(item, index, items) {
 		var flt = this.view.data.flt;
 		return flt ? item.is.toLowerCase().indexOf(flt.toLowerCase()) !== -1 : true;
 	});
@@ -11440,77 +11457,77 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "t");
+	jsv.observable(data).setProperty("flt", "t");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|table::|hat", 'incremental, on setting flt to "t"');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "e");
+	jsv.observable(data).setProperty("flt", "e");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain::|porcelain", 'incremental, on setting flt to "e"');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data.things).insert(2, [{is: "cupboard"}, {is: "window"}]);
+	jsv.observable(data.things).insert(2, [{is: "cupboard"}, {is: "window"}]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain::", 'incremental, on inserting items');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "");
+	jsv.observable(data).setProperty("flt", "");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|hat|lamp|window|cupboard", 'incremental, on setting flt to ""');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_srt", false);
+	jsv.observable(data).setProperty("t_srt", false);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain|cupboard|window|lamp|hat::", 'incremental, on setting sort to false');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", 3);
+	jsv.observable(data).setProperty("t_stp", 3);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|window::", 'incremental, on setting step to 3');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", 2);
+	jsv.observable(data).setProperty("t_stp", 2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|cupboard|lamp::|cupboard|lamp", 'incremental, on setting step to 2');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data.things).move(1, 4, 2);
+	jsv.observable(data.things).move(1, 4, 2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|lamp|porcelain::|porcelain", 'incremental, on using move(1, 4, 2)');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", false);
+	jsv.observable(data).setProperty("t_stp", false);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|window|lamp|hat|porcelain|cupboard::|window|hat|cupboard", 'incremental, on setting step to false');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data.things).refresh([data.things[4], data.things[2], data.things[0], data.things[3]]);
+	jsv.observable(data.things).refresh([data.things[4], data.things[2], data.things[0], data.things[3]]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|porcelain|lamp|table|hat::", 'incremental, on using refresh(...)');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_st", 10);
+	jsv.observable(data).setProperty("t_st", 10);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, move to final {{else}} block');
@@ -11531,7 +11548,7 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 	content = "",
 	people = data.people;
 
-	$.templates(
+	jsv.templates(
 		'{^{for people sort=p_srt reverse=p_rev}}|{{:~rndr(#data)}}{{/for}}'
 	)
 		.link("#result", data, {
@@ -11546,14 +11563,14 @@ QUnit.test("{^{for}} with start end sort filter reverse: Incremental rendering",
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_rev", true);
+	jsv.observable(data).setProperty("p_rev", true);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Jane|Bob|Jo::", 'reverse order (DataMap used - incremental re-order)');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_srt", true);
+	jsv.observable(data).setProperty("p_srt", true);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Jo|Jane|Bob::", 'reverse sort (DataMap used - incremental re-order)');
@@ -11591,7 +11608,7 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 	content = "",
 	people = data.people;
 
-	$.templates(
+	jsv.templates(
 		'{^{props skip}}{{:~rndr(prop)}}'
 	+ '{{else people start=p_st end=p_en reverse=p_rev}}|{{:~rndr(prop)}}'
 	+ '{{else things sort=t_srt filter=t_flt start=t_st end=t_en step=t_stp mapDepends=t_mapdeps}}|{{:~rndr(prop.is)}}'
@@ -11609,91 +11626,91 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("skip", {is: "SkipTheList"});
+	jsv.observable(data).setProperty("skip", {is: "SkipTheList"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "SkipTheList::|SkipTheList", 'move to initial block (no mapped list');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("skip", undefined);
+	jsv.observable(data).setProperty("skip", undefined);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Jane|Jeff::|Jane|Jeff", 'move back to {{else people}} block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_st", 1);
+	jsv.observable(data).setProperty("p_st", 1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff::|Bob", 'incremental, on reducing start');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_en", 5);
+	jsv.observable(data).setProperty("p_en", 5);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May::|May", 'incremental, on increasing end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_en", 3);
+	jsv.observable(data).setProperty("p_en", 3);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane::", 'incremental, on reducing end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_st", 4);
+	jsv.observable(data).setProperty("p_st", 4);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, on increasing start, no items, moves to {{else}} block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_st", -1);
+	jsv.observable(data).setProperty("t_st", -1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat::", 'incremental, on changing start - integer from end');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_en", -2);
+	jsv.observable(data).setProperty("t_en", -2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, on changing end - integer from end, no items, moves to final {{else}}');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({p_st: 1, p_en:40});
+	jsv.observable(data).setProperty({p_st: 1, p_en:40});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|Bob|Jane|Jeff|May|Alice::|Bob|Jane|Jeff|May|Alice", 'incremental, on changing start/end - moves to first block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("p_rev", true);
+	jsv.observable(data).setProperty("p_rev", true);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|May|Jeff|Jane|Bob|Jo::|Jo", 'incremental, set reverse=true');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
+	jsv.observable(data).setProperty({p_en: 0, t_st: 0, t_en: 10});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain|lamp|hat::|table|porcelain|lamp|hat", 'incremental, moves to second block');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_srt", "prop.is");
+	jsv.observable(data).setProperty("t_srt", "prop.is");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|porcelain|table::", 'incremental, on changing start');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_flt", function(item, index, items) {
+	jsv.observable(data).setProperty("t_flt", function(item, index, items) {
 		return index%2 === 1; // Include only odd index items
 	});
 
@@ -11702,7 +11719,7 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
+	jsv.observable(data).setProperty({t_st: 0, t_en: 10, t_flt: false, t_srt: function(a, b) {
 		return a.prop.is.length> b.prop.is.length? 1 : a.prop.is.length< b.prop.is.length? -1 : 0; // Sort by string length of items
 	}});
 
@@ -11711,7 +11728,7 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_flt", function(item, index, items) {
+	jsv.observable(data).setProperty("t_flt", function(item, index, items) {
 		var flt = this.view.data.flt;
 		return flt ? item.prop.is.toLowerCase().indexOf(flt.toLowerCase()) !== -1 : true;
 	});
@@ -11721,70 +11738,70 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "t");
+	jsv.observable(data).setProperty("flt", "t");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|table::|hat", 'incremental, on setting flt to "t"');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "e");
+	jsv.observable(data).setProperty("flt", "e");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain::|porcelain", 'incremental, on setting flt to "e"');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data.things).setProperty({e: {is: "cupboard"}, f: {is: "window"}});
+	jsv.observable(data.things).setProperty({e: {is: "cupboard"}, f: {is: "window"}});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|table|porcelain::", 'incremental, on inserting items');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("flt", "");
+	jsv.observable(data).setProperty("flt", "");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|hat|lamp|window|cupboard", 'incremental, on setting flt to ""');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_srt", "prop.is");
+	jsv.observable(data).setProperty("t_srt", "prop.is");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|cupboard|hat|lamp|porcelain|table|window::", 'incremental, on setting sort to "prop.is"');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_srt", false);
+	jsv.observable(data).setProperty("t_srt", false);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::", 'incremental, on setting sort to false');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", 3);
+	jsv.observable(data).setProperty("t_stp", 3);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|window::", 'incremental, on setting step to 3');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", 2);
+	jsv.observable(data).setProperty("t_stp", 2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|table|cupboard::|table|cupboard", 'incremental, on setting step to 2');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_stp", false);
+	jsv.observable(data).setProperty("t_stp", false);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "|hat|lamp|table|window|cupboard|porcelain::|lamp|window|porcelain", 'incremental, on setting step to false');
 
 	// ................................ Act ..................................
 	out = "";
-	$.observable(data).setProperty("t_st", 10);
+	jsv.observable(data).setProperty("t_st", 10);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "::" + out, "None::", 'incremental, move to final {{else}} block');
@@ -11794,11 +11811,11 @@ QUnit.test("{^{props}} with start end sort filter reverse: Incremental rendering
 });
 
 QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var data = {one: true, two: false, three: true},
-		boundIfElseTmpl = $.templates(
+		boundIfElseTmpl = jsv.templates(
 		'{^{if one pane=0}}'
 			+ '{^{if two pane=0}}'
 				+ '{^{if three pane=0}}ONE TWO THREE {{else}}ONE TWO notThree {{/if}}'
@@ -11822,7 +11839,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({one: false, two: false, three: true});
+	jsv.observable(data).setProperty({one: false, two: false, three: true});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11830,7 +11847,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	'Bound if and else render correct blocks based on boolean expressions');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({one: false, two: true, three: false});
+	jsv.observable(data).setProperty({one: false, two: true, three: false});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11842,7 +11859,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 
 	// =============================== Arrange ===============================
 	data = {expanded: true};
-	var deepIfTmpl = $.templates(
+	var deepIfTmpl = jsv.templates(
 			'<table><tbody>'
 			+ '<tr>{^{if expanded}}'
 				+ '<td>DeepContent</td>'
@@ -11853,8 +11870,8 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	// ................................ Act ..................................
 	deepIfTmpl.link("#result", data);
 
-	$.observable(data).setProperty("expanded", false);
-	$.observable(data).setProperty("expanded", true);
+	jsv.observable(data).setProperty("expanded", false);
+	jsv.observable(data).setProperty("expanded", true);
 
 	// ............................... Assert .................................
 	after = $("#result").text();
@@ -11866,7 +11883,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	'With deep bound {^{if}} tag, there is deferred binding and binding behaves correctly after removing and inserting');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("expanded", false);
+	jsv.observable(data).setProperty("expanded", false);
 
 	// ............................... Assert .................................
 	after = $("#result").text();
@@ -11878,7 +11895,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	'With deep bound {^{if}} tag, there is deferred binding and binding behaves correctly after further remove');
 
 	// =============================== Arrange ===============================
-	var shallowIfTmpl = $.templates(
+	var shallowIfTmpl = jsv.templates(
 			'<table><tbody>'
 			+ '{^{if expanded}}'
 				+ '<tr><td>ShallowContent</td></tr>'
@@ -11889,8 +11906,8 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	// ................................ Act ..................................
 	shallowIfTmpl.link("#result", data);
 
-	$.observable(data).setProperty("expanded", false);
-	$.observable(data).setProperty("expanded", true);
+	jsv.observable(data).setProperty("expanded", false);
+	jsv.observable(data).setProperty("expanded", true);
 
 	// ............................... Assert .................................
 	after = $("#result").text();
@@ -11900,7 +11917,7 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	'With shallow bound {^{if}} tag, there is no deferred binding, and binding behaves correctly after removing and inserting');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("expanded", false);
+	jsv.observable(data).setProperty("expanded", false);
 
 	// ............................... Assert .................................
 	after = $("#result").text();
@@ -11914,11 +11931,11 @@ QUnit.test("{^{if}}...{{else}}...{{/if}}", function(assert) {
 	$("#result").empty();
 	res = "";
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{props}} basic", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 	var root = {
@@ -11926,12 +11943,12 @@ QUnit.test("{^{props}} basic", function(assert) {
 		objB: {propB1: "valB1a"}
 	};
 
-	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},{{/props}}')
+	jsv.templates('{^{props objA}}{^{:key}}:{^{:prop}},{{/props}}')
 		.link("#result", root);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	jsv.observable(root.objA).setProperty({propA1: "valA1b"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11940,7 +11957,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1c", propA2: "valA2a"});
+	jsv.observable(root.objA).setProperty({propA1: "valA1c", propA2: "valA2a"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11949,7 +11966,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "", propA2: null});
+	jsv.observable(root.objA).setProperty({propA1: "", propA2: null});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11958,7 +11975,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: null});
+	jsv.observable(root.objA).setProperty({propA1: null});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11967,7 +11984,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).removeProperty("propA1").removeProperty("propA2");
+	jsv.observable(root.objA).removeProperty("propA1").removeProperty("propA2");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11976,7 +11993,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty({propA1: "valA1b"});
+	jsv.observable(root.objA).setProperty({propA1: "valA1b"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11985,7 +12002,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root).setProperty({objA: {}});
+	jsv.observable(root).setProperty({objA: {}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -11994,7 +12011,7 @@ QUnit.test("{^{props}} basic", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root).setProperty({objA: {propX: "XX"}});
+	jsv.observable(root).setProperty({objA: {propX: "XX"}});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12008,14 +12025,14 @@ QUnit.test("{^{props}} basic", function(assert) {
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{props}} modifying content, through arrayChange/propertyChange on target array", function(assert) {
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 
@@ -12023,7 +12040,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 		objA: {propA1: "valA1a"}
 	};
 
-	$.templates(
+	jsv.templates(
 		'{^{props objA}}'
 			+ '{^{:key}}:{^{:prop}},'
 			+ '<button class="removeProp" data-link="{on ~remove}">remove</button>'
@@ -12037,18 +12054,18 @@ if (assert.async) { done = assert.async() } else { stop() }
 			add: function(ev, eventArgs) {
 				var view = eventArgs.view,
 					arr = view.get("array").data;
-				$.observable(arr).insert({key: "addkey", prop: "addprop"});
+				jsv.observable(arr).insert({key: "addkey", prop: "addprop"});
 			},
 			remove: function(ev, eventArgs) {
 				var view = eventArgs.view,
 					arr = view.get("array").data,
 					index = view.index;
-				$.observable(arr).remove(index);
+				jsv.observable(arr).remove(index);
 			},
 			change: function(ev, eventArgs) {
 				var view = eventArgs.view,
 					item = view.data;
-				$.observable(item).setProperty({key: "changed", prop: "changedValue"});
+				jsv.observable(item).setProperty({key: "changed", prop: "changedValue"});
 			}
 		});
 
@@ -12111,7 +12128,7 @@ setTimeout(function() {
 	assert.equal(before + "|" + after, "1-1|true-true -{}",
 	'{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)');
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 
 	if (assert.async) { done() } else { start() }
 
@@ -12120,7 +12137,7 @@ setTimeout(function() {
 });
 
 QUnit.test("{^{props}}...{{else}} ...", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using cbBindings store
+	jsv.views.settings.advanced({_jsv: true}); // For using cbBindings store
 
 	// =============================== Arrange ===============================
 
@@ -12129,7 +12146,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 		objB: {propB1: "valb1", propB2: "valb2"}
 	};
 
-	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
+	jsv.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
 		+ '{{else objB}}{^{:key}}:{^{:prop}},'
 		+ '{{else}}'
 			+ 'NONE'
@@ -12139,7 +12156,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).setProperty("propA2", "valA2");
+	jsv.observable(root.objA).setProperty("propA2", "valA2");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12148,7 +12165,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objA).removeProperty("propA1").removeProperty("propA2");
+	jsv.observable(root.objA).removeProperty("propA1").removeProperty("propA2");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12157,7 +12174,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objB).removeProperty("propB1").removeProperty("propB2");
+	jsv.observable(root.objB).removeProperty("propB1").removeProperty("propB2");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12166,7 +12183,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objB).removeProperty("NotAProperty");
+	jsv.observable(root.objB).removeProperty("NotAProperty");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12175,7 +12192,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(root.objB).setProperty("newProp", "");
+	jsv.observable(root.objB).setProperty("newProp", "");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12196,7 +12213,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 		objB: {propB1: "valb1", propB2: "valb2"}
 	};
 
-	$.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
+	jsv.templates('{^{props objA}}{^{:key}}:{^{:prop}},'
 			+ '<button class="removePropA" data-link="{on ~remove}">remove</button>,'
 		+ '{{else objB}}{^{:key}}:{^{:prop}},'
 			+ '<button class="removePropB" data-link="{on ~remove}">remove</button>,'
@@ -12209,7 +12226,7 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 				var view = eventArgs.view,
 					arr = view.get("array").data,
 					index = view.index;
-				$.observable(arr).remove(index);
+				jsv.observable(arr).remove(index);
 			}
 		});
 
@@ -12238,18 +12255,18 @@ QUnit.test("{^{props}}...{{else}} ...", function(assert) {
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 		"{^{props}} dataMap bindings all removed when tag disposed (content removed from DOM)");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("{^{props start end sort filter reverse}}...{{else}} ...", function(assert) {
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 	var movies = {keyf: {title: "a0"}, keye: {title: "x0"}, keyd: {title: "b0"}, keyc: {title: "y0"}, keyb: {title: "c0"}, keya: {title: "z0"}},
 		ctx = {},
 		cnt = 0;
 
-$.templates(
+jsv.templates(
 '|All:--- {^{props movies}}{{:key}}:{{:prop.title}}  {{/props}}<br/>\
 |Sort:-- {^{props movies sort="prop.title" reverse=true}}{{:prop.title}} {{/props}}<br/>\
 |Filter: {^{props movies sort="prop.title" reverse=true filter=~odd}}{{:prop.title}} {{/props}}<br/>\
@@ -12274,7 +12291,7 @@ $.templates(
 	'{{props}} with Sorting, filtering, reverse, start and end settings');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(newProp("t" + cnt));
+	jsv.observable(tgt).insert(newProp("t" + cnt));
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12289,7 +12306,7 @@ $.templates(
 	'To refresh, sort, slice etc with new item included, call tag.refresh() ');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(0, newProp("t" + cnt));
+	jsv.observable(tgt).insert(0, newProp("t" + cnt));
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12297,7 +12314,7 @@ $.templates(
 	'Insertion of item in target array (sorted, filtered etc) - item is rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).setProperty("key" + cnt++, {title: "m" + cnt});
+	jsv.observable(movies).setProperty("key" + cnt++, {title: "m" + cnt});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12306,7 +12323,7 @@ $.templates(
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(1, [newProp("t" + cnt), newProp("t" + cnt)]);
+	jsv.observable(tgt).insert(1, [newProp("t" + cnt), newProp("t" + cnt)]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12314,7 +12331,7 @@ $.templates(
 	'Insertion of multiple items in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).refresh([tgt[1], newProp("t" + cnt), tgt[0]]);
+	jsv.observable(tgt).refresh([tgt[1], newProp("t" + cnt), tgt[0]]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12322,7 +12339,7 @@ $.templates(
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).remove();
+	jsv.observable(tgt).remove();
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12330,7 +12347,7 @@ $.templates(
 	'Removing item in target array (sorted, filtered etc) - items are rendered without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).removeProperty("keyf");
+	jsv.observable(movies).removeProperty("keyf");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12338,7 +12355,7 @@ $.templates(
 	'Removal of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).move(0, 1);
+	jsv.observable(tgt).move(0, 1);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12346,7 +12363,7 @@ $.templates(
 	'Moving items in target array (sorted, filtered etc) - items are moved in target but not in source, and this is without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).refresh([newProp("t" + cnt)]);
+	jsv.observable(tgt).refresh([newProp("t" + cnt)]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12354,7 +12371,7 @@ $.templates(
 	'Calling refresh() on target array will insert and remove items appropriately from source array and target array (and move items in target array) without refreshing sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(movies).setProperty("key" + cnt++, {title: "m" + cnt});
+	jsv.observable(movies).setProperty("key" + cnt++, {title: "m" + cnt});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12362,7 +12379,7 @@ $.templates(
 	'Insertion of item in source array will also refresh sort, filter etc.');
 
 	// ................................ Act ..................................
-	$.observable(tgt).insert(1, [newProp("t" + cnt), newProp("t" + cnt)]);
+	jsv.observable(tgt).insert(1, [newProp("t" + cnt), newProp("t" + cnt)]);
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -12375,24 +12392,24 @@ $.templates(
 	assert.equal(JSON.stringify(_jsv.cbBindings), "{}",
 	"Bindings all removed when content removed from DOM");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test('data-link="{on ...', function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 
 	function swap(ev, eventArgs) {
-		$.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
+		jsv.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
 	}
 	var thing = {
 		type: "shape",
 		swap: swap
 	};
 
-	$.templates('<div data-link="{on swap}">{^{:type}}</div>')
+	jsv.templates('<div data-link="{on swap}">{^{:type}}</div>')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -12411,7 +12428,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~swap}">{^{:type}}</div>')
+	jsv.templates('<div data-link="{on ~swap}">{^{:type}}</div>')
 		.link("#result", thing, {swap: swap});
 
 	// ................................ Act ..................................
@@ -12430,12 +12447,12 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~util.swap}">{^{:type}} {^{:check}}</div>')
+	jsv.templates('<div data-link="{on ~util.swap}">{^{:type}} {^{:check}}</div>')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(this.data).setProperty({
+						jsv.observable(this.data).setProperty({
 							type: this.data.type === "shape" ? "line" : "shape",
 							check: this.data === eventArgs.view.data
 						});
@@ -12461,7 +12478,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~util.swap context=#data}">{^{:type}}</div>')
+	jsv.templates('<div data-link="{on ~util.swap context=#data}">{^{:type}}</div>')
 		.link("#result", thing, {
 			util:
 				{
@@ -12485,12 +12502,12 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~util.swap context=~util.swapCtx}">{^{:type}} {^{:check}}</div>')
+	jsv.templates('<div data-link="{on ~util.swap context=~util.swapCtx}">{^{:type}} {^{:check}}</div>')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(this.data).setProperty({
+						jsv.observable(this.data).setProperty({
 							type: this.data.type === "shape" ? "line" : "shape",
 							check: this.data === eventArgs.view.data
 						});
@@ -12519,12 +12536,12 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~util.swap data=#data}">{^{:type}} {^{:check}}</div>')
+	jsv.templates('<div data-link="{on ~util.swap data=#data}">{^{:type}} {^{:check}}</div>')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(ev.data).setProperty({
+						jsv.observable(ev.data).setProperty({
 							type: ev.data.type === "shape" ? "line" : "shape",
 							check: ev.data === eventArgs.view.data
 						});
@@ -12553,7 +12570,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on \'mouseup mousedown blur\' swap}">{^{:type}}</div>')
+	jsv.templates('<div data-link="{on \'mouseup mousedown blur\' swap}">{^{:type}}</div>')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -12579,7 +12596,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('<div data-link="{on ~util[0].swap context=~util[0].data}">{^{:type}} </div>')
+	jsv.templates('<div data-link="{on ~util[0].swap context=~util[0].data}">{^{:type}} </div>')
 		.link("#result", thing, {
 			util:
 				[{
@@ -12606,7 +12623,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 
 	// =============================== Arrange ===============================
 	var res = "1: ";
-	$.templates(
+	jsv.templates(
 		"<div id=\"divForOn\" data-link=\"{on 'keyup keydown' '.inputA' unbind} {on 'mousedown' '#inputB' refresh} {on 'keyup' '#inputB' unbind} {on 'mouseup' 'input' test}\">"
 			+ "<input class='inputA'/>"
 			+ "<input id='inputB' />"
@@ -12688,7 +12705,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 	"Removing the element removes all associated attached {on } handlers");
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates("<div id=\"cont\" data-link=\"{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}\">\
+	var tmpl = jsv.templates("<div id=\"cont\" data-link=\"{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}\">\
 	<button id='doIt'>Do it</button>\
 	<span data-link='res'></span>\
 </div>"),
@@ -12705,7 +12722,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 				}
 			},
 			process: function(role, text, isFoo, amount, allow, extraParam) {
-				$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
+				jsv.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
 			},
 			res: ""
 		};
@@ -12715,7 +12732,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 	// ................................ Act ..................................
 	$("#doIt").click();
 	data.option.allow = false;
-	$.observable(data).setProperty("role", "Follower");
+	jsv.observable(data).setProperty("role", "Follower");
 	$("#doIt").click();
 
 	// ............................... Assert .................................
@@ -12729,7 +12746,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 			+ "<input id='inputB' />"
 		+ "</div>");
 
-	$.link(true, "#result", {
+	jsv.link(true, "#result", {
 		unbind: function(ev, eventArgs) {
 			res += "unbind ";
 			eventArgs.linkCtx.tag.onUnbind();
@@ -12822,17 +12839,17 @@ QUnit.test('data-link="{on ...', function(assert) {
 			}
 		},
 		process: function(role, text, isFoo, amount, allow, extraParam) {
-			$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
+			jsv.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
 		},
 		res: ""
 	};
 
-	$.link(true, "#result", data);
+	jsv.link(true, "#result", data);
 
 	// ................................ Act ..................................
 	$("#doIt").click();
 	data.option.allow = false;
-	$.observable(data).setProperty("role", "Follower");
+	jsv.observable(data).setProperty("role", "Follower");
 	$("#doIt").click();
 
 	// ............................... Assert .................................
@@ -12856,7 +12873,7 @@ QUnit.test('data-link="{on ...', function(assert) {
 	};
 	$("#result").html("<div id=\"linkTgt\" data-link=\"{:name} {on 'click' refresh} {on 'mousedown mouseup' test}\" >oldcontent</div>");
 
-	$.link(true, "#linkTgt", data);
+	jsv.link(true, "#linkTgt", data);
 
 	events = $._data($("#linkTgt")[0]).events;
 
@@ -12881,32 +12898,32 @@ QUnit.test('data-link="{on ...', function(assert) {
 	// ............................... Assert .................................
 	assert.equal(res,
 	"1: test 2: test 3: refresh 4: test 5: test 6: refresh ",
-	'$.link(true, "#linkTgt", data): top-level linking to element (not container) links correctly, including \'{on }\' bindings');
+	'jsv.link(true, "#linkTgt", data): top-level linking to element (not container) links correctly, including \'{on }\' bindings');
 
 	// ............................... Assert .................................
 	eventBindings = "" + events.mouseup.length + events.mousedown.length + events.click.length;
 
 	assert.equal(eventBindings,
 	"111",
-	'$.link(true, "#linkTgt", data): top-level linking to element (not container) adds {on } binding handlers correctly - including calling refresh() on {on } tag');
+	'jsv.link(true, "#linkTgt", data): top-level linking to element (not container) adds {on } binding handlers correctly - including calling refresh() on {on } tag');
 
 	// ................................ Act ..................................
-	$.unlink("#linkTgt");
+	jsv.unlink("#linkTgt");
 
 	// ............................... Assert .................................
 	eventBindings = "" + events.mouseup + events.mousedown + events.click + JSON.stringify([_jsv.cbBindings, _jsv.bindings]);
 
 	assert.equal(eventBindings,
 	"undefinedundefinedundefined[{},{}]",
-	'$.unlink("#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
+	'jsv.unlink("#linkTgt"): directly on top-level data-linked element (not through container) removes all \'{on }\' handlers');
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test('{^{radiogroup}}', function(assert) {
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 		'{^{radiogroup selected}}'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" value="{{:name}}"/>:{{:name}}</label>'
@@ -12928,15 +12945,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -12952,7 +12969,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 		'{^{radiogroup selected}}'
 		+ '<label><input type="radio" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -12974,15 +12991,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -12995,7 +13012,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 		'{^{radiogroup selected}}...<input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13010,7 +13027,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({markup:
+	tmpl = jsv.templates({markup:
 		'{^{radiogroup selected convert=~lower convertBack="upper" linkTo=selectedOut}}'
 		+ '<label><input type="radio" value="none"/>:none</label>'
 		+ '{^{for people}}'
@@ -13041,15 +13058,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13062,7 +13079,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 		'{^{radiogroup selected convert=... convertBack=... linkTo=...}}');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13077,7 +13094,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{radiogroup selected}}'
 		+ '<input type="radio" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
 		+ '{^{for people}}'
@@ -13099,15 +13116,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -13120,7 +13137,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 		'{^{radiogroup selected}} with labels by for/id');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13135,7 +13152,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{radiogroup selected}}'
 		+ '<label><input type="radio" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -13163,15 +13180,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13184,7 +13201,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 		'{^{radiogroup selected}} - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13199,7 +13216,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{radiogroup selected}}'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -13223,15 +13240,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13247,7 +13264,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{radiogroup selected name="rad1"}}'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -13271,15 +13288,15 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13292,7 +13309,7 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 		'{^{radiogroup selected}} - name for group can be specified rather than auto-generated - on item or on radiogroup tag');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 '{^{if rg1}}'
 	+ '{^{radiogroup selected name="rad1"}}'
 		+ '{^{for people}}'
@@ -13323,11 +13340,11 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13335,17 +13352,17 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	assert.equal(res, ">:NONE||:BOB:JIM:NEWNAME:NONE:BOB:JIM:NEWNAME|:JIM:JIM|:NEWNAME:NEWNAME|",
 		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - starting out with no items');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("rg1", false);
+	jsv.observable(model).setProperty("rg1", false);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13353,19 +13370,19 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEWNAME|:NEWNAME|:NEWNAME|",
 		'{^{radiogroup selected}} - two radiogroups wrapped in {{if}} blocks - one set to false');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("selected", "Jim");
+	jsv.observable(model).setProperty("selected", "Jim");
 
-	$.observable(model).setProperty("rg1", true);
+	jsv.observable(model).setProperty("rg1", true);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13379,10 +13396,10 @@ QUnit.test('{^{radiogroup}}', function(assert) {
 });
 
 QUnit.test('{^{checkboxgroup}}', function(assert) {
-	$.views.settings.advanced({_jsv: true});
+	jsv.views.settings.advanced({_jsv: true});
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople}}'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" value="{{:name}}"/>:{{:name}}</label>'
@@ -13404,15 +13421,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selectedPeople", [newName, "Jim"]);
+	jsv.observable(model).setProperty("selectedPeople", [newName, "Jim"]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13420,11 +13437,11 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.selectedPeople).remove();
+	jsv.observable(model.selectedPeople).remove();
 
 	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({name: "new"});
+	jsv.observable(model.people).insert({name: "new"});
 
 	res += model.selectedPeople + "-" + $("#result input:checked").parent().text() + "|";
 
@@ -13436,7 +13453,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople}}'
 		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -13458,15 +13475,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selectedPeople", [newName, "Bob"]);
+	jsv.observable(model).setProperty("selectedPeople", [newName, "Bob"]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13479,7 +13496,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 		'{^{checkboxgroup selectedPeople}}...<input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13494,7 +13511,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({markup:
+	tmpl = jsv.templates({markup:
 		'{^{checkboxgroup selectedPeople convert=~lower convertBack="upper" linkTo=selectedOut}}'
 		+ '<label><input type="checkbox" value="none"/>:none</label>'
 		+ '{^{for people}}'
@@ -13525,15 +13542,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13542,11 +13559,11 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	res += model.selectedPeople + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
 	// ............................... Assert .................................
-	assert.equal(res, ":jim|:new||new-NEW,NONE-:none|",
+	assert.equal(res, ":jim|:new||new-NONE-:none|",
 		'{^{checkboxgroup selectedPeople convert=... convertBack=... linkTo=...}}');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13554,14 +13571,14 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res += model.selectedPeople + "-" + model.selectedOut + "-" + $("#result input:checked").parent().text() + "|";
 
-	assert.equal(res, ":none:bob:jimUpdated|new-NEW,JIMUPDATED-:none:jimUpdated|",
+	assert.equal(res, ":none:bob:jimUpdated|new-NONE,JIMUPDATED-:none:jimUpdated|",
 		'{^{checkboxgroup selectedPeople convert=... convertBack=... linkTo=...}} - updated label and value');
 
 	// ................................ Reset ................................
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople}}'
 		+ '<input type="checkbox" value="None" id="noneId"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
 		+ '{^{for people}}'
@@ -13583,15 +13600,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -13604,7 +13621,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 		'{^{checkboxgroup selectedPeople}} with labels by for/id');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13619,7 +13636,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople}}'
 		+ '<label><input type="checkbox" value="None"/>:NONE</label>'
 		+ '{^{for people}}'
@@ -13647,15 +13664,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13668,7 +13685,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups with same selectedPeople bindings');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13683,7 +13700,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople}}'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -13707,15 +13724,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13731,7 +13748,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{checkboxgroup selectedPeople name="rad1"}}'
 		+ '{^{for people}}'
 			+ '<label><input type="checkbox" data-link="value{:name}"/>:{^{:name^toUpperCase()}}</label>'
@@ -13755,15 +13772,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13776,7 +13793,7 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 		'{^{checkboxgroup selectedPeople}} - name for group can be specified rather than auto-generated - on item or on checkboxgroup tag');
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 '{^{if rg1}}'
 	+ '{^{checkboxgroup selectedPeople name="rad1"}}'
 		+ '{^{for people}}'
@@ -13807,11 +13824,11 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13819,17 +13836,17 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	assert.equal(res, ">:NONE||:BOB:JIM:NEW:NONE:BOB:JIM:NEW|:JIM:JIM|:NEW:NEW|",
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - starting out with no items');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("rg1", false);
+	jsv.observable(model).setProperty("rg1", false);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13837,19 +13854,19 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 	assert.equal(res, ">:NONE||:NONE:BOB:JIM:NEW|:NEW|:NEW|",
 		'{^{checkboxgroup selectedPeople}} - two checkboxgroups wrapped in {{if}} blocks - one set to false');
 
-	$.observable(model.people).refresh([]);
+	jsv.observable(model.people).refresh([]);
 
-	$.observable(model).setProperty("selectedPeople", ["Jim"]);
+	jsv.observable(model).setProperty("selectedPeople", ["Jim"]);
 
-	$.observable(model).setProperty("rg1", true);
+	jsv.observable(model).setProperty("rg1", true);
 
 	res = ">" + $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: newName}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selectedPeople", [newName]);
+	jsv.observable(model).setProperty("selectedPeople", [newName]);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13859,15 +13876,15 @@ QUnit.test('{^{checkboxgroup}}', function(assert) {
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	assert.equal(JSON.stringify(_jsv.cbBindings), "{}", "WHAT");
-	$.views.settings.advanced({_jsv: false});
+	assert.equal(JSON.stringify(_jsv.cbBindings), "{}", "All bindings removed when content removed from DOM");
+	jsv.views.settings.advanced({_jsv: false});
 
 });
 
 QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 		'{^{for people}}'
 		+ '<label><input type="radio" value="{{:name}}" name="rad1" data-link="~root.selected" />:{{:name}}</label>'
 	+ '{{/for}}'
@@ -13887,15 +13904,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13911,7 +13928,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 			'<label><input type="radio" name="rad1" value="None" data-link="selected"/>:NONE</label>'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
@@ -13931,15 +13948,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -13952,7 +13969,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 		'<input.../>...{^{for ...}}...<input ... data-link="name">');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -13967,7 +13984,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({markup:
+	tmpl = jsv.templates({markup:
 		'<label><input type="radio" name="rad1" value="none" data-link="selected convert=~lower convertBack=\'upper\' linkTo=selectedOut"/>:none</label>'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected convert=~lower convertBack=\'upper\' linkTo=~root.selectedOut:}"/>:{^{:name}}</label>'
@@ -13996,15 +14013,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -14017,7 +14034,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 		'data-link="{:select convert=... convertBack=... linkTo=...:}"');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -14032,7 +14049,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<input type="radio" name="rad1" value="None" id="noneId" data-link="selected"/>:<label for "noneId" id="noneIdLbl">NONE</label>'
 		+ '{^{for people}}'
 			+ '<input type="radio" name="rad1" data-link="value{:name} id{:name + \'Id\'} {:~root.selected:}"/>:<label data-link="for{:name + \'Id\'} id{:name + \'IdLbl\'}{:name^toUpperCase()}"></label>'
@@ -14052,15 +14069,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#" + $("#result input:checked").prop("id") + "Lbl").text() + "|";
 
@@ -14073,7 +14090,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 		'data-link="selected" with labels by for/id');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -14088,7 +14105,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'<label><input type="radio" name="rad1" value="None" data-link="selected"/>:NONE</label>'
 		+ '{^{for people}}'
 			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
@@ -14112,15 +14129,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: newName
 	});
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -14133,7 +14150,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 		'data-link="selected" - two radiogroups with same selected bindings');
 
 	// ............................... Act .................................
-	$.observable(model.people[1]).setProperty("name", "jimUpdated");
+	jsv.observable(model.people[1]).setProperty("name", "jimUpdated");
 
 	res = $("#result").text() + "|";
 
@@ -14148,7 +14165,7 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 		'{^{for people}}'
 			+ '<label><input type="radio" name="rad1" data-link="value{:name} {:~root.selected:}"/>:{^{:name^toUpperCase()}}</label>'
 		+ '{{/for}}'
@@ -14168,15 +14185,15 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 	res = $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
+	jsv.observable(model.people).insert([{name: "Bob"},{name: "Jim"},{name: "newName"}]);
 
 	res += $("#result").text() + "|" + $("#result input:checked").parent().text() + "|";
 
-	$.observable(model).setProperty("selected", newName);
+	jsv.observable(model).setProperty("selected", newName);
 
 	res += $("#result input:checked").parent().text() + "|";
 
-	$.observable(model.people).remove(2);
+	jsv.observable(model.people).remove(2);
 
 	res += $("#result input:checked").parent().text() + "|";
 
@@ -14195,19 +14212,19 @@ QUnit.test('radio buttons without {{radiogroup}}', function(assert) {
 
 QUnit.test('{^{on}}', function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 
 	function swap(ev, eventArgs) {
-		$.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
+		jsv.observable(this).setProperty("type", this.type === "shape" ? "line" : "shape");
 	}
 	var thing = {
 		type: "shape",
 		swap: swap
 	};
 
-	$.templates('{^{on swap/}} {^{:type}}')
+	jsv.templates('{^{on swap/}} {^{:type}}')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -14226,7 +14243,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on missingMethod/}} {^{:type}}')
+	jsv.templates('{^{on missingMethod/}} {^{:type}}')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -14245,7 +14262,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var tmpla = $.templates('{^{on swap}} clickme {{/on}} {^{:type}}');
+	var tmpla = jsv.templates('{^{on swap}} clickme {{/on}} {^{:type}}');
 
 	tmpla.link("#result", thing);
 
@@ -14265,7 +14282,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on swap tmpl=~label}} clickme {{/on}} {^{:type}}')
+	jsv.templates('{^{on swap tmpl=~label}} clickme {{/on}} {^{:type}}')
 		.link("#result", thing, {label: "clickagain"});
 
 	// ................................ Act ..................................
@@ -14284,7 +14301,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on swap}}<span>clickme</span>{{/on}} {^{:type}}')
+	jsv.templates('{^{on swap}}<span>clickme</span>{{/on}} {^{:type}}')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -14303,7 +14320,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on ~swap/}} {^{:type}}')
+	jsv.templates('{^{on ~swap/}} {^{:type}}')
 		.link("#result", thing, {swap: swap});
 
 	// ................................ Act ..................................
@@ -14322,12 +14339,12 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on ~util.swap/}} {^{:type}} {^{:check}}')
+	jsv.templates('{^{on ~util.swap/}} {^{:type}} {^{:check}}')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(this.data).setProperty({
+						jsv.observable(this.data).setProperty({
 							type: this.data.type === "shape" ? "line" : "shape",
 							check: this.data === eventArgs.view.data
 						});
@@ -14353,7 +14370,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on ~util.swap context=#data/}} {^{:type}}')
+	jsv.templates('{^{on ~util.swap context=#data/}} {^{:type}}')
 		.link("#result", thing, {
 			util:
 				{
@@ -14377,12 +14394,12 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on ~util.swap context=~util.swapCtx/}} {^{:type}} {^{:check}}')
+	jsv.templates('{^{on ~util.swap context=~util.swapCtx/}} {^{:type}} {^{:check}}')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(this.data).setProperty({
+						jsv.observable(this.data).setProperty({
 							type: this.data.type === "shape" ? "line" : "shape",
 							check: this.data === eventArgs.view.data
 						});
@@ -14411,12 +14428,12 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on ~util.swap data=#data/}} {^{:type}} {^{:check}}')
+	jsv.templates('{^{on ~util.swap data=#data/}} {^{:type}} {^{:check}}')
 		.link("#result", thing, {
 			util:
 				{
 					swap: function(ev, eventArgs) {
-						$.observable(ev.data).setProperty({
+						jsv.observable(ev.data).setProperty({
 							type: ev.data.type === "shape" ? "line" : "shape",
 							check: ev.data === eventArgs.view.data
 						});
@@ -14445,7 +14462,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{on \'mouseup mousedown blur\' swap/}} {^{:type}}')
+	jsv.templates('{^{on \'mouseup mousedown blur\' swap/}} {^{:type}}')
 		.link("#result", thing);
 
 	// ................................ Act ..................................
@@ -14469,7 +14486,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 	var res = "1: ";
-	$.templates(
+	jsv.templates(
 		"<div id=\"divForOn\">{^{on 'keyup keydown' '.inputA' unbind}}{^{on 'keyup' '#inputB' unbind}}{^{on 'mouseup' 'input' test}}{^{on 'mousedown' '#inputB' refresh}}\">"
 			+ "<input class='inputA'/>"
 			+ "<input id='inputB' />"
@@ -14551,7 +14568,7 @@ QUnit.test('{^{on}}', function(assert) {
 	"Removing the element removes all associated attached {on } handlers");
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates("{^{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}}\
+	var tmpl = jsv.templates("{^{on 'click' '#doIt' 754 thisIsTheMethod role 'hey' true process data=option 33 #data context=option}}\
 	<button id='doIt'>Do it</button>\
 	<span data-link='res'></span>\
 {{/on}}"),
@@ -14568,7 +14585,7 @@ QUnit.test('{^{on}}', function(assert) {
 				}
 			},
 			process: function(role, text, isFoo, amount, allow, extraParam) {
-				$.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
+				jsv.observable(this).setProperty("res", this.res + role + text + isFoo + amount + " allow:" + allow + " extraParam: " + extraParam + "|");
 			},
 			res: ""
 		};
@@ -14578,7 +14595,7 @@ QUnit.test('{^{on}}', function(assert) {
 	// ................................ Act ..................................
 	$("#doIt").click();
 	data.option.allow = false;
-	$.observable(data).setProperty("role", "Follower");
+	jsv.observable(data).setProperty("role", "Follower");
 	$("#doIt").click();
 
 	// ............................... Assert .................................
@@ -14590,7 +14607,7 @@ QUnit.test('{^{on}}', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates("{^{on doit id='doIt' class='red' width='100' height='100'/}}"),
+	var tmpl = jsv.templates("{^{on doit id='doIt' class='red' width='100' height='100'/}}"),
 		res = "",
 		data = {
 			name: "Jo",
@@ -14612,7 +14629,7 @@ QUnit.test('{^{on}}', function(assert) {
 	// ................................ Act ..................................
 	$("#result").empty();
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test('data-link="{tag...} and {^{tag}} in same template"', function(assert) {
@@ -14624,17 +14641,17 @@ if (assert.async) { done = assert.async() } else { stop() }
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
-	$.templates('{^{tmplTag/}}-{^{:lastName}} <span data-link="{tmplTag}"></span>-<span data-link="lastName"></span><input data-link="lastName"/>')
+	jsv.templates('{^{tmplTag/}}-{^{:lastName}} <span data-link="{tmplTag}"></span>-<span data-link="lastName"></span><input data-link="lastName"/>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#result input").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
 	after = $("#result").text() + $("#result input").val();
 
 	// ............................... Assert .................................
@@ -14651,14 +14668,14 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+	jsv.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
@@ -14684,7 +14701,7 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events && !$._data(settings).events,
 	"$(container).empty removes the views and current listeners from that content");
 
 	// ................................ Reset ................................
@@ -14695,26 +14712,26 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+	jsv.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
 	res = 'prop:OneOne computed:Mr Jo OneMr Jo One Tag:Name: Mr Jo. Width: 30Name: Mr Jo. Width: 30OneMr Jo One|prop:compLastcompLast computed:Sir compFirst compLastSir compFirst compLast Tag:Name: Sir compFirst. Width: 40Name: Sir compFirst. Width: 40compLastSir compFirst compLast';
 
 	// ................................ Act ..................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// ............................... Assert .................................
 
-	assert.ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
-	"$.unlink(container) removes the views and current listeners from that content");
+	assert.ok(before + "|" + after === res && !viewsAndBindings($) && !$._data(person1).events && !$._data(settings).events,
+	"jsv.unlink(container) removes the views and current listeners from that content");
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -14724,7 +14741,7 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+	jsv.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
@@ -14732,33 +14749,33 @@ setTimeout(function() {
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
+	assert.ok(!viewsAndBindings($) && !$._data(person1).events && !$._data(settings).events,
 	"$(container).unlink() removes the views and current listeners from that content");
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+	jsv.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
 	res = 'prop:OneOne computed:Mr Jo OneMr Jo One Tag:Name: Mr Jo. Width: 30Name: Mr Jo. Width: 30OneMr Jo One|prop:compLastcompLast computed:Sir compFirst compLastSir compFirst compLast Tag:Name: Sir compFirst. Width: 40Name: Sir compFirst. Width: 40compLastSir compFirst compLast';
 
 	// ................................ Act ..................................
-	viewContent = viewsAndBindings();
+	viewContent = viewsAndBindings($);
 
-	$.unobserve(person1, "*", settings, "*");
+	jsv.unobserve(person1, "*", settings, "*");
 
 	// ............................... Assert .................................
 
-	assert.ok(before + "|" + after === res && viewContent === viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
-	'$.unobserve(person1, "*", settings, "*") removes the current listeners from that content, but leaves the views');
+	assert.ok(before + "|" + after === res && viewContent === viewsAndBindings($) && !$._data(person1).events && !$._data(settings).events,
+	'jsv.unobserve(person1, "*", settings, "*") removes the current listeners from that content, but leaves the views');
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
@@ -14768,33 +14785,33 @@ setTimeout(function() {
 
 	// =============================== Arrange ===============================
 
-	$.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
+	jsv.templates('prop:{^{:lastName}}<span data-link="lastName"></span><input id="last" data-link="lastName"/> computed:{^{:fullName()}}<span data-link="fullName()"></span><input id="full" data-link="fullName()"/> Tag:{^{tmplTag/}}<span data-link="{tmplTag}"></span>')
 		.link("#result", person1);
 
 	// ................................ Act ..................................
 	before = $("#result").text() + $("#last").val() + $("#full").val();
-	$.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
-	$.observable(settings).setProperty({title: "Sir", width: 40});
-	$.observable(person1).setProperty({fullName: "compFirst compLast"});
+	jsv.observable(person1).setProperty({firstName: "newFirst", lastName: "newLast"});
+	jsv.observable(settings).setProperty({title: "Sir", width: 40});
+	jsv.observable(person1).setProperty({fullName: "compFirst compLast"});
 	after = $("#result").text() + $("#last").val() + $("#full").val();
 
 	// ............................... Assert .................................
 	res = 'prop:OneOne computed:Mr Jo OneMr Jo One Tag:Name: Mr Jo. Width: 30Name: Mr Jo. Width: 30OneMr Jo One|prop:compLastcompLast computed:Sir compFirst compLastSir compFirst compLast Tag:Name: Sir compFirst. Width: 40Name: Sir compFirst. Width: 40compLastSir compFirst compLast';
 
 	// ................................ Act ..................................
-	$.unlink();
+	jsv.unlink();
 
 	// ............................... Assert .................................
 
-	assert.ok(before + "|" + after === res && !viewsAndBindings() && !$._data(person1).events && !$._data(settings).events,
-	'$.unlink() removes all views and listeners from the page');
+	assert.ok(before + "|" + after === res && !viewsAndBindings($) && !$._data(person1).events && !$._data(settings).events,
+	'jsv.unlink() removes all views and listeners from the page');
 
 	// ................................ Reset ................................
 	person1._firstName = "Jo"; // reset Prop
 	person1.lastName = "One"; // reset Prop
 	settings.title = "Mr"; // reset Prop
 	settings.width = 30; // reset Prop
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 	// TODO ADDITIONAL TESTS:
 	// 1: link(null, data) to link whole document
 
@@ -14805,11 +14822,11 @@ setTimeout(function() {
 
 QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onError = 'fallback'}}, etc.", function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using viewsAndBindings()
+	jsv.views.settings.advanced({_jsv: true}); // For using viewsAndBindings($)
 
 	// =============================== Arrange ===============================
 
-	$.views.tags({
+	jsv.views.tags({
 		mytag1: function(val) {return val + " from my tag1"; },
 		mytag2: {
 			template: "{{:}} from my tag2"
@@ -14823,7 +14840,7 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	var initial = {a: {b: null}},
 		updated = {c: {val: 'leaf'}};
 
-	$.templates(
+	jsv.templates(
 		"{^{:a.b^c.val onError=~error + 'A '}} "
 		+ "{^{upper:a.b^c.val onError=~error + 'B '}} "
 		+ "{^{>a.b^c.val onError=~error + 'C '}} "
@@ -14840,13 +14857,13 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 
 	before = "" + $._data(initial.a).events.propertyChange.length + " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
 		+ $("#result").text() + "|";
-	$.observable(initial.a).setProperty('b', updated);
+	jsv.observable(initial.a).setProperty('b', updated);
 	after = $("#result").text() + "|";
-	$.observable(initial.a.b.c).setProperty('val', "leaf2");
+	jsv.observable(initial.a.b.c).setProperty('val', "leaf2");
 	after += $("#result").text() + "|";
-	$.observable(initial.a.b).setProperty('c', {val: "leaf3"});
+	jsv.observable(initial.a.b).setProperty('c', {val: "leaf3"});
 	after += $("#result").text() + "|";
-	$.observable(initial.a).setProperty('b', {c: {val: "leaf4"}});
+	jsv.observable(initial.a).setProperty('b', {c: {val: "leaf4"}});
 	after += $("#result").text() + "|";
 	after += "" + $._data(initial.a).events.propertyChange.length + " " + $._data(initial.a.b).events.propertyChange.length + " " + $._data(initial.a.b.c).events.propertyChange.length
 		+ " " + !$._data(updated).events + " " + !$._data(updated.c).events + "|"
@@ -14854,11 +14871,11 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 
 	var prevB = initial.a.b;
 
-	$.observable(initial.a).setProperty('b', null);
+	jsv.observable(initial.a).setProperty('b', null);
 	after += "" + $._data(initial.a).events.propertyChange.length + " " + !$._data(prevB).events + " " + !$._data(prevB.c).events + "|"
 		+ $("#result").text() + "|";
 
-	$.observable(initial.a).setProperty('b', updated);
+	jsv.observable(initial.a).setProperty('b', updated);
 
 	after += $("#result").text() + "|";
 
@@ -14878,12 +14895,12 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	"deep linking in templates, using onError - correctly re-link to data when missing objects are dynamically replaced");
 
 	// ................................ Act ..................................
-	$.unlink();
+	jsv.unlink();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(initial.a).events && !$._data(initial.a.b).events,
-	'$.unlink() removes all views and listeners from the page');
+	assert.ok(!viewsAndBindings($) && !$._data(initial.a).events && !$._data(initial.a.b).events,
+	'jsv.unlink() removes all views and listeners from the page');
 
 	// =============================== Arrange ===============================
 
@@ -14902,7 +14919,7 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 
 	initial = new Item("string1", "A");
 
-	$.templates(
+	jsv.templates(
 		"{^{:value() onError='error1'}} {^{:title}} "
 		+ "{^{:value()^value() onError='error2'}} {^{:value()^title onError='error2b'}} "
 		+ "{^{:value()^value().value() onError='error3'}} {^{:value()^value().title onError='error3b'}} "
@@ -14912,15 +14929,15 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	var B, C, D, a, b, c, d, e;
 
 	before = $("#result").text() + "|";
-	$.observable(initial).setProperty('value', B = new Item("string2", "B"));
+	jsv.observable(initial).setProperty('value', B = new Item("string2", "B"));
 	after = $("#result").text() + "|";
-	$.observable(initial.value()).setProperty('value', C = new Item("string3", "C"));
+	jsv.observable(initial.value()).setProperty('value', C = new Item("string3", "C"));
 	after += $("#result").text() + "|";
-	$.observable(initial.value().value()).setProperty('value', D = new Item("string4", "D"));
+	jsv.observable(initial.value().value()).setProperty('value', D = new Item("string4", "D"));
 	after += $("#result").text() + "|";
-	$.observable(initial).removeProperty('value');
+	jsv.observable(initial).removeProperty('value');
 	after += $("#result").text() + "|";
-	$.observable(initial).setProperty('value', a = new Item(b = new Item(c = new Item(d = new Item(e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
+	jsv.observable(initial).setProperty('value', a = new Item(b = new Item(c = new Item(d = new Item(e = new Item("string4", "e"), "d"), "c"), "b"), "a"));
 	after += $("#result").text() + "|";
 
 	assert.equal(before + after,
@@ -14934,14 +14951,14 @@ QUnit.test("Fallbacks for missing or undefined paths: using {^{:some.path onErro
 	"deep linking in templates, using onError - correctly re-link to data when missing objects are dynamically replaced");
 
 	// ................................ Act ..................................
-	$.unlink();
+	jsv.unlink();
 
 	// ............................... Assert .................................
 
-	assert.ok(!viewsAndBindings() && !$._data(initial.value()).events && !$._data(initial.value().value()).events,
-	'$.unlink() removes all views and listeners from the page');
+	assert.ok(!viewsAndBindings($) && !$._data(initial.value()).events && !$._data(initial.value().value()).events,
+	'jsv.unlink() removes all views and listeners from the page');
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("contextual parameter", function(assert) {
@@ -14953,7 +14970,7 @@ QUnit.test("contextual parameter", function(assert) {
 	];
 
 	// ................................ Act ..................................
-	$.templates(
+	jsv.templates(
 		"{{if members.length ~teamTitle=title ~teamData=#data ~teamIndex=#index}}"
 		+ "{{for members itemVar='~member'}}"
 			+ "{{:~teamTitle}} "
@@ -14973,7 +14990,7 @@ QUnit.test("contextual parameter", function(assert) {
 	var ct = 1;
 
 	// ................................ Act ..................................
-	$.templates("{^{include ~f=~hlp('foo') }}{^{:~f}}{{/include}}").link("#result", {}, {
+	jsv.templates("{^{include ~f=~hlp('foo') }}{^{:~f}}{{/include}}").link("#result", {}, {
 		hlp: function() {
 			return ct++;
 		}
@@ -14986,7 +15003,7 @@ QUnit.test("contextual parameter", function(assert) {
 	// See https://github.com/BorisMoore/jsviews/issues/440#issuecomment-660853490
 
 	// ................................ Act ..................................
-	$.templates("{^{if 1 ~a='A'+\"B\"+'\"'+\"'\"+\"\\'\"}}{^{:'Inner'+~a}}{{/if}}").link("#result");
+	jsv.templates("{^{if 1 ~a='A'+\"B\"+'\"'+\"'\"+\"\\'\"}}{^{:'Inner'+~a}}{{/if}}").link("#result");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(),
@@ -15011,7 +15028,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			thickness: "1"
 		}
 	];
-	$.templates('Tag: {^{include ^tmpl=~typeTemplates[type]/}} Elem: <div data-link="{include ^tmpl=~typeTemplates[type]}"></div> ')
+	jsv.templates('Tag: {^{include ^tmpl=~typeTemplates[type]/}} Elem: <div data-link="{include ^tmpl=~typeTemplates[type]}"></div> ')
 		.link("#result", things, {
 			typeTemplates: {
 				shape: "Shape: {^{:form}}\n",
@@ -15022,9 +15039,9 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15048,7 +15065,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			thickness: "1"
 		}
 	];
-	$.templates('Tag: {^{if true ^tmpl=~typeTemplates[type]/}} Elem: <div data-link="{if true ^tmpl=~typeTemplates[type]}"></div> ')
+	jsv.templates('Tag: {^{if true ^tmpl=~typeTemplates[type]/}} Elem: <div data-link="{if true ^tmpl=~typeTemplates[type]}"></div> ')
 		.link("#result", things, {
 			typeTemplates: {
 				shape: "Shape: {^{:form}}\n",
@@ -15059,9 +15076,9 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15085,7 +15102,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			thickness: "1"
 		}
 	];
-	$.templates('Tag: {^{if false}}{{else ^tmpl=~typeTemplates[type]}}{{/if}} Elem: <div data-link="{if false}{else ^tmpl=~typeTemplates[type]}"></div> ')
+	jsv.templates('Tag: {^{if false}}{{else ^tmpl=~typeTemplates[type]}}{{/if}} Elem: <div data-link="{if false}{else ^tmpl=~typeTemplates[type]}"></div> ')
 		.link("#result", things, {
 			typeTemplates: {
 				shape: "Shape: {^{:form}}\n",
@@ -15096,9 +15113,9 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15122,7 +15139,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			thickness: "1"
 		}
 	];
-	$.templates('Tag: {^{for undefined}}{{else ^tmpl=~typeTemplates[type]}}{{/for}} Elem: <div data-link="{for undefined}{else ^tmpl=~typeTemplates[type]}"></div> ')
+	jsv.templates('Tag: {^{for undefined}}{{else ^tmpl=~typeTemplates[type]}}{{/for}} Elem: <div data-link="{for undefined}{else ^tmpl=~typeTemplates[type]}"></div> ')
 		.link("#result", things, {
 			typeTemplates: {
 				shape: "Shape: {^{:form}}\n",
@@ -15133,9 +15150,9 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15159,15 +15176,15 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			thickness: "1"
 		}
 	];
-	$.templates('Bound condition: {^{include ^~condition=type==="shape"}}{{:type}} {{:~condition}} {{/include}}'
+	jsv.templates('Bound condition: {^{include ^~condition=type==="shape"}}{{:type}} {{:~condition}} {{/include}}'
 		+ 'Unbound condition: {^{include ~condition=type==="shape"}}{{:type}} {{:~condition}} {{/include}}')
 		.link("#result", things);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15192,7 +15209,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 		}
 	];
 
-	$.views.tags({
+	jsv.views.tags({
 		updatingTag: {
 		},
 		nonUpdatingTag: {
@@ -15201,15 +15218,15 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 			}
 		}
 	});
-	$.templates('Updating: {^{updatingTag ^condition=type==="shape"}}{{:type}} {^{:~tagCtx.props.condition}} {{/updatingTag}} '
+	jsv.templates('Updating: {^{updatingTag ^condition=type==="shape"}}{{:type}} {^{:~tagCtx.props.condition}} {{/updatingTag}} '
 		+ 'Non updating: {^{nonUpdatingTag ^condition=type==="shape"}}{{:type}} {^{:~tagCtx.props.condition}} {{/nonUpdatingTag}}')
 		.link("#result", things);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
-	$.observable(things[1]).removeProperty("thickness");
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[1]).removeProperty("thickness");
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15222,7 +15239,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 
 	// =============================== Arrange ===============================
 
-	$.templates({
+	jsv.templates({
 		myTmpl: "{{>name}} lead:{^{>~team.lead}} - "
 	});
 
@@ -15235,15 +15252,15 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	};
 
 	// ............................... Act .................................
-	$.templates("<div data-link=\"{for people ~team=#data tmpl='myTmpl'}\"></div>").link("#result", model);
+	jsv.templates("<div data-link=\"{for people ~team=#data tmpl='myTmpl'}\"></div>").link("#result", model);
 
 	res = $("#result").text();
 
-	$.observable(model.people).insert({
+	jsv.observable(model.people).insert({
 		name: "newName"
 	});
 
-	$.observable(model).setProperty("lead", "newName");
+	jsv.observable(model).setProperty("lead", "newName");
 
 	res += "|" + $("#result").text();
 
@@ -15262,19 +15279,19 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	};
 
 	// ............................... Act .................................
-	$.templates('{^{for cols itemVar="~col"}}{^{:~root.sortby === ~col}} {^{:~col}} {{/for}}').link("#result", model);
+	jsv.templates('{^{for cols itemVar="~col"}}{^{:~root.sortby === ~col}} {^{:~col}} {{/for}}').link("#result", model);
 
 	res = $("#result").text();
 
-	$.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
+	jsv.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
 
 	res += "|" + $("#result").text();
 
-	$.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
+	jsv.observable(model).setProperty("sortby", model.sortby === "role" ? "name" : "role");
 
 	res += "|" + $("#result").text();
 
-	$.observable(model.cols).insert("other");
+	jsv.observable(model.cols).insert("other");
 
 	res += "|" + $("#result").text();
 
@@ -15290,7 +15307,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 	var data = {items1: [], items: [{name: "Jo"}, {name: "Bob"}]};
 
 	// ............................... Act .................................
-	$.templates(
+	jsv.templates(
 	'{^{for items1}}{{else items itemVar="~currentItem"}}' +
 		'{^{:name}} <input data-link="name"/>' +
 		'{^{:~currentItem.name}} <input data-link="~currentItem.name"/>' +
@@ -15313,7 +15330,7 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 		'{{/for}}' +
 	'{{/for}}').link("#result", data);
 
-	$.observable(data.items).insert({name: "Jeff"});
+	jsv.observable(data.items).insert({name: "Jeff"});
 
 	var inputs = $("#result input");
 
@@ -15333,14 +15350,14 @@ QUnit.test('Bound tag properties and contextual parameters', function(assert) {
 });
 
 QUnit.test('Data-linking helpers and contextual parameters', function(assert) {
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 
 	var data = {name: "Jo", address: {}};
 	res = "";
 
-	$.templates(
+	jsv.templates(
 	'{{for address ~nm=name}}'
 		+ '<div data-link="~nm"></div>'
 		+ '<input id="input1" data-link="~nm"/>'
@@ -15352,7 +15369,7 @@ $.views.settings.trigger(false);
 
 	res += $("#result").text() + " | ";
 
-	$.observable(data).setProperty("name", "new");
+	jsv.observable(data).setProperty("name", "new");
 
 	res += $("#result").text() + " | ";
 
@@ -15381,13 +15398,13 @@ $.views.settings.trigger(false);
 			thickness: "1"
 		}
 	];
-	$.templates('{^{include ~condition=type==="shape"}}{{:type}} {^{:type}} {^{:~condition}} {{/include}}')
+	jsv.templates('{^{include ~condition=type==="shape"}}{{:type}} {^{:type}} {^{:~condition}} {{/include}}')
 		.link("#result", things);
 
 	// ................................ Act ..................................
 	before = $("#result").text();
-	$.observable(things[0]).setProperty({type: "line", thickness: 5});
-	$.observable(things[1]).setProperty({type: "shape"});
+	jsv.observable(things[0]).setProperty({type: "line", thickness: 5});
+	jsv.observable(things[1]).setProperty({type: "shape"});
 	after = $("#result").text();
 
 	// ............................... Assert .................................
@@ -15407,7 +15424,7 @@ $.views.settings.trigger(false);
 		res += $("#result").text() + "|";
 	}
 
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 '<input data-link="foo"/>\
 <input data-link="#data.foo"/>\
 <input data-link="#view.data.foo"/>\
@@ -15454,7 +15471,7 @@ $.views.settings.trigger(false);
 		return $("#outerInput").val() + ":" + $("#innerInput").val() + ":" + $("#innerDiv").text();
 	}
 
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 '{^{if true ~street=address(name)}}\
 	<input id="outerInput" data-link="~street^street"/>\
 	{^{for address ~street=~street^street}}\
@@ -15488,7 +15505,7 @@ $.views.settings.trigger(false);
 
 	after += "|" + getContent();
 
-	$.observable(data).setProperty("name", "John");
+	jsv.observable(data).setProperty("name", "John");
 
 	after += "|" + getContent();
 
@@ -15500,11 +15517,11 @@ $.views.settings.trigger(false);
 
 	after += "|" + getContent();
 
-	$.observable(data).setProperty("name", "Me");
+	jsv.observable(data).setProperty("name", "Me");
 
 	after += "|" + getContent();
 
-	$.observable(data).setProperty("alt", true);
+	jsv.observable(data).setProperty("alt", true);
 
 	after += "|" + getContent();
 
@@ -15518,7 +15535,7 @@ $.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 
-	var tmpl = $.templates(
+	var tmpl = jsv.templates(
 '{^{for items}}\
 {{for 22 ~ind=#index}}\
 {{for 33 ~ind=~ind+1}}\
@@ -15540,23 +15557,23 @@ $.views.settings.trigger(false);
 
 	before = $("#result").text();
 
-	$.observable(data.items).remove();
+	jsv.observable(data.items).remove();
 
 	after = before + "|" + $("#result").text();
 
-	$.observable(data.items).remove();
+	jsv.observable(data.items).remove();
 
 	after += "|" + $("#result").text();
 
-	$.observable(data.items).insert(4);
+	jsv.observable(data.items).insert(4);
 
 	after += "|" + $("#result").text();
 
-	$.observable(data.items).insert(5);
+	jsv.observable(data.items).insert(5);
 
 	after += "|" + $("#result").text();
 
-	$.observable(data.items).insert(6);
+	jsv.observable(data.items).insert(6);
 
 	after += "|" + $("#result").text();
 
@@ -15566,13 +15583,13 @@ $.views.settings.trigger(false);
 	// ................................ Reset ................................
 	$("#result").empty();
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 });
 
 QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		liTag: function() {
 			return "<li>Tag</li>";
 		}
@@ -15580,13 +15597,13 @@ QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	jsv.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
-	$.observable(model.things).insert(1, {thing: "Last"});
-	$.observable(model.things).insert(1, {thing: "Middle"});
+	jsv.observable(model.things).insert(0, {thing: "First"});
+	jsv.observable(model.things).insert(1, {thing: "Last"});
+	jsv.observable(model.things).insert(1, {thing: "Middle"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
@@ -15597,7 +15614,7 @@ QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 	model.things = []; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
 		}
@@ -15605,13 +15622,13 @@ QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 
 	model.things = [{thing: "Orig"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	jsv.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
-	$.observable(model.things).insert(1, {thing: "Last"});
-	$.observable(model.things).insert(1, {thing: "Middle"});
+	jsv.observable(model.things).insert(0, {thing: "First"});
+	jsv.observable(model.things).insert(1, {thing: "Last"});
+	jsv.observable(model.things).insert(1, {thing: "Middle"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagFirstTagMiddleTagLastTagOrigTag|after",
@@ -15622,10 +15639,10 @@ QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 	model.things = [{thing: "Orig"}]; // reset Prop
 
 	// =============================== Arrange ===============================
-	$.templates('<table><tbody>{^{for things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody></table>')
+	jsv.templates('<table><tbody>{^{for things}}<tr><td>{{:thing}}</td></tr>{{/for}}</tbody></table>')
 		.link("#result", model);
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "First"});
+	jsv.observable(model.things).insert(0, {thing: "First"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "FirstOrig",
@@ -15638,7 +15655,7 @@ QUnit.test("JsViews ArrayChange: insert()", function(assert) {
 
 QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		liTag: function() {
 			return "<li>Tag</li>";
 		}
@@ -15646,18 +15663,18 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	jsv.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1);
+	jsv.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
 	'Within element only content, remove(1) maintains correctly prevNode, nextNode, element order and binding on views and tags');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagOrigTagMiddleTag|after",
@@ -15669,19 +15686,19 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	// =============================== Arrange ===============================
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<ul>{^{for things start=0}}<li data-link="{on foo}">{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	jsv.templates('<ul>{^{for things start=0}}<li data-link="{on foo}">{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model); // -> OrigTagFirstTagMiddleTagLastTag|after
 	// See https://github.com/BorisMoore/jsviews/issues/442
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1);
+	jsv.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "OrigTagMiddleTagLastTag|after",
 	'Within element only content, remove(1) maintains correctly prevNode etc. on views and tags, even when using start=0, and with linked {on} tag');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "OrigTagMiddleTag|after",
@@ -15693,21 +15710,21 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	// =============================== Arrange ===============================
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates("liTmpl", "<li data-link='{on foo}'>{{:thing}}</li>{^{liTag/}}");
+	jsv.templates("liTmpl", "<li data-link='{on foo}'>{{:thing}}</li>{^{liTag/}}");
 
-	$.templates('<ul data-link="{for things start=0 tmpl=\'liTmpl\'}"></ul>')
+	jsv.templates('<ul data-link="{for things start=0 tmpl=\'liTmpl\'}"></ul>')
 		.link("#result", model); // -> OrigTagFirstTagMiddleTagLastTag
 	// See https://github.com/BorisMoore/jsviews/issues/442
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1);
+	jsv.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "OrigTagMiddleTagLastTag",
 	'Within element only content, using data-linked element {for}, remove(1) maintains correctly even when using start=0, and with linked {on} tag');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "OrigTagMiddleTag",
@@ -15717,7 +15734,7 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
 		}
@@ -15725,18 +15742,18 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	jsv.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove(1);
+	jsv.observable(model.things).remove(1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagOrigTagMiddleTagLastTag|after",
 	'Within regular content, remove(1) finds correctly the previous view, prevNode, nextNode, etc and establishes correct element/textNode order and binding');
 
 	// ................................ Act ..................................
-	$.observable(model.things).remove();
+	jsv.observable(model.things).remove();
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagOrigTagMiddleTag|after",
@@ -15750,7 +15767,7 @@ QUnit.test("JsViews ArrayChange: remove()", function(assert) {
 
 QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		liTag: function() {
 			return "<li>Tag</li>";
 		}
@@ -15758,11 +15775,11 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	jsv.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
@@ -15781,27 +15798,27 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	model.one = false;
 	model.two = false;
 
-	$.templates('<ul>	{^{if one}}<li>One</li>{{/if}}{^{if two}}<li>Two</li>{{/if}}{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
+	jsv.templates('<ul>	{^{if one}}<li>One</li>{{/if}}{^{if two}}<li>Two</li>{{/if}}{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).move(2, 0, 2);
 	addResult();
-	$.observable(model).setProperty("one", true);
+	jsv.observable(model).setProperty("one", true);
 	addResult();
-	$.observable(model).setProperty("one", false);
+	jsv.observable(model).setProperty("one", false);
 	addResult();
-	$.observable(model).setProperty("one", true);
+	jsv.observable(model).setProperty("one", true);
 	addResult();
-	$.observable(model).setProperty("two", true);
+	jsv.observable(model).setProperty("two", true);
 	addResult();
-	$.observable(model).setProperty("two", false);
+	jsv.observable(model).setProperty("two", false);
 	addResult();
-	$.observable(model).setProperty("two", true);
+	jsv.observable(model).setProperty("two", true);
 	addResult();
-	$.observable(model).setProperty("one", false);
+	jsv.observable(model).setProperty("one", false);
 	addResult();
-	$.observable(model).setProperty("two", false);
+	jsv.observable(model).setProperty("two", false);
 	addResult();
 
 	// ............................... Assert .................................
@@ -15811,23 +15828,23 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	// ................................ Act ..................................
 	result = ""
 
-	$.observable(model.things).refresh([{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]);
+	jsv.observable(model.things).refresh([{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]);
 	addResult();
-	$.observable(model).setProperty("one", true);
+	jsv.observable(model).setProperty("one", true);
 	addResult();
-	$.observable(model).setProperty("one", false);
+	jsv.observable(model).setProperty("one", false);
 	addResult();
-	$.observable(model).setProperty("one", true);
+	jsv.observable(model).setProperty("one", true);
 	addResult();
-	$.observable(model).setProperty("two", true);
+	jsv.observable(model).setProperty("two", true);
 	addResult();
-	$.observable(model).setProperty("two", false);
+	jsv.observable(model).setProperty("two", false);
 	addResult();
-	$.observable(model).setProperty("two", true);
+	jsv.observable(model).setProperty("two", true);
 	addResult();
-	$.observable(model).setProperty("one", false);
+	jsv.observable(model).setProperty("one", false);
 	addResult();
-	$.observable(model).setProperty("two", false);
+	jsv.observable(model).setProperty("two", false);
 	addResult();
 
 	// ............................... Assert .................................
@@ -15843,27 +15860,27 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	model.one = [];
 	model.two = [];
 
-	$.templates('<ul>	{^{for one}}<li>{{:}}</li>{{/for}}{^{for two}}<li>{{:}}</li>{{/for}}{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
+	jsv.templates('<ul>	{^{for one}}<li>{{:}}</li>{{/for}}{^{for two}}<li>{{:}}</li>{{/for}}{^{for things}}<li>{{:thing}}</li>{{/for}}</ul>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).move(2, 0, 2);
 	addResult();
-	$.observable(model.one).insert("one");
+	jsv.observable(model.one).insert("one");
 	addResult();
-	$.observable(model.one).remove();
+	jsv.observable(model.one).remove();
 	addResult();
-	$.observable(model.one).insert("one");
+	jsv.observable(model.one).insert("one");
 	addResult();
-	$.observable(model.two).insert("two");
+	jsv.observable(model.two).insert("two");
 	addResult();
-	$.observable(model.two).remove();
+	jsv.observable(model.two).remove();
 	addResult();
-	$.observable(model.two).insert("two");
+	jsv.observable(model.two).insert("two");
 	addResult();
-	$.observable(model.one).remove();
+	jsv.observable(model.one).remove();
 	addResult();
-	$.observable(model.two).remove();
+	jsv.observable(model.two).remove();
 	addResult();
 
 	// ............................... Assert .................................
@@ -15872,23 +15889,23 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// ................................ Act ..................................
 	result = ""
-	$.observable(model.things).refresh([{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]);
+	jsv.observable(model.things).refresh([{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]);
 	addResult();
-	$.observable(model.one).insert("one");
+	jsv.observable(model.one).insert("one");
 	addResult();
-	$.observable(model.one).remove();
+	jsv.observable(model.one).remove();
 	addResult();
-	$.observable(model.one).insert("one");
+	jsv.observable(model.one).insert("one");
 	addResult();
-	$.observable(model.two).insert("two");
+	jsv.observable(model.two).insert("two");
 	addResult();
-	$.observable(model.two).remove();
+	jsv.observable(model.two).remove();
 	addResult();
-	$.observable(model.two).insert("two");
+	jsv.observable(model.two).insert("two");
 	addResult();
-	$.observable(model.one).remove();
+	jsv.observable(model.one).remove();
 	addResult();
-	$.observable(model.two).remove();
+	jsv.observable(model.two).remove();
 	addResult();
 
 	// ............................... Assert .................................
@@ -15899,7 +15916,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
 		}
@@ -15907,11 +15924,11 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	jsv.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).move(2, 0, 2);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagMiddleTagLastTagOrigTagFirstTag|after",
@@ -15923,14 +15940,14 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	// =============================== Arrange ===============================
 	function move(from, to, number) {
-		$.observable(model.items).move(from, to, number);
+		jsv.observable(model.items).move(from, to, number);
 	}
 	function remove(index, number) {
-		$.observable(model.items).remove(index, number);
+		jsv.observable(model.items).remove(index, number);
 	}
 
 	function insert(index, item) {
-		$.observable(model.items).insert(index, item);
+		jsv.observable(model.items).insert(index, item);
 	}
 
 	function findRed() {
@@ -15957,7 +15974,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	var cnt = 5;
 
-	$.templates(
+	jsv.templates(
 		'<div>Start <span>' +
 			'{^{for items}}' +
 				'{^{:#index}} {{:}}|' +
@@ -16144,7 +16161,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 	var cnt = 5;
 
-	$.templates({
+	jsv.templates({
 		tags: {
 			tag: function() {return this.tagCtx.render();}
 		},
@@ -16359,7 +16376,7 @@ QUnit.test("JsViews ArrayChange: move()", function(assert) {
 
 QUnit.test("JsViews ArrayChange: refresh()", function(assert) {
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		liTag: function() {
 			return "<li>Tag</li>";
 		}
@@ -16367,11 +16384,11 @@ QUnit.test("JsViews ArrayChange: refresh()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
+	jsv.templates('<ul>{^{liTag/}}{^{for things}}<li>{{:thing}}</li>{^{liTag/}}{{/for}}<li>|after</li></ul>')
 		.link("#result", model); // -> TagOrigTagFirstTagMiddleTagLastTag|after
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
+	jsv.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagATagBTagCTag|after",
@@ -16381,7 +16398,7 @@ QUnit.test("JsViews ArrayChange: refresh()", function(assert) {
 	$("#result").empty();
 
 	// =============================== Arrange ===============================
-	$.views.tags({
+	jsv.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
 		}
@@ -16389,11 +16406,11 @@ QUnit.test("JsViews ArrayChange: refresh()", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	jsv.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
+	jsv.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TagATagBTagCTag|after",
@@ -16413,7 +16430,7 @@ QUnit.test("JsViews jsv-domchange", function(assert) {
 		res += ev.type + " " + ev.target.tagName + " " + tagCtx.params.args[0] + " " + (linkCtx.tag === tagCtx.tag) + " " + eventArgs.change + " | " ;
 	}
 
-	$.views.tags({
+	jsv.views.tags({
 		spanTag: function() {
 			return "<span>Tag</span>";
 		}
@@ -16421,16 +16438,16 @@ QUnit.test("JsViews jsv-domchange", function(assert) {
 
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
+	jsv.templates('<div>{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span></div>')
 		.link("#result", model);
 
 	$("#result div").on("jsv-domchange", domchangeHandler);
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert({thing: "New"});
-	$.observable(model.things).move(2, 0, 2);
-	$.observable(model.things).remove(1, 2);
-	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
+	jsv.observable(model.things).insert({thing: "New"});
+	jsv.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).remove(1, 2);
+	jsv.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	// ............................... Assert .................................
 	assert.equal(res,
@@ -16449,7 +16466,7 @@ QUnit.test("JsViews jsv-domchange", function(assert) {
 	// =============================== Arrange ===============================
 	model.things = [{thing: "Orig"}, {thing: "First"}, {thing: "Middle"}, {thing: "Last"}]; // reset Prop
 
-	$.templates(
+	jsv.templates(
 		'<div data-link=\'{on "jsv-domchange" ~domchange 333 444}\'>'
 			+ '{^{spanTag/}}{^{for things}}<span>{{:thing}}</span>{^{spanTag/}}{{/for}}<span>|after</span>'
 	+ '</div>')
@@ -16461,10 +16478,10 @@ QUnit.test("JsViews jsv-domchange", function(assert) {
 		});
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert({thing: "New"});
-	$.observable(model.things).move(2, 0, 2);
-	$.observable(model.things).remove(1, 2);
-	$.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
+	jsv.observable(model.things).insert({thing: "New"});
+	jsv.observable(model.things).move(2, 0, 2);
+	jsv.observable(model.things).remove(1, 2);
+	jsv.observable(model.things).refresh([{thing: "A"}, {thing: "B"}, {thing: "C"}]);
 
 	assert.equal(res,
 		"Params: 333, 444 | jsv-domchange DIV things true insert | "
@@ -16481,11 +16498,11 @@ QUnit.test("JsViews jsv-domchange", function(assert) {
 	reset();
 });
 
-QUnit.module("API - $.observe() (jsv)");
+QUnit.module("API - jsv.observe() (jsv)");
 
 QUnit.test("observe/unobserve alternative signatures", function(assert) {
 
-	$.views.settings.advanced({_jsv: true});
+	jsv.views.settings.advanced({_jsv: true});
 
 	// =============================== Arrange ===============================
 
@@ -16494,9 +16511,9 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	}
 
 	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.templates("{^{:last}}").link("#result", person);
-	$.unobserve(person, "last", onch);
+	jsv.observe(person, "last", onch);
+	jsv.templates("{^{:last}}").link("#result", person);
+	jsv.unobserve(person, "last", onch);
 	$("#result").empty();
 
 	// ............................... Assert .................................
@@ -16511,16 +16528,16 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	person = {first: "F", last: " L"};
 
 	// ................................ Act ..................................
-	$.observe(person, "last", onch);
-	$.observe(person, "last", onch2);
-	$.templates("{^{:last}} <input data-link='last'/>}} {^{:first + last}}").link("#result", person);
-	$.observe(person, "first", onch);
-	$.observe(person, "first", onch2);
-	$.unobserve(person, "last", onch);
-	$.unobserve(person, "last", onch2);
+	jsv.observe(person, "last", onch);
+	jsv.observe(person, "last", onch2);
+	jsv.templates("{^{:last}} <input data-link='last'/>}} {^{:first + last}}").link("#result", person);
+	jsv.observe(person, "first", onch);
+	jsv.observe(person, "first", onch2);
+	jsv.unobserve(person, "last", onch);
+	jsv.unobserve(person, "last", onch2);
 	$("#result").empty();
-	$.unobserve(person, "first", onch);
-	$.unobserve(person, "first", onch2);
+	jsv.unobserve(person, "first", onch);
+	jsv.unobserve(person, "first", onch2);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(person).events]), "[{},{},null]",
@@ -16529,12 +16546,12 @@ QUnit.test("observe/unobserve alternative signatures", function(assert) {
 	// ................................ Reset ................................
 	reset();
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("Array", function(assert) {
 
-	$.views.settings.advanced({_jsv: true}); // For using _jsv
+	jsv.views.settings.advanced({_jsv: true}); // For using _jsv
 
 	// =============================== Arrange ===============================
 	var people = [1, 2];
@@ -16542,26 +16559,26 @@ QUnit.test("Array", function(assert) {
 	function onch2() {}
 
 	// ................................ Act ..................................
-	$.observe(people, "length", onch);
-	$.observe(people, "length", onch2);
-	$.observe(people, "length2", onch);
-	$.templates("{^{for people}}{{/for}} {^{:people}}").link("#result", {people: people});
-	$.observe(people, "length2", onch2);
-	$.unobserve(people, "length2", onch);
-	$.unobserve(people, "length2", onch2);
+	jsv.observe(people, "length", onch);
+	jsv.observe(people, "length", onch2);
+	jsv.observe(people, "length2", onch);
+	jsv.templates("{^{for people}}{{/for}} {^{:people}}").link("#result", {people: people});
+	jsv.observe(people, "length2", onch2);
+	jsv.unobserve(people, "length2", onch);
+	jsv.unobserve(people, "length2", onch2);
 	$("#result").empty();
-	$.unobserve(people, "length", onch);
-	$.unobserve(people, "length", onch2);
+	jsv.unobserve(people, "length", onch);
+	jsv.unobserve(people, "length", onch2);
 
 	// ............................... Assert .................................
 	assert.equal(JSON.stringify([_jsv.cbBindings, _jsv.bindings, $._data(people).events]), "[{},{},null]",
 		"observe/unobserve array - API calls in different orders: all bindings removed when content removed from DOM and unobserve called");
 
-	$.views.settings.advanced({_jsv: false});
+	jsv.views.settings.advanced({_jsv: false});
 });
 
 QUnit.test("MVVM", function(assert) {
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	reset();
 	// =============================== Arrange ===============================
@@ -16636,17 +16653,17 @@ $.views.settings.trigger(false);
 		getResult = function(sep) { ret += (sep || "|") + input.val() + "/" + $("#result").text(); };
 
 	// ................................ Act ..................................
-	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
+	jsv.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
 
 	input = $("#result input");
 	getResult();
 	$("#result input").val("InputStreet").change();
 	getResult("--");
-	$.observable(person.address()).setProperty("street", "oldAddressChgStreet");
+	jsv.observable(person.address()).setProperty("street", "oldAddressChgStreet");
 	getResult("--");
-	$.observable(person).setProperty("address", new Address("newAddressStreet"));
+	jsv.observable(person).setProperty("address", new Address("newAddressStreet"));
 	getResult("--");
-	$.observable(person.address()).setProperty("street", "newAddressChgStreet");
+	jsv.observable(person.address()).setProperty("street", "newAddressChgStreet");
 	getResult("--");
 
 	$("#result").empty();
@@ -16661,17 +16678,17 @@ $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
+	jsv.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
 
 	input = $("#result input");
 	getResult();
 	input.val("InputStreet").change();
 	getResult("--");
-	$.observable(person.address()).setProperty("street", "oldAddressChgStreet");
+	jsv.observable(person.address()).setProperty("street", "oldAddressChgStreet");
 	getResult("--");
-	$.observable(person).setProperty("address", new Address("newAddressStreet"));
+	jsv.observable(person).setProperty("address", new Address("newAddressStreet"));
 	getResult("--");
-	$.observable(person.address()).setProperty("street", "newAddressChgStreet");
+	jsv.observable(person.address()).setProperty("street", "newAddressChgStreet");
 	getResult("--");
 
 	$("#result").empty();
@@ -16686,7 +16703,7 @@ $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
+	jsv.templates('<input data-link="address()^street()" />{^{:address()^street()}}').link("#result", person);
 
 	var observeAllHandler = function(ev, eventArgs) {
 		message += JSON.stringify(eventArgs) + "\n";
@@ -16695,16 +16712,16 @@ $.views.settings.trigger(false);
 	var eventsCountBefore = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
 
-	$.observable(person).observeAll(observeAllHandler);
+	jsv.observable(person).observeAll(observeAllHandler);
 
 	var eventsCountAfterObserveAll = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
 
 	input = $("#result input");
 	input.val("InputStreet").change();
-	$.observable(person.address()).setProperty("street", "oldAddressChgStreet");
-	$.observable(person).setProperty("address", new Address("newAddressStreet"));
-	$.observable(person.address()).setProperty("street", "newAddressChgStreet");
+	jsv.observable(person.address()).setProperty("street", "oldAddressChgStreet");
+	jsv.observable(person).setProperty("address", new Address("newAddressStreet"));
+	jsv.observable(person.address()).setProperty("street", "newAddressChgStreet");
 
 	var eventsCountAfterChanges = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
@@ -16720,19 +16737,19 @@ $.views.settings.trigger(false);
 	ret = "";
 	message = "";
 
-	$.observable(person).unobserveAll(observeAllHandler);
+	jsv.observable(person).unobserveAll(observeAllHandler);
 
 	var eventsCountAfterUnobserveAll = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.address()).events.propertyChange.length + "|";
 
-	$.unobserve(person.address());
+	jsv.unobserve(person.address());
 
 	var eventsAfterUnobserveAddress = $._data(person).events.propertyChange.length + " " + !$._data(person.address()).events;
 
 	input.val("InputStreetAfterUnobserve").change();
-	$.observable(person.address()).setProperty("street", "oldAddressChgStreetAfterUnobserve");
-	$.observable(person).setProperty("address", new Address("newAddressStreetAfterUnobserve"));
-	$.observable(person.address()).setProperty("street", "newAddressChgStreetAfterUnobserve");
+	jsv.observable(person.address()).setProperty("street", "oldAddressChgStreetAfterUnobserve");
+	jsv.observable(person).setProperty("address", new Address("newAddressStreetAfterUnobserve"));
+	jsv.observable(person.address()).setProperty("street", "newAddressChgStreetAfterUnobserve");
 
 	getResult("--");
 
@@ -16760,34 +16777,34 @@ $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('{^{for phones()}}{^{:number()}},{{/for}}').link("#result", person);
+	jsv.templates('{^{for phones()}}{^{:number()}},{{/for}}').link("#result", person);
 
 	getResult("\nInit>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
 	getResult("insert:");
-	$.observable(person.phones()).remove(0);
+	jsv.observable(person.phones()).remove(0);
 	getResult("remove:");
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
+	jsv.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
 	getResult("refresh:");
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
+	jsv.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
 	getResult("insert:");
-	$.observable(person.phones()).move(1, 3, 2);
+	jsv.observable(person.phones()).move(1, 3, 2);
 	getResult(" move:");
-	$.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
+	jsv.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
 	getResult("\nSet>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
 	getResult("insert:");
-	$.observable(person.phones()).remove(0);
+	jsv.observable(person.phones()).remove(0);
 	getResult("remove:");
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
+	jsv.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
 	getResult("refresh:");
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
+	jsv.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
 	getResult("insert:");
-	$.observable(person.phones()).move(1, 3, 2);
+	jsv.observable(person.phones()).move(1, 3, 2);
 	getResult("move:");
-	$.observable(person).setProperty("phones", []);
+	jsv.observable(person).setProperty("phones", []);
 	getResult("\nsetEmpty>>");
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
 	getResult("insert:");
 
 	$("#result").empty();
@@ -16803,37 +16820,37 @@ $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	ret = "";
-	$.templates('{^{for phones()}}{^{:number()}},{{/for}}').link("#result", person);
+	jsv.templates('{^{for phones()}}{^{:number()}},{{/for}}').link("#result", person);
 
 	eventsCountBefore = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.phones()).events.arrayChange.length
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.observable(person).observeAll(observeAllHandler);
+	jsv.observable(person).observeAll(observeAllHandler);
 
 	eventsCountAfterObserveAll = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.phones()).events.arrayChange.length
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
-	$.observable(person.phones()).remove(0);
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhone"}));
+	jsv.observable(person.phones()).remove(0);
+	jsv.observable(person.phones()).refresh([new Phone({number: "replacedPhone1"}), new Phone({number: "replacedPhone2"})]);
+	jsv.observable(person.phones()).insert(1, [new Phone({number: "insertedPhone3a"}), new Phone({number: "insertedPhone3b"})]);
 
-	$.observable(person.phones()).move(1, 3, 2);
-	$.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
+	jsv.observable(person.phones()).move(1, 3, 2);
+	jsv.observable(person).setProperty("phones", [new Phone({number: "replacedPhone1"})]);
 
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhoneX"}));
 
-	$.observable(person.phones()).remove(0);
+	jsv.observable(person.phones()).remove(0);
 
-	$.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
-	$.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
+	jsv.observable(person.phones()).refresh([new Phone({number: "replacedPhoneX1"}), new Phone({number: "replacedPhoneX2"})]);
+	jsv.observable(person.phones()).insert(1, [new Phone({number: "insertedPhoneX3a"}), new Phone({number: "insertedPhoneX3b"})]);
 
-	$.observable(person.phones()).move(1, 3, 2);
-	$.observable(person).setProperty("phones", []);
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
-	$.observable(person.phones()[0]).setProperty("number", "newNumber");
+	jsv.observable(person.phones()).move(1, 3, 2);
+	jsv.observable(person).setProperty("phones", []);
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhoneY"}));
+	jsv.observable(person.phones()[0]).setProperty("number", "newNumber");
 
 	eventsCountAfterChanges = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.phones()).events.arrayChange.length
@@ -16861,26 +16878,26 @@ $.views.settings.trigger(false);
 \
 {\"change\":\"insert\",\"index\":0,\"items\":[{\"_number\":\"insertedPhoneY\"}]}\n\
 {\"change\":\"set\",\"path\":\"number\",\"value\":\"newNumber\",\"oldValue\":\"insertedPhoneY\"}\n',
-		"Paths with computed/getters: address().street() - observeAll correctly tracks all changes on all objects, even as object graph changes");
+		"Paths with computed/getters: phones() - observeAll correctly tracks all  array operations, even as object graph changes");
 
 	// ................................ Act ..................................
 	ret = "";
 	message = "";
 
-	$.observable(person).unobserveAll(observeAllHandler);
+	jsv.observable(person).unobserveAll(observeAllHandler);
 
 	eventsCountAfterUnobserveAll = $._data(person).events.propertyChange.length
 		+ " " + $._data(person.phones()).events.arrayChange.length
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.unobserve(person.phones());
+	jsv.unobserve(person.phones());
 
 	var eventsAfterUnobservePhones = $._data(person).events.propertyChange.length
 		+ " " + !$._data(person.phones()).events
 		+ " " + $._data(person.phones()[0]).events.propertyChange.length + "|";
 
-	$.observable(person.phones()).insert(new Phone({number: "insertedPhoneZ"}));
-	$.observable(person.phones()[0]).setProperty("number", "newNumberZ");
+	jsv.observable(person.phones()).insert(new Phone({number: "insertedPhoneZ"}));
+	jsv.observable(person.phones()[0]).setProperty("number", "newNumberZ");
 
 	$("#result").empty();
 
@@ -16899,12 +16916,12 @@ $.views.settings.trigger(false);
 		"1 1 1|2 2 2|2 2 2|1 1 1|1 true 1|true true true|",
 		"Paths with computed/getters: address().street() - unobserveAll is successful");
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 });
 
-QUnit.test("$.views.viewModels", function(assert) {
+QUnit.test("jsv.views.viewModels", function(assert) {
 	// =============================== Arrange ===============================
-	var Constr = $.views.viewModels({getters: ["a", "b"]});
+	var Constr = jsv.views.viewModels({getters: ["a", "b"]});
 	// ................................ Act ..................................
 	var vm = Constr("a1 ", "b1 ");
 	var res = vm.a() + vm.b();
@@ -16915,7 +16932,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(res, "a1 b1 a2 b2 ", "viewModels, two getters, no methods");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
+	Constr = jsv.views.viewModels({getters: ["a", "b", "c"], extend: {add: function(val) {
 		this.c(val + this.a() + this.b() + this.c());
 	}}});
 	// ................................ Act ..................................
@@ -16926,7 +16943,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(res, "before a1 b1 c1 ", "viewModels, two getters, one method");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({extend: {add: function(val) {
+	Constr = jsv.views.viewModels({extend: {add: function(val) {
 		this.foo = val;
 	}}});
 	// ................................ Act ..................................
@@ -16937,7 +16954,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(res, "before", "viewModels, no getters, one method");
 
 	// =============================== Arrange ===============================
-	Constr = $.views.viewModels({getters: []});
+	Constr = jsv.views.viewModels({getters: []});
 	// ................................ Act ..................................
 	vm = Constr();
 	res = JSON.stringify(vm);
@@ -16945,18 +16962,18 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(res, "{}", "viewModels, no getters, no methods");
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b"]
 		}
 	});
 	// ................................ Act ..................................
-	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
+	vm = jsv.views.viewModels.T1.map({a: "a1 ", b: "b1 "});
 	var changes = "";
 	function observeAllHandler(ev, evArgs) {
 		changes += evArgs.value;
 	}
-	$.observable(vm).observeAll(observeAllHandler);
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	res = vm.a() + vm.b();
 	vm.a("a2 ");
@@ -16984,17 +17001,17 @@ QUnit.test("$.views.viewModels", function(assert) {
 	assert.equal(res, '{"a":"a3 ","b":"b3 "}', "viewModels unmap, two getters, no methods");
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	var viewModels = $.views.viewModels({
+	var viewModels = jsv.views.viewModels({
 		T1: {
 			getters: ["a", {getter: "b"}, "c", "d", {getter: "e", type: undefined}, {getter: "f", type: null}, {getter: "g", type: "foo"}, {getter: "h", type: ""}]
 		}
 	}, {});
 	// ................................ Act ..................................
 	vm = viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 ", d: "d1 ", e: "e1 ", f: "f1 ", g: "g1 ", h: "h1 "});
-	$.observable(vm).observeAll(observeAllHandler);
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	res = vm.a() + vm.b() + vm.c() + vm.d() + vm.e() + vm.f() + vm.g() + vm.h();
 	vm.a("a2 ");
@@ -17024,10 +17041,10 @@ QUnit.test("$.views.viewModels", function(assert) {
 		"viewModels unmap, multiple unmapped getters, no methods");
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b", "c"],
 			extend : {
@@ -17039,8 +17056,8 @@ QUnit.test("$.views.viewModels", function(assert) {
 	});
 
 	// ................................ Act ..................................
-	vm = $.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
-	$.observable(vm).observeAll(observeAllHandler);
+	vm = jsv.views.viewModels.T1.map({a: "a1 ", b: "b1 ", c: "c1 "});
+	jsv.observable(vm).observeAll(observeAllHandler);
 
 	vm.add("before ");
 	res = vm.c();
@@ -17067,10 +17084,10 @@ QUnit.test("$.views.viewModels", function(assert) {
 	changes = "";
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// =============================== Arrange ===============================
-	$.views.viewModels({
+	jsv.views.viewModels({
 		T1: {
 			getters: ["a", "b"]
 		},
@@ -17078,13 +17095,13 @@ QUnit.test("$.views.viewModels", function(assert) {
 			getters: [{getter: "t1", type: "T1"}, {getter: "t1Arr", type: "T1"}, {getter: "t1OrNull", type: "T1", defaultVal: null}]
 		}
 	});
-	viewModels = $.views.viewModels;
+	viewModels = jsv.views.viewModels;
 	// ................................ Act ..................................
 	var t1 = viewModels.T1.map({a: "a1 ", b: "b1 "}); // Create a T1
 	var t2 = viewModels.T2.map({t1: {a: "a3 ", b: "b3 "}, t1Arr: [t1.unmap(), {a: "a2 ", b: "b2 "}]}); // Create a T2 (using unmap to scrape values the T1: vm)
 
-	$.observable(t1).observeAll(observeAllHandler);
-	$.observable(t2).observeAll(observeAllHandler);
+	jsv.observable(t1).observeAll(observeAllHandler);
+	jsv.observable(t2).observeAll(observeAllHandler);
 
 	res = JSON.stringify(t2.unmap());
 
@@ -17102,7 +17119,7 @@ QUnit.test("$.views.viewModels", function(assert) {
 	changes = "";
 
 	// ............................... Reset .................................
-	$.unobserve(observeAllHandler);
+	jsv.unobserve(observeAllHandler);
 
 	// ................................ Act ..................................
 	var t1Arr = viewModels.T1.map([{a: "a1 ", b: "b1 "}, {a: "a2 ", b: "b2 "}]); // Create a T1 array
@@ -17149,44 +17166,44 @@ function testDepends(template) {
 			summary: summary
 		};
 
-	$.templates(template).link("#result", app, {summary: summary});
+	jsv.templates(template).link("#result", app, {summary: summary});
 
 	ret += "|1:" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("name", "Bob");
+	jsv.observable(app).setProperty("name", "Bob");
 	ret += "|2:" + $("#result").text();
 
-	$.observable(app.itemsProp).insert(0, "previous");
+	jsv.observable(app.itemsProp).insert(0, "previous");
 	ret += "|3:" + $("#result").text();
 
-	$.observable(app).setProperty("name", "Jim");
+	jsv.observable(app).setProperty("name", "Jim");
 	ret += "|4:" + $("#result").text();
 
-	$.observable(app).setProperty("itemsProp", items2);
+	jsv.observable(app).setProperty("itemsProp", items2);
 	ret += "|5:" + $("#result").text();
 
-	$.observable(app.itemsProp).move(0, 1);
+	jsv.observable(app.itemsProp).move(0, 1);
 	ret += "|6:" + $("#result").text();
 
-	$.observable(app.itemsProp).insert(0, "newPrev");
+	jsv.observable(app.itemsProp).insert(0, "newPrev");
 	ret += "|7:" + $("#result").text();
 
-	$.observable(app).setProperty("name", "Jeff");
+	jsv.observable(app).setProperty("name", "Jeff");
 	ret += "|8:" + $("#result").text() + "/" + !$._data(items).events + "/" + $._data(items2).events.arrayChange.length;
 
-	$.observable(app).setProperty("show", false);
+	jsv.observable(app).setProperty("show", false);
 	ret += "|9:" + $("#result").text() + "/" + !$._data(items).events + "/" + !$._data(items2).events;
 
-	$.observable(app).setProperty("show", true);
+	jsv.observable(app).setProperty("show", true);
 	ret += "|10:" + $("#result").text() + "/" + !$._data(items).events + "/" + $._data(items2).events.arrayChange.length;
 
-	$.observable(app.itemsProp).insert(0, "extraPrev");
+	jsv.observable(app.itemsProp).insert(0, "extraPrev");
 	ret += "|11:" + $("#result").text() + "/" + !$._data(items).events + "/" + $._data(items2).events.arrayChange.length;
 
 	// ................................ Reset ................................
 	$("#result").empty();
-	$.unobserve(app);
+	jsv.unobserve(app);
 
 	return ret ===
 		"|1:first-1-Jo" +
@@ -17216,7 +17233,7 @@ function testDepends(template) {
 	// =============================== Arrange ===============================
 
 	summary.depends = function(object, callback) {
-		$.observe(object, "itemsProp", callback);
+		jsv.observe(object, "itemsProp", callback);
 		return "name";
 	};
 
@@ -17245,9 +17262,9 @@ function testDepends(template) {
 	// =============================== Arrange ===============================
 	summary.depends = function() {
 		return function (object, callback) {
-			$.observe(object, "itemsProp", callback);
+			jsv.observe(object, "itemsProp", callback);
 			return [function () {
-				$.observe(object, "name", callback);
+				jsv.observe(object, "name", callback);
 			}];
 		};
 	};
@@ -17258,10 +17275,10 @@ function testDepends(template) {
 
 	// =============================== Arrange ===============================
 	function listenToArray(object, callback) {
-		$.observe(object, "itemsProp", callback);
+		jsv.observe(object, "itemsProp", callback);
 	}
 	function listenToName(object, callback) {
-		$.observe(object, "name", callback);
+		jsv.observe(object, "name", callback);
 	}
 	summary.depends = [listenToArray, listenToName];
 
@@ -17272,7 +17289,7 @@ function testDepends(template) {
 	// =============================== Arrange ===============================
 	function listenTo(field) {
 		return function(object, callback) {
-			$.observe(object, field, callback);
+			jsv.observe(object, field, callback);
 		}
 	}
 
@@ -17307,18 +17324,18 @@ function testDepends(template) {
 
 	// =============================== Arrange ===============================
 
-	$.views.converters("sumry", summary);
+	jsv.views.converters("sumry", summary);
 
 	// ................................ Assert ..................................
 	assert.ok(testDepends("{^{if show}}{^{sumry:'foo'}}{{/if}}"),
 		'Registered converter with depends = ["itemsProp", ...] updates for both array change and property change');
 
-	$.views.converters("sumry", null);
+	jsv.views.converters("sumry", null);
 
 	// =============================== Arrange ===============================
 	summary.depends = null;
 
-	$.views.tags("sumry", {
+	jsv.views.tags("sumry", {
 		render: summary,
 		depends: ["itemsProp", "name"]
 	});
@@ -17327,7 +17344,7 @@ function testDepends(template) {
 	assert.ok(testDepends("{^{if show}}{^{sumry/}}{{/if}}"),
 		'Registered tag with depends = ["itemsProp", ...] updates for both array change and property change');
 
-	$.views.tags("sumry", null);
+	jsv.views.tags("sumry", null);
 
 	// =============================== Arrange ===============================
 	var ret = "",
@@ -17340,21 +17357,21 @@ function testDepends(template) {
 			summary: summary
 		};
 
-	$.templates("{^{for").link("#result", app, {summary: summary});
+	jsv.templates("{^{for").link("#result", app, {summary: summary});
 
 	ret += "|1:" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(app).setProperty("name", "Bob");
+	jsv.observable(app).setProperty("name", "Bob");
 	ret += "|2:" + $("#result").text();
 
-	$.observable(app.itemsProp).insert(0, "previous");
+	jsv.observable(app.itemsProp).insert(0, "previous");
 	ret += "|3:" + $("#result").text();
 
-	$.observable(app).setProperty("name", "Jim");
+	jsv.observable(app).setProperty("name", "Jim");
 
 	// =============================== Arrange ===============================
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	function fullName() {
 		var person = this.ctxPrm ? this.ctxPrm("prson") : this;
@@ -17367,7 +17384,7 @@ $.views.settings.trigger(false);
 
 	fullName.set = function(val) {
 		var parts = val.split(" ");
-		$.observable(this).setProperty({
+		jsv.observable(this).setProperty({
 			title: parts.shift(),
 			name: parts.shift(),
 			address: {street: parts.join(" ")}
@@ -17381,7 +17398,7 @@ $.views.settings.trigger(false);
 		fullName: fullName,
 	};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{:~prson.title}} <input data-link="~prson.title" />'
 	+ '{^{:~prson.name}} <input data-link="~prson.name" />'
 	+ '{^{:~prson.address^street}} <input data-link="~prson.address^street" /> '
@@ -17413,7 +17430,7 @@ $.views.settings.trigger(false);
 		result = $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(prson).setProperty("address", {street: "2nd St"});
+	jsv.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
 	input = $("#result input")[0];
@@ -17462,7 +17479,7 @@ $.views.settings.trigger(false);
 		address: {street: "1st Ave"}
 	};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{:~prson.title}} <input data-link="~prson.title" />'
 	+ '{^{:~prson.name}} <input data-link="~prson.name" />'
 	+ '{^{:~prson.address^street}} <input data-link="~prson.address^street" /> '
@@ -17492,7 +17509,7 @@ $.views.settings.trigger(false);
 		result = $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(prson).setProperty("address", {street: "2nd St"});
+	jsv.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
 	input = $("#result input")[0];
@@ -17531,7 +17548,7 @@ $.views.settings.trigger(false);
 		address: {street: "1st Ave"}
 	};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: 'Title: {^{:person.title}} '
 	+ 'Name: {^{:person.name}} '
 	+ 'Street: {^{:person^address.street}} '
@@ -17557,13 +17574,13 @@ $.views.settings.trigger(false);
 		result = $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(prson).setProperty("title","Sir2");
+	jsv.observable(prson).setProperty("title","Sir2");
 	result += "\nTITLE: " + $("#result").text();
 
-	$.observable(prson).setProperty("name","Jo2");
+	jsv.observable(prson).setProperty("name","Jo2");
 	result += "\nNAME: " + $("#result").text();
 
-	$.observable(prson).setProperty("address", {street: "2nd St"});
+	jsv.observable(prson).setProperty("address", {street: "2nd St"});
 	result += "\nADDRESS: " + $("#result").text();
 
 	input = $("#result input")[0];
@@ -17584,7 +17601,7 @@ $.views.settings.trigger(false);
 		"Custom tag control {{fullName ...}} with linkedCtxParam 2-way binding to computed property - either the function itself, or the evaluated function result");
 
 	// =============================== Arrange ===============================
-	$.views.templates({
+	jsv.views.templates({
 		markup:
 			'{^{personname person ~psn2=person/}}' // binding to person
 		+ '{{for person}}'
@@ -17643,7 +17660,7 @@ $.views.settings.trigger(false);
 	"Custom tag control {{personname ...}} using template, with linkedCtxParam and tag contextual parameter, binding to #data, and with 2-way binding to person.name - works correctly");
 
 	// =============================== Arrange ===============================
-	$.views.templates({
+	jsv.views.templates({
 		markup:
 			'{^{textbox path=person/}}'
 		+ '<div data-link="{textbox path=person}"></div><br/>'
@@ -17731,7 +17748,7 @@ $.views.settings.trigger(false);
 	"Custom tag control {{texbox ...}} with linkedCtxParam or linkedElement, data-linked as (1) inline tag, (2) data-linked input or (3) data-linked div");
 
 	// =============================== Arrange ===============================
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{textbox path=name edit=editable/}}'
 		+ '<div data-link="{textbox path=name edit=editable}"></div>',
 		tags: {
@@ -17760,10 +17777,10 @@ $.views.settings.trigger(false);
 
 	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
 
-	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+	var textBoxes = jsv.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
 
 	for (var i=0; i<textBoxes.length; i++) {
-		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+		jsv.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
 	}
 
 	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(1).text();
@@ -17777,7 +17794,7 @@ $.views.settings.trigger(false);
 	"Custom editable textbox control {{texbox ...}} with linkedCtxParam. Template linking to observable state, \"~tag.edit\"");
 
 	// =============================== Arrange ===============================
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{textbox path=name edit=editable/}}'
 		+ '<div data-link="{textbox path=name edit=editable}"></div>',
 		tags: {
@@ -17808,10 +17825,10 @@ $.views.settings.trigger(false);
 
 	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
 
-	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+	var textBoxes = jsv.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
 
 	for (var i=0; i<textBoxes.length; i++) {
-		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+		jsv.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
 	}
 
 	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(0).text();
@@ -17827,7 +17844,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	var data = {name: "Jo", editable: true};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{textbox path=name ^edit=editable/}}'
 		+ '<div data-link="{textbox path=name ^edit=editable}"></div>',
 		tags: {
@@ -17847,10 +17864,10 @@ $.views.settings.trigger(false);
 					this.edit = tagCtxs[0].props.edit; // Respond to changed data-linked edit property.
 				},
 				onBind: function() {
-					$.observe(this, "edit", $.proxy(this.refresh, this));
+					jsv.observe(this, "edit", $.proxy(this.refresh, this));
 				},
 				onUnbind: function() {
-					$.unobserve(this, "edit");
+					jsv.unobserve(this, "edit");
 				}
 			}
 		}
@@ -17864,10 +17881,10 @@ $.views.settings.trigger(false);
 
 	result += "|" + $("input:text", container)[0].value + " " + $("input:text", container)[1].value;
 
-	var textBoxes = $.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
+	var textBoxes = jsv.view().childTags("textbox"); // Find all the {{textbox}} tags in the view
 
 	for (var i=0; i<textBoxes.length; i++) {
-		$.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
+		jsv.observable(textBoxes[i]).setProperty("edit", !textBoxes[i].edit); // Observably change all textboxes state
 	}
 
 	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(0).text();
@@ -17876,7 +17893,7 @@ $.views.settings.trigger(false);
 
 	result += "|" + $("input:text", container)[0].value + " " + $("span", container).eq(0).text();
 
-	$.observable(data).setProperty("editable", false); // User clicks on checkbox and flips state of this textbox
+	jsv.observable(data).setProperty("editable", false); // User clicks on checkbox and flips state of this textbox
 
 	result += "|" + $("span", container).eq(0).text() + " " + $("span", container).eq(1).text();
 
@@ -17887,7 +17904,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	var data = 	data = { name: "3.545" };
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{:(+name).toFixed(2)}} {^{dec:name length=5}}',
 		converters: {
 			dec: function(val) {
@@ -17897,7 +17914,7 @@ $.views.settings.trigger(false);
 	}).link("#result", data);
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty("name", "3.745")
+	jsv.observable(data).setProperty("name", "3.745")
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "3.75 3.74500",
@@ -17905,53 +17922,53 @@ $.views.settings.trigger(false);
 
 	// ................................ Reset ..................................
 	$("#result").empty();
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 });
 
 QUnit.module("API - Settings");
 
 QUnit.test("Settings, error handlers, onError", function(assert) {
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	// Delimiters
 
-	var current = $.views.settings.delimiters();
-	$.views.settings.delimiters("@%","%@");
-	var res = $.templates("A_@%if true%@yes@%/if%@_B").render()
-		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+	var current = jsv.views.settings.delimiters();
+	jsv.views.settings.delimiters("@%","%@");
+	var res = jsv.templates("A_@%if true%@yes@%/if%@_B").render()
+		+ "|" + jsv.views.settings.delimiters() + "|" + jsv.views.sub.settings.delimiters;
 
-	$.views.settings.delimiters("<<",">>", "*");
+	jsv.views.settings.delimiters("<<",">>", "*");
 
-	res += "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+	res += "|" + jsv.views.settings.delimiters() + "|" + jsv.views.sub.settings.delimiters;
 
-	$.views.settings.delimiters(current);
+	jsv.views.settings.delimiters(current);
 
-	res += "|" + $.templates("A_{{if true}}YES{{/if}}_B").render()
-		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+	res += "|" + jsv.templates("A_{{if true}}YES{{/if}}_B").render()
+		+ "|" + jsv.views.settings.delimiters() + "|" + jsv.views.sub.settings.delimiters;
 
 	// ............................... Assert .................................
 	assert.equal(res, "A_yes_B|@%,%@,^|@%,%@,^|<<,>>,*|<<,>>,*|A_YES_B|{{,}},^|{{,}},^", "Custom delimiters with render()");
 
 	// ................................ Act ..................................
-	current = $.views.settings.delimiters();
+	current = jsv.views.settings.delimiters();
 	var app = {choose: true, name: "Jo"};
-	$.views.settings.delimiters("_^", "!@", "(");
-	$.templates('_(^if choose!@<div data-link="name"></div>_^else!@no<div data-link="name+2"></div><div data-link="^:name+3!"></div><input data-link="^:name:!"/>_^/if!@').link("#result", app);
+	jsv.views.settings.delimiters("_^", "!@", "(");
+	jsv.templates('_(^if choose!@<div data-link="name"></div>_^else!@no<div data-link="name+2"></div><div data-link="^:name+3!"></div><input data-link="^:name:!"/>_^/if!@').link("#result", app);
 	res = $("#result").text();
-	$.observable(app).setProperty({choose: false, name: "other"});
+	jsv.observable(app).setProperty({choose: false, name: "other"});
 	res += "|" + $("#result").text()
-		+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
+		+ "|" + jsv.views.settings.delimiters() + "|" + jsv.views.sub.settings.delimiters;
 
 $("#result input").val("new").change();
 
 	res += "|" + $("#result").text();
 
-	$.views.settings.delimiters(current);
+	jsv.views.settings.delimiters(current);
 
-	$.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div><div data-link="{:name+3}"></div><input data-link="{:name:}"/>{{/if}}').link("#result", app);
+	jsv.templates('{^{if choose}}<div data-link="name"></div>{{else}}NO<div data-link="name+2"></div><div data-link="{:name+3}"></div><input data-link="{:name:}"/>{{/if}}').link("#result", app);
 	res += "|" + $("#result").text()
-+ "|" + $.views.settings.delimiters() + "|" + $.views.sub.settings.delimiters;
++ "|" + jsv.views.settings.delimiters() + "|" + jsv.views.sub.settings.delimiters;
 
 $("#result input").val("NEW").change();
 
@@ -17963,17 +17980,17 @@ $("#result input").val("NEW").change();
 	// =============================== Arrange ===============================
 		// Debug mode false
 
-	var oldDebugMode = $.views.settings.debugMode();
+	var oldDebugMode = jsv.views.settings.debugMode();
 
 	app = {choose: true, name: "Jo", onerr: "invalid'Jo'"};
-	$.views.settings.debugMode(false);
+	jsv.views.settings.debugMode(false);
 
 	// ................................ Act ..................................
-	res = $.views.settings.debugMode();
+	res = jsv.views.settings.debugMode();
 	$("#result").empty();
 
 	try {
-		$.templates('{{:missing.willThrow}}X').link("#result", app);
+		jsv.templates('{{:missing.willThrow}}X').link("#result", app);
 	}
 	catch (e) {
 		res += " " + !!e.message;
@@ -17986,10 +18003,10 @@ $("#result input").val("NEW").change();
 		'Debug mode false: {{:missing.willThrow}} throws error - with link()');
 
 	// ................................ Act ..................................
-	res = $.views.settings.debugMode();
+	res = jsv.views.settings.debugMode();
 
 	try {
-		$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
+		jsv.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
 	}
 	catch (e) {
 		res += " " + !!e.message;
@@ -18004,11 +18021,11 @@ $("#result input").val("NEW").change();
 	// ................................ Act ..................................
 	// Debug mode true
 
-	$.views.settings.debugMode(true);
+	jsv.views.settings.debugMode(true);
 
-	res = $.views.settings.debugMode();
+	res = jsv.views.settings.debugMode();
 
-	$.templates('{{:missing.willThrow}}').link("#result", app);
+	jsv.templates('{{:missing.willThrow}}').link("#result", app);
 
 	res += " " + $("#result").text();
 
@@ -18018,9 +18035,9 @@ $("#result input").val("NEW").change();
 
 	// ................................ Act ..................................
 
-	res = $.views.settings.debugMode();
+	res = jsv.views.settings.debugMode();
 
-	$.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
+	jsv.templates('<div data-link="missing.willThrow">X</div>').link("#result", app);
 
 	res += " " + $("#result").text();
 
@@ -18034,14 +18051,14 @@ $("#result input").val("NEW").change();
 	// ................................ Act ..................................
 	// Debug mode 'onError' handler function with return value
 
-	$.views.settings.debugMode(function(e, fallback, view) {
-			// Can override using $.views.settings({onError: function(...) {...}});
+	jsv.views.settings.debugMode(function(e, fallback, view) {
+			// Can override using jsv.views.settings({onError: function(...) {...}});
 			var data = this;
 			return "Override error - " + (fallback||"") + "_" + data.name + " " + (e.message.indexOf("undefined")>-1); // For syntax errors e is a string, and view is undefined
 		});
 
 	// ................................ Act ..................................
-	$.templates('{{:missing.willThrow}}').link("#result", app);
+	jsv.templates('{{:missing.willThrow}}').link("#result", app);
 	res = $("#result").text();
 
 	// ............................... Assert .................................
@@ -18049,7 +18066,7 @@ $("#result input").val("NEW").change();
 		"Debug mode 'onError' handler override - with link()");
 
 	// ................................ Act ..................................
-	$.templates('{{:missing.willThrow onError=onerr}} {^{if missing.willThrow onError=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="missing.willThrow onError=onerr + \' (in data-link)\'"></span>').link("#result", app);
+	jsv.templates('{{:missing.willThrow onError=onerr}} {^{if missing.willThrow onError=onerr + \' (in if tag)\'}}inside{{/if}}<span data-link="missing.willThrow onError=onerr + \' (in data-link)\'"></span>').link("#result", app);
 	res = $("#result").text();
 
 	// ............................... Assert .................................
@@ -18057,7 +18074,7 @@ $("#result input").val("NEW").change();
 		"onError fallback in tags and in data-link expression, with debug mode 'onError' handler override");
 
 	// ................................ Act ..................................
-	$.templates('{{:missing.willThrow onError=~myErrFn}} {^{if missing.willThrow onError=~myErrFn}}inside{{/if}}<span data-link="missing.willThrow onError=~myErrFn"></span>').link("#result", app, {
+	jsv.templates('{{:missing.willThrow onError=~myErrFn}} {^{if missing.willThrow onError=~myErrFn}}inside{{/if}}<span data-link="missing.willThrow onError=~myErrFn"></span>').link("#result", app, {
 		myErrFn: function(e, view) {
 			return "myErrFn for <" + this.name + ">";
 		}
@@ -18070,10 +18087,10 @@ $("#result input").val("NEW").change();
 
 	// ................................ Reset ..................................
 	$("#result").empty();
-	$.unlink(); // Need to unlink since when throwing above, view registration was incomplete, so calling $("#result").empty() is not sufficient to clean up child views on topView
-	$.views.settings.debugMode(oldDebugMode);
+	jsv.unlink(); // Need to unlink since when throwing above, view registration was incomplete, so calling $("#result").empty() is not sufficient to clean up child views on topView
+	jsv.views.settings.debugMode(oldDebugMode);
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 });
 
 QUnit.module("API - Declarations");
@@ -18081,7 +18098,7 @@ QUnit.module("API - Declarations");
 QUnit.test("Template encapsulation", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		myTmpl6: {
 			markup: "{{sort reverse=true people}}{{:lastName}}{{/sort}}",
 			tags: {
@@ -18091,13 +18108,13 @@ QUnit.test("Template encapsulation", function(assert) {
 	});
 
 	// ................................ Act ..................................
-	$.link.myTmpl6("#result", {people: people});
+	jsv.link.myTmpl6("#result", {people: people});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "TwoOne", "Template with tag resource");
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		myTmpl7: {
 			markup: "{{if first}}Yes{{:~foo}}{{sort reverse=true people}}{{:lastName}}{{/sort}}{{else}}No{{:~foo}}{{sort reverse=true people}}{{:lastName}}{{/sort}}{{/if}}",
 			tags: {
@@ -18110,7 +18127,7 @@ QUnit.test("Template encapsulation", function(assert) {
 	});
 
 	// ................................ Act ..................................
-	$.link.myTmpl7("#result", {people: people, first: false});
+	jsv.link.myTmpl7("#result", {people: people, first: false});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "NoisFooTwoOne", "Can access tag and helper resources from a nested context (i.e. inside {{if}} block)");
@@ -18121,150 +18138,150 @@ QUnit.test("Template encapsulation", function(assert) {
 
 QUnit.module("API - Views");
 
-QUnit.test("$.view() in regular content", function(assert) {
+QUnit.test("jsv.view() in regular content", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.tmplHierarchy("#result", topData);
+	jsv.link.tmplHierarchy("#result", topData);
 
 	// ................................ Act ..................................
-	var view = $.view("#1");
+	var view = jsv.view("#1");
 
 	// ............................... Assert .................................
-	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrap", '$.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrap", 'jsv.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
-	view = $.view("#1", "root");
+	view = jsv.view("#1", "root");
 
 	// ............................... Assert .................................
-	assert.ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
+	assert.ok(view.parent.type === "top", 'jsv.view(elem, "root") gets root view (child of top view)');
 
 	// ................................ Act ..................................
-	view = $.view("#1", "item");
+	view = jsv.view("#1", "item");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'jsv.view(elem, "item") gets nearest item view');
 
 	// ................................ Act ..................................
-	view = $.view("#1", "data");
+	view = jsv.view("#1", "data");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "data" && view.data === topData, '$.view(elem, "data") gets nearest data view');
+	assert.ok(view.type === "data" && view.data === topData, 'jsv.view(elem, "data") gets nearest data view');
 
 	// ................................ Act ..................................
-	view = $.view("#1", "if");
+	view = jsv.view("#1", "if");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "if" && view.data === people[0], '$.view(elem, "if") gets nearest "if" view');
+	assert.ok(view.type === "if" && view.data === people[0], 'jsv.view(elem, "if") gets nearest "if" view');
 
 	// ................................ Act ..................................
-	view = $.view("#1", "array");
+	view = jsv.view("#1", "array");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "array" && view.data === people, '$.view(elem, "array") gets nearest array view');
+	assert.ok(view.type === "array" && view.data === people, 'jsv.view(elem, "array") gets nearest array view');
 
 	// ................................ Act ..................................
-	view = $.view("#sp1", "myWrap");
+	view = jsv.view("#sp1", "myWrap");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", '$.view(elem, "mytagName") gets nearest view for content of that tag');
+	assert.ok(view.type === "myWrap" && view.ctx.tag.tagName === "myWrap", 'jsv.view(elem, "mytagName") gets nearest view for content of that tag');
 
-	view = $.view("#sp1");
+	view = jsv.view("#sp1");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrap2", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
+	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrap2", 'Within {{if}} block, jsv.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
 
 	// ................................ Act ..................................
-	view = $.view("#1", true);
+	view = jsv.view("#1", true);
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myWrap2", '$.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.type === "myWrap2", 'jsv.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
-	view = $.view("#result", true, "myFlow");
+	view = jsv.view("#result", true, "myFlow");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myFlow", '$.view(elem, true, viewTypeName) gets the first (depth first) nested view of that type');
+	assert.ok(view.type === "myFlow", 'jsv.view(elem, true, viewTypeName) gets the first (depth first) nested view of that type');
 
 	// =============================== Arrange ===============================
 
 	var data = [];
 
-	$.templates("").link("#result", data);
+	jsv.templates("").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result", true);
+	view = jsv.view("#result", true);
 
-		var view2 = $.view("#result").get(true);
+		var view2 = jsv.view("#result").get(true);
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	var itemView = $.view("#result", true, "item");
+	var itemView = jsv.view("#result", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(!itemView,
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
 
 	data = [1];
 
-	$.templates("").link("#result", data);
+	jsv.templates("").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result", true);
+	view = jsv.view("#result", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result", true, "item");
+	itemView = jsv.view("#result", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(itemView.index === 0,
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// =============================== Arrange ===============================
 
 	data = {people: []};
 
-	$.templates("<div>{{for people}}{{/for}}</div>").link("#result", data);
+	jsv.templates("<div>{{for people}}{{/for}}</div>").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result div", true);
+	view = jsv.view("#result div", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data.people && view.type === "array",
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result div", true, "item");
+	itemView = jsv.view("#result div", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(!itemView,
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
 
 	data = {people: [1]};
 
-	$.templates("<div>{{for people}}{{/for}}</div>").link("#result", data);
+	jsv.templates("<div>{{for people}}{{/for}}</div>").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result div", true);
+	view = jsv.view("#result div", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data.people && view.type === "array",
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result div", true, "item");
+	itemView = jsv.view("#result div", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(itemView.index === 0,
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -18273,9 +18290,9 @@ QUnit.test("$.view() in regular content", function(assert) {
 QUnit.test("view.get() and view.getIndex() in regular content", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.tmplHierarchy("#result", topData);
+	jsv.link.tmplHierarchy("#result", topData);
 
-	var view1 = $.view("#1");
+	var view1 = jsv.view("#1");
 
 	// ................................ Act ..................................
 	var view = view1.get();
@@ -18317,13 +18334,13 @@ QUnit.test("view.get() and view.getIndex() in regular content", function(assert)
 	view = view1.get(true);
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myWrap2" && view === view1.get(true, "myWrap2") && view === $.view("#sp0").parent, 'view.get(true) gets nearest child view of any type');
+	assert.ok(view.type === "myWrap2" && view === view1.get(true, "myWrap2") && view === jsv.view("#sp0").parent, 'view.get(true) gets nearest child view of any type');
 
 	// ............................... Assert .................................
 	assert.ok(view1.get(true, "nonexistent") === undefined, 'view.get(true, "viewTypeName") returns undefined if no descendant of that type, starting from the view itself');
 
 	// ............................... Assert .................................
-	assert.ok($.view("#1").getIndex() === 0 && $.view("#1", "item").index === 0 && $.view("#2").getIndex() === 1 && $.view("#2", "item").index === 1, '$.view(elem).getIndex() gets index of nearest item view');
+	assert.ok(jsv.view("#1").getIndex() === 0 && jsv.view("#1", "item").index === 0 && jsv.view("#2").getIndex() === 1 && jsv.view("#2", "item").index === 1, 'jsv.view(elem).getIndex() gets index of nearest item view');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -18331,10 +18348,10 @@ QUnit.test("view.get() and view.getIndex() in regular content", function(assert)
 
 QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
-	$.views.settings.trigger(false);
+	jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
-	$.views.tags("mytag", {
+	jsv.views.tags("mytag", {
 		bindTo: ["height", "width"],
 		linkedElement: [".ht", ".wd"],
 		linkedCtxParam: ["ht", "wd"],
@@ -18358,12 +18375,12 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	});
 
 	// =============================== Arrange ===============================
-	var tmpl = $.templates('<input id="1" data-link="~foo" /> {^{:~foo}}');
+	var tmpl = jsv.templates('<input id="1" data-link="~foo" /> {^{:~foo}}');
 
 	tmpl.link("#result", {}, {});
 
 	// ............................... Assert .................................
-	assert.ok($.view().ctxPrm("toString") === undefined,
+	assert.ok(jsv.view().ctxPrm("toString") === undefined,
 		"ctxPrm() for built-in non-enumerables such as 'toString' returns undefined");
 
 	// ................................ Act ..................................
@@ -18411,7 +18428,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Initialized instance context param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
 
 	// ................................ Act ..................................
-	$.views.helpers("foo", "registered", tmpl);
+	jsv.views.helpers("foo", "registered", tmpl);
 
 	tmpl.link("#result", {});
 
@@ -18436,7 +18453,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Initialized registered helper param can be changed observably by two-way binding or by view.ctxPrm(foo, value) call");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 			'<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
 		+ '{{if true}}, Inner: {^{:~foo}}'
 			+ '{{if true}}, Nested inner: {^{:~foo}}'
@@ -18468,7 +18485,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable contextual parameter is scoped to root view (view below top view)");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates(
+	tmpl = jsv.templates(
 			'Property: <input class="prp" data-link="~prp"/> {^{:~prp}} | <br/>'
 		+ 'Function: <input class="fn" data-link="~fn()"/>{^{:is}} | <br/>'
 		+ '{{for items}}'
@@ -18482,7 +18499,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	};
 
 	fn.set = function(val) {
-		$.observable(this.data).setProperty("is", val);
+		jsv.observable(this.data).setProperty("is", val);
 	}
 
 	tmpl.link("#result", [
@@ -18527,14 +18544,14 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	"Observable contextual parameter are scoped: for computed function, to calling view, for properties, not functions, to root view (view below top view)");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<input class="inp" data-link="~foo"/> {^{:~foo}}');
+	tmpl = jsv.templates('<input class="inp" data-link="~foo"/> {^{:~foo}}');
 
 	tmpl.link("#result", [0, 1]);
 
 	var input1 = $(".inp")[0],
 		input2 = $(".inp")[1],
-		view2 = $.view(input2);
-	view1 = $.view(input1);
+		view2 = jsv.view(input2);
+	view1 = jsv.view(input1);
 
 	content = $("#result");
 	res = "1: View1:" + (view1.ctxPrm("foo")||"") + "-" + input1.value + " View2:" + (view2.ctxPrm("foo")||"") + "-" + input2.value + ": {" + content.text() + "} ";
@@ -18560,7 +18577,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable contextual parameter is scoped to root view (view below top view) - which is array view, when rendering/linking an array");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+	tmpl = jsv.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
 		+ '{^{mytag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
 			+ '{^{mytag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
 			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
@@ -18610,7 +18627,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
 	// ................................ Act ..................................
 
-	var innerTag = $.view().childTags(true, "mytag")[1];
+	var innerTag = jsv.view().childTags(true, "mytag")[1];
 
 	res = "|1: " + (innerTag.ctxPrm("foo")||"");
 
@@ -18635,7 +18652,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Multiple else blocks: tag.nodes() and tag.content() return content from all else blocks");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
+	tmpl = jsv.templates('<input id="1" data-link="~foo"/> Outer: {^{:~foo}}'
 		+ '{{mytag width=cx}}<input id="2" data-link="~foo"/>, Inner: {^{:~foo}}'
 			+ '{{mytag}}<input id="3" data-link="~foo"/>, Nested inner: {^{:~foo}}'
 			+ '{{else width=cx}}<input id="4" data-link="~foo"/>, Nested inner: {^{:~foo}}'
@@ -18685,9 +18702,9 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, shared across else blocks");
 
 	// =============================== Arrange ===============================
-	$.views.tags.mytag.vals = [[38, 48], [33, 44]];
+	jsv.views.tags.mytag.vals = [[38, 48], [33, 44]];
 
-	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
+	tmpl = jsv.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
 		+ '{^{mytag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
 			+ '{^{mytag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
 			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
@@ -18738,7 +18755,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable tag contextual parameter within linked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
+	tmpl = jsv.templates('<input id="1" data-link="~wd"/> Outer: {^{:~wd}}'
 		+ '{{mytag width=11}}<input id="2" data-link="~wd"/>, Inner: {^{:~wd}}'
 			+ '{{mytag}}<input id="3" data-link="~wd"/>, Nested inner: {^{:~wd}}'
 			+ '{{else width=cx}}<input id="4" data-link="~wd"/>, Nested inner: {^{:~wd}}'
@@ -18788,7 +18805,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observable tag contextual parameter within unlinked tag is scoped to tag view, - closest non flow tag ancestor, not shared across else blocks");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTER<input id="outer{{:#index}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}',
 		tags: {
 			namebox: {
@@ -18817,7 +18834,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When contextual parameter not initialized at higher level, it is scoped to nearest tag container, or to root view (view below top view)");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTERMOST{^{:~foo}} {^{include ~foo="wrapper!"}}OUTER<input id="outer{{:#getIndex()}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}{{/include}}',
 		// With {{include ~foo=...}} wrapper
 		tags: {
@@ -18853,7 +18870,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When contextual parameter is initialized at higher level, it is scoped to that level");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTER<input id="outer{{:#index}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}',
 		tags: {
 			namebox: {
@@ -18883,7 +18900,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When contextual parameter is initialized as global helper, it is scoped to root view (view below top view)");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTER<input id="outer{{:#index}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}',
 		tags: {
 			namebox: {
@@ -18912,7 +18929,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When contextual parameter is initialized as instance helper, it is scoped to root view (view below top view)");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTER<input id="outer{{:#index}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}',
 		tags: {
 			namebox: {
@@ -18938,7 +18955,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When tag needs to be refreshed, if no depends on tag, will not refresh values of ~foo ");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates({
+	tmpl = jsv.templates({
 		markup: 'OUTER<input id="outer{{:#index}}" data-link="~foo"/>{^{:~foo}}{^{namebox/}}',
 		tags: {
 			namebox: {
@@ -18965,7 +18982,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"When tag needs to be refreshed, if depends='~foo' on tag, will refresh values of ~foo ");
 
 // =============================== Arrange ===============================
-	tmpl = $.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
+	tmpl = jsv.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
 
 	tmpl.link("#result", [1,2], {foo: "val1"});
 
@@ -19026,7 +19043,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"link() will initialize contextual parameters, which are scoped to the newly linked view - so re-initialize on relinking");
 
 	// =============================== Arrange ===============================
-	var outerTmpl = $.templates('<input id="outer" data-link="~foo"/> {^{:~foo}} <div id="main"></div>');
+	var outerTmpl = jsv.templates('<input id="outer" data-link="~foo"/> {^{:~foo}} <div id="main"></div>');
 
 	outerTmpl.link("#result", {}, {foo: "outer"});
 	content = $("#result");
@@ -19040,7 +19057,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	// ................................ Act ..................................
 	// Link to "#main" within linked templated content, and ensure context params are scoped within "#main", independent
 	// of context params in outer views under "#result"
-	tmpl = $.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
+	tmpl = jsv.templates('<input id="a{{:#index+1}}" data-link="~foo"/> {^{:~foo}}');
 	tmpl.link("#main", [1,2], {foo: "val1"});
 
 	input1 = $("#a1");
@@ -19081,19 +19098,19 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"link() will initialize contextual parameters, scoped to the newly linked view (within target container), even when the target container is within data-linked content");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
+	tmpl = jsv.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
 
 	function fn1() {return "FN1"}
 	function fn2() {return "FN2"}
 
 	function fullNameVM() {
-		return this.nm + $.view("#it").ctxPrm("nm") + "Last";
+		return this.nm + jsv.view("#it").ctxPrm("nm") + "Last";
 	}
 
 	fullNameVM.depends = ["nm", "~nm"];
 
 	fullNameVM.set = function(val) {
-		$.observable(this).setProperty("nm", val.slice(0, -4));
+		jsv.observable(this).setProperty("nm", val.slice(0, -4));
 	};
 
 	function fullNameCtx() {
@@ -19126,17 +19143,17 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		message += eventArgs.path + "(" + (eventArgs.ctxPrm||"") + "):" + eventArgs.value;
 	}
 
-	$.observe(data, "nm", changeHandler);
-	$.observe(data, "fullName", changeHandler);
-	$.observe($.view("#it"), "~nm", changeHandler);
-	$.observe($.view("#it"), "~fullName", changeHandler);
+	jsv.observe(data, "nm", changeHandler);
+	jsv.observe(data, "fullName", changeHandler);
+	jsv.observe(jsv.view("#it"), "~nm", changeHandler);
+	jsv.observe(jsv.view("#it"), "~fullName", changeHandler);
 
-	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("nm", "NewVmProp");
-	$.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fnprop", fn2);
-	$.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fullName", "NewVmFullname");
+	jsv.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("nm", "NewVmProp");
+	jsv.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fnprop", fn2);
+	jsv.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fullName", "NewVmFullname");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(), "NewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
@@ -19147,7 +19164,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		"Observe listener registered for props and computed props, and ctxPrm listener registered for contextual parameters and computed contextual parameters. Trigger correctly.");
 
 	// =============================== Arrange ===============================
-	tmpl = $.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
+	tmpl = jsv.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
 
 	function fullNameHlp() {
 		return this.data.nm + this.ctxPrm("nm") + "Last";
@@ -19159,7 +19176,7 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 		this.ctxPrm("nm", val.slice(0, -4));
 	};
 
-	$.views.helpers({
+	jsv.views.helpers({
 		nm: "Jim",
 		fnprop: fn1,
 		fullName: fullNameHlp
@@ -19176,20 +19193,20 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	// ................................ Act ..................................
 	var message = "";
 
-	$.observe(data, "nm", changeHandler);
-	$.observe(data, "fullName", changeHandler);
-	$.observe($.view("#it"), "~nm", changeHandler);
-	$.observe($.view("#it"), "~fullName", changeHandler);
+	jsv.observe(data, "nm", changeHandler);
+	jsv.observe(data, "fullName", changeHandler);
+	jsv.observe(jsv.view("#it"), "~nm", changeHandler);
+	jsv.observe(jsv.view("#it"), "~fullName", changeHandler);
 
-	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("nm", "NewVmProp");
-	$.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fnprop", fn2);
-	$.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fullName", "NewVmFullname");
+	jsv.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("nm", "NewVmProp");
+	jsv.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fnprop", fn2);
+	jsv.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fullName", "NewVmFullname");
 
 	// ............................... Assert .................................
-	var fnctions = fullNameHlp === $.views.helpers.fullName && fn1 === $.views.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
+	var fnctions = fullNameHlp === jsv.views.helpers.fullName && fn1 === jsv.views.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
 	assert.equal(fnctions + $("#result").text(), "trueNewCtxFull NewVmFull FN2 FN2 NewVmFullNewCtxFullLast NewVmFullNewCtxFullLast ",
 		"Observe registered computed helper with both data and contextual parameters as depends paths");
 
@@ -19202,15 +19219,15 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	$("#result").empty();
 
-	$.views.helpers({
+	jsv.views.helpers({
 		nm: null,
 		fnprop: null,
 		fullName: null
 	});
 
-	tmpl = $.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
+	tmpl = jsv.templates('{^{:~nm}} {^{:nm}} {^{:~fnprop()}} {^{:fnprop()}} {^{:~fullName()}} {^{:fullName()}} <span id="it"></span>');
 
-	$.views.helpers({
+	jsv.views.helpers({
 		nm: "Jim",
 		fnprop: fn1,
 		fullName: fullNameHlp
@@ -19227,17 +19244,17 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	// ................................ Act ..................................
 	var message = "";
 
-	$.observe(data, "nm", changeHandler);
-	$.observe(data, "fullName", changeHandler);
-	$.observe($.view("#it"), "~nm", changeHandler);
-	$.observe($.view("#it"), "~fullName", changeHandler);
+	jsv.observe(data, "nm", changeHandler);
+	jsv.observe(data, "fullName", changeHandler);
+	jsv.observe(jsv.view("#it"), "~nm", changeHandler);
+	jsv.observe(jsv.view("#it"), "~fullName", changeHandler);
 
-	$.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("nm", "NewVmProp");
-	$.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fnprop", fn2);
-	$.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fullName", "NewVmFullname");
+	jsv.view("#it").ctxPrm("nm", "NewCtxProp"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("nm", "NewVmProp");
+	jsv.view("#it").ctxPrm("fnprop", fn2); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fnprop", fn2);
+	jsv.view("#it").ctxPrm("fullName", "NewCtxFullname"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fullName", "NewVmFullname");
 
 	// ............................... Assert .................................
 	fnctions = fullNameHlp === tmpl.helpers.fullName && fn1 === tmpl.helpers.fnprop; // Make sure helper function have not been replaced by ctxPrm() call
@@ -19254,26 +19271,26 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 
 	function listeners() {
 		res += $._data(data).events.propertyChange.length
-			+ $._data($.view("#it")._ocps.nm[0]).events.propertyChange.length
-			+ $._data($.view("#it")._ocps.fullName[0]).events.propertyChange.length + "|";
+			+ $._data(jsv.view("#it")._ocps.nm[0]).events.propertyChange.length
+			+ $._data(jsv.view("#it")._ocps.fullName[0]).events.propertyChange.length + "|";
 	}
 
 	listeners();
-	$.unobserve(data, "nm", changeHandler);
+	jsv.unobserve(data, "nm", changeHandler);
 	listeners();
-	$.unobserve(data, "fullName", changeHandler);
+	jsv.unobserve(data, "fullName", changeHandler);
 	listeners();
-	$.unobserve($.view("#it"), "~nm", changeHandler);
+	jsv.unobserve(jsv.view("#it"), "~nm", changeHandler);
 	listeners();
-	$.unobserve($.view("#it"), "~fullName", changeHandler);
+	jsv.unobserve(jsv.view("#it"), "~fullName", changeHandler);
 	listeners();
 
-	$.view("#it").ctxPrm("nm", "AddCtxProp"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("nm", "AddVmProp");
-	$.view("#it").ctxPrm("fnprop", fn1); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fnprop", fn1);
-	$.view("#it").ctxPrm("fullName", "AddCtxFullname"); // Get this to work for triggering computed function helper change
-	$.observable(data).setProperty("fullName", "AddVmFullname");
+	jsv.view("#it").ctxPrm("nm", "AddCtxProp"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("nm", "AddVmProp");
+	jsv.view("#it").ctxPrm("fnprop", fn1); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fnprop", fn1);
+	jsv.view("#it").ctxPrm("fullName", "AddCtxFullname"); // Get this to work for triggering computed function helper change
+	jsv.observable(data).setProperty("fullName", "AddVmFullname");
 
 	// ............................... Assert .................................
 	assert.equal(message === "" && res, "14|13|11|10|9|",
@@ -19287,97 +19304,97 @@ QUnit.test("view.ctxPrm() tag.ctxPrm()", function(assert) {
 	$("#result").empty();
 });
 
-QUnit.test("$.view() in element-only content", function(assert) {
+QUnit.test("jsv.view() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.tmplHierarchyElCnt("#result", topData);
+	jsv.link.tmplHierarchyElCnt("#result", topData);
 
 	// ................................ Act ..................................
-	var view = $.view("#tr1");
+	var view = jsv.view("#tr1");
 
 	// ............................... Assert .................................
-	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'Within element-only content, $.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'Within element-only content, jsv.view(elem) gets nearest parent view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", "root");
+	view = jsv.view("#tr1", "root");
 
 	// ............................... Assert .................................
-	assert.ok(view.parent.type === "top", '$.view(elem, "root") gets root view (child of top view)');
+	assert.ok(view.parent.type === "top", 'jsv.view(elem, "root") gets root view (child of top view)');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", "item");
+	view = jsv.view("#tr1", "item");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'Within element-only content, $.view(elem, "item") gets nearest item view');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'Within element-only content, jsv.view(elem, "item") gets nearest item view');
 
 	// ................................ Act ..................................
-	view = $.view("#sp1", "item");
+	view = jsv.view("#sp1", "item");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, '$.view(elem, "item") gets nearest item view, up through both elCnt and regular content views');
+	assert.ok(view.type === "item" && view.data.lastName === "One" && view.index === 0, 'jsv.view(elem, "item") gets nearest item view, up through both elCnt and regular content views');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", "data");
+	view = jsv.view("#tr1", "data");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "data" && view.data === topData, 'Within element-only content, $.view(elem, "data") gets nearest data view');
+	assert.ok(view.type === "data" && view.data === topData, 'Within element-only content, jsv.view(elem, "data") gets nearest data view');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", "if");
+	view = jsv.view("#tr1", "if");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "if" && view.data === people[0], 'Within element-only content, $.view(elem, "if") gets nearest "if" view');
+	assert.ok(view.type === "if" && view.data === people[0], 'Within element-only content, jsv.view(elem, "if") gets nearest "if" view');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", "array");
+	view = jsv.view("#tr1", "array");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "array" && view.data === people, 'Within element-only content, $.view(elem, "array") gets nearest array view');
+	assert.ok(view.type === "array" && view.data === people, 'Within element-only content, jsv.view(elem, "array") gets nearest array view');
 
 	// ................................ Act ..................................
-	view = $.view("#sp1", "myWrapElCnt");
+	view = jsv.view("#sp1", "myWrapElCnt");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, $.view(elem, "mytagName") gets nearest view for content of that tag');
+	assert.ok(view.type === "myWrapElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within element-only content, jsv.view(elem, "mytagName") gets nearest view for content of that tag');
 
 	// ................................ Act ..................................
-	view = $.view("#td1");
+	view = jsv.view("#td1");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{if}} block, $.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
+	assert.ok(view.type === "if" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{if}} block, jsv.view(elem) gets nearest "if" view, but view.ctx.tag is the nearest non-flow tag, i.e. custom tag that does not have flow set to true');
 
 	// ................................ Act ..................................
-	view = $.view("#spInFlow1");
+	view = jsv.view("#spInFlow1");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, $.view(elem) gets nearest "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
+	assert.ok(view.type === "myFlowElCnt" && view.ctx.tag.tagName === "myWrapElCnt", 'Within {{myFlow}} block, for a flow tag, jsv.view(elem) gets nearest "myFlow" view, but view.ctx.tag is the nearest non-flow tag');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", true);
+	view = jsv.view("#tr1", true);
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myWrap2ElCnt", 'Within element-only content, $.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
+	assert.ok(view.type === "myWrap2ElCnt", 'Within element-only content, jsv.view(elem, true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1", true, "myFlowElCnt");
+	view = jsv.view("#tr1", true, "myFlowElCnt");
 
 	// ............................... Assert .................................
-	assert.ok(view.type === "myFlowElCnt", 'Within element-only content, $.view(elem, true, "mytagName") gets the first (depth first) nested view of that type');
+	assert.ok(view.type === "myFlowElCnt", 'Within element-only content, jsv.view(elem, true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1").get(true);
+	view = jsv.view("#tr1").get(true);
 
 	// ............................... Assert .................................
 	assert.ok(view.type === "myWrap2ElCnt", 'Within element-only content, view.get(true) gets the first nested view. Custom tag blocks are of type "tmplName"');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1").get(true, "myFlowElCnt");
+	view = jsv.view("#tr1").get(true, "myFlowElCnt");
 
 	// ............................... Assert .................................
 	assert.ok(view.type === "myFlowElCnt", 'Within element-only content, view.get(true, "mytagName") gets the first (depth first) nested view of that type');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1");
+	view = jsv.view("#tr1");
 
 	// ............................... Assert .................................
 	assert.ok(view.type === "myWrapElCnt" && view === view.get("myWrapElCnt"), 'view.get("viewTypeName") gets nearest viewTypeName view looking at ancestors starting from the view itself');
@@ -19386,19 +19403,19 @@ QUnit.test("$.view() in element-only content", function(assert) {
 	assert.ok(view === view.get(true, "myWrapElCnt"), 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1").get(true, "myFlowElCnt");
+	view = jsv.view("#tr1").get(true, "myFlowElCnt");
 
 	// ............................... Assert .................................
 	assert.ok(view.tmpl.markup === "xx<span id=\"spInFlow{{:#getIndex()+1}}\"></span>{{if true}}{{myFlow2/}}{{/if}}", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ................................ Act ..................................
-	view = $.view("#tr1").get(true, "myFlow2");
+	view = jsv.view("#tr1").get(true, "myFlow2");
 
 	// ............................... Assert .................................
 	assert.ok(view.tmpl.markup === "flow2", 'view.get(true, "viewTypeName") gets nearest viewTypeName view looking at descendants starting from the view itself');
 
 	// ............................... Assert .................................
-	assert.ok($.view("#tr1").get(true, "nonexistent") === undefined, 'view.get(true, "viewTypeName") returns undefined if no descendant of that type, starting from the view itself');
+	assert.ok(jsv.view("#tr1").get(true, "nonexistent") === undefined, 'view.get(true, "viewTypeName") returns undefined if no descendant of that type, starting from the view itself');
 
 	// =============================== Arrange ===============================
 
@@ -19406,21 +19423,21 @@ QUnit.test("$.view() in element-only content", function(assert) {
 
 	$("#result").html("<ul></ul>");
 
-	$.templates("").link("#result ul", data);
+	jsv.templates("").link("#result ul", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result ul", true);
+	view = jsv.view("#result ul", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	var itemView = $.view("#result ul", true, "item");
+	var itemView = jsv.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(!itemView,
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
 
@@ -19428,61 +19445,61 @@ QUnit.test("$.view() in element-only content", function(assert) {
 
 	$("#result").html("<ul></ul>");
 
-	$.templates("").link("#result ul", data);
+	jsv.templates("").link("#result ul", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result ul", true);
+	view = jsv.view("#result ul", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data && view.type === "array",
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result ul", true, "item");
+	itemView = jsv.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(itemView.index === 0,
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// =============================== Arrange ===============================
 
 	data = {people: []};
 
-	$.templates("<ul>{{for people}}{{/for}}</ul>").link("#result", data);
+	jsv.templates("<ul>{{for people}}{{/for}}</ul>").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result ul", true);
+	view = jsv.view("#result ul", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data.people && view.type === "array",
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true) returns the array view (even though the element is empty)');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true) returns the array view (even though the element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result ul", true, "item");
+	itemView = jsv.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(!itemView,
-		'If elem is a container for a rendered array, and the array is empty, $.view(elem, true, "item") returns nothing');
+		'If elem is a container for a rendered array, and the array is empty, jsv.view(elem, true, "item") returns nothing');
 
 	// =============================== Arrange ===============================
 
 	data = {people: [1]};
 
-	$.templates("<ul>{{for people}}{{/for}}</ul>").link("#result", data);
+	jsv.templates("<ul>{{for people}}{{/for}}</ul>").link("#result", data);
 
 	// ................................ Act ..................................
-	view = $.view("#result ul", true);
+	view = jsv.view("#result ul", true);
 
 	// ............................... Assert .................................
 	assert.ok(view.data === data.people && view.type === "array",
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true) returns the array view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true) returns the array view (even though the container element is empty)');
 
 	// ................................ Act ..................................
-	itemView = $.view("#result ul", true, "item");
+	itemView = jsv.view("#result ul", true, "item");
 
 	// ............................... Assert .................................
 	assert.ok(itemView.index === 0,
-		'If elem is a container for a rendered array rendering nothing, and the array is not empty, $.view(elem, true, "item") returns the item view (even though the container element is empty)');
+		'If elem is a container for a rendered array rendering nothing, and the array is not empty, jsv.view(elem, true, "item") returns the item view (even though the container element is empty)');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -19491,9 +19508,9 @@ QUnit.test("$.view() in element-only content", function(assert) {
 QUnit.test("view.get() and view.getIndex() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.tmplHierarchyElCnt("#result", topData);
+	jsv.link.tmplHierarchyElCnt("#result", topData);
 
-	var view1 = $.view("#tr1");
+	var view1 = jsv.view("#tr1");
 
 	// ................................ Act ..................................
 	var view = view1.get();
@@ -19514,12 +19531,12 @@ QUnit.test("view.get() and view.getIndex() in element-only content", function(as
 	assert.ok(view.ctxPrm("val") === 1 && view.type === "myWrapElCnt", 'In element-only content, view.get("viewTypeName") gets nearest viewTypeName view - even if is the nearest view');
 
 	// ............................... Assert .................................
-	assert.ok($.view("#tr1").getIndex() === 0 && $.view("#tr1", "item").index === 0 && $.view("#tr2").getIndex() === 1 && $.view("#tr2", "item").index === 1,
-		'$.view(elem).getIndex() gets index of nearest item view, up through elCnt views');
+	assert.ok(jsv.view("#tr1").getIndex() === 0 && jsv.view("#tr1", "item").index === 0 && jsv.view("#tr2").getIndex() === 1 && jsv.view("#tr2", "item").index === 1,
+		'jsv.view(elem).getIndex() gets index of nearest item view, up through elCnt views');
 
 	// ............................... Assert .................................
-	assert.ok($.view("#sp1").getIndex() === 0 && $.view("#sp1", "item").index === 0 && $.view("#sp2").getIndex() === 1 && $.view("#sp2", "item").index === 1,
-		'$.view(elem).getIndex() gets index of nearest item view, up through both elCnt and regular content views');
+	assert.ok(jsv.view("#sp1").getIndex() === 0 && jsv.view("#sp1", "item").index === 0 && jsv.view("#sp2").getIndex() === 1 && jsv.view("#sp2", "item").index === 1,
+		'jsv.view(elem).getIndex() gets index of nearest item view, up through both elCnt and regular content views');
 
 	// ............................... Reset .................................
 	$("#result").empty();
@@ -19529,7 +19546,7 @@ QUnit.module("API - Tag Controls");
 
 QUnit.test("Wrapping", function(assert) {
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 			markup: '{{mytag}}{{:name}}{{/mytag}}'
 		+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
 			tags: {
@@ -19548,7 +19565,7 @@ QUnit.test("Wrapping", function(assert) {
 		"If tag has no template, tagCtx.render() and tagCtx.content.render() both render content. arg[0] defaults to current data context.");
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 			markup: '{{mytag}}{{:name}}{{/mytag}}'
 		+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
 			tags: {
@@ -19568,7 +19585,7 @@ QUnit.test("Wrapping", function(assert) {
 		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content");
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 			markup: '{{mytag}}a{{:name}}{{else #data}}b{{:name}}{{/mytag}}'
 		+ '<div data-link="{mytag tmpl=\'a{{:name}}\'}{else #data tmpl=\'b{{:name}}\'}"></div>',
 			tags: {
@@ -19591,7 +19608,7 @@ QUnit.test("Wrapping", function(assert) {
 		"If tag has a template, tagCtx.render() renders template and tagCtx.content.render() renders content - also for else blocks");
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 			markup: '{{mytag}}{{:name}}{{/mytag}}'
 				+ '<div data-link="{mytag tmpl=\'{{:name}}\'}"></div>',
 			tags: {
@@ -19620,10 +19637,10 @@ QUnit.test("Wrapping", function(assert) {
 QUnit.test("view.childTags() and tag.childTags()", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.boundTmplHierarchy("#result", topData);
+	jsv.link.boundTmplHierarchy("#result", topData);
 
 	var tags,
-		view1 = $.view("#result", true, "item");
+		view1 = jsv.view("#result", true, "item");
 
 	// ................................ Act ..................................
 
@@ -19715,10 +19732,10 @@ QUnit.test("view.childTags() and tag.childTags()", function(assert) {
 QUnit.test("view.childTags() in element-only content", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.boundTmplHierarchyElCnt("#result", topData);
+	jsv.link.boundTmplHierarchyElCnt("#result", topData);
 
 	var tags,
-		view1 = $.view("#result", true, "item");
+		view1 = jsv.view("#result", true, "item");
 
 	// ................................ Act ..................................
 	tags = view1.childTags();
@@ -19839,7 +19856,7 @@ QUnit.test("view.childTags() in element-only content", function(assert) {
 		'tag.childTags(true, "mytagName") returns descendant tags of chosen name, and skips any unbound tags');
 
 	// =============================== Arrange ===============================
-	$.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", {row: {}});
+	jsv.templates("<table><tbody>{^{for row}}<tr>{^{mySimpleWrap/}}</tr>{{/for}}</tbody></table>").link("#result", {row: {}});
 
 	// ................................ Act ..................................
 	var tag = $("#result tr").view().childTags()[0];
@@ -19855,10 +19872,10 @@ QUnit.test("view.childTags() in element-only content", function(assert) {
 QUnit.test("view.childTags() in element-only content, using data-link", function(assert) {
 
 	// =============================== Arrange ===============================
-	$.link.boundTmplHierarchyElCntWithDataLink("#result", person1);
+	jsv.link.boundTmplHierarchyElCntWithDataLink("#result", person1);
 
 	var tags,
-		view1 = $.view("#result", true);
+		view1 = jsv.view("#result", true);
 	// ................................ Act ..................................
 	tags = view1.childTags();
 
@@ -19902,7 +19919,7 @@ QUnit.test("lateRender - for deferred API calls", function(assert) {
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup:
 // These calls are before the targeted instance, so need lateRender=true (or any other value than false)
 '<div data-link="{for #get(true, \'mytag\').tag.value tmpl=\'showVal\' lateRender=true}"></div>' +
@@ -19947,7 +19964,7 @@ QUnit.test("lateRender - for deferred API calls", function(assert) {
 	"When using APIs such as #childTags() and #get() within binding expressions, to return tag instances, use lateRender=true to defer the API call until linking is complete" );
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup:
 // These calls are before the targeted instance, so need lateRender=true
 '<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=0}"></div>' +
@@ -19973,7 +19990,7 @@ QUnit.test("lateRender - for deferred API calls", function(assert) {
 	"When using APIs such as #childTags() and #get() within binding expressions, to return tag instances, use lateRender=xxx (any value xxx other than false or undefined) to defer the API call until linking is complete" );
 
 	// ................................ Act ..................................
-var myTmpl = $.templates({
+var myTmpl = jsv.templates({
 		markup:
 // These calls are before the targeted instance, so need lateRender=true
 '<div data-link="{for #childTags(\'mytag\')[0].value tmpl=\'showVal\' lateRender=false}"></div>' +
@@ -20007,12 +20024,12 @@ try {
 });
 
 QUnit.test("this= and @some.path", function(assert) {
-	$.views.settings.trigger(false);
+	jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup:
 '<input id="inp1" data-link="@~o1.tagCtx.props.p" />' +
 'BEFORE:{^{:@~o1.tagCtx.props.p}}' +
@@ -20039,7 +20056,7 @@ QUnit.test("this= and @some.path", function(assert) {
 	"Declarative this=ref binding on built-in flow tag and late path @ref... works correctly");
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup:
 '<input id="inp1" data-link="@~o1.tagCtx.props.p" />' +
 'BEFORE:{^{:@~o1.tagCtx.props.p}}' +
@@ -20084,7 +20101,7 @@ QUnit.test("this= and @some.path", function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 });
 
 //TODO add tests for tag.refresh()
@@ -20094,7 +20111,7 @@ QUnit.test("Modifying content, initializing widgets/tag controls, using data-lin
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<div data-link="{myWidget}"></div>',
 		tags: {
 			myWidget: {
@@ -20116,7 +20133,7 @@ QUnit.test("Modifying content, initializing widgets/tag controls, using data-lin
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<div data-link="{myRenderInLinkEventsWidget}"></div>',
 		tags: {
 			myRenderInLinkEventsWidget: {
@@ -20142,7 +20159,7 @@ QUnit.test('two-way bound tag controls', function(assert) {
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 	var person = {name: "Jo"};
@@ -20155,7 +20172,7 @@ $.views.settings.trigger(false);
 	//TODO add tests for convert and convertBack declared on tag def or on tag instance and declared dependencies on tag and/or convert - either arrays or functions.
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT
 	// ................................ Act ..................................
-	$.templates('<input id="linkedElm" data-link="{twoWayTag name}"/>')
+	jsv.templates('<input id="linkedElm" data-link="{twoWayTag name}"/>')
 		.link("#result", person);
 
 	var tag = $("#result").view(true).childTags("twoWayTag")[0],
@@ -20169,7 +20186,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -20186,7 +20203,7 @@ $.views.settings.trigger(false);
 	noRenderOnUpdate = false;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName2"});
+	jsv.observable(person).setProperty({name: "newName2"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -20204,7 +20221,7 @@ $.views.settings.trigger(false);
 	renders = true;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	jsv.observable(person).setProperty({name: "newName3"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -20311,7 +20328,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<input id="linkedElm" data-link="{twoWayTag name convert=\'myupper\' convertBack=~lower}"/>',
 		converters: {
 			myupper: function(val) {
@@ -20333,7 +20350,7 @@ $.views.settings.trigger(false);
 	'Data link using: <input data-link="{twoWayTag name convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -20369,7 +20386,7 @@ $.views.settings.trigger(false);
 		options = {cvt: upper};
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<input id="linkedElm" data-link="{twoWayTag name ^convert=~options.cvt}"/>',
 		converters: {
 			myupper: function(val) {
@@ -20387,8 +20404,8 @@ $.views.settings.trigger(false);
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - converter specified by data-linked convert property');
 
 	// ................................ Act ..................................
-	$.observable(options).setProperty({cvt: lower});
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(options).setProperty({cvt: lower});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -20396,7 +20413,7 @@ $.views.settings.trigger(false);
 	'Data link using: <input data-link="{twoWayTag name ^convert=~options.cvt}"/> - data-linked swapping of converter from one function to another');
 
 	// ................................ Act ..................................
-	$.observable(options).setProperty({cvt: "myupper"});
+	jsv.observable(options).setProperty({cvt: "myupper"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -20414,7 +20431,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	//INLINE DATA-LINKED TAGS ON INPUT
 	// ................................ Act ..................................
-	$.templates('{^{twoWayTag name}}<input id="linkedElm"/>{{/twoWayTag}}')
+	jsv.templates('{^{twoWayTag name}}<input id="linkedElm"/>{{/twoWayTag}}')
 		.link("#result", person);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
@@ -20428,7 +20445,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -20444,7 +20461,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	noRenderOnUpdate = false;
 	before = tag.value + linkedEl.value;
-	$.observable(person).setProperty({name: "newName2"});
+	jsv.observable(person).setProperty({name: "newName2"});
 
 	// ............................... Assert .................................
 	assert.equal(eventData + !!linkedEl.parentNode, "onBeforeChange onUpdate onUnbind render onBind onAfterLink setValue onAfterChange false",
@@ -20463,7 +20480,7 @@ $.views.settings.trigger(false);
 	renders = true;
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	jsv.observable(person).setProperty({name: "newName3"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -20551,7 +20568,7 @@ $.views.settings.trigger(false);
 	person.name = "Jo";
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower}}<input id="linkedElm"/>{{/twoWayTag}}',
 		converters: {
 			myupper: function(val) {
@@ -20573,7 +20590,7 @@ $.views.settings.trigger(false);
 	'Data link using: {^{twoWayTag name convert=\'myupper\'}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -20602,7 +20619,7 @@ $.views.settings.trigger(false);
 	//INLINE DATA-LINKED SELF-CLOSED TAG rendering INPUT
 
 	// ................................ Act ..................................
-	$.templates('{^{twoWayTag name/}}')
+	jsv.templates('{^{twoWayTag name/}}')
 		.link("#result", person);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
@@ -20616,7 +20633,7 @@ $.views.settings.trigger(false);
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -20634,7 +20651,7 @@ $.views.settings.trigger(false);
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName2"});
+	jsv.observable(person).setProperty({name: "newName2"});
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -20653,7 +20670,7 @@ $.views.settings.trigger(false);
 	linkedEl = tag.linkedElem[0];
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName3"});
+	jsv.observable(person).setProperty({name: "newName3"});
 	after = tag.value + tag.linkedElem[0].value;
 
 	// ............................... Assert .................................
@@ -20737,7 +20754,7 @@ $.views.settings.trigger(false);
 	person.name = "Jo";
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
@@ -20758,7 +20775,7 @@ $.views.settings.trigger(false);
 	'Data link using: {^{twoWayTag name convert="myupper"/}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(tag.linkedElem[0].value + "|" + tag.value,
@@ -20779,7 +20796,7 @@ $.views.settings.trigger(false);
 	person.name2 = "Jo";
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		markup: '{^{textbox name /}} {^{textbox name2 convert="cvt" convertBack=~cvtBk/}}',
 		tags: {
 			textbox: {
@@ -20818,7 +20835,7 @@ $.views.settings.trigger(false);
 	'Data linked tag with default convert and convertBack, on initial linking: {^{textbox/}} uses default convert and {^{textbox convert=.../}} uses overridden convert');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName", name2: "ANewName2"});
+	jsv.observable(person).setProperty({name: "ANewName", name2: "ANewName2"});
 
 	// ............................... Assert .................................
 	assert.equal(tagWithDefaultConverters.linkedElem[0].value + "|" + tagWithDefaultConverters.value + " % " + tagWithOverrideConverters.linkedElem[0].value + "|" + tagWithOverrideConverters.value,
@@ -20859,7 +20876,7 @@ $.views.settings.trigger(false);
 	}
 	var person = {name: "Jo", foo: "foo1", bar: "bar1"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{:name type=foo convert=~cvt}} {^{:name type=foo convert="cvt"}} {^{cvt:name type=foo }}',
 		converters: {
 			cvt: conv1
@@ -20870,10 +20887,10 @@ $.views.settings.trigger(false);
 
 	// ................................ Act ..................................
 	var result = $("#result").text();
-	$.observable(person).setProperty({name: "Jo2"});
+	jsv.observable(person).setProperty({name: "Jo2"});
 	result += "\nChangeData-name: " + $("#result").text();
 
-	$.observable(person).setProperty({foo: "foo2"});
+	jsv.observable(person).setProperty({foo: "foo2"});
 	result += "\nChangeConverterDepends-foo: " + $("#result").text();
 
 	// ............................... Assert .................................
@@ -20885,7 +20902,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	var person = {name: "Jo", foo: "foo1", bar: "bar1"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{textbox name type=foo convert=~cvt/}} {^{textbox name type=foo convert="cvt"/}} {^{textbox name type=foo /}}',
 		tags: {
 			textbox: {
@@ -20910,16 +20927,16 @@ $.views.settings.trigger(false);
 	result = $("#result").text();
 
 	result = $("#result").text();
-	$.observable(person).setProperty({name: "Jo2"});
+	jsv.observable(person).setProperty({name: "Jo2"});
 	result += "\nChangeData-name: " + $("#result").text();
 
-	$.observable(person).setProperty({foo: "foo2"});
+	jsv.observable(person).setProperty({foo: "foo2"});
 	result += "\nChangeConverterDepends-foo: " + $("#result").text();
 
-	$.observable(person).setProperty({bar: "bar2"});
+	jsv.observable(person).setProperty({bar: "bar2"});
 	result += "\nChangeTagDependsData-bar: " + $("#result").text();
 
-	$.observable(textbox2).setProperty({state: "state2"});
+	jsv.observable(textbox2).setProperty({state: "state2"});
 	result += "\nChangeTagDependsState-state: " + $("#result").text();
 
 	// ............................... Assert .................................
@@ -20933,7 +20950,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	var res = "";
 
-	$.templates('{^{twoWayTag name trigger="keydown mouseup"/}}').link("#result", person);
+	jsv.templates('{^{twoWayTag name trigger="keydown mouseup"/}}').link("#result", person);
 
 	var linkedElem = $("#result input")[0],
 		events = $._data(linkedElem).events,
@@ -20941,7 +20958,7 @@ $.views.settings.trigger(false);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -20982,23 +20999,23 @@ setTimeout(function() {
 	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}} has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// ............................... Assert .................................
 	assert.ok($._data(linkedElem).events === undefined,
-	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: {^{twoWayTag name trigger="event1 event2"/}}: handlers are removed by jsv.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
 
-	$.templates('<input data-link=\'name trigger="keydown mouseup"\' />').link("#result", person);
+	jsv.templates('<input data-link=\'name trigger="keydown mouseup"\' />').link("#result", person);
 
 	linkedElem = $("#result input")[0];
 
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -21039,23 +21056,23 @@ setTimeout(function() {
 	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// ............................... Assert .................................
 	assert.ok($._data(linkedElem).events === undefined,
-	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by jsv.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
 
-	$.templates('<div contenteditable="true" data-link=\'name trigger="keydown mouseup"\'>some content</div>').link("#result", person);
+	jsv.templates('<div contenteditable="true" data-link=\'name trigger="keydown mouseup"\'>some content</div>').link("#result", person);
 
 	linkedElem = $("#result div")[0];
 
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "First <b>Name</b>"});
+	jsv.observable(person).setProperty({name: "First <b>Name</b>"});
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -21096,11 +21113,11 @@ setTimeout(function() {
 	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// ............................... Assert .................................
 	assert.ok($._data(linkedElem).events === undefined,
-	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by $.unlink(container)');
+	'Data link, global trigger false, using: <div contenteditable=true data-link=\'name trigger="event1 event2"\'>: handlers are removed by jsv.unlink(container)');
 
 	// =============================== Arrange ===============================
 	res = "";
@@ -21108,12 +21125,12 @@ setTimeout(function() {
 
 	linkedElem = $("#result input")[0];
 
-	$.link(true, "#result", person);
+	jsv.link(true, "#result", person);
 
 	events = $._data(linkedElem).events;
 	handlers = "|" + events.mouseup.length + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	handlers += "|" + events.mouseup.length + events.keydown.length;
 
@@ -21154,15 +21171,15 @@ setTimeout(function() {
 	'Top-level data link, global trigger false, using: <input data-link=\'name trigger="event1 event2"\' /> has no duplicate handlers after relinking');
 
 	// ................................ Act ..................................
-	$.unlink("#result");
+	jsv.unlink("#result");
 
 	// ............................... Assert .................................
 	assert.ok($._data(linkedElem).events === undefined,
-	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by $.unlink(container)');
+	'Top-level data link using: <input data-link=\'name trigger="event1 event2"\' />: handlers are removed by jsv.unlink(container)');
 
 	$("#result").empty();
 
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 
 	if (assert.async) { done() } else { start() }
 
@@ -21181,7 +21198,7 @@ setTimeout(function() {
 });
 
 QUnit.test("Tag options versus setting in init()", function(assert) {
-	$.views.settings.trigger(false);
+	jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 	var getValues = function() {
@@ -21191,7 +21208,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	}
 
 	var person = {first: "Jo", last: "Blow", title: "Sir"};
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{mytag 0 prop=first last title=title}}{{else 0 prop=last first title=title}}{{/mytag}}'
 		+ '<input data-link="first"/><input data-link="last"/><input data-link="title"/>',
 		tags: {
@@ -21259,7 +21276,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow", title: "Sir"};
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{mytag 0 prop=first last title=title}}{{else 0 prop=last first title=title}}{{/mytag}}'
 		+ '<input data-link="first"/><input data-link="last"/><input data-link="title"/>',
 		tags: {
@@ -21338,7 +21355,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	// =============================== Arrange ===============================
 	person = {heading: "HEAD"};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '<div data-link=\'prop-foo{mytag attr="title"}\'>One</div>'
 					+ '<div data-link=\'{mytag attr="title"}\'>Two</div>'
 					+ '<div data-link=\'{mytag attr="prop-bar"}\'>Two</div>'
@@ -21369,7 +21386,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	// =============================== Arrange ===============================
 	person = {first: "Jo", width: 32};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '{^{mytag first width=width height=66 class="box" id="a"}}'
 			+ '{{else first id="b"}}'
 			+ '{{else first width=width-10 height=46 id="c"}}{{/mytag}}',
@@ -21418,7 +21435,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 	// =============================== Arrange ===============================
 	person = {first: "Jo", width: 32};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '<div data-link=\'{mytag first width=width height=66 class="box" id="a"}'
 				+ '{else first id="b"}'
 			+ '{else first width=width-10 height=46 id="c"}\'></div>',
@@ -21467,7 +21484,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 // =============================== Arrange ===============================
 	person = {first: "Jo"};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: '1 <div data-link="{mytag useData=false}"></div>{^{mytag useData=false/}}'
 		+ '2 <div data-link="{mytag useData=true}"></div>{^{mytag useData=true/}}'
 		+ '3 <div data-link="{mytag ~person2 useOuterCtx=false}{else ~person2 useOuterCtx=false}"></div>{^{mytag ~person2 useOuterCtx=false}}{{else ~person2 useOuterCtx=false}}{{/mytag}}'
@@ -21497,7 +21514,7 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 // =============================== Arrange ===============================
 	person = {first: "Jo"};
 
-	$.views.templates({
+	jsv.views.templates({
 		markup: "1: {{mytag person=~person2/}} "
 		+ "2: {{mytag person=~person2}}inner block: {{:first}}{{/mytag}} "
 		+ "3: {{myrendertag person=~person2}}inner block: {{:first}}{{/myrendertag}}",
@@ -21530,25 +21547,25 @@ QUnit.test("Tag options versus setting in init()", function(assert) {
 		+ "3: inner block: Fred",
 	"contentCtx as a function returns the data context both for the template and for block content.");
 
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 });
 
 QUnit.test("Global trigger=false local trigger=true - triggers after keydown: <input/>", function(assert) {
 	// =============================== Arrange ===============================
-	$.views.settings.trigger(false);
+	jsv.views.settings.trigger(false);
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 	var res = "",
 		person = {name: "Jo"};
 
-	$.templates('<input data-link="name trigger=true" />').link("#result", person);
+	jsv.templates('<input data-link="name trigger=true" />').link("#result", person);
 
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events,
 		handlers = "|" + events[inputOrKeydown].length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	events = $._data(linkedElem).events;
 	handlers += "|" + events[inputOrKeydown].length;
@@ -21559,7 +21576,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	linkedElem.value = "SecondName";
 
 	keydown($(linkedElem));
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 
 	setTimeout(function() {
 		res += " 2: " + person.name;
@@ -21577,11 +21594,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Data link using: <input data-link=\'name trigger=true\' /> has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Data link using: <input data-link="name trigger=true" />: handlers are removed by $.unlink(container)');
+		'Data link using: <input data-link="name trigger=true" />: handlers are removed by jsv.unlink(container)');
 
 		if (assert.async) { done() } else { start() }
 
@@ -21595,13 +21612,13 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var res = "",
 		person = {name: "Jo"};
 
-	$.templates('<input data-link="name trigger=false" />').link("#result", person);
+	jsv.templates('<input data-link="name trigger=false" />').link("#result", person);
 
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	// ................................ Act ..................................
 	res += " 1: " + person.name;
@@ -21624,11 +21641,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Data link using: <input data-link=\'name trigger=false\' /> has no handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Data link using: <input data-link="name trigger=false" />: No handlers after $.unlink(container)');
+		'Data link using: <input data-link="name trigger=false" />: No handlers after jsv.unlink(container)');
 
 	if (assert.async) { done() } else { start() }
 
@@ -21642,14 +21659,14 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var res = "",
 		person = {name: "Jo"};
 
-	$.templates('<input data-link="name" />').link("#result", person);
+	jsv.templates('<input data-link="name" />').link("#result", person);
 
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events,
 		handlers = "|" + events[inputOrKeydown].length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	events = $._data(linkedElem).events;
 	handlers += "|" + events[inputOrKeydown].length;
@@ -21677,11 +21694,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Data link using: <input data-link=\'name\' /> has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Data link using: <input data-link="name" />: handlers are removed by $.unlink(container)');
+		'Data link using: <input data-link="name" />: handlers are removed by jsv.unlink(container)');
 
 	if (assert.async) { done() } else { start() }
 
@@ -21695,12 +21712,12 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var res = "",
 		person = {member: true};
 
-	$.templates('<input type="checkbox" data-link="member" />').link("#result", person);
+	jsv.templates('<input type="checkbox" data-link="member" />').link("#result", person);
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events;
 
-	$.observable(person).setProperty({member: false});
+	jsv.observable(person).setProperty({member: false});
 
 	events = $._data(linkedElem).events;
 
@@ -21725,7 +21742,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Data link using: <input type="checkbox" data-link="member" /> has no events');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 	if (assert.async) { done() } else { start() }
 	}, 0);
@@ -21739,14 +21756,14 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var res = "",
 		person = {name: "Jo"};
 
-	$.templates('<input data-link="name trigger=\'keydown\'" />').link("#result", person);
+	jsv.templates('<input data-link="name trigger=\'keydown\'" />').link("#result", person);
 
 	var linkedElem = $("#result input")[0];
 
 	var events = $._data(linkedElem).events,
 		handlers = "|" + events.keydown.length;
 
-	$.observable(person).setProperty({name: "FirstName"});
+	jsv.observable(person).setProperty({name: "FirstName"});
 
 	events = $._data(linkedElem).events;
 	handlers += "|" + events.keydown.length;
@@ -21774,11 +21791,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Data link using: <input data-link=\'name trigger=\'keydown\'\' /> has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Data link using: <input data-link="name trigger=\'keydown\'" />: handlers are removed by $.unlink(container)');
+		'Data link using: <input data-link="name trigger=\'keydown\'" />: handlers are removed by jsv.unlink(container)');
 
 	if (assert.async) { done() } else { start() }
 	}, 0);
@@ -21792,7 +21809,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var before = "",
 		person = {name: "Jo"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{twoWayTag name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
@@ -21831,11 +21848,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{twoWayTag name convertBack=~lower/}}: handlers are removed by jsv.unlink(container)');
 
 	if (assert.async) { done() } else { start() }
 	}, 0);
@@ -21849,7 +21866,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var before = "",
 		person = {name: "Jo"};
 
-	$.views.tags({
+	jsv.views.tags({
 		textbox: {
 			onAfterLink: function() {
 				// Find input in contents, if not already found
@@ -21863,7 +21880,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 		}
 	});
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{textbox name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
@@ -21902,11 +21919,11 @@ if (assert.async) { done = assert.async() } else { stop() }
 		'Top-level data link using: {^{textbox name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{textbox name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{textbox name convertBack=~lower/}}: handlers are removed by jsv.unlink(container)');
 
 	if (assert.async) { done() } else { start() }
 	}, 0);
@@ -21921,7 +21938,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 	var before = "",
 		person = {name: "Jo", trig:true};
 
-	$.views.tags({
+	jsv.views.tags({
 		textbox: {
 			linkedElement: "input",
 			onUpdate: false,
@@ -21930,7 +21947,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 		}
 	});
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{textbox name/}} {^{textbox name trigger=true/}}',
 	}).link("#result", person);
 
@@ -21974,14 +21991,14 @@ if (assert.async) { done = assert.async() } else { stop() }
 
 QUnit.test("Global trigger=true - triggers after keydown: {^{contentEditable}}", function(assert) {
 	// =============================== Arrange ===============================
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
 
 var done;
 if (assert.async) { done = assert.async() } else { stop() }
 	var before = "",
 		person = {name: "Jo <b>Smith</b>"};
 
-	$.views.tags({
+	jsv.views.tags({
 		contentEditable: {
 			onAfterLink: function() {
 				// Find contentEditable div in contents, if not already found
@@ -21995,7 +22012,7 @@ if (assert.async) { done = assert.async() } else { stop() }
 		}
 	});
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{contentEditable name convert="myupper" convertBack=~lower/}}',
 		converters: {
 			myupper: function(val) {
@@ -22046,13 +22063,102 @@ setTimeout(function() {
 		'Top-level data link using: {^{contentEditable name convertBack=~lower/}} has no duplicate handlers after relinking');
 
 		// ................................ Act ..................................
-		$.unlink("#result");
+		jsv.unlink("#result");
 
 		// ............................... Assert .................................
 		assert.ok($._data(linkedElem).events === undefined,
-		'Top-level data link using: {^{contentEditable name convertBack=~lower/}}: handlers are removed by $.unlink(container)');
+		'Top-level data link using: {^{contentEditable name convertBack=~lower/}}: handlers are removed by jsv.unlink(container)');
 
-$.views.settings.trigger(true);
+jsv.views.settings.trigger(true);
+
+	if (assert.async) { done() } else { start() }
+	}, 0);
+	}, 0);
+	}, 0);
+
+});
+
+QUnit.test("Global trigger=true - triggers after keydown: {^{plaintextonly}}", function(assert) {
+	// =============================== Arrange ===============================
+jsv.views.settings.trigger(true);
+
+var done;
+if (assert.async) { done = assert.async() } else { stop() }
+	var before = "",
+		person = {name: "Jo <b>Smith</b>"};
+
+	jsv.views.tags({
+		plaintextonly: {
+			onAfterLink: function() {
+				// Find contentEditable div in contents, if not already found
+				this.linkedElem = this.linkedElem || this.contents("[contentEditable]");
+			},
+			onUpdate: function() {
+				// No need to re-render whole tag, when content updates.
+				return false;
+			},
+			template: "<div contenteditable='plaintext-only'></div>"
+		}
+	});
+
+	jsv.templates({
+		markup: '{^{plaintextonly name convert="myupper" convertBack=~lower/}}',
+		converters: {
+			myupper: function(val) {
+				return val.toUpperCase();
+			}
+		}
+	}).link("#result", person, {
+		lower: function(val) {
+			return val.toLowerCase();
+		}
+	});
+
+	var tag = $("#result").view(true).childTags("plaintextonly")[0],
+
+		linkedElem = tag.linkedElem[0],
+		events = $._data(linkedElem).events,
+		handlers = "|" + events[inputOrKeydownContentEditable].length;
+
+	// ................................ Act ..................................
+	before = linkedElem.innerHTML;
+	linkedElem.innerHTML = "New <em>Name</em>";
+
+	tag.linkedElem.trigger(inputOrKeydownContentEditable);
+
+setTimeout(function() {
+	before += "|" + person.name;
+	linkedElem.innerHTML = "New2 <p>Name2</p>";
+
+	tag.linkedElem.trigger(inputOrKeydownContentEditable);
+
+setTimeout(function() {
+	before += "|" + person.name;
+	linkedElem.innerHTML = "New3 <div>Name3</div>";
+
+	tag.linkedElem.trigger(inputOrKeydownContentEditable);
+
+setTimeout(function() {
+		// ............................... Assert .................................
+		assert.equal(before + "|" + person.name,
+		"JO <b>SMITH</b>|new <em>name</em>|new2 <p>name2</p>|new3 <div>name3</div>",
+		'Data link using: {^{plaintextonly name convertBack=~lower/}} - triggers after keydown, converts the data, and sets on data');
+
+		handlers += "|" + events[inputOrKeydownContentEditable].length;
+
+		// ............................... Assert .................................
+		assert.equal(handlers,
+		"|1|1",
+		'Top-level data link using: {^{plaintextonly name convertBack=~lower/}} has no duplicate handlers after relinking');
+
+		// ................................ Act ..................................
+		jsv.unlink("#result");
+
+		// ............................... Assert .................................
+		assert.ok($._data(linkedElem).events === undefined,
+		'Top-level data link using: {^{plaintextonly name convertBack=~lower/}}: handlers are removed by jsv.unlink(container)');
+
+jsv.views.settings.trigger(true);
 
 	if (assert.async) { done() } else { start() }
 	}, 0);
@@ -22062,14 +22168,14 @@ $.views.settings.trigger(true);
 });
 
 QUnit.test('linkTo for {:source linkTo=target:} or {twoWayTag source linkTo=target}', function(assert) {
-$.views.settings.trigger(false);
+jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 	var before, after, person = {name: "Jo", name2: "Jo2"},
 		cancelChange = false,
 		eventData = "";
 
-	$.views.tags({
+	jsv.views.tags({
 		twoWayTag: {
 			init: function(tagCtx, linkCtx, ctx) {
 				eventData += "init ";
@@ -22116,7 +22222,7 @@ $.views.settings.trigger(false);
 	});
 
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
-	$.templates('<input id="linkedElm" data-link="{:name linkTo=name2:}"/>')
+	jsv.templates('<input id="linkedElm" data-link="{:name linkTo=name2:}"/>')
 		.link("#result", person);
 
 	var linkedEl = $("#linkedElm")[0];
@@ -22124,7 +22230,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	before = linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = linkedEl.value;
 
 	// ............................... Assert .................................
@@ -22155,7 +22261,7 @@ $.views.settings.trigger(false);
 	person.name = "Jo";
 	person.name2 = "Jo2";
 
-	$.templates('<input id="linkedElm" data-link="\'initialValue\' linkTo=name2"/>')
+	jsv.templates('<input id="linkedElm" data-link="\'initialValue\' linkTo=name2"/>')
 		.link("#result", person);
 
 	linkedEl = $("#linkedElm")[0];
@@ -22176,7 +22282,7 @@ $.views.settings.trigger(false);
 	person.name = "Jo";
 	person.name2 = "Jo2";
 
-	$.templates('<input id="linkedElm" data-link="linkTo=name2"/>')
+	jsv.templates('<input id="linkedElm" data-link="linkTo=name2"/>')
 		.link("#result", person);
 
 	linkedEl = $("#linkedElm")[0];
@@ -22195,7 +22301,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<input id="linkedElm" data-link="{myupper:name linkTo=name2:mylower}"/>',
 		converters: {
 			myupper: function(val) {
@@ -22214,7 +22320,7 @@ $.views.settings.trigger(false);
 	'Data link using: <input data-link="{myupper:name linkTo=name2:mylower} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value,
@@ -22239,7 +22345,7 @@ $.views.settings.trigger(false);
 
 	// ELEMENT-BASED DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
 	// ................................ Act ..................................
-	$.templates('<input id="linkedElm" data-link="{twoWayTag name linkTo=name2}"/>')
+	jsv.templates('<input id="linkedElm" data-link="{twoWayTag name linkTo=name2}"/>')
 		.link("#result", person);
 
 	var tag = $("#result").view(true).childTags("twoWayTag")[0];
@@ -22253,7 +22359,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -22290,7 +22396,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<input id="linkedElm" data-link="{twoWayTag name linkTo=name2 convert=\'myupper\' convertBack=~lower}"/>',
 		converters: {
 			myupper: function(val) {
@@ -22312,7 +22418,7 @@ $.views.settings.trigger(false);
 	'Data link using: <input data-link="{twoWayTag name linkTo=name2 convert=\'myupper\'}"/> - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -22338,7 +22444,7 @@ $.views.settings.trigger(false);
 	// =============================== Arrange ===============================
 	//INLINE DATA-LINKED TAGS ON INPUT - WITH linkTo EXPRESSION
 	// ................................ Act ..................................
-	$.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedElm"/>{{/twoWayTag}}')
+	jsv.templates('{^{twoWayTag name linkTo=name2}}<input id="linkedElm"/>{{/twoWayTag}}')
 		.link("#result", person);
 
 	tag = $("#result").view(true).childTags("twoWayTag")[0];
@@ -22352,7 +22458,7 @@ $.views.settings.trigger(false);
 	// ................................ Act ..................................
 	before = tag.value + linkedEl.value;
 
-	$.observable(person).setProperty({name: "newName"});
+	jsv.observable(person).setProperty({name: "newName"});
 	after = tag.value + linkedEl.value;
 
 	// ............................... Assert .................................
@@ -22386,7 +22492,7 @@ $.views.settings.trigger(false);
 	person.name2 = "Jo2";
 
 	// =============================== Arrange ===============================
-	$.templates({
+	jsv.templates({
 		markup: '{^{twoWayTag name linkTo=name2 convert="myupper" convertBack=~lower}}<input id="linkedElm"/>{{/twoWayTag}}',
 		converters: {
 			myupper: function(val) {
@@ -22408,7 +22514,7 @@ $.views.settings.trigger(false);
 	'Data link using: {^{twoWayTag name linkTo=name2 convert="myupper"}} - (tag.convert setting) - initial linking: converts the value on the target input');
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({name: "ANewName"});
+	jsv.observable(person).setProperty({name: "ANewName"});
 
 	// ............................... Assert .................................
 	assert.equal(linkedEl.value + "|" + tag.value,
@@ -22427,16 +22533,16 @@ $.views.settings.trigger(false);
 
 	// ............................... Reset .................................
 	$("#result").empty();
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 });
 
 QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(assert) {
-	$.views.settings.trigger(false);
+	jsv.views.settings.trigger(false);
 
 	// =============================== Arrange ===============================
 	var person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first/}}',
 		tags: {
 			mytag: {
@@ -22457,13 +22563,13 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	var mytag = $.view().childTags("mytag")[0];
+	var mytag = jsv.view().childTags("mytag")[0];
 	var linkedEl = $("#linkedElm")[0];
 
 	var result = mytag.bndArgs() + "|" + linkedEl.value;
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob"});
+	jsv.observable(person).setProperty({first: "Bob"});
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl.value;
 
@@ -22498,7 +22604,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first last/}}',
 		tags: {
 			mytag: {
@@ -22516,14 +22622,14 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	var linkedEl1 = $("#linkedElm1")[0];
 	var linkedEl2 = $("#linkedElm2")[0];
 
 	result = mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", last: "Puff"});
+	jsv.observable(person).setProperty({first: "Bob", last: "Puff"});
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
@@ -22543,7 +22649,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag 1 first/}}',
 		tags: {
 			mytag: {
@@ -22561,13 +22667,13 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 
 	result = mytag.bndArgs() + "|" + linkedEl1.value ;
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob"});
+	jsv.observable(person).setProperty({first: "Bob"});
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + $("#result").text();
 
@@ -22585,7 +22691,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first name2=last/}}',
 		tags: {
 			mytag: {
@@ -22603,14 +22709,14 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value;
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", last: "Puff"});
+	jsv.observable(person).setProperty({first: "Bob", last: "Puff"});
 
 	result += "--" + mytag.bndArgs() + "|" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
@@ -22630,7 +22736,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first/}}',
 		tags: {
 			mytag: {
@@ -22641,13 +22747,13 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value;
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob"});
+	jsv.observable(person).setProperty({first: "Bob"});
 
 	result += "--" + linkedEl.value;
 
@@ -22668,7 +22774,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first/}}',
 		tags: {
 			mytag: {
@@ -22679,13 +22785,13 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob"});
+	jsv.observable(person).setProperty({first: "Bob"});
 
 	result += "--" + linkedEl.value + "|" + $("#result").text();
 
@@ -22706,7 +22812,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first/}}',
 		tags: {
 			mytag: {
@@ -22718,13 +22824,13 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl = $("#linkedElm")[0];
 
 	result = linkedEl.value + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob"});
+	jsv.observable(person).setProperty({first: "Bob"});
 
 	result += "--" + linkedEl.value + "|" + $("#result").text();
 
@@ -22745,7 +22851,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first last/}}',
 		tags: {
 			mytag: {
@@ -22757,14 +22863,14 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
 	result = linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", last: "Puff"});
+	jsv.observable(person).setProperty({first: "Bob", last: "Puff"});
 
 	result += "--" + linkedEl1.value + "|" + linkedEl2.value + "|" + $("#result").text();
 
@@ -22793,7 +22899,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
 			mytag: {
@@ -22807,7 +22913,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -22825,7 +22931,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
 			mytag: {
@@ -22843,7 +22949,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -22865,7 +22971,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
 			mytag: {
@@ -22883,7 +22989,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -22901,7 +23007,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first 1 last/}}',
 		tags: {
 			mytag: {
@@ -22913,7 +23019,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -22931,7 +23037,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first last/}}',
 		tags: {
 			mytag: {
@@ -22946,7 +23052,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = $("#linkedElm1")[0];
 	linkedEl2 = $("#linkedElm2")[0];
 
@@ -22971,7 +23077,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag 1 first convert=cvt convertBack=cvtbk/}}',
 		tags: {
 			mytag: {
@@ -22982,7 +23088,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl = mytag.linkedElem[0];
 
 	result = linkedEl.value;
@@ -23011,7 +23117,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag first last convert=cvt convertBack=cvtbk/}}',
 		tags: {
 			mytag: {
@@ -23021,7 +23127,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl = mytag.linkedElem[0];
 
 	linkedEl.value += "+";
@@ -23048,7 +23154,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag name1=first 1 last convert=cvt convertBack=cvtbk/}}',
 		tags: {
 			mytag: {
@@ -23060,7 +23166,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedEl1 = mytag.contents("#linkedElm1")[0]; // first - param
 	linkedEl2 = mytag.linkedElems[1][0]; // last - el
 
@@ -23082,7 +23188,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"bindTo with converters, using linkedElement and linkedCtxParam");
 
 	// =============================== Arrange ===============================
-	$.views.tags("mytag", {
+	jsv.views.tags("mytag", {
 		bindTo: ["height", "width"],
 		linkedElement: [".ht", ".wd"],
 		linkedCtxParam: ["ht", "wd"],
@@ -23123,7 +23229,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		setSize: true
 	});
 
-	var tmpl = $.templates('{^{mytag}}'
+	var tmpl = jsv.templates('{^{mytag}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
 		+ '{{/mytag}}');
@@ -23131,7 +23237,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	tmpl.link("#result");
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	var linkedElHt = mytag.contents(true, ".ht")[0];
 	var linkedElHt2 = mytag.linkedElems[0][0];
 	var linkedElWd = mytag.contents(true, ".wd")[0];
@@ -23162,14 +23268,14 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{mytag height=30 width=40}}'
+	tmpl = jsv.templates('{^{mytag height=30 width=40}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
 		+ '{{/mytag}}');
 
 	tmpl.link("#result");
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedElHt = mytag.contents(true, ".ht")[0];
 	linkedElWd = mytag.contents(true, ".wd")[0];
 	linkedCtxPrmHts = mytag.contents(true, ".htc");
@@ -23213,7 +23319,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValues(), mytag.updateValues()");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
+	tmpl = jsv.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
 	+ '{^{mytag height=cy width=cx}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
@@ -23221,7 +23327,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	tmpl.link("#result", {cx: 40, cy: 30});
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedElHt = mytag.contents(true, ".ht")[0];
 	linkedElWd = mytag.contents(true, ".wd")[0];
 	linkedCtxPrmHts = mytag.contents(true, ".htc");
@@ -23282,7 +23388,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValues() - tag.updateValues()");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{mytag convert=~plus convertBack=~minus}}'
+	tmpl = jsv.templates('{^{mytag convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
 		+ '{{/mytag}}');
@@ -23296,7 +23402,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	});
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	var linkedElHt = mytag.contents(true, ".ht")[0];
 	var linkedElHt2 = mytag.linkedElems[0][0];
 	var linkedElWd = mytag.contents(true, ".wd")[0];
@@ -23329,7 +23435,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam for unset params continue to 2way-bind to shared value which is the tag.setValue/getValue (with converters)");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('{^{mytag height=30 width=40 convert=~plus convertBack=~minus}}'
+	tmpl = jsv.templates('{^{mytag height=30 width=40 convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
 		+ '{{/mytag}}');
@@ -23343,7 +23449,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	});
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedElHt = mytag.contents(true, ".ht")[0];
 	linkedElWd = mytag.contents(true, ".wd")[0];
 	linkedCtxPrmHts = mytag.contents(true, ".htc");
@@ -23388,7 +23494,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam for static initial values continue to 2way-bind to shared value set by tag.setValue(), mytag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
+	tmpl = jsv.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
 	+ '{^{mytag height=cy width=cx convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
@@ -23403,7 +23509,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	});
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedElHt = mytag.contents(true, ".ht")[0];
 	linkedElWd = mytag.contents(true, ".wd")[0];
 	linkedCtxPrmHts = mytag.contents(true, ".htc");
@@ -23465,7 +23571,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"linkedElement and linkedCtxParam continue to 2way-bind to shared value set by tag.setValue() - tag.updateValues() (with converters)");
 
 	// ................................ Act ..................................
-	tmpl = $.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
+	tmpl = jsv.templates('<input class="cx" data-link="cx" /> <input class="cy" data-link="cy" />'
 	+ '{^{mytag width=cx convert=~plus convertBack=~minus}}'
 			+ '<input class="ht" /> <input class="htc" data-link="~ht" /> <input class="htc" data-link="~ht" />'
 			+ '<input class="wd" /> <input class="wdc" data-link="~wd" /> <input class="wdc" data-link="~wd" />'
@@ -23480,7 +23586,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	});
 
-	mytag = $.view().childTags("mytag")[0];
+	mytag = jsv.view().childTags("mytag")[0];
 	linkedElHt = mytag.contents(true, ".ht")[0];
 	linkedElWd = mytag.contents(true, ".wd")[0];
 	linkedCtxPrmHts = mytag.contents(true, ".htc");
@@ -23543,7 +23649,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", middle: "Herbert", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup:
 			'{^{textbox first label="First"}} {^{child ~nm/}}'
 			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
@@ -23576,7 +23682,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	var linkedElFirst = $("#First")[0],
 	linkedElMiddle = $("#Middle")[0],
 	linkedElLast = $("#Last")[0],
-	mytag = $.view(linkedElFirst).tag;
+	mytag = jsv.view(linkedElFirst).tag;
 
 	function getResult() {
 		return "Data: " + person.first + "-" + person.middle + "-" + person.last
@@ -23589,7 +23695,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way bound tag with multiple else blocks - initial render");
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
+	jsv.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
 	assert.equal(getResult(), "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
@@ -23656,7 +23762,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	person = {first: "Jo", middle: "Herbert", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup:
 			'{^{textbox first label="First"}} {^{child ~nm/}}'
 			+ '{{else middle label="Middle"}} {^{child ~nm/}}'
@@ -23691,14 +23797,14 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	linkedElFirst = $("#First")[0];
 	linkedElMiddle = $("#Middle")[0];
 	linkedElLast = $("#Last")[0];
-	mytag = $.view(linkedElFirst).tag;
+	mytag = jsv.view(linkedElFirst).tag;
 
 	// ............................... Assert .................................
 	assert.equal(getResult(), "Data: Jo-Herbert-Blow Inputs: Jo-Herbert-Blow Text: First Jo Middle Herbert Last Blow: Jo Herbert Blow|",
 	"Two-way bound tag (using render method) with multiple else blocks - initial render");
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
+	jsv.observable(person).setProperty({first: "Bob", middle: "Xavier", last: "Smith"});
 
 	// ............................... Assert .................................
 	assert.equal(getResult(), "Data: Bob-Xavier-Smith Inputs: Bob-Xavier-Smith Text: First Bob Middle Xavier Last Smith: Bob Xavier Smith|",
@@ -23762,7 +23868,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 	var person = {first: "Jo", last: "Blow"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag 0 prop=first last}}{{else 0 prop=last first}}{{/mytag}} {^{:first}} {^{:last}}',
 		tags: {
 			mytag: {
@@ -23789,7 +23895,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", person);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElems0 = mytag.tagCtx.contents("input");
 	var linkedElems1 = mytag.tagCtxs[1].contents("input");
 
@@ -23804,7 +23910,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with multiple bindings and multiple else blocks - initial render");
 
 	// ................................ Act ..................................
-	$.observable(person).setProperty({first: "Bob", last: "Smith"});
+	jsv.observable(person).setProperty({first: "Bob", last: "Smith"});
 
 	// ............................... Assert .................................
 	assert.equal(getResult2(), "Data: Bob-Smith Inputs: Bob-Smith-Smith-Bob Text: Bob Smith Smith Bob Bob Smith|",
@@ -23890,7 +23996,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
 	);
 
-	$.views.tags("namebox", {
+	jsv.views.tags("namebox", {
 		setSize: true,
 		template: '<div><span>X</span> <input/></div>',
 		linkedElement: "input",
@@ -23921,12 +24027,12 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		+ " " + linkedElem[0].tagName + mainElem[0].tagName + displayElem[0].tagName
 	};
 
-	$.templates('<input data-link="first"/><input data-link="last"/>'
+	jsv.templates('<input data-link="first"/><input data-link="last"/>'
 	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
 	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
 		.link("#page", data);
 
-	$.link(true, ".top", data);
+	jsv.link(true, ".top", data);
 
 	logElems = undefined;
 
@@ -23940,7 +24046,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	var inputs = $("#result input");
 	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
-	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	jsv.observable(data).setProperty({first: "Jeff", last: "Blye"});
 	inputs = $("#result input");
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
 	$(inputs[0]).val("Pete").change();
@@ -23968,7 +24074,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
 	);
 
-	$.views.tags("namebox", {
+	jsv.views.tags("namebox", {
 		onUpdate: false,
 		setSize: true,
 		template: '<div><span>X</span> <input/></div>',
@@ -23999,12 +24105,12 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		+ " " + linkedElem[0].tagName + mainElem[0].tagName + displayElem[0].tagName
 	};
 
-	$.templates('<input data-link="first"/><input data-link="last"/>'
+	jsv.templates('<input data-link="first"/><input data-link="last"/>'
 	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
 	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
 		.link("#page", data);
 
-	$.link(true, ".top", data);
+	jsv.link(true, ".top", data);
 
 	logElems = undefined;
 
@@ -24018,7 +24124,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	inputs = $("#result input");
 	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
-	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	jsv.observable(data).setProperty({first: "Jeff", last: "Blye"});
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
 	$(inputs[0]).val("Pete").change();
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
@@ -24040,7 +24146,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
 	);
 
-	$.views.tags("namebox", {
+	jsv.views.tags("namebox", {
 		setSize: true,
 		template: '<div><span>X</span> <input/></div>',
 		onBind: function(tagCtx) {
@@ -24059,12 +24165,12 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 			last: "Blow"
 		};
 
-	$.templates('<input data-link="first"/><input data-link="last"/>'
+	jsv.templates('<input data-link="first"/><input data-link="last"/>'
 	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
 	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
 		.link("#page", data);
 
-	$.link(true, ".top", data);
+	jsv.link(true, ".top", data);
 
 	// ............................... Assert .................................
 	assert.ok(	$(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "SPAN" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "SPAN" && $("#id5")[0].tagName === "DIV" && $("#id6")[0].tagName === "SPAN",
@@ -24073,7 +24179,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	inputs = $("#result input");
 	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
-	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	jsv.observable(data).setProperty({first: "Jeff", last: "Blye"});
 	inputs = $("#result input");
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
 	$(inputs[0]).val("Pete").change();
@@ -24100,7 +24206,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	+ '<div class="top" data-link=\'{namebox first class="nm1" id="id5" width=66}{else last width=24 class="nm2" id="id6"}\'></div>'
 	);
 
-	$.views.tags("namebox", {
+	jsv.views.tags("namebox", {
 		onUpdate: false,
 		setSize: true,
 		template: '<div><span>X</span> <input/></div>',
@@ -24122,12 +24228,12 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 			last: "Blow"
 		};
 
-	$.templates('<input data-link="first"/><input data-link="last"/>'
+	jsv.templates('<input data-link="first"/><input data-link="last"/>'
 	+ '{^{namebox first class="nm1" id="id1" width=66}}{{else last width=24 class="nm2" id="id2" }}{{/namebox}}'
 	+ '<p data-link=\'{namebox first class="nm1" id="id3" width=66}{else last width=24 class="nm2" id="id4"}\'></p>')
 		.link("#page", data);
 
-	$.link(true, ".top", data);
+	jsv.link(true, ".top", data);
 
 	// ............................... Assert .................................
 	assert.ok(	$(".nm1").length === 3 && $(".nm2").length === 3 && $("#id1")[0].tagName === "DIV" && $("#id2")[0].tagName === "SPAN" && $("#id3")[0].tagName === "DIV" && $("#id4")[0].tagName === "SPAN" && $("#id5")[0].tagName === "DIV" && $("#id6")[0].tagName === "SPAN",
@@ -24136,7 +24242,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	inputs = $("#result input");
 	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
-	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	jsv.observable(data).setProperty({first: "Jeff", last: "Blye"});
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
 	$(inputs[0]).val("Pete").change();
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value + inputs[4].value + inputs[5].value + inputs[6].value + inputs[7].value;
@@ -24153,7 +24259,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	// =============================== Arrange ===============================
 
-	$.views.tags("namebox", {
+	jsv.views.tags("namebox", {
 		onUpdate: false,
 		setSize: true,
 		onBind: function(tagCtx) {
@@ -24174,7 +24280,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 			last: "Blow"
 		};
 
-	$.templates('<input data-link="first"/><input data-link="last"/>'
+	jsv.templates('<input data-link="first"/><input data-link="last"/>'
 	+ '{^{namebox first class="nm1" id="id1" width=66}}<div><span>X</span> <input/></div>{{else last width=24 class="nm2" id="id2" }}<div><span>X</span> <input/></div>{{/namebox}}')
 		.link("#result", data);
 
@@ -24185,7 +24291,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// ................................ Act ..................................
 	inputs = $("#result input");
 	ret = inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
-	$.observable(data).setProperty({first: "Jeff", last: "Blye"});
+	jsv.observable(data).setProperty({first: "Jeff", last: "Blye"});
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
 	$(inputs[0]).val("Pete").change();
 	ret += "|" + inputs[0].value + inputs[1].value + inputs[2].value + inputs[3].value;
@@ -24208,7 +24314,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	var ret,
 		data = {current: "cur", modified: "mod"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag current modified/}}',
 		tags: {
 			mytag: {
@@ -24225,7 +24331,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElem = mytag.tagCtx.contents("input")[0];
 
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
@@ -24235,7 +24341,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): initial render");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({current: "cur2"});
+	jsv.observable(data).setProperty({current: "cur2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24243,7 +24349,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths (1, 0): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({modified: "mod2"});
+	jsv.observable(data).setProperty({modified: "mod2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24299,7 +24405,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	data = {current: "cur", modified: "mod"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag modified current/}}',
 		tags: {
 			mytag: {
@@ -24316,7 +24422,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElem = mytag.tagCtx.contents("input")[0];
 
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
@@ -24326,7 +24432,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): initial render");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({current: "cur2"});
+	jsv.observable(data).setProperty({current: "cur2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24334,7 +24440,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths (0, 1): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({modified: "mod2"});
+	jsv.observable(data).setProperty({modified: "mod2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24390,7 +24496,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	data = {current: "cur", modified: "mod"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag modified current convert=~cvt convertBack=~cvb/}}',
 		tags: {
 			mytag: {
@@ -24414,7 +24520,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 				}
 });
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElem = mytag.tagCtx.contents("input")[0];
 
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
@@ -24424,7 +24530,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): initial render");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({current: "cur2"});
+	jsv.observable(data).setProperty({current: "cur2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24432,7 +24538,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag plus cvt/cvtback with bindTo and bindFrom to different paths (0, 1): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({modified: "mod2"});
+	jsv.observable(data).setProperty({modified: "mod2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value;
 
 	// ............................... Assert .................................
@@ -24488,7 +24594,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	data = {current: "cur", modified: "mod"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag modified fm=current/}}',
 		tags: {
 			mytag: {
@@ -24505,7 +24611,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElem = mytag.tagCtx.contents("input")[0];
 
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
@@ -24515,7 +24621,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): initial render");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({current: "cur2"});
+	jsv.observable(data).setProperty({current: "cur2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -24523,7 +24629,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0): bindFrom binding updates from data");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({modified: "mod2"});
+	jsv.observable(data).setProperty({modified: "mod2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -24579,7 +24685,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	data = {current: "cur", modified: "mod", two: 2, title: "Title"};
 
-	$.templates({
+	jsv.templates({
 		markup: '{^{mytag modified 1 two fm=current title=title/}}',
 		tags: {
 			mytag: {
@@ -24605,7 +24711,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var linkedElem = mytag.tagCtx.contents("input")[0];
 
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
@@ -24615,7 +24721,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: initial render");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({current: "cur2", two: "two2"});
+	jsv.observable(data).setProperty({current: "cur2", two: "two2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -24623,7 +24729,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	"Two-way tag with bindTo and bindFrom to different paths ('fm', 0) and convert/convertBack: bindFrom binding updates from data");
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({modified: "mod2"});
+	jsv.observable(data).setProperty({modified: "mod2"});
 	ret = data.current + "-" + data.modified + ":" + linkedElem.value + "-" + $("#result").text();
 
 	// ............................... Assert .................................
@@ -24679,7 +24785,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 	// =============================== Arrange ===============================
 
 	data = {current1: "cur1", modified1: "mod1", current2: "cur2", modified2: "mod2"};
-	$.templates({
+	jsv.templates({
 		markup: "<input data-link='current1' class='fromCur1'/> <input data-link='modified1' class='toMod1'/><br/>"
 		+ "<input data-link='current2' class='fromCur2'/> <input data-link='modified2' class='toMod2'/><br/>"
 		+ "{^{mytag current1 modified1}}"
@@ -24709,7 +24815,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	var fromCur1 = $("#result .fromCur1")[0],
 		toMod1 = $("#result .toMod1")[0],
 		fromCur2 = $("#result .fromCur2")[0],
@@ -24844,7 +24950,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		objD4:{x: {val:'value 4'}}
 	};
 
-	$.templates({
+	jsv.templates({
 		markup: 
 		"{^{mytag arrA[0].val objA2['0'].val objA3['x'].val objA4.x.val p1=arrB[0].val p2=objB2['0'].val p3=objB3['x'].val p4=objB4.x.val}}"
 		+ "{{else  arrC[0].val objC2['0'].val objC3['x'].val objC4.x.val p1=arrD[0].val p2=objD2['0'].val p3=objD3['x'].val p4=objD4.x.val}}"
@@ -24858,7 +24964,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 
 	// ................................ Act ..................................
 	mytag.updateValue("new1").updateValue("new2", 1).updateValue("new3", 2).updateValue("new4", 3)
@@ -24921,7 +25027,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		objD4: function() { return store.objD4 },
 	};
 
-	$.templates({
+	jsv.templates({
 		markup: 
 		"{^{mytag arrA().val objA2().val objA3().val objA4().val p1=arrB().val p2=objB2().val p3=objB3().val p4=objB4().val}}"
 		+ "{{else  arrC().val objC2().val objC3().val objC4().val p1=arrD().val p2=objD2().val p3=objD3().val p4=objD4().val}}"
@@ -24935,7 +25041,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", data);
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 
 	// ................................ Act ..................................
 	mytag.updateValue("new1").updateValue("new2", 1).updateValue("new3", 2).updateValue("new4", 3)
@@ -24957,7 +25063,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	// =============================== Arrange ===============================
 
-	$.templates({
+	jsv.templates({
 		markup: 
 		"{^{mytag arg prop=prop/}}",
 		tags: {
@@ -24966,7 +25072,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 				template: '',
 				init: function() {
 					this.onPropChange = this.onPropChange.bind(this);
-					$.observe(this.tagCtx.props,'prop',this.onPropChange);
+					jsv.observe(this.tagCtx.props,'prop',this.onPropChange);
 				},
 				onPropChange: function() {
 					this.updateValue("newArg", 0);
@@ -24975,7 +25081,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", {arg: "theArg", prop: "theProp"});
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	mytag.updateValue("newProp", 1);
 
 	// ............................... Assert .................................
@@ -24984,7 +25090,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	// =============================== Arrange ===============================
 
-	$.templates({
+	jsv.templates({
 		markup: 
 		"{^{mytag prop=prop prop2=prop2 /}}",
 		tags: {
@@ -24993,7 +25099,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 				template: '',
 				init: function() {
 					this.onPropChange = this.onPropChange.bind(this);
-					$.observe(this.tagCtx.props, 'prop2', this.onPropChange);
+					jsv.observe(this.tagCtx.props, 'prop2', this.onPropChange);
 				},
 				onPropChange: function() {
 					this.updateValue("newProp", 0);
@@ -25002,7 +25108,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 		}
 	}).link("#result", {prop2: "theProp2", prop: "theProp"});
 
-	mytag = $.view().childTags()[0];
+	mytag = jsv.view().childTags()[0];
 	mytag.updateValue("newProp2", 1);
 
 	// ............................... Assert .................................
@@ -25011,7 +25117,7 @@ QUnit.test('Custom Tag Controls - two-way binding (multiple targets)', function(
 
 	// ............................... Reset .................................
 	$("#result").empty();
-	$.views.settings.trigger(true);
+	jsv.views.settings.trigger(true);
 });
 
 QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties', function(assert) {
@@ -25030,7 +25136,7 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 		return ret;
 	}
 
-	$.templates({
+	jsv.templates({
 		markup: 
 	'<input data-link="val" /><input data-link="title" /><input data-link="mode" /><br/>'
 + '{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
@@ -25090,9 +25196,9 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
 	getSelection();
-	$.observable(model.arr).refresh(["d", "b"]);
+	jsv.observable(model.arr).refresh(["d", "b"]);
 	getSelection();
-	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	jsv.observable(model).setProperty("arr", ["c", "a", "b"]);
 	getSelection();
 	$("#result input").eq(0).val("newVal").trigger("input");
 	getSelection();
@@ -25156,9 +25262,9 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
 	getSelection();
-	$.observable(model.arr).refresh(["d", "b"]);
+	jsv.observable(model.arr).refresh(["d", "b"]);
 	getSelection();
-	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	jsv.observable(model).setProperty("arr", ["c", "a", "b"]);
 	getSelection();
 	$("#result input").eq(0).val("newVal").trigger("input");
 	getSelection();
@@ -25221,9 +25327,9 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
 	getSelection();
-	$.observable(model.arr).refresh(["d", "b"]);
+	jsv.observable(model.arr).refresh(["d", "b"]);
 	getSelection();
-	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	jsv.observable(model).setProperty("arr", ["c", "a", "b"]);
 	getSelection();
 
 	// ............................... Assert .................................
@@ -25249,7 +25355,7 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 		return arr;
 	}
 
-	$.templates({
+	jsv.templates({
 		markup: 
 	'{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
 + '{^{for items}}<label><input name="sports" type="checkbox" value="{{:}}"data-link="{same:~root.arr:same}" /> {{:}}</label><br/>{{/for}}<br/>'
@@ -25298,9 +25404,9 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
 	getSelection();
-	$.observable(model.arr).refresh(["d", "b"]);
+	jsv.observable(model.arr).refresh(["d", "b"]);
 	getSelection();
-	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	jsv.observable(model).setProperty("arr", ["c", "a", "b"]);
 	getSelection();
 
 	// ............................... Assert .................................
@@ -25325,7 +25431,7 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 		return arr;
 	}
 
-	$.templates({
+	jsv.templates({
 		markup: 
 	'{^{checkboxgroup arr convert="same" convertBack="same" }}{^{for items}}<label><input type="checkbox" value="{{:}}"/> {{:}}</label><br/>{{/for}}{{/checkboxgroup}}<br/>'
 + '{^{for items}}<label><input name="sports" type="checkbox" value="{{:}}"data-link="{same:~root.arr:same}" /> {{:}}</label><br/>{{/for}}<br/>'
@@ -25394,9 +25500,9 @@ QUnit.test('Custom Tag Controls - two-way binding, with array-valued properties'
 	getSelection();
 	$("#result select").eq(1).val(["a", "b", "c", "d"]).change();
 	getSelection();
-	$.observable(model.arr).refresh(["d", "b"]);
+	jsv.observable(model.arr).refresh(["d", "b"]);
 	getSelection();
-	$.observable(model).setProperty("arr", ["c", "a", "b"]);
+	jsv.observable(model).setProperty("arr", ["c", "a", "b"]);
 	getSelection();
 
 	// ............................... Assert .................................
@@ -25416,7 +25522,7 @@ QUnit.test("Tag control events", function(assert) {
 	model.things = [{thing: "box"}]; // reset Prop
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<div>{^{myWidget person1.lastName things/}}</div>',
 		tags: {
 			myWidget: {
@@ -25470,7 +25576,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData,
@@ -25479,7 +25585,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData,
@@ -25488,7 +25594,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
+	jsv.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData,
@@ -25513,7 +25619,7 @@ QUnit.test("Tag control events", function(assert) {
 	model.things = [{thing: "box"}]; // reset Prop
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<div>{^{myCustomArrayChangeWidget person1.lastName things/}}</div>',
 		tags: {
 			myCustomArrayChangeWidget: {
@@ -25537,11 +25643,11 @@ QUnit.test("Tag control events", function(assert) {
 					var tag = this,
 						data = tagCtx.args[1];
 					if (tag._boundArray && data !== tag._boundArray) {
-						$.unobserve(tag._boundArray, tag._arCh); // Different array, so remove handler from previous array
+						jsv.unobserve(tag._boundArray, tag._arCh); // Different array, so remove handler from previous array
 						tag._boundArray = undefined;
 					}
 					if (!tag._boundArray && $.isArray(data)) {
-						$.observe(tag._boundArray = data, tag._arCh = function(ev, eventArgs) { // Store array data as tag._boundArray, and arrayChangeHandler as tag._arCh
+						jsv.observe(tag._boundArray = data, tag._arCh = function(ev, eventArgs) { // Store array data as tag._boundArray, and arrayChangeHandler as tag._arCh
 							tag.onArrayChange(ev, eventArgs);
 						});
 					}
@@ -25565,7 +25671,7 @@ QUnit.test("Tag control events", function(assert) {
 				onDispose: function() {
 					var tag = this;
 					if (tag._boundArray) {
-						$.unobserve(tag._boundArray, tag._arCh); // Remove arrayChange handler from bound array
+						jsv.unobserve(tag._boundArray, tag._arCh); // Remove arrayChange handler from bound array
 					}
 					eventData += "dispose ";
 				},
@@ -25585,7 +25691,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(person1).setProperty("lastName", "Two");
+	jsv.observable(person1).setProperty("lastName", "Two");
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData,
@@ -25594,7 +25700,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(model.things).insert(0, {thing: "tree"});
+	jsv.observable(model.things).insert(0, {thing: "tree"});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onArrayChange ",
@@ -25602,7 +25708,7 @@ QUnit.test("Tag control events", function(assert) {
 	eventData = "";
 
 	// ................................ Act ..................................
-	$.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
+	jsv.observable(model.things).refresh([{thing: "bush"}, {thing: "flower"}]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text() + "|" + eventData, "Two 1 special|onArrayChange(refresh) onArrayChange(refresh) onArrayChange ",
@@ -25635,7 +25741,7 @@ vm = {
 };
 
 	// ................................ Act ..................................
-$.views.templates({
+jsv.views.templates({
 	markup: "{^{mytag prop1=p1 prop2=p2 a ^other=other}}{{else prop1=elsep1 prop2=elsep2 elsea}}{{/mytag}}",
 	tags: {
 		mytag: {
@@ -25662,7 +25768,7 @@ var inputs = $("#result input"),
 		'SetValue used correctly during rendering');
 
 	// ................................ Act ..................................
-	$.observable(vm).setProperty("a", "AX")
+	jsv.observable(vm).setProperty("a", "AX")
 		.setProperty("p1", "p1X")
 		.setProperty("p2", "p2X")
 		.setProperty("elsea", "elseAX")
@@ -25694,7 +25800,7 @@ vm = {
 };
 
 	// ................................ Act ..................................
-$.views.templates({
+jsv.views.templates({
 	markup: "{^{mytag prop1=p1 prop2=p2 a ^other=other}}{{else prop1=elsep1 prop2=elsep2 elsea}}{{/mytag}}",
 	tags: {
 		mytag: {
@@ -25721,7 +25827,7 @@ var inputs = $("#result input"),
 		'With undefined initial values for bound args/props SetValue is used correctly during rendering');
 
 	// ................................ Act ..................................
-	$.observable(vm).setProperty("a", "AX")
+	jsv.observable(vm).setProperty("a", "AX")
 		.setProperty("p1", "p1X")
 		.setProperty("p2", "p2X")
 		.setProperty("elsea", "elseAX")
@@ -25742,7 +25848,7 @@ var inputs = $("#result input"),
 	// =============================== Arrange ===============================
 
 	// ................................ Act ..................................
-	$.templates({
+	jsv.templates({
 		markup: '<div>{^{myNoRenderWidget/}}</div>',
 		tags: {
 			myNoRenderWidget: {
@@ -25786,7 +25892,7 @@ var inputs = $("#result input"),
 	// ................................ Act ..................................
 eventData = "Init| ";
 
-	$.templates({
+	jsv.templates({
 		markup: '<div>{^{mytag lastName/}}</div>',
 		tags: {
 			mytag: {
@@ -25803,20 +25909,20 @@ eventData = "Init| ";
 		}
 	}).link("#result", person1);
 
-	var mytag = $.view().childTags("mytag")[0];
+	var mytag = jsv.view().childTags("mytag")[0];
 
 eventData += "\nUpdate to One| ";
 mytag.updateValue("One"); // Same value so no-op
-$.observable(person1).setProperty("lastName", "One"); // Same value so no-op
+jsv.observable(person1).setProperty("lastName", "One"); // Same value so no-op
 
 eventData += "\nUpdate to Two| ";
 mytag.updateValue("Two"); // Change value
-$.observable(person1).setProperty("lastName", "One"); // Change back to value previously passed in setValue() call
+jsv.observable(person1).setProperty("lastName", "One"); // Change back to value previously passed in setValue() call
 
 eventData += "\nUpdate to Two and setValue to Three, twice| ";
 mytag.updateValue("Two");
 mytag.setValue("Three");
-$.observable(person1).setProperty("lastName", "Three");
+jsv.observable(person1).setProperty("lastName", "Three");
 
 	// ............................... Assert .................................
 	assert.equal(eventData, 
@@ -25838,7 +25944,7 @@ QUnit.test("tag onArrayChange options", function(assert) {
 	// ................................ Act ..................................
 	var template = "First: {{:#data[0]}} Last: {{:#data[length-1]}} First2: {{:~tagCtx.args[1][0]}} Last2: {{:~tagCtx.args[1][~tagCtx.args[1].length-1]}}";
 
-	$.templates({
+	jsv.templates({
 		markup:
 '1 {^{mytag items items2/}} ' +
 '2 {^{arrChFn items items2/}} ' +
@@ -25884,8 +25990,8 @@ QUnit.test("tag onArrayChange options", function(assert) {
 		'Initial rendering');
 
 	// ................................ Act ..................................
-	$.observable(data.items).move(0, data.items.length-1);
-	$.observable(data.items2).move(0, data.items2.length-1);
+	jsv.observable(data.items).move(0, data.items.length-1);
+	jsv.observable(data.items2).move(0, data.items2.length-1);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(),
@@ -25893,7 +25999,7 @@ QUnit.test("tag onArrayChange options", function(assert) {
 		'After array change "move"');
 
 	// ................................ Act ..................................
-	$.observable(data).setProperty({items: ["xx", "XX"], items2: ["yy", "YY"]});
+	jsv.observable(data).setProperty({items: ["xx", "XX"], items2: ["yy", "YY"]});
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(),
@@ -25901,7 +26007,7 @@ QUnit.test("tag onArrayChange options", function(assert) {
 		'After property change "setProperty"');
 
 	// ................................ Act ..................................
-	$.observable(data.items).refresh(["aa", "AA"]);
+	jsv.observable(data.items).refresh(["aa", "AA"]);
 
 	// ............................... Assert .................................
 	assert.equal($("#result").text(),
@@ -25911,4 +26017,4 @@ QUnit.test("tag onArrayChange options", function(assert) {
 	// ................................ Reset ................................
 	$("#result").empty();
 });
-})(this, this.jQuery);
+})(this.jsviews || this.jQuery, this.jsviews && this.jsviews.$ || this.jQuery);
