@@ -1,5 +1,6 @@
 ## JsViews: next-generation MVVM and MVP framework - bringing templates to life
 
+[![NPM Version](https://img.shields.io/npm/v/jsviews)](https://www.npmjs.com/package/jsviews)
 [![CDNJS version](https://img.shields.io/cdnjs/v/jsviews.svg)](https://cdnjs.com/libraries/jsviews)
 
 *The power of MVVM, the flexibility of JavaScript, the speed and ease of JsRender templates and jQuery*<br/>
@@ -16,7 +17,7 @@ The content of this **_ReadMe_** is available also as a *[JsViews Quickstart](ht
 
 jsviews.js is available from [downloads](http://www.jsviews.com/#download) on the jsviews.com site.
 
-CDN delivery is available from the **_[cdnjs](https://cdnjs.com)_** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
+CDN delivery is available from the ***[jsdelivr](https://jsdelivr.com)*** CDN at [jsdelivr.com/package/npm/jsviews](https://jsdelivr.com/package/npm/jsviews?tab=files), and from the ***[cdnjs](https://cdnjs.com)*** CDN at [cdnjs.com/libraries/jsviews](https://cdnjs.com/libraries/jsviews).
 
 Alternatively:
 
