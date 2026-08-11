@@ -7207,9 +7207,15 @@ function addLinkMethods(tagOrView) { // tagOrView is View prototype or tag insta
 						}
 						$(nodesToRemove).remove();
 					}
-					if (!viewToRemove._elCnt && prevNode) {
-						prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
-						nextNode.parentNode.removeChild(nextNode);
+					if (!viewToRemove._elCnt) {
+
+						// nodes could have been already detached from dom
+						if (prevNode && prevNode.parentNode) {
+							prevNode.parentNode.removeChild(prevNode); // (prevNode.parentNode is parentElem, except if jQuery Mobile or similar has inserted an intermediate wrapper
+						}
+						if (nextNode && nextNode.parentNode) {
+							nextNode.parentNode.removeChild(nextNode);
+						}
 					}
 					setArrayChangeLink(viewToRemove);
 					for (bindId in viewToRemove._.bnds) {
